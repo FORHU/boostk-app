@@ -2,22 +2,22 @@ import { Elysia, t } from "elysia";
 
 export const testController = new Elysia({ prefix: "/test" })
   .get("/", () => "Test Controller")
-  .get("/greet", ({ query }) => `Hello ${query.name}`, {
+  .get("/greet", ({ query }) => `GET Hello ${query.name}`, {
     query: t.Object({
       name: t.String(),
     }),
   })
-  .get("/greet/:name", ({ params }) => `Hello ${params.name}`, {
+  .get("/greet/:name", ({ params }) => `GET Hello ${params.name}`, {
     params: t.Object({
       name: t.String(),
     }),
   })
-  .post("/greet", ({ body }) => `Hello ${body.name}`, {
+  .post("/greet", ({ body }) => `POST Hello ${body.name}`, {
     body: t.Object({
       name: t.String(),
     }),
   })
-  .put("/greet/:name", ({ body, params }) => `Hello ${body.name} ${params.name}`, {
+  .put("/greet/:name", ({ body, params }) => `PUT Hello ${body.name} ${params.name}`, {
     params: t.Object({
       name: t.String(),
     }),
@@ -25,7 +25,7 @@ export const testController = new Elysia({ prefix: "/test" })
       name: t.String(),
     }),
   })
-  .delete("/greet/:name", ({ params }) => `Hello ${params.name}`, {
+  .delete("/greet/:name", ({ params }) => `DELETE Hello ${params.name}`, {
     params: t.Object({
       name: t.String(),
     }),
