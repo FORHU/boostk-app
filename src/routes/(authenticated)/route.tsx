@@ -1,13 +1,22 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/(authenticated)")({
   beforeLoad: ({ context }) => {
-    if (!context.authSession) {
-      throw redirect({ to: "/signin" });
-    }
+    if (!context.authSession) throw redirect({ to: "/signin" });
 
     return {
       authSession: context.authSession,
     };
   },
+  component: AuthenticatedLayout,
 });
+
+function AuthenticatedLayout() {
+  return (
+    <>
+      {/* TODO: Create nav here */}
+      <div>nav</div>
+      <Outlet />
+    </>
+  );
+}

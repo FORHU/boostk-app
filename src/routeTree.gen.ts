@@ -22,6 +22,7 @@ import { Route as authenticatedDashboardRouteImport } from './routes/(authentica
 import { Route as authSignupRouteImport } from './routes/(auth)/signup'
 import { Route as authSigninRouteImport } from './routes/(auth)/signin'
 import { Route as DemoPrismaDemoIndexRouteImport } from './routes/demo/prisma-demo/index'
+import { Route as authenticatedOrganizationIndexRouteImport } from './routes/(authenticated)/organization/index'
 import { Route as DemoStartServerFuncsRouteImport } from './routes/demo/start.server-funcs'
 import { Route as DemoStartApiRequestRouteImport } from './routes/demo/start.api-request'
 import { Route as DemoFormSimpleRouteImport } from './routes/demo/form.simple'
@@ -97,6 +98,12 @@ const DemoPrismaDemoIndexRoute = DemoPrismaDemoIndexRouteImport.update({
   path: '/prisma-demo/',
   getParentRoute: () => DemoRouteRoute,
 } as any)
+const authenticatedOrganizationIndexRoute =
+  authenticatedOrganizationIndexRouteImport.update({
+    id: '/organization/',
+    path: '/organization/',
+    getParentRoute: () => authenticatedRouteRoute,
+  } as any)
 const DemoStartServerFuncsRoute = DemoStartServerFuncsRouteImport.update({
   id: '/start/server-funcs',
   path: '/start/server-funcs',
@@ -171,6 +178,7 @@ export interface FileRoutesByFullPath {
   '/demo/form/simple': typeof DemoFormSimpleRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
+  '/organization/': typeof authenticatedOrganizationIndexRoute
   '/demo/prisma-demo/': typeof DemoPrismaDemoIndexRoute
   '/demo/prisma-demo/$userId/todos': typeof DemoPrismaDemoUserIdTodosRoute
   '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
@@ -194,6 +202,7 @@ export interface FileRoutesByTo {
   '/demo/form/simple': typeof DemoFormSimpleRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
+  '/organization': typeof authenticatedOrganizationIndexRoute
   '/demo/prisma-demo': typeof DemoPrismaDemoIndexRoute
   '/demo/prisma-demo/$userId/todos': typeof DemoPrismaDemoUserIdTodosRoute
   '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
@@ -221,6 +230,7 @@ export interface FileRoutesById {
   '/demo/form/simple': typeof DemoFormSimpleRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
+  '/(authenticated)/organization/': typeof authenticatedOrganizationIndexRoute
   '/demo/prisma-demo/': typeof DemoPrismaDemoIndexRoute
   '/demo/prisma-demo/$userId/todos': typeof DemoPrismaDemoUserIdTodosRoute
   '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
@@ -247,6 +257,7 @@ export interface FileRouteTypes {
     | '/demo/form/simple'
     | '/demo/start/api-request'
     | '/demo/start/server-funcs'
+    | '/organization/'
     | '/demo/prisma-demo/'
     | '/demo/prisma-demo/$userId/todos'
     | '/demo/start/ssr/data-only'
@@ -270,6 +281,7 @@ export interface FileRouteTypes {
     | '/demo/form/simple'
     | '/demo/start/api-request'
     | '/demo/start/server-funcs'
+    | '/organization'
     | '/demo/prisma-demo'
     | '/demo/prisma-demo/$userId/todos'
     | '/demo/start/ssr/data-only'
@@ -296,6 +308,7 @@ export interface FileRouteTypes {
     | '/demo/form/simple'
     | '/demo/start/api-request'
     | '/demo/start/server-funcs'
+    | '/(authenticated)/organization/'
     | '/demo/prisma-demo/'
     | '/demo/prisma-demo/$userId/todos'
     | '/demo/start/ssr/data-only'
@@ -404,6 +417,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DemoPrismaDemoIndexRouteImport
       parentRoute: typeof DemoRouteRoute
     }
+    '/(authenticated)/organization/': {
+      id: '/(authenticated)/organization/'
+      path: '/organization'
+      fullPath: '/organization/'
+      preLoaderRoute: typeof authenticatedOrganizationIndexRouteImport
+      parentRoute: typeof authenticatedRouteRoute
+    }
     '/demo/start/server-funcs': {
       id: '/demo/start/server-funcs'
       path: '/start/server-funcs'
@@ -500,10 +520,12 @@ const authRouteRouteWithChildren = authRouteRoute._addFileChildren(
 
 interface authenticatedRouteRouteChildren {
   authenticatedDashboardRoute: typeof authenticatedDashboardRoute
+  authenticatedOrganizationIndexRoute: typeof authenticatedOrganizationIndexRoute
 }
 
 const authenticatedRouteRouteChildren: authenticatedRouteRouteChildren = {
   authenticatedDashboardRoute: authenticatedDashboardRoute,
+  authenticatedOrganizationIndexRoute: authenticatedOrganizationIndexRoute,
 }
 
 const authenticatedRouteRouteWithChildren =
