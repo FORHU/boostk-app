@@ -8,23 +8,28 @@ datasource db {
 }
 
 model User {
-  id        String   @id
-  publicId  String   @unique @default(uuid())
-  name      String
-  email     String   @unique
-  createdAt DateTime @default(now())
-
-  todos Todo[]
-
-  emailVerified Boolean   @default(false)
+  id            String  @id
+  publicId      String  @unique @default(uuid())
+  name          String
+  email         String  @unique
+  emailVerified Boolean @default(false)
   image         String?
-  updatedAt     DateTime  @updatedAt
-  sessions      Session[]
-  accounts      Account[]
+
+  role   UserRole   @default(AGENT)
+  status UserStatus @default(OFFLINE)
+
+  orgId        String?
+  organization Organization? @relation(fields: [orgId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sessions        Session[]
+  accounts        Account[]
+  assignedTickets Ticket[]  @relation("AgentTickets")
 
   @@map("users")
 }
-
 
 model Session {
   id        String   @id
@@ -74,15 +79,105 @@ model Verification {
   @@map("verification")
 }
 
-
-model Todo {
-  id        String   @id @default(uuid())
-  title     String
-  completed Boolean  @default(false)
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
   createdAt DateTime @default(now())
 
-  userId String
-  user   User @relation(fields: [userId], references: [id])
+  members  User[]
+  projects Project[]
 
-  @@map("todos")
+  @@map("organizations")
+}
+
+model Project {
+  id           String       @id @default(cuid())
+  name         String
+  orgId        String
+  organization Organization @relation(fields: [orgId], references: [id])
+
+  // Future-proofing: store colors/config here
+  widgetConfig Json? @default("{}")
+
+  tickets   Ticket[]
+  customers Customer[]
+
+  @@map("projects")
+}
+
+model Customer {
+  id        String  @id @default(cuid())
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id])
+
+  // This could be an email or a unique ID from the iframe session
+  externalId String? @unique
+  name       String?
+
+  tickets Ticket[]
+
+  @@map("customers")
+}
+
+model Ticket {
+  id     String       @id @default(cuid())
+  status TicketStatus @default(OPEN)
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id])
+
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+
+  agentId String?
+  agent   User?   @relation("AgentTickets", fields: [agentId], references: [id])
+
+  messages  Message[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@map("tickets")
+}
+
+model Message {
+  id       String @id @default(cuid())
+  ticketId String
+  ticket   Ticket @relation(fields: [ticketId], references: [id])
+
+  content    String
+  senderId   String // Can be User.id or Customer.id
+  senderType SenderType
+
+  translatedContent String?
+
+  sourceLang String? // e.g., "zh"
+  targetLang String? // e.g., "en"
+
+  createdAt DateTime @default(now())
+
+  @@map("messages")
+}
+
+enum UserRole {
+  OWNER
+  ADMIN
+  AGENT
+}
+
+enum UserStatus {
+  ONLINE
+  OFFLINE
+  BUSY
+}
+
+enum TicketStatus {
+  OPEN
+  PENDING
+  CLOSED
+}
+
+enum SenderType {
+  AGENT
+  CUSTOMER
+  SYSTEM
 }

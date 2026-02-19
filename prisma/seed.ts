@@ -50,15 +50,6 @@ const seed = async () => {
     }
   }
 
-  // Seed Todos
-  await prisma.todo.deleteMany({});
-  const todoData = todos.map((todo) => ({
-    ...todo,
-    userId: userIds[Math.floor(Math.random() * userIds.length)],
-  }));
-
-  await prisma.todo.createMany({ data: todoData });
-
   console.log("✅ Seeding finished successfully.");
 };
 
