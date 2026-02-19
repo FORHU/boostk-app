@@ -4,6 +4,7 @@ import { Elysia, t } from "elysia";
 import { env } from "@/env";
 import { betterAuthRoutes } from "@/modules/auth";
 import { authMiddleware } from "@/modules/auth/service";
+import { organizationController } from "./organization/organization.controller";
 import { testController } from "./test/test-controller";
 
 const ws = new Elysia().ws("/ws", {
@@ -22,12 +23,13 @@ const api = new Elysia({ prefix: "/api" })
   .use(authMiddleware)
   .all("/auth/*", betterAuthRoutes)
   .use(testController)
+  .use(organizationController)
   .get("/user", ({ user }) => user, { auth: true })
   .get("/hello", ({ user }) => ({ message: `Hello from Elysia ${user.email}` }), { auth: true });
 
 export const backend = new Elysia()
   .use(cors())
-  .use(openapi({ enabled: env.isDev || env.isLocal }))
+  .use(openapi({ enabled: env.VITE_APP_ENV === "local" || env.VITE_APP_ENV === "staging" }))
   .use(ws)
   .use(api);
 
