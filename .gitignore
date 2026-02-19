@@ -1,0 +1,51 @@
+# ======================
+# Dependencies & Builds
+# ======================
+node_modules/
+dist/
+dist-ssr/
+.output/
+.vinxi/
+.nitro/
+.tanstack/
+.wrangler/
+.vercel/
+
+# ======================
+# Environment & Config
+# ======================
+.env
+.env*
+!.env.example
+*.local
+
+# ======================
+# Generated / Runtime
+# ======================
+count.txt
+todos.json
+
+# ======================
+# Prisma
+# ======================
+prisma/generated/
+
+# ======================
+# Debug Logs
+# ======================
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# ======================
+# OS / Editor
+# ======================
+.DS_Store
+*.pem
+
+# ======================
+# TypeScript
+# ======================
+*.tsbuildinfo
+next-env.d.ts

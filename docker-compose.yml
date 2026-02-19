@@ -1,0 +1,17 @@
+services:
+  app:
+    build:
+      context: .
+      args:
+        # These look for values in your local .env file automatically
+        - NODE_ENV=production
+        - DATABASE_URL
+        - VITE_APP_URL
+        - VITE_APP_ENV
+        - BETTER_AUTH_SECRET
+        - BETTER_AUTH_URL
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    # The env_file handles the RUNTIME variables when the container starts
