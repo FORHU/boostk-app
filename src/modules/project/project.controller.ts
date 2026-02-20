@@ -1,4 +1,4 @@
-import { Elysia, t } from "elysia";
+import { Elysia } from "elysia";
 import { prisma } from "prisma/db";
 
 export const projectController = new Elysia({ prefix: "/projects" }).get(
