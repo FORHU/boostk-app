@@ -29,6 +29,7 @@ import { Route as DemoFormSimpleRouteImport } from './routes/demo/form.simple'
 import { Route as DemoFormAddressRouteImport } from './routes/demo/form.address'
 import { Route as DemoApiTqTodosRouteImport } from './routes/demo/api.tq-todos'
 import { Route as DemoApiNamesRouteImport } from './routes/demo/api.names'
+import { Route as authenticatedProjectProjectIdRouteImport } from './routes/(authenticated)/project/$projectId'
 import { Route as authenticatedOrganizationOrganizationIdRouteImport } from './routes/(authenticated)/organization/$organizationId'
 import { Route as DemoStartSsrIndexRouteImport } from './routes/demo/start.ssr.index'
 import { Route as DemoStartSsrSpaModeRouteImport } from './routes/demo/start.ssr.spa-mode'
@@ -135,6 +136,12 @@ const DemoApiNamesRoute = DemoApiNamesRouteImport.update({
   path: '/api/names',
   getParentRoute: () => DemoRouteRoute,
 } as any)
+const authenticatedProjectProjectIdRoute =
+  authenticatedProjectProjectIdRouteImport.update({
+    id: '/project/$projectId',
+    path: '/project/$projectId',
+    getParentRoute: () => authenticatedRouteRoute,
+  } as any)
 const authenticatedOrganizationOrganizationIdRoute =
   authenticatedOrganizationOrganizationIdRouteImport.update({
     id: '/organization/$organizationId',
@@ -180,6 +187,7 @@ export interface FileRoutesByFullPath {
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/demo/': typeof DemoIndexRoute
   '/organization/$organizationId': typeof authenticatedOrganizationOrganizationIdRoute
+  '/project/$projectId': typeof authenticatedProjectProjectIdRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/api/tq-todos': typeof DemoApiTqTodosRoute
   '/demo/form/address': typeof DemoFormAddressRoute
@@ -205,6 +213,7 @@ export interface FileRoutesByTo {
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/demo': typeof DemoIndexRoute
   '/organization/$organizationId': typeof authenticatedOrganizationOrganizationIdRoute
+  '/project/$projectId': typeof authenticatedProjectProjectIdRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/api/tq-todos': typeof DemoApiTqTodosRoute
   '/demo/form/address': typeof DemoFormAddressRoute
@@ -234,6 +243,7 @@ export interface FileRoutesById {
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/demo/': typeof DemoIndexRoute
   '/(authenticated)/organization/$organizationId': typeof authenticatedOrganizationOrganizationIdRoute
+  '/(authenticated)/project/$projectId': typeof authenticatedProjectProjectIdRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/api/tq-todos': typeof DemoApiTqTodosRoute
   '/demo/form/address': typeof DemoFormAddressRoute
@@ -262,6 +272,7 @@ export interface FileRouteTypes {
     | '/demo/tanstack-query'
     | '/demo/'
     | '/organization/$organizationId'
+    | '/project/$projectId'
     | '/demo/api/names'
     | '/demo/api/tq-todos'
     | '/demo/form/address'
@@ -287,6 +298,7 @@ export interface FileRouteTypes {
     | '/demo/tanstack-query'
     | '/demo'
     | '/organization/$organizationId'
+    | '/project/$projectId'
     | '/demo/api/names'
     | '/demo/api/tq-todos'
     | '/demo/form/address'
@@ -315,6 +327,7 @@ export interface FileRouteTypes {
     | '/demo/tanstack-query'
     | '/demo/'
     | '/(authenticated)/organization/$organizationId'
+    | '/(authenticated)/project/$projectId'
     | '/demo/api/names'
     | '/demo/api/tq-todos'
     | '/demo/form/address'
@@ -479,6 +492,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DemoApiNamesRouteImport
       parentRoute: typeof DemoRouteRoute
     }
+    '/(authenticated)/project/$projectId': {
+      id: '/(authenticated)/project/$projectId'
+      path: '/project/$projectId'
+      fullPath: '/project/$projectId'
+      preLoaderRoute: typeof authenticatedProjectProjectIdRouteImport
+      parentRoute: typeof authenticatedRouteRoute
+    }
     '/(authenticated)/organization/$organizationId': {
       id: '/(authenticated)/organization/$organizationId'
       path: '/organization/$organizationId'
@@ -541,6 +561,7 @@ const authRouteRouteWithChildren = authRouteRoute._addFileChildren(
 interface authenticatedRouteRouteChildren {
   authenticatedDashboardRoute: typeof authenticatedDashboardRoute
   authenticatedOrganizationOrganizationIdRoute: typeof authenticatedOrganizationOrganizationIdRoute
+  authenticatedProjectProjectIdRoute: typeof authenticatedProjectProjectIdRoute
   authenticatedOrganizationIndexRoute: typeof authenticatedOrganizationIndexRoute
 }
 
@@ -548,6 +569,7 @@ const authenticatedRouteRouteChildren: authenticatedRouteRouteChildren = {
   authenticatedDashboardRoute: authenticatedDashboardRoute,
   authenticatedOrganizationOrganizationIdRoute:
     authenticatedOrganizationOrganizationIdRoute,
+  authenticatedProjectProjectIdRoute: authenticatedProjectProjectIdRoute,
   authenticatedOrganizationIndexRoute: authenticatedOrganizationIndexRoute,
 }
 

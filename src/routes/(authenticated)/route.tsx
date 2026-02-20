@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/(authenticated)")({
   beforeLoad: ({ context }) => {
@@ -15,7 +15,9 @@ function AuthenticatedLayout() {
   return (
     <>
       {/* TODO: Create nav here */}
-      <div>nav</div>
+      <nav>
+        <Link to="/organization">Organization</Link>
+      </nav>
       <Outlet />
     </>
   );
