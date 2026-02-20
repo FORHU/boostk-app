@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as R404RouteImport } from './routes/404'
 import { Route as DemoRouteRouteImport } from './routes/demo/route'
 import { Route as authenticatedRouteRouteImport } from './routes/(authenticated)/route'
 import { Route as authRouteRouteImport } from './routes/(auth)/route'
@@ -34,6 +35,11 @@ import { Route as DemoStartSsrFullSsrRouteImport } from './routes/demo/start.ssr
 import { Route as DemoStartSsrDataOnlyRouteImport } from './routes/demo/start.ssr.data-only'
 import { Route as DemoPrismaDemoUserIdTodosRouteImport } from './routes/demo/prisma-demo/$userId/todos'
 
+const R404Route = R404RouteImport.update({
+  id: '/404',
+  path: '/404',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DemoRouteRoute = DemoRouteRouteImport.update({
   id: '/demo',
   path: '/demo',
@@ -157,6 +163,7 @@ const DemoPrismaDemoUserIdTodosRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/demo': typeof DemoRouteRouteWithChildren
+  '/404': typeof R404Route
   '/signin': typeof authSigninRoute
   '/signup': typeof authSignupRoute
   '/dashboard': typeof authenticatedDashboardRoute
@@ -180,6 +187,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/404': typeof R404Route
   '/signin': typeof authSigninRoute
   '/signup': typeof authSignupRoute
   '/dashboard': typeof authenticatedDashboardRoute
@@ -207,6 +215,7 @@ export interface FileRoutesById {
   '/(auth)': typeof authRouteRouteWithChildren
   '/(authenticated)': typeof authenticatedRouteRouteWithChildren
   '/demo': typeof DemoRouteRouteWithChildren
+  '/404': typeof R404Route
   '/(auth)/signin': typeof authSigninRoute
   '/(auth)/signup': typeof authSignupRoute
   '/(authenticated)/dashboard': typeof authenticatedDashboardRoute
@@ -233,6 +242,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/demo'
+    | '/404'
     | '/signin'
     | '/signup'
     | '/dashboard'
@@ -256,6 +266,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/404'
     | '/signin'
     | '/signup'
     | '/dashboard'
@@ -282,6 +293,7 @@ export interface FileRouteTypes {
     | '/(auth)'
     | '/(authenticated)'
     | '/demo'
+    | '/404'
     | '/(auth)/signin'
     | '/(auth)/signup'
     | '/(authenticated)/dashboard'
@@ -309,10 +321,18 @@ export interface RootRouteChildren {
   authRouteRoute: typeof authRouteRouteWithChildren
   authenticatedRouteRoute: typeof authenticatedRouteRouteWithChildren
   DemoRouteRoute: typeof DemoRouteRouteWithChildren
+  R404Route: typeof R404Route
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/404': {
+      id: '/404'
+      path: '/404'
+      fullPath: '/404'
+      preLoaderRoute: typeof R404RouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/demo': {
       id: '/demo'
       path: '/demo'
@@ -558,6 +578,7 @@ const rootRouteChildren: RootRouteChildren = {
   authRouteRoute: authRouteRouteWithChildren,
   authenticatedRouteRoute: authenticatedRouteRouteWithChildren,
   DemoRouteRoute: DemoRouteRouteWithChildren,
+  R404Route: R404Route,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
