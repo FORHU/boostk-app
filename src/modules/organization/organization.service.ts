@@ -34,11 +34,21 @@ export const OrganizationService = {
 
   // Create a project linked to this Org
   async createProject(organizationId: string, data: CreateProjectInput) {
-    return await prisma.project.create({
-      data: {
-        ...data,
-        organization: { connect: { id: organizationId } },
-      },
+    return await prisma.$transaction(async (tx) => {
+      const project = await tx.project.create({
+        data: {
+          ...data,
+          apiKey: "",
+          organization: { connect: { id: organizationId } },
+        },
+      });
+
+      return await tx.project.update({
+        where: { id: project.id },
+        data: {
+          apiKey: `ch-api-${project.id}`,
+        },
+      });
     });
   },
 };

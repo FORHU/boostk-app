@@ -1,8 +1,10 @@
 import { useForm } from "@tanstack/react-form";
+import { useRouter } from "@tanstack/react-router";
 import { elysiaClient } from "@/lib/elysia-client";
 import { CreateOrganizationSchema } from "@/modules/organization/organization.schema";
 
 export function CreateOrganizationForm() {
+  const router = useRouter();
   const form = useForm({
     defaultValues: {
       name: "",
@@ -44,8 +46,10 @@ export function CreateOrganizationForm() {
 
       // 3. Success!
       console.log("Success:", data);
-      formApi.reset(); // Clear the form after success
-      alert(`Organization "${data.name}" created successfully!`);
+      formApi.reset();
+      router.navigate({ to: `/organization/${data.id}` });
+      // TODO: Add toast notification
+      // alert(`Organization "${data.name}" created successfully!`);
     },
   });
 
