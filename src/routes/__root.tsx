@@ -1,4 +1,5 @@
 import { TanStackDevtools } from "@tanstack/react-devtools";
+import React from "react";
 import type { QueryClient } from "@tanstack/react-query";
 import { createRootRouteWithContext, HeadContent, Scripts } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
@@ -28,12 +29,31 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
     ],
     links: [
       {
+        rel: "preconnect",
+        href: "https://fonts.googleapis.com",
+      },
+      {
+        rel: "preconnect",
+        href: "https://fonts.gstatic.com",
+        crossOrigin: "anonymous",
+      },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200",
+      },
+      {
         rel: "stylesheet",
         href: appCss,
       },
     ],
   }),
   shellComponent: RootDocument,
+  notFoundComponent: () => (
+    <div style={{ padding: '2rem', textAlign: 'center' }}>
+      <h2>404 — Page Not Found</h2>
+      <p>The page you were looking for doesn&apos;t exist.</p>
+    </div>
+  ),
   beforeLoad: async () => {
     return {
       authSession: await getAuthSessionFn(),

@@ -136,3 +136,87 @@ code {
     @apply bg-background text-foreground;
   }
 }
+
+/* =============================================
+   COLOR TOKENS
+   ============================================= */
+:root {
+  --primary-color: #2563eb;
+  --primary-hover-color: #1d4ed8;
+}
+
+/* Tailwind-compatible utility aliases used in components */
+.bg-primary { background-color: var(--primary-color) !important; }
+.hover\:bg-primary:hover { background-color: var(--primary-color) !important; }
+.hover\:bg-primary-hover:hover { background-color: var(--primary-hover-color) !important; }
+.text-primary { color: var(--primary-color) !important; }
+.hover\:text-primary:hover { color: var(--primary-color) !important; }
+.border-border-light { border-color: #e2e8f0; }
+
+/* =============================================
+   NAVBAR
+   ============================================= */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.navbar-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+@media (min-width: 640px) {
+  .navbar-container { padding: 0 1.5rem; }
+}
+@media (min-width: 1024px) {
+  .navbar-container { padding: 0 2rem; }
+}
+
+.navbar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 4rem;
+  gap: 1rem;
+}
+
+.navbar-logo {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.navbar-logo-image {
+  height: 2rem;
+  width: auto;
+  object-fit: contain;
+}
+
+.navbar-menu {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #475569;
+  text-decoration: none;
+  transition: color 0.15s ease;
+  white-space: nowrap;
+}
+
+.navbar-menu:hover {
+  color: var(--primary-color);
+}
+
+.navbar-button {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
