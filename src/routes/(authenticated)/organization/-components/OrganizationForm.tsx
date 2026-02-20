@@ -1,6 +1,6 @@
 import { useForm } from "@tanstack/react-form";
 import { elysiaClient } from "@/lib/elysia-client";
-import { CreateOrganizationSchema } from "@/modules/organization/organization.model";
+import { CreateOrganizationSchema } from "@/modules/organization/organization.schema";
 
 export function CreateOrganizationForm() {
   const form = useForm({

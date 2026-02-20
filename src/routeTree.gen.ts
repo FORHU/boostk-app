@@ -29,6 +29,7 @@ import { Route as DemoFormSimpleRouteImport } from './routes/demo/form.simple'
 import { Route as DemoFormAddressRouteImport } from './routes/demo/form.address'
 import { Route as DemoApiTqTodosRouteImport } from './routes/demo/api.tq-todos'
 import { Route as DemoApiNamesRouteImport } from './routes/demo/api.names'
+import { Route as authenticatedOrganizationOrganizationIdRouteImport } from './routes/(authenticated)/organization/$organizationId'
 import { Route as DemoStartSsrIndexRouteImport } from './routes/demo/start.ssr.index'
 import { Route as DemoStartSsrSpaModeRouteImport } from './routes/demo/start.ssr.spa-mode'
 import { Route as DemoStartSsrFullSsrRouteImport } from './routes/demo/start.ssr.full-ssr'
@@ -134,6 +135,12 @@ const DemoApiNamesRoute = DemoApiNamesRouteImport.update({
   path: '/api/names',
   getParentRoute: () => DemoRouteRoute,
 } as any)
+const authenticatedOrganizationOrganizationIdRoute =
+  authenticatedOrganizationOrganizationIdRouteImport.update({
+    id: '/organization/$organizationId',
+    path: '/organization/$organizationId',
+    getParentRoute: () => authenticatedRouteRoute,
+  } as any)
 const DemoStartSsrIndexRoute = DemoStartSsrIndexRouteImport.update({
   id: '/start/ssr/',
   path: '/start/ssr/',
@@ -172,6 +179,7 @@ export interface FileRoutesByFullPath {
   '/demo/table': typeof DemoTableRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/demo/': typeof DemoIndexRoute
+  '/organization/$organizationId': typeof authenticatedOrganizationOrganizationIdRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/api/tq-todos': typeof DemoApiTqTodosRoute
   '/demo/form/address': typeof DemoFormAddressRoute
@@ -196,6 +204,7 @@ export interface FileRoutesByTo {
   '/demo/table': typeof DemoTableRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/demo': typeof DemoIndexRoute
+  '/organization/$organizationId': typeof authenticatedOrganizationOrganizationIdRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/api/tq-todos': typeof DemoApiTqTodosRoute
   '/demo/form/address': typeof DemoFormAddressRoute
@@ -224,6 +233,7 @@ export interface FileRoutesById {
   '/demo/table': typeof DemoTableRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/demo/': typeof DemoIndexRoute
+  '/(authenticated)/organization/$organizationId': typeof authenticatedOrganizationOrganizationIdRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/api/tq-todos': typeof DemoApiTqTodosRoute
   '/demo/form/address': typeof DemoFormAddressRoute
@@ -251,6 +261,7 @@ export interface FileRouteTypes {
     | '/demo/table'
     | '/demo/tanstack-query'
     | '/demo/'
+    | '/organization/$organizationId'
     | '/demo/api/names'
     | '/demo/api/tq-todos'
     | '/demo/form/address'
@@ -275,6 +286,7 @@ export interface FileRouteTypes {
     | '/demo/table'
     | '/demo/tanstack-query'
     | '/demo'
+    | '/organization/$organizationId'
     | '/demo/api/names'
     | '/demo/api/tq-todos'
     | '/demo/form/address'
@@ -302,6 +314,7 @@ export interface FileRouteTypes {
     | '/demo/table'
     | '/demo/tanstack-query'
     | '/demo/'
+    | '/(authenticated)/organization/$organizationId'
     | '/demo/api/names'
     | '/demo/api/tq-todos'
     | '/demo/form/address'
@@ -466,6 +479,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DemoApiNamesRouteImport
       parentRoute: typeof DemoRouteRoute
     }
+    '/(authenticated)/organization/$organizationId': {
+      id: '/(authenticated)/organization/$organizationId'
+      path: '/organization/$organizationId'
+      fullPath: '/organization/$organizationId'
+      preLoaderRoute: typeof authenticatedOrganizationOrganizationIdRouteImport
+      parentRoute: typeof authenticatedRouteRoute
+    }
     '/demo/start/ssr/': {
       id: '/demo/start/ssr/'
       path: '/start/ssr'
@@ -520,11 +540,14 @@ const authRouteRouteWithChildren = authRouteRoute._addFileChildren(
 
 interface authenticatedRouteRouteChildren {
   authenticatedDashboardRoute: typeof authenticatedDashboardRoute
+  authenticatedOrganizationOrganizationIdRoute: typeof authenticatedOrganizationOrganizationIdRoute
   authenticatedOrganizationIndexRoute: typeof authenticatedOrganizationIndexRoute
 }
 
 const authenticatedRouteRouteChildren: authenticatedRouteRouteChildren = {
   authenticatedDashboardRoute: authenticatedDashboardRoute,
+  authenticatedOrganizationOrganizationIdRoute:
+    authenticatedOrganizationOrganizationIdRoute,
   authenticatedOrganizationIndexRoute: authenticatedOrganizationIndexRoute,
 }
 
