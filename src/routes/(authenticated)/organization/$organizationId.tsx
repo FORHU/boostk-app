@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect, useRouter } from "@tanstack/react-router";
 import { useId, useState } from "react";
 import { elysiaClient } from "@/lib/elysia-client";
 
@@ -69,9 +69,9 @@ function RouteComponent() {
 
       <ul className="space-y-2">
         {projects.map((project) => (
-          <li key={project.id} className="p-3 border rounded shadow-sm bg-white">
-            {project.name}
-          </li>
+          <Link key={project.id} to="/project/$projectId" params={{ projectId: project.id }}>
+            <li className="p-3 border rounded shadow-sm bg-white">{project.name}</li>
+          </Link>
         ))}
       </ul>
 
