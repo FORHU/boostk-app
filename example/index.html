@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BoostK Chat Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Smooth scale animation for the iframe container */
+        .chat-container-hidden {
+            opacity: 0;
+            transform: scale(0.9) translateY(20px);
+            pointer-events: none;
+        }
+        .chat-container-visible {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+            pointer-events: auto;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col items-center justify-center font-sans">
+
+    <div class="text-center space-y-4 p-6">
+        <h1 class="text-4xl font-extrabold text-gray-900 tracking-tight">BoostK <span class="bg-gradient-to-r from-pink-500 to-purple-600 bg-clip-text text-transparent">Chat Widget</span></h1>
+        <p class="text-gray-600 max-w-md mx-auto text-lg">This is a demo page. Click the bubble in the bottom right corner to start a conversation with our support team.</p>
+        <div class="flex gap-4 justify-center pt-4">
+            <div class="w-24 h-2 bg-pink-500 rounded-full"></div>
+            <div class="w-24 h-2 bg-purple-600 rounded-full"></div>
+        </div>
+    </div>
+
+    <div id="chat-widget-wrapper" class="antialiased">
+        
+        <div 
+            id="chat-iframe-container" 
+            class="chat-container-hidden fixed bottom-24 right-5 w-[90vw] sm:w-[380px] h-[600px] max-h-[80vh] z-999999 transition-all duration-300 ease-out"
+        >
+            <iframe 
+                src="http://localhost:3000/widget/ch-api-cmlvuewao00018clp1w9togsr"
+                class="w-full h-full border-none rounded-2xl shadow-2xl ring-1 ring-black/5"
+            ></iframe>
+        </div>
+
+        <button 
+            id="chat-bubble" 
+            class="fixed bottom-6 right-6 w-16 h-16 rounded-full bg-gradient-to-tr from-pink-500 to-purple-600 text-white shadow-lg hover:shadow-2xl hover:scale-110 active:scale-95 transition-all duration-200 z-[999999] flex items-center justify-center group"
+        >
+            <svg id="icon-chat" class="w-8 h-8 transition-all duration-300 group-hover:rotate-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
+            </svg>
+            <svg id="icon-close" class="hidden w-8 h-8 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+    </div>
+
+    <script>
+        const bubble = document.getElementById("chat-bubble");
+        const container = document.getElementById("chat-iframe-container");
+        const iconChat = document.getElementById("icon-chat");
+        const iconClose = document.getElementById("icon-close");
+        let isOpen = false;
+
+        function toggleChat() {
+            isOpen = !isOpen;
+            if (isOpen) {
+                container.classList.remove("chat-container-hidden");
+                container.classList.add("chat-container-visible");
+                iconChat.classList.add("hidden");
+                iconClose.classList.remove("hidden");
+            } else {
+                container.classList.remove("chat-container-visible");
+                container.classList.add("chat-container-hidden");
+                iconChat.classList.remove("hidden");
+                iconClose.classList.add("hidden");
+            }
+        }
+
+        bubble.onclick = toggleChat;
+
+        // Listen for "close-chat" message from the React Iframe
+        window.addEventListener("message", (event) => {
+            if (event.data === "close-chat") {
+                if (isOpen) toggleChat();
+            }
+        });
+    </script>
+</body>
+</html>

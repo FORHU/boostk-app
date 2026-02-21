@@ -14,6 +14,8 @@ import { Route as authenticatedRouteRouteImport } from './routes/(authenticated)
 import { Route as authRouteRouteImport } from './routes/(auth)/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DemoIndexRouteImport } from './routes/demo/index'
+import { Route as WidgetAccessDeniedRouteImport } from './routes/widget.access-denied'
+import { Route as WidgetApiKeyRouteImport } from './routes/widget.$apiKey'
 import { Route as DemoTanstackQueryRouteImport } from './routes/demo/tanstack-query'
 import { Route as DemoTableRouteImport } from './routes/demo/table'
 import { Route as DemoStoreRouteImport } from './routes/demo/store'
@@ -59,6 +61,16 @@ const DemoIndexRoute = DemoIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => DemoRouteRoute,
+} as any)
+const WidgetAccessDeniedRoute = WidgetAccessDeniedRouteImport.update({
+  id: '/widget/access-denied',
+  path: '/widget/access-denied',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WidgetApiKeyRoute = WidgetApiKeyRouteImport.update({
+  id: '/widget/$apiKey',
+  path: '/widget/$apiKey',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const DemoTanstackQueryRoute = DemoTanstackQueryRouteImport.update({
   id: '/tanstack-query',
@@ -185,6 +197,8 @@ export interface FileRoutesByFullPath {
   '/demo/store': typeof DemoStoreRoute
   '/demo/table': typeof DemoTableRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
+  '/widget/$apiKey': typeof WidgetApiKeyRoute
+  '/widget/access-denied': typeof WidgetAccessDeniedRoute
   '/demo/': typeof DemoIndexRoute
   '/organization/$organizationId': typeof authenticatedOrganizationOrganizationIdRoute
   '/project/$projectId': typeof authenticatedProjectProjectIdRoute
@@ -211,6 +225,8 @@ export interface FileRoutesByTo {
   '/demo/store': typeof DemoStoreRoute
   '/demo/table': typeof DemoTableRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
+  '/widget/$apiKey': typeof WidgetApiKeyRoute
+  '/widget/access-denied': typeof WidgetAccessDeniedRoute
   '/demo': typeof DemoIndexRoute
   '/organization/$organizationId': typeof authenticatedOrganizationOrganizationIdRoute
   '/project/$projectId': typeof authenticatedProjectProjectIdRoute
@@ -241,6 +257,8 @@ export interface FileRoutesById {
   '/demo/store': typeof DemoStoreRoute
   '/demo/table': typeof DemoTableRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
+  '/widget/$apiKey': typeof WidgetApiKeyRoute
+  '/widget/access-denied': typeof WidgetAccessDeniedRoute
   '/demo/': typeof DemoIndexRoute
   '/(authenticated)/organization/$organizationId': typeof authenticatedOrganizationOrganizationIdRoute
   '/(authenticated)/project/$projectId': typeof authenticatedProjectProjectIdRoute
@@ -270,6 +288,8 @@ export interface FileRouteTypes {
     | '/demo/store'
     | '/demo/table'
     | '/demo/tanstack-query'
+    | '/widget/$apiKey'
+    | '/widget/access-denied'
     | '/demo/'
     | '/organization/$organizationId'
     | '/project/$projectId'
@@ -296,6 +316,8 @@ export interface FileRouteTypes {
     | '/demo/store'
     | '/demo/table'
     | '/demo/tanstack-query'
+    | '/widget/$apiKey'
+    | '/widget/access-denied'
     | '/demo'
     | '/organization/$organizationId'
     | '/project/$projectId'
@@ -325,6 +347,8 @@ export interface FileRouteTypes {
     | '/demo/store'
     | '/demo/table'
     | '/demo/tanstack-query'
+    | '/widget/$apiKey'
+    | '/widget/access-denied'
     | '/demo/'
     | '/(authenticated)/organization/$organizationId'
     | '/(authenticated)/project/$projectId'
@@ -348,6 +372,8 @@ export interface RootRouteChildren {
   authRouteRoute: typeof authRouteRouteWithChildren
   authenticatedRouteRoute: typeof authenticatedRouteRouteWithChildren
   DemoRouteRoute: typeof DemoRouteRouteWithChildren
+  WidgetApiKeyRoute: typeof WidgetApiKeyRoute
+  WidgetAccessDeniedRoute: typeof WidgetAccessDeniedRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -386,6 +412,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/demo/'
       preLoaderRoute: typeof DemoIndexRouteImport
       parentRoute: typeof DemoRouteRoute
+    }
+    '/widget/access-denied': {
+      id: '/widget/access-denied'
+      path: '/widget/access-denied'
+      fullPath: '/widget/access-denied'
+      preLoaderRoute: typeof WidgetAccessDeniedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/widget/$apiKey': {
+      id: '/widget/$apiKey'
+      path: '/widget/$apiKey'
+      fullPath: '/widget/$apiKey'
+      preLoaderRoute: typeof WidgetApiKeyRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/demo/tanstack-query': {
       id: '/demo/tanstack-query'
@@ -625,6 +665,8 @@ const rootRouteChildren: RootRouteChildren = {
   authRouteRoute: authRouteRouteWithChildren,
   authenticatedRouteRoute: authenticatedRouteRouteWithChildren,
   DemoRouteRoute: DemoRouteRouteWithChildren,
+  WidgetApiKeyRoute: WidgetApiKeyRoute,
+  WidgetAccessDeniedRoute: WidgetAccessDeniedRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
