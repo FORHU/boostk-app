@@ -27,6 +27,7 @@ import { Route as DemoPrismaDemoIndexRouteImport } from './routes/demo/prisma-de
 import { Route as authenticatedOrganizationIndexRouteImport } from './routes/(authenticated)/organization/index'
 import { Route as DemoStartServerFuncsRouteImport } from './routes/demo/start.server-funcs'
 import { Route as DemoStartApiRequestRouteImport } from './routes/demo/start.api-request'
+import { Route as DemoSseSampleRouteImport } from './routes/demo/sse/sample'
 import { Route as DemoFormSimpleRouteImport } from './routes/demo/form.simple'
 import { Route as DemoFormAddressRouteImport } from './routes/demo/form.address'
 import { Route as DemoApiTqTodosRouteImport } from './routes/demo/api.tq-todos'
@@ -128,6 +129,11 @@ const DemoStartApiRequestRoute = DemoStartApiRequestRouteImport.update({
   path: '/start/api-request',
   getParentRoute: () => DemoRouteRoute,
 } as any)
+const DemoSseSampleRoute = DemoSseSampleRouteImport.update({
+  id: '/sse/sample',
+  path: '/sse/sample',
+  getParentRoute: () => DemoRouteRoute,
+} as any)
 const DemoFormSimpleRoute = DemoFormSimpleRouteImport.update({
   id: '/form/simple',
   path: '/form/simple',
@@ -206,6 +212,7 @@ export interface FileRoutesByFullPath {
   '/demo/api/tq-todos': typeof DemoApiTqTodosRoute
   '/demo/form/address': typeof DemoFormAddressRoute
   '/demo/form/simple': typeof DemoFormSimpleRoute
+  '/demo/sse/sample': typeof DemoSseSampleRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
   '/organization/': typeof authenticatedOrganizationIndexRoute
@@ -234,6 +241,7 @@ export interface FileRoutesByTo {
   '/demo/api/tq-todos': typeof DemoApiTqTodosRoute
   '/demo/form/address': typeof DemoFormAddressRoute
   '/demo/form/simple': typeof DemoFormSimpleRoute
+  '/demo/sse/sample': typeof DemoSseSampleRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
   '/organization': typeof authenticatedOrganizationIndexRoute
@@ -266,6 +274,7 @@ export interface FileRoutesById {
   '/demo/api/tq-todos': typeof DemoApiTqTodosRoute
   '/demo/form/address': typeof DemoFormAddressRoute
   '/demo/form/simple': typeof DemoFormSimpleRoute
+  '/demo/sse/sample': typeof DemoSseSampleRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
   '/(authenticated)/organization/': typeof authenticatedOrganizationIndexRoute
@@ -297,6 +306,7 @@ export interface FileRouteTypes {
     | '/demo/api/tq-todos'
     | '/demo/form/address'
     | '/demo/form/simple'
+    | '/demo/sse/sample'
     | '/demo/start/api-request'
     | '/demo/start/server-funcs'
     | '/organization/'
@@ -325,6 +335,7 @@ export interface FileRouteTypes {
     | '/demo/api/tq-todos'
     | '/demo/form/address'
     | '/demo/form/simple'
+    | '/demo/sse/sample'
     | '/demo/start/api-request'
     | '/demo/start/server-funcs'
     | '/organization'
@@ -356,6 +367,7 @@ export interface FileRouteTypes {
     | '/demo/api/tq-todos'
     | '/demo/form/address'
     | '/demo/form/simple'
+    | '/demo/sse/sample'
     | '/demo/start/api-request'
     | '/demo/start/server-funcs'
     | '/(authenticated)/organization/'
@@ -504,6 +516,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DemoStartApiRequestRouteImport
       parentRoute: typeof DemoRouteRoute
     }
+    '/demo/sse/sample': {
+      id: '/demo/sse/sample'
+      path: '/sse/sample'
+      fullPath: '/demo/sse/sample'
+      preLoaderRoute: typeof DemoSseSampleRouteImport
+      parentRoute: typeof DemoRouteRoute
+    }
     '/demo/form/simple': {
       id: '/demo/form/simple'
       path: '/form/simple'
@@ -626,6 +645,7 @@ interface DemoRouteRouteChildren {
   DemoApiTqTodosRoute: typeof DemoApiTqTodosRoute
   DemoFormAddressRoute: typeof DemoFormAddressRoute
   DemoFormSimpleRoute: typeof DemoFormSimpleRoute
+  DemoSseSampleRoute: typeof DemoSseSampleRoute
   DemoStartApiRequestRoute: typeof DemoStartApiRequestRoute
   DemoStartServerFuncsRoute: typeof DemoStartServerFuncsRoute
   DemoPrismaDemoIndexRoute: typeof DemoPrismaDemoIndexRoute
@@ -646,6 +666,7 @@ const DemoRouteRouteChildren: DemoRouteRouteChildren = {
   DemoApiTqTodosRoute: DemoApiTqTodosRoute,
   DemoFormAddressRoute: DemoFormAddressRoute,
   DemoFormSimpleRoute: DemoFormSimpleRoute,
+  DemoSseSampleRoute: DemoSseSampleRoute,
   DemoStartApiRequestRoute: DemoStartApiRequestRoute,
   DemoStartServerFuncsRoute: DemoStartServerFuncsRoute,
   DemoPrismaDemoIndexRoute: DemoPrismaDemoIndexRoute,
