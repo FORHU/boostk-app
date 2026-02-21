@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Bot, Send, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import { validateWidgetAccess } from "@/modules/widget/widget.service";
-import { LeadForm } from "./widget/-components/LeadForm";
+import { LeadForm } from "@/routes/widget/-components/LeadForm";
 
 export const Route = createFileRoute("/widget/$apiKey")({
   beforeLoad: async ({ params }) => {
