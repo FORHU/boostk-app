@@ -1,26 +1,6 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
-import { prisma } from "prisma/db";
 import { useState } from "react";
-import { auth } from "@/lib/auth";
-
-const getUsers = createServerFn({ method: "GET" }).handler(async () => {
-  return await prisma.user.findMany({
-    orderBy: { createdAt: "desc" },
-  });
-});
-
-const createUser = createServerFn({ method: "POST" })
-  .inputValidator((data: { name: string; email: string; password: string }) => data)
-  .handler(async ({ data }) => {
-    return await auth.api.signUpEmail({
-      body: {
-        email: data.email,
-        password: data.password,
-        name: data.name,
-      },
-    });
-  });
+import { createUser, getUsers } from "./-prisma-demo.serverFn";
 
 export const Route = createFileRoute("/demo/prisma-demo/")({
   component: PrismaDemoPage,

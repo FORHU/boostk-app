@@ -1,34 +1,5 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
-import { prisma } from "prisma/db";
-
-/**
- * Server function to fetch todos filtered by userId
- */
-const getTodosByUser = createServerFn({ method: "GET" })
-  .inputValidator((userId: string) => userId)
-  .handler(async ({ data: userId }) => {
-    return await prisma.todo.findMany({
-      where: {
-        userId: userId, // Matches the Int ID from your User model
-      },
-      orderBy: { createdAt: "desc" },
-    });
-  });
-
-/**
- * Server function to create a todo linked to a specific user
- */
-const createTodo = createServerFn({ method: "POST" })
-  .inputValidator((data: { title: string; userId: string }) => data)
-  .handler(async ({ data }) => {
-    return await prisma.todo.create({
-      data: {
-        title: data.title,
-        userId: data.userId,
-      },
-    });
-  });
+import { createTodo, getTodosByUser } from "./-todos.serverFn";
 
 export const Route = createFileRoute("/demo/prisma-demo/$userId/todos")({
   component: TodosPage,
