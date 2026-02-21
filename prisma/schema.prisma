@@ -114,9 +114,10 @@ model Customer {
   projectId String
   project   Project @relation(fields: [projectId], references: [id])
 
-  // This could be an email or a unique ID from the iframe session
-  externalId String? @unique
-  name       String?
+  email String
+  name  String
+
+  metadata Json?
 
   tickets Ticket[]
 
@@ -124,8 +125,9 @@ model Customer {
 }
 
 model Ticket {
-  id     String       @id @default(cuid())
-  status TicketStatus @default(OPEN)
+  id          String       @id @default(cuid())
+  referenceId String       @unique
+  status      TicketStatus @default(OPEN)
 
   projectId String
   project   Project @relation(fields: [projectId], references: [id])

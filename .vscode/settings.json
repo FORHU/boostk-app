@@ -32,5 +32,5 @@
   "editor.codeActionsOnSave": {
     "source.organizeImports.biome": "explicit"
   },
-  "cSpell.words": ["bunx", "elysia", "elysiajs", "tsrouter"]
+  "cSpell.words": ["ABCDEFGHJKMNPQRSTUVWXYZ", "bunx", "elysia", "elysiajs", "tsrouter"]
 }
