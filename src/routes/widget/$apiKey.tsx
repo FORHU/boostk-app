@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
 import { Bot, Send, Sparkles } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createTicket } from "@/modules/ticket/ticket.serverFn";
 import { validateWidgetAccess } from "@/modules/widget/widget.service";
 import { LeadForm } from "@/routes/widget/-components/LeadForm";
 
@@ -13,7 +14,7 @@ export const Route = createFileRoute("/widget/$apiKey")({
       data: { apiKey: params.apiKey, domain: domain },
     });
 
-    return { widgetConfig: access.config };
+    return { apiKey: params.apiKey, widgetConfig: access.config };
   },
   component: ChatWidget,
 });
@@ -24,35 +25,94 @@ function ChatWidget() {
   const [showForm, setShowForm] = useState(false);
   const [input, setInput] = useState("");
 
+  const { apiKey } = Route.useRouteContext();
+  const scrollRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
+    const trigger = {
+      msgCount: messages.length,
+      formVisible: showForm,
+      captured: isLeadCaptured,
+    };
+
+    if (scrollRef.current && trigger) {
+      const scrollContainer = scrollRef.current;
+
+      const timeoutId = setTimeout(() => {
+        scrollContainer.scrollTo({
+          top: scrollContainer.scrollHeight,
+          behavior: "smooth",
+        });
+      }, 100);
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [messages, showForm, isLeadCaptured]);
+
+  useEffect(() => {
+    const now = new Date();
     setTimeout(() => {
       setMessages([
         {
-          id: "init",
+          id: "initial_message",
           text: "Hi! Please introduce yourself to start the chat.",
           sender: "bot",
-          timestamp: new Date().toLocaleTimeString(),
+          timestamp: now.toISOString(),
         },
       ]);
       setShowForm(true);
     }, 1000);
   }, []);
 
-  const handleLeadSubmit = (data: { name: string; email: string }) => {
-    console.log("Lead captured:", data);
+  const handleLeadSubmit = async (data: { name: string; email: string; referenceNumber?: string }) => {
+    console.log("Lead captured:", data, apiKey);
+
+    const ticket = await createTicket({
+      data: {
+        apiKey: apiKey,
+        name: data.name,
+        email: data.email,
+      },
+    });
+
+    console.log("Ticket created:", ticket);
+
     setShowForm(false);
     setIsLeadCaptured(true);
 
-    // Add a confirmation message
     setMessages((prev) => [
       ...prev,
       {
-        id: Date.now(),
-        text: `Thanks ${data.name}! How can I help you today?`,
+        id: `confirmation_message`,
+        text: `Thanks, ${data.name}! Your reference number is: ${ticket.referenceId}`,
         sender: "bot",
-        timestamp: new Date().toLocaleTimeString(),
+        timestamp: new Date().toISOString(),
       },
     ]);
+
+    setTimeout(() => {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `note_message`,
+          text: "Please keep an eye on your inbox. You'll need to confirm your email to continue this conversation using your reference number later.",
+          sender: "bot",
+          timestamp: new Date().toISOString(),
+        },
+      ]);
+    }, 800);
+
+    setTimeout(() => {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `help_message`,
+          text: "How can I help you today?",
+          sender: "bot",
+          timestamp: new Date().toISOString(),
+        },
+      ]);
+    }, 1600);
   };
 
   const handleSendMessage = (e: React.FormEvent) => {
@@ -63,7 +123,7 @@ function ChatWidget() {
       id: Date.now(),
       text: input,
       sender: "user",
-      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      timestamp: new Date().toISOString(),
     };
 
     console.log("Message Sent:", input);
@@ -88,27 +148,68 @@ function ChatWidget() {
         </div>
         <Sparkles size={16} className="text-indigo-300" />
       </header>
-      <main className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50">
+      <main ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50 scroll-smooth pb-0!">
         <AnimatePresence mode="popLayout">
-          {messages.map((msg) => (
-            <motion.div
-              key={msg.id}
-              initial={{ opacity: 0, y: 10, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              className={`flex flex-col ${msg.sender === "user" ? "items-end" : "items-start"}`}
-            >
-              <div
-                className={`max-w-[85%] px-4 py-2.5 rounded-2xl text-sm ${
-                  msg.sender === "user"
-                    ? "bg-indigo-600 text-white rounded-tr-none"
-                    : "bg-white text-gray-800 border border-gray-200 rounded-tl-none"
-                }`}
+          {messages.map((msg, index) => {
+            const prevMsg = messages[index - 1];
+            const nextMsg = messages[index + 1];
+
+            const isSameGroup = (m1: any, m2: any) => {
+              if (!m1 || !m2) return false;
+              if (m1.sender !== m2.sender) return false;
+              const time1 = new Date(m1.timestamp).getTime();
+              const time2 = new Date(m2.timestamp).getTime();
+              return Math.abs(time2 - time1) <= 30000;
+            };
+
+            const isStart = !isSameGroup(prevMsg, msg);
+            const isEnd = !isSameGroup(msg, nextMsg);
+
+            // New Radius Logic based on your specific request
+            const getRadiusClasses = () => {
+              const isUser = msg.sender === "user";
+              const isSingle = isStart && isEnd;
+
+              if (isSingle) {
+                return "rounded-2xl";
+              }
+
+              if (isUser) {
+                // User Group Logic (Right side)
+                if (isStart) return "rounded-2xl rounded-br-none"; // First in group
+                if (isEnd) return "rounded-2xl rounded-tr-none"; // Last in group
+                return "rounded-2xl rounded-tr-none rounded-br-none"; // Middle
+              } else {
+                // Bot Group Logic (Left side)
+                if (isStart) return "rounded-2xl rounded-bl-none"; // First in group
+                if (isEnd) return "rounded-2xl rounded-tl-none"; // Last in group
+                return "rounded-2xl rounded-tl-none rounded-bl-none"; // Middle
+              }
+            };
+
+            return (
+              <motion.div
+                key={msg.id}
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`flex flex-col ${msg.sender === "user" ? "items-end" : "items-start"} ${!isEnd ? "mb-1" : "mb-4"}`}
               >
-                {msg.text}
-              </div>
-              <span className="text-[10px] text-gray-400 mt-1 px-1">{msg.timestamp}</span>
-            </motion.div>
-          ))}
+                <div
+                  className={`max-w-[85%] px-4 py-2 text-sm transition-all shadow-sm ${getRadiusClasses()} ${
+                    msg.sender === "user" ? "bg-indigo-600 text-white" : "bg-white text-gray-800 border border-gray-100"
+                  }`}
+                >
+                  {msg.text}
+                </div>
+
+                {isEnd && (
+                  <span className="text-[10px] text-gray-400 mt-1 px-1 tracking-tight">
+                    {new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                )}
+              </motion.div>
+            );
+          })}
         </AnimatePresence>
       </main>
 
