@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { prisma } from "prisma/db";
 import { z } from "zod";
-import { generateTicketReferenceId } from "@/lib/utils";
+import { generateTicketReferenceId } from "./ticket.utils";
 
 const createTicketInputValidator = z.object({
   apiKey: z.string(),
