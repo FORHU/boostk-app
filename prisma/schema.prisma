@@ -94,7 +94,7 @@ model Project {
   id   String @id @default(cuid())
   name String
 
-  apiKey         String
+  apiKey         String   @unique
   allowedDomains String[] @default([])
 
   orgId        String
