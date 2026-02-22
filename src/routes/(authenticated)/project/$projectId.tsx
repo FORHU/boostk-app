@@ -1,7 +1,7 @@
-import { useForm } from "@tanstack/react-form";
-import { createFileRoute, Link, redirect, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, redirect } from "@tanstack/react-router";
+import { Copy, Link as LinkIcon } from "lucide-react";
+import { TopBar } from "@/components/TopBar";
 import { elysiaClient } from "@/lib/elysia-client";
-import { updateProjectDomains } from "@/modules/project/project.service";
 
 export const Route = createFileRoute("/(authenticated)/project/$projectId")({
   component: RouteComponent,
@@ -9,15 +9,12 @@ export const Route = createFileRoute("/(authenticated)/project/$projectId")({
     const { data: project, error } = await elysiaClient.api.projects({ projectId: params.projectId }).get();
 
     if (error) {
-      // redirect to /organization
       console.log("error", error.value);
-      // TODO: Display as toast
-      // throw new Error(`Failed: ${error.value}`)
       throw redirect({
         to: "/organization",
       });
     }
-    console.log("project", project);
+
     if (!project) {
       throw redirect({
         to: "/organization",
@@ -30,90 +27,84 @@ export const Route = createFileRoute("/(authenticated)/project/$projectId")({
 
 function RouteComponent() {
   const { project } = Route.useRouteContext();
-  const router = useRouter();
-  const form = useForm({
-    defaultValues: {
-      // Joining array to string for easy editing in a single input
-      domains: project.allowedDomains.join(", "),
-    },
-    onSubmit: async ({ value }) => {
-      const domainArray = value.domains
-        .split(",")
-        .map((d) => d.trim())
-        .filter(Boolean);
-
-      await updateProjectDomains({
-        data: {
-          projectId: project.id,
-          allowedDomains: domainArray,
-        },
-      });
-
-      // Refresh the route data to show the updated domains
-      router.invalidate();
-    },
-  });
 
   return (
-    <div className="p-4 space-y-6">
-      <div>
-        <h1 className="text-xl font-bold">Project: {project.name}</h1>
-        <p>Project ID: {project.id}</p>
-        <p>API Key: {project.apiKey}</p>
-        <p>Allowed Domains: {project.allowedDomains.join(", ")}</p>
-      </div>
-      <div>
-        <Link to="/widget/$apiKey" params={{ apiKey: project.apiKey }}>
-          Open Widget
-        </Link>
-      </div>
-      <hr />
+    <div className="min-h-full bg-[#fcfcfc] font-sans text-gray-900 flex flex-col">
+      <TopBar
+        breadcrumbs={[
+          { label: "Dashboard", to: "/" },
+          { label: "Organizations", to: "/organization" },
+          { label: "User's Org", to: "/organization/$organizationId", params: { organizationId: project.orgId } },
+          { label: project.name },
+        ]}
+      />
 
-      <div className="max-w-md">
-        <h2 className="text-lg font-semibold mb-2">Update Allowed Domains</h2>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            form.handleSubmit();
-          }}
-          className="space-y-4"
-        >
-          <form.Field name="domains">
-            {(field) => (
-              <div>
-                <label htmlFor={field.name} className="block text-sm font-medium mb-1">
-                  Domains (comma separated)
-                </label>
-                <input
-                  id={field.name}
-                  name={field.name}
-                  value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  className="w-full p-2 border rounded"
-                  placeholder="example.com, localhost:3000"
-                />
-                {/* Optional: Add error handling display here */}
-                {field.state.meta.errors ? (
-                  <em className="text-red-500 text-xs">{field.state.meta.errors.join(", ")}</em>
-                ) : null}
-              </div>
-            )}
-          </form.Field>
+      <div className="flex-1 w-full max-w-6xl mx-auto px-6 py-8">
+        <div className="mb-8">
+          <h1 className="text-[28px] font-bold text-gray-900 mb-4">{project.name}</h1>
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <LinkIcon size={14} />
+            <span className="font-mono text-xs">https://{project.apiKey.toLowerCase()}.boostk.co</span>
+            <button className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-gray-600 transition-colors ml-1">
+              <Copy size={14} />
+            </button>
+          </div>
+        </div>
 
-          <form.Subscribe selector={(state) => [state.canSubmit, state.isSubmitting]}>
-            {([canSubmit, isSubmitting]) => (
-              <button
-                type="submit"
-                disabled={!canSubmit}
-                className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
+        {/* Navigation Tabs */}
+        <nav className="border-b border-gray-200 mb-6">
+          <ul className="flex items-center gap-6">
+            <li>
+              <Link
+                to="/project/$projectId"
+                params={{ projectId: project.id }}
+                activeProps={{ className: "text-gray-900 border-gray-900 border-b-2 font-medium" }}
+                inactiveProps={{ className: "border-transparent text-gray-500 hover:text-gray-700" }}
+                className="inline-flex items-center justify-center pb-3 text-sm transition-colors"
+                activeOptions={{ exact: true }}
               >
-                {isSubmitting ? "Updating..." : "Save Domains"}
-              </button>
-            )}
-          </form.Subscribe>
-        </form>
+                Overview
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/project/$projectId/tickets"
+                params={{ projectId: project.id }}
+                activeProps={{ className: "text-gray-900 border-gray-900 border-b-2 font-medium" }}
+                inactiveProps={{ className: "border-transparent text-gray-500 hover:text-gray-700" }}
+                className="inline-flex items-center justify-center pb-3 text-sm transition-colors"
+              >
+                Tickets
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/project/$projectId/agents"
+                params={{ projectId: project.id }}
+                activeProps={{ className: "text-gray-900 border-gray-900 border-b-2 font-medium" }}
+                inactiveProps={{ className: "border-transparent text-gray-500 hover:text-gray-700" }}
+                className="inline-flex items-center justify-center pb-3 text-sm transition-colors"
+              >
+                Agents
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/project/$projectId/settings"
+                params={{ projectId: project.id }}
+                activeProps={{ className: "text-gray-900 border-gray-900 border-b-2 font-medium" }}
+                inactiveProps={{ className: "border-transparent text-gray-500 hover:text-gray-700" }}
+                className="inline-flex items-center justify-center pb-3 text-sm transition-colors"
+              >
+                Settings
+              </Link>
+            </li>
+          </ul>
+        </nav>
+
+        <div>
+          <Outlet />
+        </div>
       </div>
     </div>
   );

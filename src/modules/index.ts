@@ -4,6 +4,7 @@ import { Elysia, t } from "elysia";
 import { env } from "@/env";
 import { betterAuthRoutes } from "@/modules/auth";
 import { authMiddleware } from "@/modules/auth/service";
+import { notificationController } from "./notification/notification.controller";
 import { organizationController } from "./organization/organization.controller";
 import { projectController } from "./project/project.controller";
 import { testController } from "./test/test-controller";
@@ -26,6 +27,7 @@ const api = new Elysia({ prefix: "/api" })
   .use(testController)
   .use(organizationController)
   .use(projectController)
+  .use(notificationController)
   .get("/user", ({ user }) => user, { auth: true })
   .get("/hello", ({ user }) => ({ message: `Hello from Elysia ${user.email}` }), { auth: true });
 

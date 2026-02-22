@@ -43,3 +43,18 @@ export const createTicket = createServerFn({ method: "POST" })
 
     return ticket;
   });
+
+export const getProjectTickets = createServerFn({ method: "GET" }).handler(async () => {
+  // Note: If authentication/org-level filtering is required, it should be added here.
+  // For now, returning all tickets as requested for the agent view.
+  const tickets = await prisma.ticket.findMany({
+    include: {
+      customer: true,
+    },
+    orderBy: {
+      updatedAt: "desc",
+    },
+  });
+
+  return tickets;
+});
