@@ -1,7 +1,9 @@
 import { createFileRoute, Link, Outlet, redirect } from "@tanstack/react-router";
 import { Copy, Link as LinkIcon } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { TopBar } from "@/components/TopBar";
 import { elysiaClient } from "@/lib/elysia-client";
+import { useAppStore } from "@/store/app.store";
 
 export const Route = createFileRoute("/(authenticated)/project/$projectId")({
   component: RouteComponent,
@@ -27,6 +29,30 @@ export const Route = createFileRoute("/(authenticated)/project/$projectId")({
 
 function RouteComponent() {
   const { project } = Route.useRouteContext();
+  const setSelectedProject = useAppStore((state) => state.setSelectedProject);
+
+  useEffect(() => {
+    setSelectedProject(project as any);
+  }, [project, setSelectedProject]);
+
+  const [copied, setCopied] = useState(false);
+
+  const path = `/widget/${project.apiKey.toLowerCase()}`;
+
+  const fullUrl = useMemo(() => {
+    if (typeof window === "undefined") return path; // SSR safety
+    return `${window.location.origin}${path}`;
+  }, [path]);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(fullUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
+  };
 
   return (
     <div className="min-h-full bg-[#fcfcfc] font-sans text-gray-900 flex flex-col">
@@ -44,10 +70,25 @@ function RouteComponent() {
           <h1 className="text-[28px] font-bold text-gray-900 mb-4">{project.name}</h1>
           <div className="flex items-center gap-2 text-sm text-gray-500">
             <LinkIcon size={14} />
-            <span className="font-mono text-xs">https://{project.apiKey.toLowerCase()}.boostk.co</span>
-            <button className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-gray-600 transition-colors ml-1">
+            <a
+              href={path}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-mono text-xs hover:underline text-blue-600"
+            >
+              {fullUrl}
+            </a>
+
+            <button
+              type="button"
+              onClick={handleCopy}
+              className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-gray-600 transition-colors ml-1"
+              title="Copy link"
+            >
               <Copy size={14} />
             </button>
+
+            {copied && <span className="text-xs text-green-600 ml-1">Copied!</span>}
           </div>
         </div>
 

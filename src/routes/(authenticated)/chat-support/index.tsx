@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { TopBar } from "../../../components/TopBar";
 import { getProjectTickets } from "../../../modules/ticket/ticket.serverFn";
@@ -8,6 +8,7 @@ import { CustomerInfoSidebar } from "./-components/CustomerInfoSidebar";
 import { TicketDetailsSidebar } from "./-components/TicketDetailsSidebar";
 import { TicketTabs } from "./-components/TicketTabs";
 import { useChatSupportStore } from "./-store/chat-support.store";
+import { useAppStore } from "@/store/app.store";
 
 export const Route = createFileRoute("/(authenticated)/chat-support/")({
   component: RouteComponent,
@@ -18,9 +19,23 @@ export const Route = createFileRoute("/(authenticated)/chat-support/")({
 });
 
 function RouteComponent() {
+  const selectedProject = useAppStore((state) => state.selectedProject);
+  const selectedOrganization = useAppStore((state) => state.selectedOrganization);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!selectedProject) {
+      navigate({
+        to: selectedOrganization ? "/organization/$organizationId" : "/organization",
+        params: selectedOrganization ? { organizationId: selectedOrganization } : undefined,
+      });
+    }
+  }, [selectedProject, selectedOrganization, navigate]);
+
   const { data: tickets, isLoading } = useQuery({
-    queryKey: ["project-tickets"],
-    queryFn: () => getProjectTickets(),
+    queryKey: ["project-tickets", selectedProject?.id],
+    queryFn: () => getProjectTickets({ data: { projectId: selectedProject?.id as string } }),
+    enabled: !!selectedProject?.id,
   });
 
   const activeTicketId = useChatSupportStore((state) => state.activeTicketId);
