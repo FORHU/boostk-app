@@ -1,9 +1,10 @@
 import { useMutation } from "@tanstack/react-query";
 import { createFileRoute, Link, redirect, useRouter } from "@tanstack/react-router";
 import { Filter, LayoutGrid, List, MoreVertical, Plus, Search } from "lucide-react";
-import { useId, useState } from "react";
+import { useId, useState, useEffect } from "react";
 import { TopBar } from "@/components/TopBar";
 import { elysiaClient } from "@/lib/elysia-client";
+import { useAppStore } from "@/store/app.store";
 
 export const Route = createFileRoute("/(authenticated)/organization/$organizationId")({
   component: RouteComponent,
@@ -30,6 +31,11 @@ function RouteComponent() {
   const [isOpen, setIsOpen] = useState(false);
   const [projectName, setProjectName] = useState("");
   const [search, setSearch] = useState("");
+  const setSelectedOrganization = useAppStore((state) => state.setSelectedOrganization);
+
+  useEffect(() => {
+    setSelectedOrganization(organizationId);
+  }, [organizationId, setSelectedOrganization]);
 
   const filteredProjects = projects.filter((project) => project.name.toLowerCase().includes(search.toLowerCase()));
 
@@ -62,7 +68,7 @@ function RouteComponent() {
         breadcrumbs={[
           { label: "Dashboard", to: "/" },
           { label: "Organizations", to: "/organization" },
-          { label: "Organization" },
+          { label: "Projects" },
         ]}
       />
 
