@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
 import { Bot, Send, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { elysiaClient } from "@/lib/elysia-client";
 import { createTicket } from "@/modules/ticket/ticket.serverFn";
 import { validateWidgetAccess } from "@/modules/widget/widget.service";
 import { LeadForm } from "@/routes/widget/-components/LeadForm";
@@ -24,111 +25,136 @@ function ChatWidget() {
   const [isLeadCaptured, setIsLeadCaptured] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [input, setInput] = useState("");
+  const [activeTicketId, setActiveTicketId] = useState<string | null>(null);
 
   const { apiKey } = Route.useRouteContext();
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // 1. SCROLL LOGIC (Restored and improved)
   useEffect(() => {
-    const trigger = {
-      msgCount: messages.length,
-      formVisible: showForm,
-      captured: isLeadCaptured,
-    };
+    // We reference these to ensure the effect runs when they change
+    messages;
+    showForm;
 
-    if (scrollRef.current && trigger) {
-      const scrollContainer = scrollRef.current;
-
-      const timeoutId = setTimeout(() => {
-        scrollContainer.scrollTo({
-          top: scrollContainer.scrollHeight,
-          behavior: "smooth",
-        });
-      }, 100);
-
-      return () => clearTimeout(timeoutId);
+    if (scrollRef.current) {
+      scrollRef.current.scrollTo({
+        top: scrollRef.current.scrollHeight,
+        behavior: "smooth",
+      });
     }
-  }, [messages, showForm, isLeadCaptured]);
+  }, [messages, showForm]);
 
+  // 2. INITIAL DELAY FOR FORM
   useEffect(() => {
-    const now = new Date();
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       setMessages([
         {
-          id: "initial_message",
+          id: "initial",
           text: "Hi! Please introduce yourself to start the chat.",
           sender: "bot",
-          timestamp: now.toISOString(),
+          timestamp: new Date().toISOString(),
         },
       ]);
       setShowForm(true);
     }, 1000);
+    return () => clearTimeout(timer);
   }, []);
 
-  const handleLeadSubmit = async (data: { name: string; email: string; referenceNumber?: string }) => {
-    console.log("Lead captured:", data, apiKey);
+  // 3. SSE CONNECTION LOGIC
+  useEffect(() => {
+    if (!activeTicketId) return;
 
-    const ticket = await createTicket({
-      data: {
-        apiKey: apiKey,
-        name: data.name,
-        email: data.email,
-      },
-    });
+    const controller = new AbortController();
 
-    console.log("Ticket created:", ticket);
+    const connect = async () => {
+      try {
+        const response = await elysiaClient.api.notification
+          .listen({ channelId: activeTicketId })
+          .get({ fetch: { signal: controller.signal } });
 
-    setShowForm(false);
-    setIsLeadCaptured(true);
+        if (response.error) return;
 
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: `confirmation_message`,
-        text: `Thanks, ${data.name}! Your reference number is: ${ticket.referenceId}`,
-        sender: "bot",
-        timestamp: new Date().toISOString(),
-      },
-    ]);
+        const stream = response.data as unknown as AsyncIterable<{ data: string }>;
+        for await (const chunk of stream) {
+          const parsed = JSON.parse(chunk.data);
 
-    setTimeout(() => {
+          // Filter out heartbeats and system connection messages
+          if (parsed.type === "heartbeat" || parsed.message === "connected") continue;
+
+          setMessages((prev) => {
+            // Prevent duplicate messages if the broadcast echoes back to the sender
+            if (prev.find((m) => m.id === parsed.id)) return prev;
+
+            return [
+              ...prev,
+              {
+                id: parsed.id || Date.now().toString(),
+                text: parsed.content || parsed.message, // handle both formats
+                sender: (parsed.senderType || "AGENT").toLowerCase(),
+                timestamp: parsed.createdAt || new Date().toISOString(),
+              },
+            ];
+          });
+        }
+      } catch (err: any) {
+        if (err.name !== "AbortError") console.error("SSE Error:", err);
+      }
+    };
+
+    connect();
+    return () => controller.abort();
+  }, [activeTicketId]);
+
+  // 4. LEAD SUBMIT (Creates ticket & opens SSE)
+  const handleLeadSubmit = async (data: { name: string; email: string }) => {
+    try {
+      const ticket = await createTicket({
+        data: { apiKey, name: data.name, email: data.email },
+      });
+
+      setActiveTicketId(ticket.id);
+      setIsLeadCaptured(true);
+      setShowForm(false);
+
+      // Local confirmation messages
+      const now = new Date().toISOString();
       setMessages((prev) => [
         ...prev,
         {
-          id: `note_message`,
-          text: "Please keep an eye on your inbox. You'll need to confirm your email to continue this conversation using your reference number later.",
+          id: `conf-${Date.now()}`,
+          text: `Thanks, ${data.name}! Your reference: ${ticket.referenceId}`,
           sender: "bot",
-          timestamp: new Date().toISOString(),
+          timestamp: now,
         },
+        { id: `note-${Date.now()}`, text: "How can I help you today?", sender: "bot", timestamp: now },
       ]);
-    }, 800);
-
-    setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `help_message`,
-          text: "How can I help you today?",
-          sender: "bot",
-          timestamp: new Date().toISOString(),
-        },
-      ]);
-    }, 1600);
+    } catch (error) {
+      console.error("Failed to create ticket", error);
+    }
   };
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  // 5. SEND MESSAGE
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!input.trim() || !activeTicketId) return;
 
-    const newMessage = {
-      id: Date.now(),
+    const userMsg = {
+      id: `temp-${Date.now()}`, // Temporary ID for Optimistic UI
       text: input,
       sender: "user",
       timestamp: new Date().toISOString(),
     };
 
-    console.log("Message Sent:", input);
-    setMessages((prev) => [...prev, newMessage]);
+    // Optimistic Update: Show message immediately
+    setMessages((prev) => [...prev, userMsg]);
+    const currentInput = input;
     setInput("");
+
+    try {
+      await elysiaClient.api.notification.broadcast({ channelId: activeTicketId }).post({ message: currentInput });
+    } catch (error) {
+      console.error("Failed to send message", error);
+    }
   };
 
   return (
@@ -148,7 +174,8 @@ function ChatWidget() {
         </div>
         <Sparkles size={16} className="text-indigo-300" />
       </header>
-      <main ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50 scroll-smooth pb-0!">
+
+      <main ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50 scroll-smooth pb-4">
         <AnimatePresence mode="popLayout">
           {messages.map((msg, index) => {
             const prevMsg = messages[index - 1];
@@ -157,33 +184,23 @@ function ChatWidget() {
             const isSameGroup = (m1: any, m2: any) => {
               if (!m1 || !m2) return false;
               if (m1.sender !== m2.sender) return false;
-              const time1 = new Date(m1.timestamp).getTime();
-              const time2 = new Date(m2.timestamp).getTime();
-              return Math.abs(time2 - time1) <= 30000;
+              return Math.abs(new Date(m2.timestamp).getTime() - new Date(m1.timestamp).getTime()) <= 30000;
             };
 
             const isStart = !isSameGroup(prevMsg, msg);
             const isEnd = !isSameGroup(msg, nextMsg);
 
-            // New Radius Logic based on your specific request
             const getRadiusClasses = () => {
               const isUser = msg.sender === "user";
-              const isSingle = isStart && isEnd;
-
-              if (isSingle) {
-                return "rounded-2xl";
-              }
-
+              if (isStart && isEnd) return "rounded-2xl";
               if (isUser) {
-                // User Group Logic (Right side)
-                if (isStart) return "rounded-2xl rounded-br-none"; // First in group
-                if (isEnd) return "rounded-2xl rounded-tr-none"; // Last in group
-                return "rounded-2xl rounded-tr-none rounded-br-none"; // Middle
+                if (isStart) return "rounded-2xl rounded-br-none";
+                if (isEnd) return "rounded-2xl rounded-tr-none";
+                return "rounded-2xl rounded-tr-none rounded-br-none";
               } else {
-                // Bot Group Logic (Left side)
-                if (isStart) return "rounded-2xl rounded-bl-none"; // First in group
-                if (isEnd) return "rounded-2xl rounded-tl-none"; // Last in group
-                return "rounded-2xl rounded-tl-none rounded-bl-none"; // Middle
+                if (isStart) return "rounded-2xl rounded-bl-none";
+                if (isEnd) return "rounded-2xl rounded-tl-none";
+                return "rounded-2xl rounded-tl-none rounded-bl-none";
               }
             };
 
@@ -195,15 +212,14 @@ function ChatWidget() {
                 className={`flex flex-col ${msg.sender === "user" ? "items-end" : "items-start"} ${!isEnd ? "mb-1" : "mb-4"}`}
               >
                 <div
-                  className={`max-w-[85%] px-4 py-2 text-sm transition-all shadow-sm ${getRadiusClasses()} ${
+                  className={`max-w-[85%] px-4 py-2 text-sm shadow-sm ${getRadiusClasses()} ${
                     msg.sender === "user" ? "bg-indigo-600 text-white" : "bg-white text-gray-800 border border-gray-100"
                   }`}
                 >
                   {msg.text}
                 </div>
-
                 {isEnd && (
-                  <span className="text-[10px] text-gray-400 mt-1 px-1 tracking-tight">
+                  <span className="text-[10px] text-gray-400 mt-1 px-1">
                     {new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                   </span>
                 )}
@@ -230,12 +246,12 @@ function ChatWidget() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder="Type your message..."
-                  className="flex-1 bg-gray-100 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                  className="flex-1 bg-gray-100 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
                 />
                 <button
                   type="submit"
                   disabled={!input.trim()}
-                  className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white p-2.5 rounded-xl transition-all active:scale-95"
+                  className="bg-indigo-600 text-white p-2.5 rounded-xl active:scale-95 disabled:opacity-50"
                 >
                   <Send size={18} />
                 </button>
