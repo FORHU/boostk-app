@@ -1,16 +1,24 @@
+import type { Prisma } from "prisma/generated/client";
 import { useChatSupportStore } from "../-store/chat-support.store";
 
-export function TicketTabs({ tickets, isLoading }: { tickets: any[]; isLoading: boolean }) {
+type TicketWithCustomer = Prisma.TicketGetPayload<{
+  include: { customer: true };
+}>;
+
+export function TicketTabs({ tickets, isLoading }: { tickets: TicketWithCustomer[]; isLoading: boolean }) {
   const activeTicketId = useChatSupportStore((state) => state.activeTicketId);
   const setActiveTicketId = useChatSupportStore((state) => state.setActiveTicketId);
 
   return (
-    <div className="h-14 bg-gray-50/80 backdrop-blur-md border-b border-gray-200 flex items-end px-2 shrink-0">
-      <div className="flex gap-1 h-full pt-2">
+    <div
+      className="h-14 bg-gray-50/80 backdrop-blur-md border-b border-gray-200 flex items-end px-2 shrink-0 overflow-x-auto [&::-webkit-scrollbar]:hidden"
+      style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+    >
+      <div className="flex gap-1 h-full pt-2 min-w-max">
         {isLoading ? (
           <div className="px-4 py-2 text-sm text-gray-500">Loading tickets...</div>
         ) : (
-          tickets?.slice(0, 3).map((ticket, idx) => {
+          tickets?.map((ticket) => {
             const isActive = activeTicketId === ticket.id;
             return (
               <button
