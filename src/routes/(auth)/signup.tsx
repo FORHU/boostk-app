@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useId, useState } from "react";
 import { authClient } from "@/lib/auth-client";
 
@@ -10,6 +10,8 @@ function RouteComponent() {
   const nameId = useId();
   const emailId = useId();
   const passwordId = useId();
+
+  const router = useRouter();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -34,12 +36,14 @@ function RouteComponent() {
     if (error) {
       console.error("Signup Error:", error);
       alert(error.message);
+
       return;
     }
 
     if (data) {
       console.log("Signup Success:", data);
-      alert("Signup Success!");
+      setFormData({ name: "", email: "", password: "" });
+      router.navigate({ to: "/organization" });
     }
   };
 
