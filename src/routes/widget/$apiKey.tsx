@@ -175,35 +175,51 @@ function ChatWidget() {
     const connect = async () => {
       try {
         const response = await elysiaClient.api.notification
-          .listen({ channelId: activeTicketId })
+          .listen({ channelId: `ticket_${activeTicketId}` })
           .get({ fetch: { signal: controller.signal } });
 
         if (response.error) return;
 
         const stream = response.data as unknown as AsyncIterable<{ data: string }>;
         for await (const chunk of stream) {
-          if (!chunk.data) continue;
+          const rawData = chunk.data || chunk;
+          if (!rawData) continue;
 
           // biome-ignore lint/suspicious/noExplicitAny: <TODO: type safety for SSE>
           let parsed: Record<string, any>;
-          try {
-            parsed = JSON.parse(chunk.data);
-          } catch {
-            continue;
+          if (typeof rawData === "string") {
+            try {
+              parsed = JSON.parse(rawData);
+            } catch {
+              continue;
+            }
+          } else {
+            parsed = rawData as Record<string, any>;
           }
 
-          if (parsed.type === "heartbeat" || parsed.message === "connected") continue;
+          if (
+            parsed.type === "heartbeat" ||
+            parsed.message === "connected" ||
+            parsed.event === "system" ||
+            parsed.event === "heartbeat"
+          )
+            continue;
+
+          const msgData = parsed.data || parsed;
 
           setMessages((prev) => {
-            if (prev.find((m) => m.id === parsed.id)) return prev;
+            if (prev.find((m) => m.id === msgData.id || m.id === parsed.id)) return prev;
+
+            const backendSender = (msgData.senderType || parsed.senderType || "AGENT").toUpperCase();
+            const senderRole: MessageSender = backendSender === "CUSTOMER" ? "user" : "agent";
 
             return [
               ...prev,
               {
-                id: parsed.id || Date.now().toString(),
-                text: parsed.content || parsed.message,
-                sender: (parsed.senderType || "AGENT").toLowerCase() as MessageSender,
-                timestamp: parsed.createdAt || new Date().toISOString(),
+                id: msgData.id || parsed.id || Date.now().toString(),
+                text: msgData.content || msgData.message || parsed.content || parsed.message || "",
+                sender: senderRole,
+                timestamp: msgData.createdAt || parsed.createdAt || new Date().toISOString(),
               },
             ];
           });
@@ -254,14 +270,6 @@ function ChatWidget() {
     e.preventDefault();
     if (!input.trim() || !activeTicketId || !customerId) return;
 
-    const userMsg: Message = {
-      id: `temp-${Date.now()}`,
-      text: input,
-      sender: "user",
-      timestamp: new Date().toISOString(),
-    };
-
-    setMessages((prev) => [...prev, userMsg]);
     const currentInput = input;
     setInput("");
 
