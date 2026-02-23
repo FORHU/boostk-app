@@ -18,14 +18,15 @@ export const MessageService = {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const customerMetadata = ticket.customer.metadata as any;
-    const browserLanguage = customerMetadata?.browserLanguage || "en";
+    const customerMetadata = ticket.customer.metadata as Record<string, unknown>;
+    // 1. Cast the metadata value to a string or fallback to "en"
+    const browserLanguage =
+      typeof customerMetadata?.browserLanguage === "string" ? customerMetadata.browserLanguage : "en";
 
-    // target always english for customer messages
-    let sourceLang = browserLanguage;
-    let targetLang = "en";
+    // 2. Explicitly type your variables if you want to be extra safe
+    let sourceLang: string = browserLanguage;
+    let targetLang: string = "en";
 
-    // target always browserLanguage for agent messages
     if (data.senderType === "AGENT") {
       sourceLang = "en";
       targetLang = browserLanguage;
@@ -114,7 +115,14 @@ export const MessageService = {
 
           if (response.ok) {
             const result = await response.json();
-            if (result && result.translated) {
+
+            // Check if n8n returned a specific error payload (e.g. { error: { message: ... } })
+            if (result?.error) {
+              console.error("Translation webhook returned an error payload:", result.error);
+              throw new Error("Webhook payload contained an error");
+            }
+
+            if (result?.translated) {
               // Update the message in DB
               const updatedMessage = await prisma.message.update({
                 where: { id: newMessage.id },
@@ -135,9 +143,30 @@ export const MessageService = {
             }
           } else {
             console.error("Translation webhook failed with status", response.status);
+            throw new Error(`Webhook failed with status ${response.status}`);
           }
         } catch (error) {
           console.error("Failed to process background translation:", error);
+
+          try {
+            // Update the message in DB with the error keyword
+            const updatedMessage = await prisma.message.update({
+              where: { id: newMessage.id },
+              data: {
+                translatedContent: "__TRANSLATION_ERROR__",
+              },
+            });
+
+            const updatedMessageWithSender = {
+              ...updatedMessage,
+              sender: senderDetails,
+            };
+
+            // Broadcast the error state so the UI can update
+            getNotifier().onBroadcast(`ticket_${data.ticketId}`, updatedMessageWithSender, EventType.CHAT_MESSAGE);
+          } catch (dbError) {
+            console.error("Failed to save translation error state to DB:", dbError);
+          }
         }
       })();
     }
