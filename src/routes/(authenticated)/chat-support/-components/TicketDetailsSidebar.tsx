@@ -2,7 +2,7 @@ import { CircleUser } from "lucide-react";
 
 export function TicketDetailsSidebar({ ticket }: { ticket: any }) {
   return (
-    <div className="w-[320px] border-r border-gray-200 flex flex-col bg-gray-50/30 overflow-y-auto">
+    <div className="w-[400px] border-r border-gray-200 flex flex-col bg-gray-50/30 overflow-y-auto">
       <div className="h-16 border-b border-gray-200 flex flex-col justify-center px-6 bg-white shrink-0">
         <h2 className="text-lg font-bold text-gray-900">Ticket Details</h2>
         <p className="text-xs text-gray-500">Manage properties and routing</p>

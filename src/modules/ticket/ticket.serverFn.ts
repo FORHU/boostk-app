@@ -5,6 +5,19 @@ import { EventType } from "@/notifier/core";
 import { getNotifier } from "@/notifier/impl";
 import { generateTicketReferenceId } from "./ticket.utils";
 
+export const getTickets = createServerFn({ method: "GET" })
+  .inputValidator(z.object({ projectId: z.string().optional(), includeCustomer: z.boolean().optional() }))
+  .handler(async ({ data }) => {
+    const tickets = await prisma.ticket.findMany({
+      where: { projectId: data.projectId },
+      include: {
+        customer: data.includeCustomer,
+      },
+    });
+
+    return tickets;
+  });
+
 const createTicketInputValidator = z.object({
   apiKey: z.string(),
   name: z.string(),
