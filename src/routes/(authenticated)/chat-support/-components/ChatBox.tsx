@@ -155,7 +155,34 @@ export function ChatBox({ ticket }: { ticket: any }) {
                     : "bg-gray-100 text-gray-800 rounded-2xl rounded-tl-sm"
                 }`}
               >
-                <p className="text-[15px] leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                {/* Agent viewing their own message */}
+                {isAgent ? (
+                  <>
+                    <p className="text-[15px] leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                    {msg.translatedContent && (
+                      <p className="mt-1 text-[11px] italic opacity-70 whitespace-pre-wrap text-blue-200">
+                        Translated: {msg.translatedContent}
+                      </p>
+                    )}
+                    {!msg.translatedContent && msg.sourceLang !== msg.targetLang && (
+                      <p className="mt-1 text-[10px] italic opacity-60 flex items-center gap-1">
+                        <span className="w-1 h-1 bg-white/60 rounded-full animate-pulse"></span> Translating...
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  /* Agent viewing incoming Customer message */
+                  <>
+                    <p className="text-[15px] leading-relaxed whitespace-pre-wrap">
+                      {msg.translatedContent || (msg.sourceLang === msg.targetLang ? msg.content : "Translating...")}
+                    </p>
+                    {(msg.translatedContent || msg.sourceLang === msg.targetLang) && (
+                      <p className="mt-1 text-[11px] italic opacity-70 whitespace-pre-wrap text-gray-500">
+                        Original: {msg.content}
+                      </p>
+                    )}
+                  </>
+                )}
               </div>
               <span className={`text-[10px] text-gray-400 mt-1 ${isAgent ? "mr-1" : "ml-1"}`}>
                 {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}

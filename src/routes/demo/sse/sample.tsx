@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { elysiaClient } from "@/lib/elysia-client";
+import { createTicket } from "@/modules/ticket/ticket.serverFn";
 
 type SSEChunk = { data: string };
 
@@ -125,6 +126,29 @@ function RouteComponent() {
         <input value={messageText} onChange={(e) => setMessageText(e.target.value)} style={{ flexGrow: 1 }} />
         <button type="submit">Send</button>
       </form>
+
+      <div>
+        <button
+          type="button"
+          onClick={async () => {
+            try {
+              const ticket = await createTicket({
+                data: {
+                  apiKey: "ch-api-cmlyjz50r0001w4lpr666lcqe",
+                  email: "test@example.com",
+                  name: "John Test",
+                },
+              });
+
+              console.log("Created ticket:", ticket);
+            } catch (err) {
+              console.error("Failed to create ticket:", err);
+            }
+          }}
+        >
+          Create Ticket
+        </button>
+      </div>
     </div>
   );
 }
