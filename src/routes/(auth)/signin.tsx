@@ -41,7 +41,7 @@ function RouteComponent() {
     }
 
     if (data) {
-      navigate({ to: "/dashboard" });
+      navigate({ to: "/organization" });
     }
   };
 
