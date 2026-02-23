@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { prisma } from "prisma/db";
 import { z } from "zod";
+import { EventType } from "@/notifier/core";
+import { getNotifier } from "@/notifier/impl";
 import { generateTicketReferenceId } from "./ticket.utils";
 
 const createTicketInputValidator = z.object({
@@ -16,9 +18,8 @@ export const createTicket = createServerFn({ method: "POST" })
       where: { apiKey: data.apiKey },
     });
 
-    if (!project) {
-      throw new Error("Project not found");
-    }
+    if (!project) throw new Error("Project not found");
+
     const customer = await prisma.customer.create({
       data: {
         projectId: project.id,
@@ -41,6 +42,8 @@ export const createTicket = createServerFn({ method: "POST" })
       },
     });
 
+    getNotifier().onBroadcast(`project_${project.id}`, ticket, EventType.TICKET_CREATED);
+
     return ticket;
   });
 
@@ -51,13 +54,13 @@ export const getProjectTickets = createServerFn({ method: "GET" })
     // For now, returning tickets filtered by project for the agent view.
     const tickets = await prisma.ticket.findMany({
       where: data.projectId ? { projectId: data.projectId } : undefined,
-    include: {
-      customer: true,
-    },
-    orderBy: {
-      updatedAt: "desc",
-    },
-  });
+      include: {
+        customer: true,
+      },
+      orderBy: {
+        updatedAt: "desc",
+      },
+    });
 
-  return tickets;
-});
+    return tickets;
+  });

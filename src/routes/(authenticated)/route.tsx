@@ -1,7 +1,17 @@
-import { createFileRoute, Link, Outlet, redirect, useRouter, useLocation, useNavigate } from "@tanstack/react-router";
-import { Building2, ChevronDown, Folder, HelpCircle, LayoutDashboard, MessageSquare, MessageSquarePlus, Users, Video } from "lucide-react";
-import { useAppStore } from "@/store/app.store";
+import { createFileRoute, Link, Outlet, redirect, useLocation, useNavigate } from "@tanstack/react-router";
+import {
+  Building2,
+  ChevronDown,
+  Folder,
+  HelpCircle,
+  LayoutDashboard,
+  MessageSquare,
+  MessageSquarePlus,
+  Users,
+  Video,
+} from "lucide-react";
 import { useEffect } from "react";
+import { useAppStore } from "@/store/app.store";
 
 export const Route = createFileRoute("/(authenticated)")({
   beforeLoad: ({ context }) => {
@@ -17,10 +27,15 @@ export const Route = createFileRoute("/(authenticated)")({
 function AuthenticatedLayout() {
   const { authSession } = Route.useRouteContext();
   const selectedOrganization = useAppStore((state) => state.selectedOrganization);
-  const selectedProject = useAppStore((state) => state.selectedProject);
-  const router = useRouter();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const initSSE = useAppStore((state) => state.initSSE);
+  const agentId = authSession.user.id;
+
+  useEffect(() => {
+    initSSE(agentId);
+  }, [initSSE, agentId]);
 
   useEffect(() => {
     // Redirect to /organization if no org is selected and they aren't on the org selection page
@@ -142,7 +157,10 @@ function AuthenticatedLayout() {
 
         {/* User Profile */}
         <div className="p-4">
-          <button className="w-full bg-white rounded-xl p-2 flex items-center gap-3 hover:bg-blue-50 transition-colors shadow-sm text-left border border-transparent hover:border-blue-100">
+          <button
+            type="button"
+            className="w-full bg-white rounded-xl p-2 flex items-center gap-3 hover:bg-blue-50 transition-colors shadow-sm text-left border border-transparent hover:border-blue-100"
+          >
             <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center text-white font-bold text-xs shrink-0">
               {userInitials}
             </div>
