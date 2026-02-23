@@ -9,6 +9,7 @@ const createTicketInputValidator = z.object({
   apiKey: z.string(),
   name: z.string(),
   email: z.string(),
+  browserLanguage: z.string().optional(),
 });
 
 export const createTicket = createServerFn({ method: "POST" })
@@ -25,6 +26,7 @@ export const createTicket = createServerFn({ method: "POST" })
         projectId: project.id,
         email: data.email,
         name: data.name,
+        metadata: data.browserLanguage ? { browserLanguage: data.browserLanguage } : undefined,
       },
     });
 
