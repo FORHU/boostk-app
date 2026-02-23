@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
 import { Bot, Send, Sparkles } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { elysiaClient } from "@/lib/elysia-client";
 import { createTicket } from "@/modules/ticket/ticket.serverFn";
 import { validateWidgetAccess } from "@/modules/widget/widget.service";
@@ -99,14 +99,26 @@ function ChatMessageBubble({ msg, isStart, isEnd }: { msg: Message; isStart: boo
           /* Customer viewing incoming Agent/Bot message */
           <>
             <p className="whitespace-pre-wrap">
-              {msg.translatedText ||
-                (msg.sourceLang === msg.targetLang || !msg.sourceLang ? msg.text : "Translating...")}
+              {
+                msg.translatedText === "__TRANSLATION_ERROR__" ||
+                (!msg.translatedText && msg.sourceLang !== msg.targetLang && msg.sourceLang)
+                  ? msg.text // While loading or on error: Show original text as main
+                  : msg.translatedText || msg.text // When complete or no translation needed: Show translated text as main
+              }
             </p>
-            {(msg.translatedText || msg.sourceLang === msg.targetLang || !msg.sourceLang) && (
+
+            {/* Bottom auxiliary text */}
+            {msg.translatedText === "__TRANSLATION_ERROR__" ? (
+              <p className="mt-1 text-[11px] italic opacity-80 whitespace-pre-wrap text-red-500">Translation error</p>
+            ) : !msg.translatedText && msg.sourceLang !== msg.targetLang && msg.sourceLang ? (
+              <p className="mt-1 text-[10px] italic opacity-80 flex items-center gap-1 text-gray-500">
+                <span className="w-1 h-1 bg-gray-400 rounded-full animate-pulse"></span> Translating...
+              </p>
+            ) : msg.translatedText || msg.sourceLang === msg.targetLang || !msg.sourceLang ? (
               <p className="mt-1 text-[11px] italic opacity-70 whitespace-pre-wrap text-gray-500">
                 Original: {msg.text}
               </p>
-            )}
+            ) : null}
           </>
         )}
       </div>
@@ -156,6 +168,49 @@ function ChatInput({
   );
 }
 
+// Hardcoded UI Translations (i18n)
+const uiTranslations: Record<string, Record<string, string>> = {
+  "Hi! Please introduce yourself to start the chat.": {
+    ko: "안녕하세요! 채팅을 시작하려면 자신을 소개해 주세요.",
+    "ko-KR": "안녕하세요! 채팅을 시작하려면 자신을 소개해 주세요.",
+    es: "¡Hola! Por favor, preséntate para comenzar el chat.",
+    fr: "Salut ! Veuillez vous présenter pour commencer la discussion.",
+    de: "Hallo! Bitte stellen Sie sich vor, um den Chat zu starten.",
+    ja: "こんにちは！チャットを始めるには、自己紹介をしてください。",
+    zh: "你好！请做个自我介绍以开始聊天。",
+  },
+  // The exact confirmation text requires matching the dynamic part, so we use a function helper below for it
+  "How can I help you today?": {
+    ko: "오늘 무엇을 도와드릴까요?",
+    "ko-KR": "오늘 무엇을 도와드릴까요?",
+    es: "¿En qué puedo ayudarte hoy?",
+    fr: "Comment puis-je vous aider aujourd'hui ?",
+    de: "Wie kann ich Ihnen heute helfen?",
+    ja: "今日はどのようなご用件でしょうか？",
+    zh: "我今天能帮您什么忙？",
+  },
+};
+
+const getConfirmationTranslation = (name: string, refId: string, lang: string) => {
+  const baseLang = lang.split("-")[0];
+  switch (baseLang) {
+    case "ko":
+      return `감사합니다, ${name}님! 참조 번호: ${refId}`;
+    case "es":
+      return `¡Gracias, ${name}! Tu referencia: ${refId}`;
+    case "fr":
+      return `Merci, ${name} ! Votre référence : ${refId}`;
+    case "de":
+      return `Danke, ${name}! Ihre Referenz: ${refId}`;
+    case "ja":
+      return `ありがとうございます、${name}さん！ 参照番号: ${refId}`;
+    case "zh":
+      return `谢谢，${name}！您的参考号：${refId}`;
+    default:
+      return `Thanks, ${name}! Your reference: ${refId}`;
+  }
+};
+
 function ChatWidget() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLeadCaptured, setIsLeadCaptured] = useState(false);
@@ -175,6 +230,32 @@ function ChatWidget() {
     }
   }, []);
 
+  const translateText = useCallback(
+    async (text: string, targetLang: string, messageId: string, name?: string, refId?: string) => {
+      if (targetLang === "en" || targetLang.startsWith("en-")) return;
+
+      // Fast local i18n lookup instead of API call
+      const baseLang = targetLang.split("-")[0];
+      let translated = "";
+
+      if (name && refId) {
+        translated = getConfirmationTranslation(name, refId, targetLang);
+      } else {
+        translated = uiTranslations[text]?.[targetLang] || uiTranslations[text]?.[baseLang];
+      }
+
+      if (translated) {
+        // Simulate slight async delay to feel like the actual translation flow
+        setTimeout(() => {
+          setMessages((prev) =>
+            prev.map((msg) => (msg.id === messageId ? { ...msg, translatedText: translated } : msg)),
+          );
+        }, 300);
+      }
+    },
+    [],
+  );
+
   // 1. SCROLL LOGIC
   useEffect(() => {
     // We reference these to ensure the effect runs when they change
@@ -192,18 +273,27 @@ function ChatWidget() {
   // 2. INITIAL DELAY FOR FORM
   useEffect(() => {
     const timer = setTimeout(() => {
+      const initialId = "initial";
+      const text = "Hi! Please introduce yourself to start the chat.";
+
       setMessages([
         {
-          id: "initial",
-          text: "Hi! Please introduce yourself to start the chat.",
+          id: initialId,
+          text,
           sender: "bot",
           timestamp: new Date().toISOString(),
+          sourceLang: "en",
+          targetLang: browserLanguage,
         },
       ]);
       setShowForm(true);
+
+      if (browserLanguage !== "en" && !browserLanguage.startsWith("en-")) {
+        translateText(text, browserLanguage, initialId);
+      }
     }, 1000);
     return () => clearTimeout(timer);
-  }, []);
+  }, [browserLanguage, translateText]);
 
   // 3. SSE CONNECTION LOGIC
   useEffect(() => {
@@ -299,16 +389,35 @@ function ChatWidget() {
       setShowForm(false);
 
       const now = new Date().toISOString();
+      const confId = `conf-${Date.now()}`;
+      const noteId = `note-${Date.now()}`;
+      const confText = `Thanks, ${data.name}! Your reference: ${ticket.referenceId}`;
+      const noteText = "How can I help you today?";
+
       setMessages((prev) => [
         ...prev,
         {
-          id: `conf-${Date.now()}`,
-          text: `Thanks, ${data.name}! Your reference: ${ticket.referenceId}`,
+          id: confId,
+          text: confText,
           sender: "bot",
           timestamp: now,
+          sourceLang: "en",
+          targetLang: browserLanguage,
         },
-        { id: `note-${Date.now()}`, text: "How can I help you today?", sender: "bot", timestamp: now },
+        {
+          id: noteId,
+          text: noteText,
+          sender: "bot",
+          timestamp: now,
+          sourceLang: "en",
+          targetLang: browserLanguage,
+        },
       ]);
+
+      if (browserLanguage !== "en" && !browserLanguage.startsWith("en-")) {
+        translateText(confText, browserLanguage, confId, data.name, ticket.referenceId);
+        translateText(noteText, browserLanguage, noteId);
+      }
     } catch (error) {
       console.error("Failed to create ticket", error);
     }
