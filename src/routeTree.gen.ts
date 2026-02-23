@@ -34,6 +34,7 @@ import { Route as DemoFormAddressRouteImport } from './routes/demo/form.address'
 import { Route as DemoApiTqTodosRouteImport } from './routes/demo/api.tq-todos'
 import { Route as DemoApiNamesRouteImport } from './routes/demo/api.names'
 import { Route as authenticatedProjectProjectIdRouteImport } from './routes/(authenticated)/project/$projectId'
+import { Route as authenticatedOrganizationCreateRouteImport } from './routes/(authenticated)/organization/create'
 import { Route as authenticatedOrganizationOrganizationIdRouteImport } from './routes/(authenticated)/organization/$organizationId'
 import { Route as DemoStartSsrIndexRouteImport } from './routes/demo/start.ssr.index'
 import { Route as authenticatedProjectProjectIdIndexRouteImport } from './routes/(authenticated)/project/$projectId/index'
@@ -171,6 +172,12 @@ const authenticatedProjectProjectIdRoute =
     path: '/project/$projectId',
     getParentRoute: () => authenticatedRouteRoute,
   } as any)
+const authenticatedOrganizationCreateRoute =
+  authenticatedOrganizationCreateRouteImport.update({
+    id: '/organization/create',
+    path: '/organization/create',
+    getParentRoute: () => authenticatedRouteRoute,
+  } as any)
 const authenticatedOrganizationOrganizationIdRoute =
   authenticatedOrganizationOrganizationIdRouteImport.update({
     id: '/organization/$organizationId',
@@ -242,6 +249,7 @@ export interface FileRoutesByFullPath {
   '/widget/access-denied': typeof WidgetAccessDeniedRoute
   '/demo/': typeof DemoIndexRoute
   '/organization/$organizationId': typeof authenticatedOrganizationOrganizationIdRoute
+  '/organization/create': typeof authenticatedOrganizationCreateRoute
   '/project/$projectId': typeof authenticatedProjectProjectIdRouteWithChildren
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/api/tq-todos': typeof DemoApiTqTodosRoute
@@ -276,6 +284,7 @@ export interface FileRoutesByTo {
   '/widget/access-denied': typeof WidgetAccessDeniedRoute
   '/demo': typeof DemoIndexRoute
   '/organization/$organizationId': typeof authenticatedOrganizationOrganizationIdRoute
+  '/organization/create': typeof authenticatedOrganizationCreateRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/api/tq-todos': typeof DemoApiTqTodosRoute
   '/demo/form/address': typeof DemoFormAddressRoute
@@ -313,6 +322,7 @@ export interface FileRoutesById {
   '/widget/access-denied': typeof WidgetAccessDeniedRoute
   '/demo/': typeof DemoIndexRoute
   '/(authenticated)/organization/$organizationId': typeof authenticatedOrganizationOrganizationIdRoute
+  '/(authenticated)/organization/create': typeof authenticatedOrganizationCreateRoute
   '/(authenticated)/project/$projectId': typeof authenticatedProjectProjectIdRouteWithChildren
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/api/tq-todos': typeof DemoApiTqTodosRoute
@@ -350,6 +360,7 @@ export interface FileRouteTypes {
     | '/widget/access-denied'
     | '/demo/'
     | '/organization/$organizationId'
+    | '/organization/create'
     | '/project/$projectId'
     | '/demo/api/names'
     | '/demo/api/tq-todos'
@@ -384,6 +395,7 @@ export interface FileRouteTypes {
     | '/widget/access-denied'
     | '/demo'
     | '/organization/$organizationId'
+    | '/organization/create'
     | '/demo/api/names'
     | '/demo/api/tq-todos'
     | '/demo/form/address'
@@ -420,6 +432,7 @@ export interface FileRouteTypes {
     | '/widget/access-denied'
     | '/demo/'
     | '/(authenticated)/organization/$organizationId'
+    | '/(authenticated)/organization/create'
     | '/(authenticated)/project/$projectId'
     | '/demo/api/names'
     | '/demo/api/tq-todos'
@@ -628,6 +641,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof authenticatedProjectProjectIdRouteImport
       parentRoute: typeof authenticatedRouteRoute
     }
+    '/(authenticated)/organization/create': {
+      id: '/(authenticated)/organization/create'
+      path: '/organization/create'
+      fullPath: '/organization/create'
+      preLoaderRoute: typeof authenticatedOrganizationCreateRouteImport
+      parentRoute: typeof authenticatedRouteRoute
+    }
     '/(authenticated)/organization/$organizationId': {
       id: '/(authenticated)/organization/$organizationId'
       path: '/organization/$organizationId'
@@ -742,6 +762,7 @@ const authenticatedProjectProjectIdRouteWithChildren =
 interface authenticatedRouteRouteChildren {
   authenticatedDashboardRoute: typeof authenticatedDashboardRoute
   authenticatedOrganizationOrganizationIdRoute: typeof authenticatedOrganizationOrganizationIdRoute
+  authenticatedOrganizationCreateRoute: typeof authenticatedOrganizationCreateRoute
   authenticatedProjectProjectIdRoute: typeof authenticatedProjectProjectIdRouteWithChildren
   authenticatedChatSupportIndexRoute: typeof authenticatedChatSupportIndexRoute
   authenticatedOrganizationIndexRoute: typeof authenticatedOrganizationIndexRoute
@@ -751,6 +772,7 @@ const authenticatedRouteRouteChildren: authenticatedRouteRouteChildren = {
   authenticatedDashboardRoute: authenticatedDashboardRoute,
   authenticatedOrganizationOrganizationIdRoute:
     authenticatedOrganizationOrganizationIdRoute,
+  authenticatedOrganizationCreateRoute: authenticatedOrganizationCreateRoute,
   authenticatedProjectProjectIdRoute:
     authenticatedProjectProjectIdRouteWithChildren,
   authenticatedChatSupportIndexRoute: authenticatedChatSupportIndexRoute,
