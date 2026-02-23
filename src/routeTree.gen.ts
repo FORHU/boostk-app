@@ -35,15 +35,17 @@ import { Route as DemoApiTqTodosRouteImport } from './routes/demo/api.tq-todos'
 import { Route as DemoApiNamesRouteImport } from './routes/demo/api.names'
 import { Route as authenticatedProjectProjectIdRouteImport } from './routes/(authenticated)/project/$projectId'
 import { Route as authenticatedOrganizationCreateRouteImport } from './routes/(authenticated)/organization/create'
-import { Route as authenticatedOrganizationOrganizationIdRouteImport } from './routes/(authenticated)/organization/$organizationId'
+import { Route as authenticatedOrganizationOrganizationIdRouteRouteImport } from './routes/(authenticated)/organization/$organizationId/route'
 import { Route as DemoStartSsrIndexRouteImport } from './routes/demo/start.ssr.index'
 import { Route as authenticatedProjectProjectIdIndexRouteImport } from './routes/(authenticated)/project/$projectId/index'
+import { Route as authenticatedOrganizationOrganizationIdIndexRouteImport } from './routes/(authenticated)/organization/$organizationId/index'
 import { Route as DemoStartSsrSpaModeRouteImport } from './routes/demo/start.ssr.spa-mode'
 import { Route as DemoStartSsrFullSsrRouteImport } from './routes/demo/start.ssr.full-ssr'
 import { Route as DemoStartSsrDataOnlyRouteImport } from './routes/demo/start.ssr.data-only'
 import { Route as DemoPrismaDemoUserIdTodosRouteImport } from './routes/demo/prisma-demo/$userId/todos'
-import { Route as authenticatedProjectProjectIdTicketsRouteImport } from './routes/(authenticated)/project/$projectId/tickets'
+import { Route as authenticatedProjectProjectIdChatSupportRouteImport } from './routes/(authenticated)/project/$projectId_.chat-support'
 import { Route as authenticatedProjectProjectIdSettingsRouteImport } from './routes/(authenticated)/project/$projectId/settings'
+import { Route as authenticatedProjectProjectIdLogsRouteImport } from './routes/(authenticated)/project/$projectId/logs'
 import { Route as authenticatedProjectProjectIdAgentsRouteImport } from './routes/(authenticated)/project/$projectId/agents'
 
 const DemoRouteRoute = DemoRouteRouteImport.update({
@@ -178,8 +180,8 @@ const authenticatedOrganizationCreateRoute =
     path: '/organization/create',
     getParentRoute: () => authenticatedRouteRoute,
   } as any)
-const authenticatedOrganizationOrganizationIdRoute =
-  authenticatedOrganizationOrganizationIdRouteImport.update({
+const authenticatedOrganizationOrganizationIdRouteRoute =
+  authenticatedOrganizationOrganizationIdRouteRouteImport.update({
     id: '/organization/$organizationId',
     path: '/organization/$organizationId',
     getParentRoute: () => authenticatedRouteRoute,
@@ -194,6 +196,12 @@ const authenticatedProjectProjectIdIndexRoute =
     id: '/',
     path: '/',
     getParentRoute: () => authenticatedProjectProjectIdRoute,
+  } as any)
+const authenticatedOrganizationOrganizationIdIndexRoute =
+  authenticatedOrganizationOrganizationIdIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => authenticatedOrganizationOrganizationIdRouteRoute,
   } as any)
 const DemoStartSsrSpaModeRoute = DemoStartSsrSpaModeRouteImport.update({
   id: '/start/ssr/spa-mode',
@@ -216,16 +224,22 @@ const DemoPrismaDemoUserIdTodosRoute =
     path: '/prisma-demo/$userId/todos',
     getParentRoute: () => DemoRouteRoute,
   } as any)
-const authenticatedProjectProjectIdTicketsRoute =
-  authenticatedProjectProjectIdTicketsRouteImport.update({
-    id: '/tickets',
-    path: '/tickets',
-    getParentRoute: () => authenticatedProjectProjectIdRoute,
+const authenticatedProjectProjectIdChatSupportRoute =
+  authenticatedProjectProjectIdChatSupportRouteImport.update({
+    id: '/project/$projectId_/chat-support',
+    path: '/project/$projectId/chat-support',
+    getParentRoute: () => authenticatedRouteRoute,
   } as any)
 const authenticatedProjectProjectIdSettingsRoute =
   authenticatedProjectProjectIdSettingsRouteImport.update({
     id: '/settings',
     path: '/settings',
+    getParentRoute: () => authenticatedProjectProjectIdRoute,
+  } as any)
+const authenticatedProjectProjectIdLogsRoute =
+  authenticatedProjectProjectIdLogsRouteImport.update({
+    id: '/logs',
+    path: '/logs',
     getParentRoute: () => authenticatedProjectProjectIdRoute,
   } as any)
 const authenticatedProjectProjectIdAgentsRoute =
@@ -248,7 +262,7 @@ export interface FileRoutesByFullPath {
   '/widget/$apiKey': typeof WidgetApiKeyRoute
   '/widget/access-denied': typeof WidgetAccessDeniedRoute
   '/demo/': typeof DemoIndexRoute
-  '/organization/$organizationId': typeof authenticatedOrganizationOrganizationIdRoute
+  '/organization/$organizationId': typeof authenticatedOrganizationOrganizationIdRouteRouteWithChildren
   '/organization/create': typeof authenticatedOrganizationCreateRoute
   '/project/$projectId': typeof authenticatedProjectProjectIdRouteWithChildren
   '/demo/api/names': typeof DemoApiNamesRoute
@@ -262,12 +276,14 @@ export interface FileRoutesByFullPath {
   '/organization/': typeof authenticatedOrganizationIndexRoute
   '/demo/prisma-demo/': typeof DemoPrismaDemoIndexRoute
   '/project/$projectId/agents': typeof authenticatedProjectProjectIdAgentsRoute
+  '/project/$projectId/logs': typeof authenticatedProjectProjectIdLogsRoute
   '/project/$projectId/settings': typeof authenticatedProjectProjectIdSettingsRoute
-  '/project/$projectId/tickets': typeof authenticatedProjectProjectIdTicketsRoute
+  '/project/$projectId/chat-support': typeof authenticatedProjectProjectIdChatSupportRoute
   '/demo/prisma-demo/$userId/todos': typeof DemoPrismaDemoUserIdTodosRoute
   '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
   '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
   '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
+  '/organization/$organizationId/': typeof authenticatedOrganizationOrganizationIdIndexRoute
   '/project/$projectId/': typeof authenticatedProjectProjectIdIndexRoute
   '/demo/start/ssr/': typeof DemoStartSsrIndexRoute
 }
@@ -283,7 +299,6 @@ export interface FileRoutesByTo {
   '/widget/$apiKey': typeof WidgetApiKeyRoute
   '/widget/access-denied': typeof WidgetAccessDeniedRoute
   '/demo': typeof DemoIndexRoute
-  '/organization/$organizationId': typeof authenticatedOrganizationOrganizationIdRoute
   '/organization/create': typeof authenticatedOrganizationCreateRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/api/tq-todos': typeof DemoApiTqTodosRoute
@@ -296,12 +311,14 @@ export interface FileRoutesByTo {
   '/organization': typeof authenticatedOrganizationIndexRoute
   '/demo/prisma-demo': typeof DemoPrismaDemoIndexRoute
   '/project/$projectId/agents': typeof authenticatedProjectProjectIdAgentsRoute
+  '/project/$projectId/logs': typeof authenticatedProjectProjectIdLogsRoute
   '/project/$projectId/settings': typeof authenticatedProjectProjectIdSettingsRoute
-  '/project/$projectId/tickets': typeof authenticatedProjectProjectIdTicketsRoute
+  '/project/$projectId/chat-support': typeof authenticatedProjectProjectIdChatSupportRoute
   '/demo/prisma-demo/$userId/todos': typeof DemoPrismaDemoUserIdTodosRoute
   '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
   '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
   '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
+  '/organization/$organizationId': typeof authenticatedOrganizationOrganizationIdIndexRoute
   '/project/$projectId': typeof authenticatedProjectProjectIdIndexRoute
   '/demo/start/ssr': typeof DemoStartSsrIndexRoute
 }
@@ -321,7 +338,7 @@ export interface FileRoutesById {
   '/widget/$apiKey': typeof WidgetApiKeyRoute
   '/widget/access-denied': typeof WidgetAccessDeniedRoute
   '/demo/': typeof DemoIndexRoute
-  '/(authenticated)/organization/$organizationId': typeof authenticatedOrganizationOrganizationIdRoute
+  '/(authenticated)/organization/$organizationId': typeof authenticatedOrganizationOrganizationIdRouteRouteWithChildren
   '/(authenticated)/organization/create': typeof authenticatedOrganizationCreateRoute
   '/(authenticated)/project/$projectId': typeof authenticatedProjectProjectIdRouteWithChildren
   '/demo/api/names': typeof DemoApiNamesRoute
@@ -335,12 +352,14 @@ export interface FileRoutesById {
   '/(authenticated)/organization/': typeof authenticatedOrganizationIndexRoute
   '/demo/prisma-demo/': typeof DemoPrismaDemoIndexRoute
   '/(authenticated)/project/$projectId/agents': typeof authenticatedProjectProjectIdAgentsRoute
+  '/(authenticated)/project/$projectId/logs': typeof authenticatedProjectProjectIdLogsRoute
   '/(authenticated)/project/$projectId/settings': typeof authenticatedProjectProjectIdSettingsRoute
-  '/(authenticated)/project/$projectId/tickets': typeof authenticatedProjectProjectIdTicketsRoute
+  '/(authenticated)/project/$projectId_/chat-support': typeof authenticatedProjectProjectIdChatSupportRoute
   '/demo/prisma-demo/$userId/todos': typeof DemoPrismaDemoUserIdTodosRoute
   '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
   '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
   '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
+  '/(authenticated)/organization/$organizationId/': typeof authenticatedOrganizationOrganizationIdIndexRoute
   '/(authenticated)/project/$projectId/': typeof authenticatedProjectProjectIdIndexRoute
   '/demo/start/ssr/': typeof DemoStartSsrIndexRoute
 }
@@ -373,12 +392,14 @@ export interface FileRouteTypes {
     | '/organization/'
     | '/demo/prisma-demo/'
     | '/project/$projectId/agents'
+    | '/project/$projectId/logs'
     | '/project/$projectId/settings'
-    | '/project/$projectId/tickets'
+    | '/project/$projectId/chat-support'
     | '/demo/prisma-demo/$userId/todos'
     | '/demo/start/ssr/data-only'
     | '/demo/start/ssr/full-ssr'
     | '/demo/start/ssr/spa-mode'
+    | '/organization/$organizationId/'
     | '/project/$projectId/'
     | '/demo/start/ssr/'
   fileRoutesByTo: FileRoutesByTo
@@ -394,7 +415,6 @@ export interface FileRouteTypes {
     | '/widget/$apiKey'
     | '/widget/access-denied'
     | '/demo'
-    | '/organization/$organizationId'
     | '/organization/create'
     | '/demo/api/names'
     | '/demo/api/tq-todos'
@@ -407,12 +427,14 @@ export interface FileRouteTypes {
     | '/organization'
     | '/demo/prisma-demo'
     | '/project/$projectId/agents'
+    | '/project/$projectId/logs'
     | '/project/$projectId/settings'
-    | '/project/$projectId/tickets'
+    | '/project/$projectId/chat-support'
     | '/demo/prisma-demo/$userId/todos'
     | '/demo/start/ssr/data-only'
     | '/demo/start/ssr/full-ssr'
     | '/demo/start/ssr/spa-mode'
+    | '/organization/$organizationId'
     | '/project/$projectId'
     | '/demo/start/ssr'
   id:
@@ -445,12 +467,14 @@ export interface FileRouteTypes {
     | '/(authenticated)/organization/'
     | '/demo/prisma-demo/'
     | '/(authenticated)/project/$projectId/agents'
+    | '/(authenticated)/project/$projectId/logs'
     | '/(authenticated)/project/$projectId/settings'
-    | '/(authenticated)/project/$projectId/tickets'
+    | '/(authenticated)/project/$projectId_/chat-support'
     | '/demo/prisma-demo/$userId/todos'
     | '/demo/start/ssr/data-only'
     | '/demo/start/ssr/full-ssr'
     | '/demo/start/ssr/spa-mode'
+    | '/(authenticated)/organization/$organizationId/'
     | '/(authenticated)/project/$projectId/'
     | '/demo/start/ssr/'
   fileRoutesById: FileRoutesById
@@ -652,7 +676,7 @@ declare module '@tanstack/react-router' {
       id: '/(authenticated)/organization/$organizationId'
       path: '/organization/$organizationId'
       fullPath: '/organization/$organizationId'
-      preLoaderRoute: typeof authenticatedOrganizationOrganizationIdRouteImport
+      preLoaderRoute: typeof authenticatedOrganizationOrganizationIdRouteRouteImport
       parentRoute: typeof authenticatedRouteRoute
     }
     '/demo/start/ssr/': {
@@ -668,6 +692,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/project/$projectId/'
       preLoaderRoute: typeof authenticatedProjectProjectIdIndexRouteImport
       parentRoute: typeof authenticatedProjectProjectIdRoute
+    }
+    '/(authenticated)/organization/$organizationId/': {
+      id: '/(authenticated)/organization/$organizationId/'
+      path: '/'
+      fullPath: '/organization/$organizationId/'
+      preLoaderRoute: typeof authenticatedOrganizationOrganizationIdIndexRouteImport
+      parentRoute: typeof authenticatedOrganizationOrganizationIdRouteRoute
     }
     '/demo/start/ssr/spa-mode': {
       id: '/demo/start/ssr/spa-mode'
@@ -697,18 +728,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DemoPrismaDemoUserIdTodosRouteImport
       parentRoute: typeof DemoRouteRoute
     }
-    '/(authenticated)/project/$projectId/tickets': {
-      id: '/(authenticated)/project/$projectId/tickets'
-      path: '/tickets'
-      fullPath: '/project/$projectId/tickets'
-      preLoaderRoute: typeof authenticatedProjectProjectIdTicketsRouteImport
-      parentRoute: typeof authenticatedProjectProjectIdRoute
+    '/(authenticated)/project/$projectId_/chat-support': {
+      id: '/(authenticated)/project/$projectId_/chat-support'
+      path: '/project/$projectId/chat-support'
+      fullPath: '/project/$projectId/chat-support'
+      preLoaderRoute: typeof authenticatedProjectProjectIdChatSupportRouteImport
+      parentRoute: typeof authenticatedRouteRoute
     }
     '/(authenticated)/project/$projectId/settings': {
       id: '/(authenticated)/project/$projectId/settings'
       path: '/settings'
       fullPath: '/project/$projectId/settings'
       preLoaderRoute: typeof authenticatedProjectProjectIdSettingsRouteImport
+      parentRoute: typeof authenticatedProjectProjectIdRoute
+    }
+    '/(authenticated)/project/$projectId/logs': {
+      id: '/(authenticated)/project/$projectId/logs'
+      path: '/logs'
+      fullPath: '/project/$projectId/logs'
+      preLoaderRoute: typeof authenticatedProjectProjectIdLogsRouteImport
       parentRoute: typeof authenticatedProjectProjectIdRoute
     }
     '/(authenticated)/project/$projectId/agents': {
@@ -735,10 +773,25 @@ const authRouteRouteWithChildren = authRouteRoute._addFileChildren(
   authRouteRouteChildren,
 )
 
+interface authenticatedOrganizationOrganizationIdRouteRouteChildren {
+  authenticatedOrganizationOrganizationIdIndexRoute: typeof authenticatedOrganizationOrganizationIdIndexRoute
+}
+
+const authenticatedOrganizationOrganizationIdRouteRouteChildren: authenticatedOrganizationOrganizationIdRouteRouteChildren =
+  {
+    authenticatedOrganizationOrganizationIdIndexRoute:
+      authenticatedOrganizationOrganizationIdIndexRoute,
+  }
+
+const authenticatedOrganizationOrganizationIdRouteRouteWithChildren =
+  authenticatedOrganizationOrganizationIdRouteRoute._addFileChildren(
+    authenticatedOrganizationOrganizationIdRouteRouteChildren,
+  )
+
 interface authenticatedProjectProjectIdRouteChildren {
   authenticatedProjectProjectIdAgentsRoute: typeof authenticatedProjectProjectIdAgentsRoute
+  authenticatedProjectProjectIdLogsRoute: typeof authenticatedProjectProjectIdLogsRoute
   authenticatedProjectProjectIdSettingsRoute: typeof authenticatedProjectProjectIdSettingsRoute
-  authenticatedProjectProjectIdTicketsRoute: typeof authenticatedProjectProjectIdTicketsRoute
   authenticatedProjectProjectIdIndexRoute: typeof authenticatedProjectProjectIdIndexRoute
 }
 
@@ -746,10 +799,10 @@ const authenticatedProjectProjectIdRouteChildren: authenticatedProjectProjectIdR
   {
     authenticatedProjectProjectIdAgentsRoute:
       authenticatedProjectProjectIdAgentsRoute,
+    authenticatedProjectProjectIdLogsRoute:
+      authenticatedProjectProjectIdLogsRoute,
     authenticatedProjectProjectIdSettingsRoute:
       authenticatedProjectProjectIdSettingsRoute,
-    authenticatedProjectProjectIdTicketsRoute:
-      authenticatedProjectProjectIdTicketsRoute,
     authenticatedProjectProjectIdIndexRoute:
       authenticatedProjectProjectIdIndexRoute,
   }
@@ -761,22 +814,25 @@ const authenticatedProjectProjectIdRouteWithChildren =
 
 interface authenticatedRouteRouteChildren {
   authenticatedDashboardRoute: typeof authenticatedDashboardRoute
-  authenticatedOrganizationOrganizationIdRoute: typeof authenticatedOrganizationOrganizationIdRoute
+  authenticatedOrganizationOrganizationIdRouteRoute: typeof authenticatedOrganizationOrganizationIdRouteRouteWithChildren
   authenticatedOrganizationCreateRoute: typeof authenticatedOrganizationCreateRoute
   authenticatedProjectProjectIdRoute: typeof authenticatedProjectProjectIdRouteWithChildren
   authenticatedChatSupportIndexRoute: typeof authenticatedChatSupportIndexRoute
   authenticatedOrganizationIndexRoute: typeof authenticatedOrganizationIndexRoute
+  authenticatedProjectProjectIdChatSupportRoute: typeof authenticatedProjectProjectIdChatSupportRoute
 }
 
 const authenticatedRouteRouteChildren: authenticatedRouteRouteChildren = {
   authenticatedDashboardRoute: authenticatedDashboardRoute,
-  authenticatedOrganizationOrganizationIdRoute:
-    authenticatedOrganizationOrganizationIdRoute,
+  authenticatedOrganizationOrganizationIdRouteRoute:
+    authenticatedOrganizationOrganizationIdRouteRouteWithChildren,
   authenticatedOrganizationCreateRoute: authenticatedOrganizationCreateRoute,
   authenticatedProjectProjectIdRoute:
     authenticatedProjectProjectIdRouteWithChildren,
   authenticatedChatSupportIndexRoute: authenticatedChatSupportIndexRoute,
   authenticatedOrganizationIndexRoute: authenticatedOrganizationIndexRoute,
+  authenticatedProjectProjectIdChatSupportRoute:
+    authenticatedProjectProjectIdChatSupportRoute,
 }
 
 const authenticatedRouteRouteWithChildren =
