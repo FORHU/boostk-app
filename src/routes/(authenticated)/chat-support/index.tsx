@@ -86,7 +86,6 @@ function RouteComponent() {
   useEffect(() => {
     if (lastSseEvent) {
       if (lastSseEvent.event === "heartbeat") return;
-      console.log("lastSseEvent", lastSseEvent);
       if (lastSseEvent.event === "ticket_assigned" || lastSseEvent.event === "ticket_created") {
         queryClient.invalidateQueries({ queryKey: ["project-tickets", selectedProject?.id] });
       }
