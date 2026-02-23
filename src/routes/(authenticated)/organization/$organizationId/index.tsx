@@ -1,77 +1,40 @@
-import { useMutation } from "@tanstack/react-query";
-import { createFileRoute, Link, redirect, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { Filter, LayoutGrid, List, MoreVertical, Plus, Search } from "lucide-react";
-import { useId, useState, useEffect } from "react";
-import { TopBar } from "@/components/TopBar";
-import { elysiaClient } from "@/lib/elysia-client";
-import { useAppStore } from "@/store/app.store";
+import { useId, useState } from "react";
+import { createProject, getOrganizationProjects } from "@/modules/project/project.serverFn";
 
-export const Route = createFileRoute("/(authenticated)/organization/$organizationId")({
+export const Route = createFileRoute("/(authenticated)/organization/$organizationId/")({
   component: RouteComponent,
-  loader: async ({ params }) => {
-    // In a real app we'd fetch the Org details to get the name, using ID as fallback
-    const { data: projects, error } = await elysiaClient.api
-      .organizations({ id: params.organizationId })
-      .projects.get();
-
-    if (error) {
-      console.log("error", error.value);
-      throw redirect({
-        to: "/organization",
-      });
-    }
-    return { organizationId: params.organizationId, projects: projects ?? [] };
+  loader: async ({ context }) => {
+    const projects = await getOrganizationProjects({ data: { orgId: context.organization.id } });
+    return { projects };
   },
 });
 
 function RouteComponent() {
-  const projectId = useId();
-  const { organizationId, projects } = Route.useLoaderData();
   const router = useRouter();
-  const [isOpen, setIsOpen] = useState(false);
-  const [projectName, setProjectName] = useState("");
+  const { organization } = Route.useRouteContext();
+  const { projects } = Route.useLoaderData();
   const [search, setSearch] = useState("");
-  const setSelectedOrganization = useAppStore((state) => state.setSelectedOrganization);
 
-  useEffect(() => {
-    setSelectedOrganization(organizationId);
-  }, [organizationId, setSelectedOrganization]);
+  const [isCreateProjectModalOpen, setIsCreateProjectModalOpen] = useState(false);
+  const projectId = useId();
+  const [projectName, setProjectName] = useState("");
 
   const filteredProjects = projects.filter((project) => project.name.toLowerCase().includes(search.toLowerCase()));
 
-  const createProjectMutation = useMutation({
-    mutationFn: async (name: string) => {
-      const { data, error } = await elysiaClient.api.organizations({ id: organizationId }).projects.post({ name });
-
-      if (error) {
-        console.log("error", error.value);
-        throw new Error("Failed to create project");
-      }
-
-      return data;
-    },
-    onSuccess: () => {
-      router.invalidate();
-      setIsOpen(false);
-      setProjectName("");
-    },
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
-    createProjectMutation.mutate(projectName);
+
+    await createProject({ data: { name: projectName, organizationId: organization.id } });
+
+    router.invalidate();
+    setIsCreateProjectModalOpen(false);
+    setProjectName("");
   };
 
   return (
     <div className="min-h-full bg-white font-sans text-gray-900">
-      <TopBar
-        breadcrumbs={[
-          { label: "Dashboard", to: "/" },
-          { label: "Organizations", to: "/organization" },
-          { label: "Projects" },
-        ]}
-      />
-
       <div className="max-w-6xl mx-auto px-6 py-8">
         <h1 className="text-2xl font-bold bg-white mb-6">Projects</h1>
 
@@ -109,7 +72,7 @@ function RouteComponent() {
             </div>
             <button
               type="button"
-              onClick={() => setIsOpen(true)}
+              onClick={() => setIsCreateProjectModalOpen(true)}
               className="px-4 py-2 bg-[#10b981] hover:bg-[#059669] text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2 shadow-sm"
             >
               <Plus className="h-4 w-4" />
@@ -153,8 +116,7 @@ function RouteComponent() {
           ))}
         </div>
 
-        {/* Modal for Creating Project */}
-        {isOpen && (
+        {isCreateProjectModalOpen && (
           <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
             <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-2xl">
               <h2 className="text-xl font-bold mb-4">Create a new project</h2>
@@ -169,23 +131,21 @@ function RouteComponent() {
                     placeholder="e.g. My Awesome Dashboard"
                     value={projectName}
                     onChange={(e) => setProjectName(e.target.value)}
-                    disabled={createProjectMutation.isPending}
                   />
                 </div>
                 <div className="flex justify-end gap-3">
                   <button
                     type="button"
-                    onClick={() => setIsOpen(false)}
+                    onClick={() => setIsCreateProjectModalOpen(false)}
                     className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    disabled={createProjectMutation.isPending || !projectName.trim()}
                     className="bg-[#10b981] text-white px-4 py-2 text-sm font-medium rounded-lg hover:bg-[#059669] disabled:opacity-50 transition-colors shadow-sm"
                   >
-                    {createProjectMutation.isPending ? "Creating..." : "Create Project"}
+                    Create Project
                   </button>
                 </div>
               </form>
