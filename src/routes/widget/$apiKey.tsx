@@ -20,17 +20,123 @@ export const Route = createFileRoute("/widget/$apiKey")({
   component: ChatWidget,
 });
 
+export type MessageSender = "bot" | "user" | "agent";
+
+export interface Message {
+  id: string;
+  text: string;
+  sender: MessageSender;
+  timestamp: string;
+}
+
+function ChatHeader() {
+  return (
+    <header className="flex-none bg-indigo-600 p-4 text-white flex items-center justify-between shadow-sm">
+      <div className="flex items-center gap-3">
+        <div className="bg-indigo-400/30 p-2 rounded-lg">
+          <Bot size={20} />
+        </div>
+        <div>
+          <h2 className="text-sm font-bold leading-none">Support Chat</h2>
+          <span className="text-[10px] text-indigo-200 flex items-center gap-1">
+            <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
+            Always active
+          </span>
+        </div>
+      </div>
+      <Sparkles size={16} className="text-indigo-300" />
+    </header>
+  );
+}
+
+function ChatMessageBubble({ msg, isStart, isEnd }: { msg: Message; isStart: boolean; isEnd: boolean }) {
+  const getRadiusClasses = () => {
+    const isUser = msg.sender === "user";
+    if (isStart && isEnd) return "rounded-2xl";
+    if (isUser) {
+      if (isStart) return "rounded-2xl rounded-br-none";
+      if (isEnd) return "rounded-2xl rounded-tr-none";
+      return "rounded-2xl rounded-tr-none rounded-br-none";
+    } else {
+      if (isStart) return "rounded-2xl rounded-bl-none";
+      if (isEnd) return "rounded-2xl rounded-tl-none";
+      return "rounded-2xl rounded-tl-none rounded-bl-none";
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 5 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -5 }}
+      layout
+      className={`flex flex-col ${msg.sender === "user" ? "items-end" : "items-start"} ${!isEnd ? "mb-1" : "mb-4"}`}
+    >
+      <div
+        className={`max-w-[85%] px-4 py-2 text-sm shadow-sm ${getRadiusClasses()} ${
+          msg.sender === "user" ? "bg-indigo-600 text-white" : "bg-white text-gray-800 border border-gray-100"
+        }`}
+      >
+        {msg.text}
+      </div>
+      {isEnd && (
+        <span className="text-[10px] text-gray-400 mt-1 px-1">
+          {new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+        </span>
+      )}
+    </motion.div>
+  );
+}
+
+function ChatInput({
+  input,
+  setInput,
+  onSend,
+}: {
+  input: string;
+  setInput: (val: string) => void;
+  onSend: (e: React.FormEvent) => void;
+}) {
+  return (
+    <motion.div
+      key="chat-input"
+      initial={{ y: 20, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      exit={{ y: 20, opacity: 0 }}
+      className="p-3 bg-white border-t border-gray-100"
+    >
+      <form onSubmit={onSend} className="flex items-center gap-2">
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Type your message..."
+          className="flex-1 bg-gray-100 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+        />
+        <button
+          type="submit"
+          disabled={!input.trim()}
+          className="bg-indigo-600 text-white p-2.5 rounded-xl active:scale-95 disabled:opacity-50"
+        >
+          <Send size={18} />
+        </button>
+      </form>
+    </motion.div>
+  );
+}
+
 function ChatWidget() {
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [isLeadCaptured, setIsLeadCaptured] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [input, setInput] = useState("");
-  const [activeTicketId, setActiveTicketId] = useState<string | null>(null);
+  const [activeTicketId, setActiveTicketId] = useState<string>();
+  const [customerId, setCustomerId] = useState<string>();
 
   const { apiKey } = Route.useRouteContext();
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // 1. SCROLL LOGIC (Restored and improved)
+  // 1. SCROLL LOGIC
   useEffect(() => {
     // We reference these to ensure the effect runs when they change
     messages;
@@ -62,7 +168,7 @@ function ChatWidget() {
 
   // 3. SSE CONNECTION LOGIC
   useEffect(() => {
-    if (!activeTicketId) return;
+    if (!activeTicketId || !customerId) return;
 
     const controller = new AbortController();
 
@@ -76,36 +182,46 @@ function ChatWidget() {
 
         const stream = response.data as unknown as AsyncIterable<{ data: string }>;
         for await (const chunk of stream) {
-          const parsed = JSON.parse(chunk.data);
+          if (!chunk.data) continue;
 
-          // Filter out heartbeats and system connection messages
+          // biome-ignore lint/suspicious/noExplicitAny: <TODO: type safety for SSE>
+          let parsed: Record<string, any>;
+          try {
+            parsed = JSON.parse(chunk.data);
+          } catch {
+            continue;
+          }
+
           if (parsed.type === "heartbeat" || parsed.message === "connected") continue;
 
           setMessages((prev) => {
-            // Prevent duplicate messages if the broadcast echoes back to the sender
             if (prev.find((m) => m.id === parsed.id)) return prev;
 
             return [
               ...prev,
               {
                 id: parsed.id || Date.now().toString(),
-                text: parsed.content || parsed.message, // handle both formats
-                sender: (parsed.senderType || "AGENT").toLowerCase(),
+                text: parsed.content || parsed.message,
+                sender: (parsed.senderType || "AGENT").toLowerCase() as MessageSender,
                 timestamp: parsed.createdAt || new Date().toISOString(),
               },
             ];
           });
         }
-      } catch (err: any) {
-        if (err.name !== "AbortError") console.error("SSE Error:", err);
+      } catch (err: unknown) {
+        if (err instanceof Error && err.name !== "AbortError") {
+          console.error("SSE Error:", err);
+        } else if (!(err instanceof Error)) {
+          console.error("SSE Error:", err);
+        }
       }
     };
 
     connect();
     return () => controller.abort();
-  }, [activeTicketId]);
+  }, [activeTicketId, customerId]);
 
-  // 4. LEAD SUBMIT (Creates ticket & opens SSE)
+  // 4. LEAD SUBMIT
   const handleLeadSubmit = async (data: { name: string; email: string }) => {
     try {
       const ticket = await createTicket({
@@ -113,10 +229,10 @@ function ChatWidget() {
       });
 
       setActiveTicketId(ticket.id);
+      setCustomerId(ticket.customerId);
       setIsLeadCaptured(true);
       setShowForm(false);
 
-      // Local confirmation messages
       const now = new Date().toISOString();
       setMessages((prev) => [
         ...prev,
@@ -134,24 +250,28 @@ function ChatWidget() {
   };
 
   // 5. SEND MESSAGE
-  const handleSendMessage = async (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.SyntheticEvent) => {
     e.preventDefault();
-    if (!input.trim() || !activeTicketId) return;
+    if (!input.trim() || !activeTicketId || !customerId) return;
 
-    const userMsg = {
-      id: `temp-${Date.now()}`, // Temporary ID for Optimistic UI
+    const userMsg: Message = {
+      id: `temp-${Date.now()}`,
       text: input,
       sender: "user",
       timestamp: new Date().toISOString(),
     };
 
-    // Optimistic Update: Show message immediately
     setMessages((prev) => [...prev, userMsg]);
     const currentInput = input;
     setInput("");
 
     try {
-      await elysiaClient.api.notification.broadcast({ channelId: activeTicketId }).post({ message: currentInput });
+      await elysiaClient.api.messages.post({
+        ticketId: activeTicketId,
+        content: currentInput,
+        senderId: customerId,
+        senderType: "CUSTOMER",
+      });
     } catch (error) {
       console.error("Failed to send message", error);
     }
@@ -159,21 +279,7 @@ function ChatWidget() {
 
   return (
     <div className="flex flex-col h-screen max-h-screen bg-white overflow-hidden border border-gray-200">
-      <header className="flex-none bg-indigo-600 p-4 text-white flex items-center justify-between shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="bg-indigo-400/30 p-2 rounded-lg">
-            <Bot size={20} />
-          </div>
-          <div>
-            <h2 className="text-sm font-bold leading-none">Support Chat</h2>
-            <span className="text-[10px] text-indigo-200 flex items-center gap-1">
-              <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
-              Always active
-            </span>
-          </div>
-        </div>
-        <Sparkles size={16} className="text-indigo-300" />
-      </header>
+      <ChatHeader />
 
       <main ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50 scroll-smooth pb-4">
         <AnimatePresence mode="popLayout">
@@ -181,7 +287,7 @@ function ChatWidget() {
             const prevMsg = messages[index - 1];
             const nextMsg = messages[index + 1];
 
-            const isSameGroup = (m1: any, m2: any) => {
+            const isSameGroup = (m1?: Message, m2?: Message) => {
               if (!m1 || !m2) return false;
               if (m1.sender !== m2.sender) return false;
               return Math.abs(new Date(m2.timestamp).getTime() - new Date(m1.timestamp).getTime()) <= 30000;
@@ -190,41 +296,7 @@ function ChatWidget() {
             const isStart = !isSameGroup(prevMsg, msg);
             const isEnd = !isSameGroup(msg, nextMsg);
 
-            const getRadiusClasses = () => {
-              const isUser = msg.sender === "user";
-              if (isStart && isEnd) return "rounded-2xl";
-              if (isUser) {
-                if (isStart) return "rounded-2xl rounded-br-none";
-                if (isEnd) return "rounded-2xl rounded-tr-none";
-                return "rounded-2xl rounded-tr-none rounded-br-none";
-              } else {
-                if (isStart) return "rounded-2xl rounded-bl-none";
-                if (isEnd) return "rounded-2xl rounded-tl-none";
-                return "rounded-2xl rounded-tl-none rounded-bl-none";
-              }
-            };
-
-            return (
-              <motion.div
-                key={msg.id}
-                initial={{ opacity: 0, y: 5 }}
-                animate={{ opacity: 1, y: 0 }}
-                className={`flex flex-col ${msg.sender === "user" ? "items-end" : "items-start"} ${!isEnd ? "mb-1" : "mb-4"}`}
-              >
-                <div
-                  className={`max-w-[85%] px-4 py-2 text-sm shadow-sm ${getRadiusClasses()} ${
-                    msg.sender === "user" ? "bg-indigo-600 text-white" : "bg-white text-gray-800 border border-gray-100"
-                  }`}
-                >
-                  {msg.text}
-                </div>
-                {isEnd && (
-                  <span className="text-[10px] text-gray-400 mt-1 px-1">
-                    {new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                  </span>
-                )}
-              </motion.div>
-            );
+            return <ChatMessageBubble key={msg.id} msg={msg} isStart={isStart} isEnd={isEnd} />;
           })}
         </AnimatePresence>
       </main>
@@ -234,29 +306,7 @@ function ChatWidget() {
           {showForm && !isLeadCaptured ? (
             <LeadForm key="lead-form" onSubmit={handleLeadSubmit} />
           ) : isLeadCaptured ? (
-            <motion.div
-              key="chat-input"
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              className="p-3 bg-white border-t border-gray-100"
-            >
-              <form onSubmit={handleSendMessage} className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="Type your message..."
-                  className="flex-1 bg-gray-100 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-                <button
-                  type="submit"
-                  disabled={!input.trim()}
-                  className="bg-indigo-600 text-white p-2.5 rounded-xl active:scale-95 disabled:opacity-50"
-                >
-                  <Send size={18} />
-                </button>
-              </form>
-            </motion.div>
+            <ChatInput key="chat-input" input={input} setInput={setInput} onSend={handleSendMessage} />
           ) : null}
         </AnimatePresence>
       </footer>

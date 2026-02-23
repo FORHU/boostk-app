@@ -1,54 +1,98 @@
-// import type { User } from "better-auth";
-// import { prisma } from "prisma/db";
-// import type { CreateProjectInput } from "../project/project.schema";
-// import type { CreateOrganizationInput } from "./organization.schema";
+import { prisma } from "prisma/db";
+import type { SenderType } from "prisma/generated/client";
+import { EventType } from "@/notifier/core";
+import { getNotifier } from "@/notifier/impl";
 
-// export const OrganizationService = {
-//   async create(data: CreateOrganizationInput, user: User) {
-//     const org = await prisma.organization.create({ data });
+export type NonSystemSenderType = Exclude<SenderType, "SYSTEM">;
 
-//     await prisma.user.update({
-//       where: { id: user.id },
-//       data: { organization: { connect: { id: org.id } } },
-//     });
+export const MessageService = {
+  async createMessage(data: { ticketId: string; content: string; senderId: string; senderType: NonSystemSenderType }) {
+    // 1. Create the message (without the invalid include)
+    const newMessage = await prisma.message.create({
+      data: {
+        ticketId: data.ticketId,
+        content: data.content,
+        senderId: data.senderId,
+        senderType: data.senderType,
+      },
+    });
 
-//     return org;
-//   },
+    // 2. Conditionally fetch the sender based on the senderType
+    let senderDetails = null;
 
-//   async getAll() {
-//     return await prisma.organization.findMany();
-//   },
+    if (data.senderType === "AGENT") {
+      // Fetch Agent (User) details.
+      // Using select to avoid returning sensitive fields like tokens or passwords.
+      senderDetails = await prisma.user.findUnique({
+        where: { id: data.senderId },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      });
+    } else if (data.senderType === "CUSTOMER") {
+      // Fetch Customer details
+      senderDetails = await prisma.customer.findUnique({
+        where: { id: data.senderId },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      });
+    }
 
-//   // Get projects belonging to a specific Org
-//   async getProjects(organizationId: string) {
-//     const org = await prisma.organization.findUnique({
-//       where: { id: organizationId },
-//     });
+    // 3. Combine the message with the fetched sender details
+    const messageWithSender = {
+      ...newMessage,
+      sender: senderDetails,
+    };
 
-//     if (!org) return null;
+    // 4. Broadcast and return the enriched message
+    getNotifier().onBroadcast(`ticket_${data.ticketId}`, messageWithSender, EventType.CHAT_MESSAGE);
 
-//     return await prisma.project.findMany({
-//       where: { orgId: organizationId },
-//     });
-//   },
+    return messageWithSender;
+  },
 
-//   // Create a project linked to this Org
-//   async createProject(organizationId: string, data: CreateProjectInput) {
-//     return await prisma.$transaction(async (tx) => {
-//       const project = await tx.project.create({
-//         data: {
-//           ...data,
-//           apiKey: "",
-//           organization: { connect: { id: organizationId } },
-//         },
-//       });
+  async createSystemMessage(data: { ticketId: string; content: string }) {
+    const newMessage = await prisma.message.create({
+      data: {
+        ticketId: data.ticketId,
+        content: data.content,
+        senderId: "SYSTEM",
+        senderType: "SYSTEM",
+      },
+      include: {
+        ticket: true,
+      },
+    });
 
-//       return await tx.project.update({
-//         where: { id: project.id },
-//         data: {
-//           apiKey: `ch-api-${project.id}`,
-//         },
-//       });
-//     });
-//   },
-// };
+    getNotifier().onBroadcast(`ticket_${newMessage.ticketId}`, newMessage, EventType.CHAT_MESSAGE);
+
+    return newMessage;
+  },
+
+  async getHistory(ticketId: string, cursor?: string, take: number = 20) {
+    const messages = await prisma.message.findMany({
+      where: { ticketId },
+      orderBy: { createdAt: "desc" },
+      take,
+      cursor: cursor ? { id: cursor } : undefined,
+      skip: cursor ? 1 : 0,
+    });
+
+    // We want the frontend to display chronologically, so we reverse the descending list
+    const reversedMessages = messages.reverse();
+
+    let nextCursor: string | undefined = undefined;
+    if (messages.length === take) {
+      nextCursor = reversedMessages[0].id;
+    }
+
+    return {
+      messages: reversedMessages,
+      nextCursor,
+    };
+  },
+};
