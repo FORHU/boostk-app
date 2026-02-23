@@ -1,6 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
+import { elysiaClient } from "@/lib/elysia-client";
+import { useAppStore } from "@/store/app.store";
 import { TopBar } from "../../../components/TopBar";
 import { getProjectTickets } from "../../../modules/ticket/ticket.serverFn";
 import { ChatBox } from "./-components/ChatBox";
@@ -8,11 +10,11 @@ import { CustomerInfoSidebar } from "./-components/CustomerInfoSidebar";
 import { TicketDetailsSidebar } from "./-components/TicketDetailsSidebar";
 import { TicketTabs } from "./-components/TicketTabs";
 import { useChatSupportStore } from "./-store/chat-support.store";
-import { useAppStore } from "@/store/app.store";
 
 export const Route = createFileRoute("/(authenticated)/chat-support/")({
   component: RouteComponent,
   loader: async () => {
+    // TODO: get project id from url
     // We can prefetch here if we want, but for simplicity we'll just use useQuery in the component
     return {};
   },
@@ -22,6 +24,13 @@ function RouteComponent() {
   const selectedProject = useAppStore((state) => state.selectedProject);
   const selectedOrganization = useAppStore((state) => state.selectedOrganization);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  // SSE Store setup
+  const lastSseEvent = useAppStore((state) => state.lastSseEvent);
+
+  const context = Route.useRouteContext() as any;
+  const agentId = context?.authSession?.user?.id || context?.authSession?.id || "agent_fallback";
 
   useEffect(() => {
     if (!selectedProject) {
@@ -49,6 +58,43 @@ function RouteComponent() {
   }, [tickets, activeTicketId, setActiveTicketId]);
 
   const activeTicket = tickets?.find((t) => t.id === activeTicketId) || tickets?.[0];
+
+  // Dynamic Topics Subscription
+  useEffect(() => {
+    const subscribeTopics = async () => {
+      try {
+        if (selectedProject?.id) {
+          await elysiaClient.api.notification["active-topics"].add.post({
+            agentId: `agent_${agentId}`,
+            topicId: `project_${selectedProject.id}`,
+          });
+        }
+        if (activeTicketId) {
+          await elysiaClient.api.notification["active-topics"].add.post({
+            agentId: `agent_${agentId}`,
+            topicId: `ticket_${activeTicketId}`,
+          });
+        }
+      } catch (err) {
+        console.error("Failed to subscribe to topics", err);
+      }
+    };
+    subscribeTopics();
+  }, [selectedProject?.id, activeTicketId, agentId]);
+
+  // Handle Real-Time Events
+  useEffect(() => {
+    if (lastSseEvent) {
+      if (lastSseEvent.event === "heartbeat") return;
+      console.log("lastSseEvent", lastSseEvent);
+      if (lastSseEvent.event === "ticket_assigned" || lastSseEvent.event === "ticket_created") {
+        queryClient.invalidateQueries({ queryKey: ["project-tickets", selectedProject?.id] });
+      }
+      if (lastSseEvent.event === "chat_message") {
+        queryClient.invalidateQueries({ queryKey: ["ticket-messages", lastSseEvent.data.ticketId] });
+      }
+    }
+  }, [lastSseEvent, queryClient, selectedProject?.id]);
 
   if (!isLoading && (!tickets || tickets.length === 0)) {
     return (

@@ -3,6 +3,11 @@ export enum EventType {
   JOIN = "join",
   TEST = "test",
   HEARTBEAT = "heartbeat",
+
+  TICKET_ASSIGNED = "ticket_assigned",
+  CHAT_MESSAGE = "chat_message",
+
+  TICKET_CREATED = "ticket_created",
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: <TODO: fix any type here later>

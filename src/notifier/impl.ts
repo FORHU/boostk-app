@@ -1,12 +1,18 @@
 import type { Notifier } from "./core";
 import { InMemoryNotifier } from "./memory";
 
-let notifier: Notifier | null = null;
+const globalForNotifier = globalThis as unknown as {
+  __notifier: Notifier | undefined;
+};
 
 export function getNotifier() {
-  if (!notifier) {
-    notifier = new InMemoryNotifier();
+  if (typeof window !== "undefined") {
+    throw new Error("getNotifier() can only be called on the server.");
   }
 
-  return notifier;
+  if (!globalForNotifier.__notifier) {
+    globalForNotifier.__notifier = new InMemoryNotifier();
+  }
+
+  return globalForNotifier.__notifier;
 }

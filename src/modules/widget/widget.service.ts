@@ -11,8 +11,8 @@ const widgetInputValidator = z.object({
 export const validateWidgetAccess = createServerFn({ method: "GET" })
   .inputValidator(widgetInputValidator)
   .handler(async ({ data }) => {
-    const { apiKey, domain } = data;
-    console.log("test 2", apiKey, domain);
+    const { apiKey } = data;
+
     const project = await prisma.project.findUnique({
       where: { apiKey },
       select: {
