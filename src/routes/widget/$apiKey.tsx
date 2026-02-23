@@ -25,6 +25,9 @@ export type MessageSender = "bot" | "user" | "agent";
 export interface Message {
   id: string;
   text: string;
+  translatedText?: string;
+  sourceLang?: string;
+  targetLang?: string;
   sender: MessageSender;
   timestamp: string;
 }
@@ -77,7 +80,35 @@ function ChatMessageBubble({ msg, isStart, isEnd }: { msg: Message; isStart: boo
           msg.sender === "user" ? "bg-indigo-600 text-white" : "bg-white text-gray-800 border border-gray-100"
         }`}
       >
-        {msg.text}
+        {/* Customer viewing their own message */}
+        {msg.sender === "user" ? (
+          <>
+            <p className="whitespace-pre-wrap">{msg.text}</p>
+            {msg.translatedText && (
+              <p className="mt-1 text-[11px] italic opacity-80 whitespace-pre-wrap text-indigo-200">
+                Translated: {msg.translatedText}
+              </p>
+            )}
+            {!msg.translatedText && msg.sourceLang !== msg.targetLang && msg.sourceLang && (
+              <p className="mt-1 text-[10px] italic opacity-60 flex items-center gap-1 text-indigo-200">
+                <span className="w-1 h-1 bg-white/60 rounded-full animate-pulse"></span> Translating...
+              </p>
+            )}
+          </>
+        ) : (
+          /* Customer viewing incoming Agent/Bot message */
+          <>
+            <p className="whitespace-pre-wrap">
+              {msg.translatedText ||
+                (msg.sourceLang === msg.targetLang || !msg.sourceLang ? msg.text : "Translating...")}
+            </p>
+            {(msg.translatedText || msg.sourceLang === msg.targetLang || !msg.sourceLang) && (
+              <p className="mt-1 text-[11px] italic opacity-70 whitespace-pre-wrap text-gray-500">
+                Original: {msg.text}
+              </p>
+            )}
+          </>
+        )}
       </div>
       {isEnd && (
         <span className="text-[10px] text-gray-400 mt-1 px-1">
@@ -132,9 +163,17 @@ function ChatWidget() {
   const [input, setInput] = useState("");
   const [activeTicketId, setActiveTicketId] = useState<string>();
   const [customerId, setCustomerId] = useState<string>();
-
+  const [browserLanguage, setBrowserLanguage] = useState<string>("en");
+  console.log(browserLanguage);
   const { apiKey } = Route.useRouteContext();
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // 0. DETECT BROWSER LANGUAGE
+  useEffect(() => {
+    if (typeof navigator !== "undefined") {
+      setBrowserLanguage(navigator.language || navigator.languages?.[0] || "en");
+    }
+  }, []);
 
   // 1. SCROLL LOGIC
   useEffect(() => {
@@ -194,6 +233,7 @@ function ChatWidget() {
               continue;
             }
           } else {
+            // biome-ignore lint/suspicious/noExplicitAny: <TODO: type safety for SSE>
             parsed = rawData as Record<string, any>;
           }
 
@@ -208,20 +248,29 @@ function ChatWidget() {
           const msgData = parsed.data || parsed;
 
           setMessages((prev) => {
-            if (prev.find((m) => m.id === msgData.id || m.id === parsed.id)) return prev;
-
+            const rawId = msgData.id || parsed.id || Date.now().toString();
+            const existingIndex = prev.findIndex((m) => m.id === rawId);
             const backendSender = (msgData.senderType || parsed.senderType || "AGENT").toUpperCase();
             const senderRole: MessageSender = backendSender === "CUSTOMER" ? "user" : "agent";
 
-            return [
-              ...prev,
-              {
-                id: msgData.id || parsed.id || Date.now().toString(),
-                text: msgData.content || msgData.message || parsed.content || parsed.message || "",
-                sender: senderRole,
-                timestamp: msgData.createdAt || parsed.createdAt || new Date().toISOString(),
-              },
-            ];
+            const newMessage = {
+              id: rawId,
+              text: msgData.content || msgData.message || parsed.content || parsed.message || "",
+              translatedText: msgData.translatedContent || parsed.translatedContent,
+              sourceLang: msgData.sourceLang || parsed.sourceLang,
+              targetLang: msgData.targetLang || parsed.targetLang,
+              sender: senderRole,
+              timestamp: msgData.createdAt || parsed.createdAt || new Date().toISOString(),
+            };
+
+            // Replace if existing, otherwise append
+            if (existingIndex !== -1) {
+              const updated = [...prev];
+              updated[existingIndex] = newMessage;
+              return updated;
+            }
+
+            return [...prev, newMessage];
           });
         }
       } catch (err: unknown) {
@@ -241,7 +290,7 @@ function ChatWidget() {
   const handleLeadSubmit = async (data: { name: string; email: string }) => {
     try {
       const ticket = await createTicket({
-        data: { apiKey, name: data.name, email: data.email },
+        data: { apiKey, name: data.name, email: data.email, browserLanguage },
       });
 
       setActiveTicketId(ticket.id);
