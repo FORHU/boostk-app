@@ -65,13 +65,14 @@ function AuthenticatedLayout() {
         <div className="px-4 py-6 flex-1 overflow-y-auto">
           <div className="text-[10px] font-bold text-gray-500 mb-4 px-2 tracking-wider">PLATFORM</div>
           <nav className="space-y-1">
-            <Link
+            {/* TODO: Remove dashboard link */}
+            {/* <Link
               to="/dashboard"
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium text-sm text-gray-700 hover:bg-blue-500 hover:text-white transition-colors group [&.active]:bg-blue-500 [&.active]:text-white"
             >
               <LayoutDashboard size={18} />
               Dashboard
-            </Link>
+            </Link> */}
 
             <Link
               to="/organization"
