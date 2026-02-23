@@ -1,6 +1,6 @@
 import { useForm } from "@tanstack/react-form";
 import { createFileRoute } from "@tanstack/react-router";
-import { Copy, Plus, UserPlus } from "lucide-react";
+import { Copy, UserPlus } from "lucide-react";
 import { z } from "zod";
 
 export const Route = createFileRoute("/(authenticated)/project/$projectId/agents")({
@@ -8,8 +8,8 @@ export const Route = createFileRoute("/(authenticated)/project/$projectId/agents
 });
 
 const inviteSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
-  role: z.enum(["AGENT", "ADMIN"]).default("AGENT"),
+  email: z.email("Please enter a valid email address"),
+  role: z.enum(["AGENT", "ADMIN"]),
 });
 
 function AgentsComponent() {
@@ -51,7 +51,10 @@ function AgentsComponent() {
               value={inviteLink}
               className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 pr-10"
             />
-            <button className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors">
+            <button
+              type="button"
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+            >
               <Copy size={16} />
             </button>
           </div>
@@ -99,7 +102,7 @@ function AgentsComponent() {
                     id={field.name}
                     value={field.state.value}
                     onBlur={field.handleBlur}
-                    onChange={(e) => field.handleChange(e.target.value)}
+                    onChange={(e) => field.handleChange(e.target.value as "AGENT" | "ADMIN")}
                     className="w-full p-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow bg-white"
                   >
                     <option value="AGENT">Agent</option>
@@ -146,7 +149,7 @@ function AgentsComponent() {
             <tr>
               <td className="px-6 py-4 whitespace-nowrap">
                 <div className="flex items-center">
-                  <div className="flex-shrink-0 h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs">
+                  <div className="shrink-0 h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs">
                     JK
                   </div>
                   <div className="ml-4">
@@ -164,14 +167,16 @@ function AgentsComponent() {
                 </span>
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <button className="text-gray-400 hover:text-gray-600">Edit</button>
+                <button type="button" className="text-gray-400 hover:text-gray-600">
+                  Edit
+                </button>
               </td>
             </tr>
             {/* Dummy User 2 */}
             <tr>
               <td className="px-6 py-4 whitespace-nowrap">
                 <div className="flex items-center">
-                  <div className="flex-shrink-0 h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold text-xs">
+                  <div className="shrink-0 h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold text-xs">
                     SA
                   </div>
                   <div className="ml-4">
@@ -189,14 +194,16 @@ function AgentsComponent() {
                 </span>
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <button className="text-gray-400 hover:text-gray-600">Edit</button>
+                <button type="button" className="text-gray-400 hover:text-gray-600">
+                  Edit
+                </button>
               </td>
             </tr>
             {/* Dummy User 3 */}
             <tr>
               <td className="px-6 py-4 whitespace-nowrap">
                 <div className="flex items-center">
-                  <div className="flex-shrink-0 h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 font-bold text-xs">
+                  <div className="shrink-0 h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 font-bold text-xs">
                     MJ
                   </div>
                   <div className="ml-4">
@@ -214,7 +221,9 @@ function AgentsComponent() {
                 </span>
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <button className="text-red-500 hover:text-red-700">Revoke</button>
+                <button type="button" className="text-red-500 hover:text-red-700">
+                  Revoke
+                </button>
               </td>
             </tr>
           </tbody>
