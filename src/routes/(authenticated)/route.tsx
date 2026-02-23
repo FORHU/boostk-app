@@ -4,28 +4,46 @@ import { getOrganization } from "@/modules/organization/organization.serverFn";
 import { useAppStore } from "@/store/app.store";
 
 export const Route = createFileRoute("/(authenticated)")({
-  beforeLoad: async ({ context }) => {
+  beforeLoad: async ({ context, location }) => {
     if (!context.authSession) {
       throw redirect({ to: "/signin" });
     }
 
-    const orgId = context.authSession.user.orgId;
+    // Handle string variants: `/organization`, `/organization/`, `/organization/create`, etc.
+    const normalizedPath = location.pathname.replace(/\/$/, "");
+    const isOrgRoute = normalizedPath === "/organization" || normalizedPath.startsWith("/organization/");
+
+    const orgId = context.authSession.user?.orgId;
+
     if (!orgId) {
+      if (isOrgRoute) {
+        return {
+          authSession: {
+            ...context.authSession,
+            user: { ...context.authSession.user, organization: null },
+          },
+        };
+      }
       throw redirect({ to: "/organization" });
     }
-    const authUserOrg = await getOrganization({ data: { orgId } });
 
+    const authUserOrg = await getOrganization({ data: { orgId } });
     if (!authUserOrg) {
+      if (isOrgRoute) {
+        return {
+          authSession: {
+            ...context.authSession,
+            user: { ...context.authSession.user, organization: null },
+          },
+        };
+      }
       throw redirect({ to: "/organization" });
     }
 
     return {
       authSession: {
         ...context.authSession,
-        user: {
-          ...context.authSession.user,
-          organization: authUserOrg,
-        },
+        user: { ...context.authSession.user, organization: authUserOrg },
       },
     };
   },

@@ -1,16 +1,5 @@
-import { betterAuth } from "better-auth";
-import { prismaAdapter } from "better-auth/adapters/prisma";
 import Elysia from "elysia";
-import { prisma } from "prisma/db";
-
-export const auth = betterAuth({
-  database: prismaAdapter(prisma, {
-    provider: "postgresql",
-  }),
-  emailAndPassword: {
-    enabled: true,
-  },
-});
+import { auth } from "@/lib/auth";
 
 export const authMiddleware = new Elysia({ name: "better-auth" }).mount(auth.handler).macro({
   auth: {
