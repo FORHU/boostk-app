@@ -82,16 +82,13 @@ export const MessageService = {
       skip: cursor ? 1 : 0,
     });
 
-    // We want the frontend to display chronologically, so we reverse the descending list
-    const reversedMessages = messages.reverse();
-
     let nextCursor: string | undefined = undefined;
     if (messages.length === take) {
-      nextCursor = reversedMessages[0].id;
+      nextCursor = messages[messages.length - 1].id;
     }
 
     return {
-      messages: reversedMessages,
+      messages,
       nextCursor,
     };
   },
