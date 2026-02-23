@@ -1,77 +1,108 @@
 import { Elysia } from "elysia";
 import z from "zod";
-import type { Message } from "@/notifier/core";
+import { EventType, type Message } from "@/notifier/core";
 import { getNotifier } from "@/notifier/impl";
 
 export const notificationController = new Elysia({ prefix: "/notification" })
   .post(
     "broadcast/:channelId",
     ({ body, params: { channelId } }) => {
-      console.log("broadcast", channelId, body.message);
-
-      getNotifier().onBroadcast(channelId, body.message);
+      console.log(`[Notification Controller] Received manual broadcast for channel ${channelId}. Event: ${body.event}`);
+      getNotifier().onBroadcast(channelId, body.data, body.event);
       return { success: true };
     },
     {
       body: z.object({
-        message: z.string(),
+        data: z.any(),
+        event: z.enum(EventType),
       }),
     },
   )
-  .get("listen/:channelId", ({ params: { channelId }, set }) => {
+  .post(
+    "active-topics/add",
+    ({ body }) => {
+      const { agentId, topicId } = body;
+      console.log(`[Notification Controller] Agent ${agentId} subscribing to topic ${topicId}`);
+      getNotifier().subscribeUserToTopic(agentId, topicId);
+      return { success: true };
+    },
+    {
+      body: z.object({
+        agentId: z.string(),
+        topicId: z.string(),
+      }),
+    },
+  )
+  .post(
+    "active-topics/remove",
+    ({ body }) => {
+      const { agentId, topicId } = body;
+      console.log(`[Notification Controller] Agent ${agentId} unsubscribing from topic ${topicId}`);
+      getNotifier().unsubscribeUserFromTopic(agentId, topicId);
+      return { success: true };
+    },
+    {
+      body: z.object({
+        agentId: z.string(),
+        topicId: z.string(),
+      }),
+    },
+  )
+  .get("listen/:channelId", ({ query, headers, params: { channelId }, set }) => {
     set.headers["Content-Type"] = "text/event-stream";
     set.headers["Cache-Control"] = "no-cache";
     set.headers.Connection = "keep-alive";
 
+    const lastEventId = (query.lastEventId as string | undefined) || headers["last-event-id"];
     const notifier = getNotifier();
 
-    const stream = new ReadableStream({
-      async start(controller) {
-        // 1. Setup the listener and resolver
-        let resolver: ((value: Message | "__heartbeat__") => void) | null = null;
+    // Variables held in closure so cancel() can access them
+    let heartbeatInterval: Timer | NodeJS.Timeout;
+    let streamListener: (data: Message) => void;
 
-        const listener = (data: Message) => {
-          if (resolver) resolver(data);
+    const stream = new ReadableStream({
+      start(controller) {
+        console.log(
+          `[Notification Controller] Stream established for ${channelId} (LastEventId: ${lastEventId || "none"})`,
+        );
+
+        // Send initial connection message. Notice we omit "event:" so the worker's onmessage catches it.
+        controller.enqueue(
+          `data: ${JSON.stringify({ event: "system", data: "connected", timestamp: Date.now() })}\n\n`,
+        );
+
+        // 1. Define a direct listener. No promises, no loops. Immediate pass-through.
+        streamListener = (message: Message) => {
+          try {
+            // FIX: Stringify the ENTIRE message object, not just message.data.
+            // This matches the worker's expectation: JSON.parse(e.data) -> Message
+            const payload = JSON.stringify(message);
+
+            // FIX: We omit "event:" line so it defaults to "message" and triggers Worker's onmessage
+            controller.enqueue(`id: ${message.id}\ndata: ${payload}\n\n`);
+          } catch (err) {
+            console.error(`[SSE API] Failed to enqueue message for ${channelId}`, err);
+          }
         };
 
-        notifier.subscribe(channelId, listener);
-
-        // 2. Send initial connection message
-        const initialMsg = `data: ${JSON.stringify({ type: "system", message: "connected", timestamp: Date.now() })}\n\n`;
-        controller.enqueue(initialMsg);
-
-        try {
-          while (true) {
-            // 3. Wait for either a message or a 5s heartbeat timeout
-            const message = await Promise.race([
-              new Promise<Message | "__heartbeat__">((resolve) => {
-                resolver = resolve;
-              }),
-              new Promise<"__heartbeat__">((resolve) => setTimeout(() => resolve("__heartbeat__"), 5000)),
-            ]);
-
-            let payload: string;
-
-            if (message === "__heartbeat__") {
-              payload = JSON.stringify({ type: "heartbeat", timestamp: Date.now() });
-            } else {
-              payload = JSON.stringify(message);
-            }
-
-            // 4. Format as SSE data and push to stream
+        // 2. Setup standard heartbeat without blocking the thread
+        heartbeatInterval = setInterval(() => {
+          try {
+            const payload = JSON.stringify({ event: "heartbeat", timestamp: Date.now() });
             controller.enqueue(`data: ${payload}\n\n`);
+          } catch (e) {
+            clearInterval(heartbeatInterval);
           }
-        } catch (e) {
-          console.error(`Stream error for ${channelId}:`, e);
-        } finally {
-          // 5. Cleanup when the loop breaks or connection closes
-          notifier.unsubscribe(channelId, listener);
-          console.log(`Connection closed for channel: ${channelId}`);
-        }
+        }, 5000);
+
+        // 3. Subscribe LAST, so if the notifier immediately flushes buffered events,
+        // the streamListener and controller are already fully initialized to catch them.
+        notifier.subscribe(channelId, streamListener, lastEventId);
       },
       cancel() {
-        // This is triggered if the client disconnects (browser closes tab, etc.)
-        console.log(`Client disconnected from ${channelId}`);
+        console.log(`[SSE API] Client disconnected from ${channelId}`);
+        clearInterval(heartbeatInterval);
+        notifier.unsubscribe(channelId, streamListener);
       },
     });
 
