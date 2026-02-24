@@ -23,14 +23,13 @@ export const BarrierCard: React.FC<BarrierCardProps> = React.memo(({
   const cardRef = useRef<HTMLDivElement>(null);
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const timeoutRefs = useRef<(ReturnType<typeof setTimeout> | null)[]>([]);
-  const [isHovered, setIsHovered] = useState(false);
   
   // Track play counts for each video
   const playCounts = useRef<number[]>(new Array(videos.length).fill(0));
   // Track if videos have reached their limit
   const [videosFinished, setVideosFinished] = useState<boolean[]>(new Array(videos.length).fill(false));
   // Track if card is visible
-  const [isVisible, setIsVisible] = useState(false);
+  const isVisible = useRef(false);
   // Add a flag to prevent multiple replay attempts
   const isReplaying = useRef<boolean>(false);
 
@@ -104,7 +103,7 @@ export const BarrierCard: React.FC<BarrierCardProps> = React.memo(({
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          setIsVisible(entry.isIntersecting);
+          isVisible.current = entry.isIntersecting;
           
           videoRefs.current.forEach((video, index) => {
             if (!video) return;
@@ -152,8 +151,6 @@ export const BarrierCard: React.FC<BarrierCardProps> = React.memo(({
     <div
       ref={cardRef}
       className="group relative h-auto md:h-[600px] w-full"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
       <div className="relative h-full w-full">
         {/* Floating Icon Box */}
@@ -169,8 +166,7 @@ export const BarrierCard: React.FC<BarrierCardProps> = React.memo(({
         <div className="relative h-full w-full flex flex-col overflow-hidden rounded-xl border-r-[12px] border-r-blue-600 border-b-[12px] border-b-indigo-600 shadow-2xl bg-white transition-transform duration-300 hover:-translate-y-2">
           {/* Main Content */}
           <div
-            className="relative z-10 flex h-full flex-col p-10 pt-24 transition-opacity duration-300"
-            style={{ opacity: isHovered ? 0.3 : 1 }}
+            className="relative z-10 flex h-full flex-col p-10 pt-24 transition-opacity duration-300 group-hover:opacity-30"
           >
             <h3 className="mb-6 text-3xl font-extrabold text-slate-900 tracking-tight">
               {title}
@@ -220,12 +216,7 @@ export const BarrierCard: React.FC<BarrierCardProps> = React.memo(({
 
           {/* Sliding Blue Drawer */}
           <div
-            className="absolute bottom-0 left-0 right-0 z-30 flex w-full flex-col justify-center bg-gradient-to-r from-blue-600 via-indigo-500 to-blue-400 p-10 transition-all duration-300 border-t border-white/20"
-            style={{
-              height: isHovered ? '40%' : '0%',
-              opacity: isHovered ? 1 : 0,
-              pointerEvents: isHovered ? 'auto' : 'none'
-            }}
+            className="absolute bottom-0 left-0 right-0 z-30 flex w-full flex-col justify-center bg-gradient-to-r from-blue-600 via-indigo-500 to-blue-400 p-10 transition-all duration-300 border-t border-white/20 h-0 opacity-0 pointer-events-none group-hover:h-[40%] group-hover:opacity-100 group-hover:pointer-events-auto"
           >
             <div className="mb-3 flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-blue-100">
               <CheckCircle size={20} />

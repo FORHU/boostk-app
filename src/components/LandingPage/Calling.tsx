@@ -12,15 +12,18 @@ export const Calling  = () => {
                         <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center mb-6 shadow-lg shadow-white/20">
                             <span className="material-symbols-outlined text-[#ec4899] text-3xl drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]">favorite</span>
                         </div>
-                        <h2 className="text-3xl md:text-5xl font-display font-extrabold text-white mb-6 tracking-tight leading-tight">
+                        <h2 className="text-3xl md:text-5xl font-display font-extrabold text-white mb-6 tracking-tight leading-tight ">
                             We Believe In You
                         </h2>
                         <p className="text-lg text-blue-100 font-medium mb-10 max-w-2xl mx-auto leading-relaxed">
                             We’ll take the first small step toward the world together. Join high-performing teams already using BOOSTK to drive global growth.
                         </p>
                         <div className="flex flex-col sm:flex-row gap-4 w-full justify-center mb-8">
-                            <button className="px-8 py-3.5 bg-white text-[#3b82f5] font-bold text-base rounded-lg hover:bg-blue-50 transition-all shadow-md active:scale-95">
-                            Get Started Now
+                            <button className="px-8 py-3.5 bg-white text-[#3b82f5] font-bold text-base rounded-lg 
+                                hover:bg-blue-700 hover:text-white hover:shadow-lg hover:-translate-y-0.5
+                                active:bg-blue-600 active:translate-y-0
+                                transition-all duration-200">
+                                Get Started Now
                             </button>
                         </div>
                         <p className="text-[11px] text-blue-100 font-medium tracking-wide opacity-80">

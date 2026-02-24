@@ -38,7 +38,7 @@ export const StepsCard: React.FC<StepCardProps> = ({
         </div>
 
         {/* Content */}
-        <h3 className="text-lg font-bold text-slate-800 mb-3 group-hover:text-blue-600 transition-colors">
+        <h3 className="text-lg font-bold text-slate-800 mb-3">
           {title}
         </h3>
         <p className="text-sm text-slate-500 leading-relaxed">
