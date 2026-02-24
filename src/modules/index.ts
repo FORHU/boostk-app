@@ -30,6 +30,7 @@ const api = new Elysia({ prefix: "/api" })
   .use(projectController)
   .use(notificationController)
   .use(messageController)
+  .get("/demo", () => Bun.file("./public/demo/index.html"))
   .get("/user", ({ user }) => user, { auth: true })
   .get("/hello", ({ user }) => ({ message: `Hello from Elysia ${user.email}` }), { auth: true });
 
