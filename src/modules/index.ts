@@ -1,3 +1,4 @@
+import path from "node:path";
 import { cors } from "@elysiajs/cors";
 import { openapi } from "@elysiajs/openapi";
 import { Elysia, t } from "elysia";
@@ -30,7 +31,6 @@ const api = new Elysia({ prefix: "/api" })
   .use(projectController)
   .use(notificationController)
   .use(messageController)
-  .get("/demo", () => Bun.file("./public/demo/index.html"))
   .get("/user", ({ user }) => user, { auth: true })
   .get("/hello", ({ user }) => ({ message: `Hello from Elysia ${user.email}` }), { auth: true });
 
@@ -38,6 +38,7 @@ export const backend = new Elysia()
   .use(cors())
   .use(openapi({ enabled: env.VITE_APP_ENV === "local" || env.VITE_APP_ENV === "staging" }))
   .use(ws)
-  .use(api);
+  .use(api)
+  .get("/demo", () => Bun.file(path.join(import.meta.dir, "../../public/demo/index.html")));
 
 export type App = typeof backend;
