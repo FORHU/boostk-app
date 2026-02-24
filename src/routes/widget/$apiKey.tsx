@@ -89,11 +89,13 @@ function ChatMessageBubble({ msg, isStart, isEnd }: { msg: Message; isStart: boo
                 Translated: {msg.translatedText}
               </p>
             )}
-            {!msg.translatedText && msg.sourceLang !== msg.targetLang && msg.sourceLang && (
-              <p className="mt-1 text-[10px] italic opacity-60 flex items-center gap-1 text-indigo-200">
-                <span className="w-1 h-1 bg-white/60 rounded-full animate-pulse"></span> Translating...
-              </p>
-            )}
+            {!msg.translatedText &&
+              msg.sourceLang?.split("-")[0] !== msg.targetLang?.split("-")[0] &&
+              msg.sourceLang && (
+                <p className="mt-1 text-[10px] italic opacity-60 flex items-center gap-1 text-indigo-200">
+                  <span className="w-1 h-1 bg-white/60 rounded-full animate-pulse"></span> Translating...
+                </p>
+              )}
           </>
         ) : (
           /* Customer viewing incoming Agent/Bot message */
@@ -101,7 +103,9 @@ function ChatMessageBubble({ msg, isStart, isEnd }: { msg: Message; isStart: boo
             <p className="whitespace-pre-wrap">
               {
                 msg.translatedText === "__TRANSLATION_ERROR__" ||
-                (!msg.translatedText && msg.sourceLang !== msg.targetLang && msg.sourceLang)
+                (!msg.translatedText &&
+                  msg.sourceLang?.split("-")[0] !== msg.targetLang?.split("-")[0] &&
+                  msg.sourceLang)
                   ? msg.text // While loading or on error: Show original text as main
                   : msg.translatedText || msg.text // When complete or no translation needed: Show translated text as main
               }
@@ -110,11 +114,13 @@ function ChatMessageBubble({ msg, isStart, isEnd }: { msg: Message; isStart: boo
             {/* Bottom auxiliary text */}
             {msg.translatedText === "__TRANSLATION_ERROR__" ? (
               <p className="mt-1 text-[11px] italic opacity-80 whitespace-pre-wrap text-red-500">Translation error</p>
-            ) : !msg.translatedText && msg.sourceLang !== msg.targetLang && msg.sourceLang ? (
+            ) : !msg.translatedText &&
+              msg.sourceLang?.split("-")[0] !== msg.targetLang?.split("-")[0] &&
+              msg.sourceLang ? (
               <p className="mt-1 text-[10px] italic opacity-80 flex items-center gap-1 text-gray-500">
                 <span className="w-1 h-1 bg-gray-400 rounded-full animate-pulse"></span> Translating...
               </p>
-            ) : msg.translatedText || msg.sourceLang === msg.targetLang || !msg.sourceLang ? (
+            ) : msg.translatedText && msg.targetLang?.split("-")[0] !== "en" ? (
               <p className="mt-1 text-[11px] italic opacity-70 whitespace-pre-wrap text-gray-500">
                 Original: {msg.text}
               </p>
@@ -218,7 +224,7 @@ function ChatWidget() {
   const [input, setInput] = useState("");
   const [activeTicketId, setActiveTicketId] = useState<string>();
   const [customerId, setCustomerId] = useState<string>();
-  const [browserLanguage, setBrowserLanguage] = useState<string>("en");
+  const [browserLanguage, setBrowserLanguage] = useState<string | null>(null);
   console.log(browserLanguage);
   const { apiKey } = Route.useRouteContext();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -232,26 +238,33 @@ function ChatWidget() {
 
   const translateText = useCallback(
     async (text: string, targetLang: string, messageId: string, name?: string, refId?: string) => {
-      if (targetLang === "en" || targetLang.startsWith("en-")) return;
-
       // Fast local i18n lookup instead of API call
       const baseLang = targetLang.split("-")[0];
       let translated = "";
 
-      if (name && refId) {
-        translated = getConfirmationTranslation(name, refId, targetLang);
-      } else {
-        translated = uiTranslations[text]?.[targetLang] || uiTranslations[text]?.[baseLang];
+      // Only look up translation if not English
+      if (baseLang !== "en") {
+        if (name && refId) {
+          translated = getConfirmationTranslation(name, refId, targetLang);
+        } else {
+          translated = uiTranslations[text]?.[targetLang] || uiTranslations[text]?.[baseLang];
+        }
       }
 
-      if (translated) {
-        // Simulate slight async delay to feel like the actual translation flow
-        setTimeout(() => {
-          setMessages((prev) =>
-            prev.map((msg) => (msg.id === messageId ? { ...msg, translatedText: translated } : msg)),
-          );
-        }, 300);
-      }
+      // Always resolve the message — use translation if found, otherwise original text.
+      // This prevents messages from being stuck in "Translating..." forever.
+      setTimeout(() => {
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === messageId
+              ? {
+                  ...msg,
+                  translatedText: translated || text,
+                }
+              : msg,
+          ),
+        );
+      }, 300);
     },
     [],
   );
@@ -271,11 +284,15 @@ function ChatWidget() {
   }, [messages, showForm]);
 
   // 2. INITIAL DELAY FOR FORM
+  // Wait until browser language is detected (not null) before showing initial message
   useEffect(() => {
+    if (browserLanguage === null) return;
+
     const timer = setTimeout(() => {
       const initialId = "initial";
       const text = "Hi! Please introduce yourself to start the chat.";
 
+      const lang = browserLanguage ?? "en";
       setMessages([
         {
           id: initialId,
@@ -283,13 +300,13 @@ function ChatWidget() {
           sender: "bot",
           timestamp: new Date().toISOString(),
           sourceLang: "en",
-          targetLang: browserLanguage,
+          targetLang: lang,
         },
       ]);
       setShowForm(true);
 
-      if (browserLanguage !== "en" && !browserLanguage.startsWith("en-")) {
-        translateText(text, browserLanguage, initialId);
+      if (lang !== "en" && !lang.startsWith("en-")) {
+        translateText(text, lang, initialId);
       }
     }, 1000);
     return () => clearTimeout(timer);
@@ -380,7 +397,7 @@ function ChatWidget() {
   const handleLeadSubmit = async (data: { name: string; email: string }) => {
     try {
       const ticket = await createTicket({
-        data: { apiKey, name: data.name, email: data.email, browserLanguage },
+        data: { apiKey, name: data.name, email: data.email, browserLanguage: browserLanguage ?? "en" },
       });
 
       setActiveTicketId(ticket.id);
@@ -393,6 +410,7 @@ function ChatWidget() {
       const noteId = `note-${Date.now()}`;
       const confText = `Thanks, ${data.name}! Your reference: ${ticket.referenceId}`;
       const noteText = "How can I help you today?";
+      const lang = browserLanguage ?? "en";
 
       setMessages((prev) => [
         ...prev,
@@ -402,7 +420,7 @@ function ChatWidget() {
           sender: "bot",
           timestamp: now,
           sourceLang: "en",
-          targetLang: browserLanguage,
+          targetLang: lang,
         },
         {
           id: noteId,
@@ -410,13 +428,13 @@ function ChatWidget() {
           sender: "bot",
           timestamp: now,
           sourceLang: "en",
-          targetLang: browserLanguage,
+          targetLang: lang,
         },
       ]);
 
-      if (browserLanguage !== "en" && !browserLanguage.startsWith("en-")) {
-        translateText(confText, browserLanguage, confId, data.name, ticket.referenceId);
-        translateText(noteText, browserLanguage, noteId);
+      if (lang !== "en" && !lang.startsWith("en-")) {
+        translateText(confText, lang, confId, data.name, ticket.referenceId);
+        translateText(noteText, lang, noteId);
       }
     } catch (error) {
       console.error("Failed to create ticket", error);
