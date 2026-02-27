@@ -23,9 +23,9 @@ export const Steps: React.FC = () => {
           </div>
 
           <h2 className="text-4xl md:text-5xl pb-0 font-extrabold text-slate-900 tracking-tight mb-6">
-            Simple, Fast,{" "}
+            Simple. Fast.{" "}
             <span className="relative inline-block text-blue-600">
-              Effective
+              Effective.
               <svg
                 className="absolute w-full h-3 bottom-0 left-0 text-blue-200 -z-10"
                 viewBox="0 0 100 10"
@@ -42,8 +42,7 @@ export const Steps: React.FC = () => {
           </h2>
 
           <p className="text-base text-slate-500 max-w-xl mx-auto leading-relaxed">
-            We've distilled the complex process of global expansion into three
-            actionable steps. Watch your business climb to new heights.
+            3 steps to global growth
           </p>
         </div>
 
@@ -59,8 +58,8 @@ export const Steps: React.FC = () => {
               <StepsCard
                 animationClass="animate-float-slow"
                 stepNumber="01"
-                title="Chat & Configure"
-                description="Tell us your story. Our AI analyzes inputs to structure campaign parameters, identifying opportunities."
+                title="Chat"
+                description="Tell us your story. We analyze your inputs to structure campaign parameters and identify opportunities."
                 icon={<MessageSquareText className="text-blue-600" size={24} />}
               />
             </div>
@@ -70,8 +69,8 @@ export const Steps: React.FC = () => {
               <StepsCard
                 animationClass="animate-float-medium"
                 stepNumber="02"
-                title="Engage & Connect"
-                description="Our AI identifies and engages with your ideal audience, building authentic connections at scale."
+                title="Engage"
+                description="We identify and engage with your ideal audience, building authentic connections at scale."
                 icon={<Users className="text-blue-600" size={24} />}
               />
             </div>
@@ -81,8 +80,8 @@ export const Steps: React.FC = () => {
               <StepsCard
                 animationClass="animate-float-fast"
                 stepNumber="03"
-                title="Analyze & Grow"
-                description="Track real-time performance metrics and optimize campaigns automatically for continuous growth."
+                title="Grow"
+                description="Watch it happen. Your campaigns continuously improve as we drive steady, long-term growth."
                 icon={<TrendingUp className="text-blue-600" size={24} />}
               />
             </div>

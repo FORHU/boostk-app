@@ -280,12 +280,11 @@ export const Globe = () => {
                     
                     {/* Inner circle with gradient */}
                     <div className="relative w-24 h-24 rounded-full bg-gradient-to-br from-blue-300 to-blue-500 flex items-center justify-center shadow-xl animate-pulse">
-                        <span className="text-4xl filter drop-shadow-lg">🌍</span>
+                        <span className="text-4xl filter drop-shadow-lg"></span>
                     </div>
                     
                     {/* Loading text with pulse */}
                     <p className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-blue-700 text-sm font-light whitespace-nowrap animate-pulse">
-                        Loading globe
                         <span className="inline-flex w-8 justify-start">
                             <span className="animate-bounce delay-0">.</span>
                             <span className="animate-bounce delay-150">.</span>
@@ -326,11 +325,11 @@ export const Globe = () => {
                 <div className="relative">
                     {/* Multiple pulsing rings for depth */}
                     <div className="absolute inset-0 rounded-full bg-blue-300/30 animate-ping" 
-                         style={{ animationDuration: '2s' }}></div>
+                        style={{ animationDuration: '2s' }}></div>
                     <div className="absolute inset-0 rounded-full bg-blue-400/20 animate-ping" 
-                         style={{ animationDuration: '2.5s', animationDelay: '0.2s' }}></div>
+                        style={{ animationDuration: '2.5s', animationDelay: '0.2s' }}></div>
                     <div className="absolute inset-0 rounded-full bg-blue-200/40 animate-ping" 
-                         style={{ animationDuration: '3s', animationDelay: '0.5s' }}></div>
+                        style={{ animationDuration: '3s', animationDelay: '0.5s' }}></div>
                     
                     {/* Main circle with gradient and pulse */}
                     <div className="relative w-28 h-28 rounded-full bg-gradient-to-br from-blue-300 via-blue-400 to-blue-500 flex items-center justify-center shadow-2xl animate-pulse">

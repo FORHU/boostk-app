@@ -8,7 +8,6 @@ interface StepCardProps {
   icon: ReactNode;
 }
 
-
 export const StepsCard: React.FC<StepCardProps> = ({ 
   animationClass, 
   stepNumber,

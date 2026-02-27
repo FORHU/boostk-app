@@ -24,14 +24,13 @@ export const Hero = () => {
                 <span className="text-sky-600 text-xs font-bold tracking-wide uppercase">Global Access Live</span>
               </div>
 
-               <h1 className="text-5xl lg:text-7xl font-bold tracking-tight text-slate-900 mb-6 leading-tight">
+              <h1 className="text-5xl lg:text-7xl font-bold tracking-tight text-slate-900 mb-6 leading-tight">
                 Speak Local.<br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-500 to-blue-800">Sell Global.</span>
               </h1>
 
               <p className="text-lg text-slate-600 mb-8 leading-relaxed max-w-lg">
-                Don&apos;t let the language barrier act as a glass ceiling. We act as your
-                in-house global department for sales, marketing, and strategy.
+                Exceptional products. World-class technology. Outstanding service. Don't let the English language barrier become the glass ceiling between your business and international opportunities.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 mb-12">
@@ -84,17 +83,14 @@ export const Hero = () => {
                 <SilentBarrierCard
                   icon={Mail}
                   title="Unanswered Emails"
-                  subtitle="Average 40% drop-off"
                 />
                 <SilentBarrierCard
                   icon={MessageSquare}
                   title="Lost Conversations"
-                  subtitle="Misunderstood intent"
                 />
                 <SilentBarrierCard
                   icon={TrendingDown}
                   title="Missed Deals"
-                  subtitle="Delayed response"
                 />
               </div>
             </div>

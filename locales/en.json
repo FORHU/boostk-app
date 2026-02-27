@@ -1,0 +1,427 @@
+    {
+    "Metadata": {
+        "title": "BoostK",
+        "description": "Marketing, sales, planning, communication — we execute every English-based operation that connects you to the world."
+    },
+    "DashboardPage": {
+        "breadcrumb": "Dashboard",
+        "helloworld": "Hello world!"
+    },
+    "TermsContent": {
+        "lastUpdated": "Last Updated: December 2024",
+        "intro": "Welcome to BOOSTK. These Terms of Service (\"Terms\") govern your access to and use of our services. Please read these Terms carefully before using our services.",
+        "title1": "1. Agreement to Terms",
+        "p1": "By accessing and using BOOSTK services, you agree to be bound by these Terms of Service. If you disagree with any part of these terms, you may not access our services. These Terms constitute a legally binding agreement between you and BOOSTK.",
+        "title2": "2. Services Description",
+        "p2": "BOOSTK provides dedicated global department services, including but not limited to marketing, sales, strategic planning, and cross-cultural communications. Our services are powered by teams based in the Philippines, acting as an extension of your company. We offer flexible engagement models to meet your business needs, including project-based and ongoing retainer arrangements.",
+        "title3": "3. Service Agreement",
+        "p3": "All services are provided under a formal service agreement that outlines specific deliverables, timelines, and payment terms. This agreement is binding on both parties and sets the ground rules for the use of our services.",
+        "title4": "4. Payment Terms",
+        "p4": "Payment terms will be specified in your service agreement. Generally, we require payment according to the agreed schedule, which may include upfront deposits, milestone payments, or monthly retainers. Late payments may result in service suspension. All fees are non-refundable except as expressly stated in your service agreement. Additional services requested beyond the scope of the original agreement may incur additional fees.",
+        "title5": "5. Confidentiality and Non-Disclosure",
+        "p5": "BOOSTK maintains strict confidentiality regarding your business information, trade secrets, proprietary data, client lists, financial information, and strategic plans. Our team members are bound by comprehensive non-disclosure agreements. We will not use your confidential information for any purpose other than providing the agreed services, and we will take reasonable measures to protect such information from unauthorized access or disclosure.",
+        "title6": "6. Intellectual Property Rights",
+        "p6": "All work products, deliverables, creative content, and materials created specifically for your company remain your intellectual property upon full payment. BOOSTK retains the right to use anonymized, aggregated data and general methodologies for improving our services and may showcase work samples in our portfolio (with your prior written consent). Any pre-existing BOOSTK intellectual property used in service delivery remains our property.",
+        "title7": "7. Limitation of Liability",
+        "p7": "BOOSTK's liability is limited to the value of services paid for in the preceding 12 months. We are not liable for indirect, incidental, special, consequential, or punitive damages, including but not limited to lost profits, revenue, or business opportunities. Our maximum liability shall not exceed the total fees paid by you in the 12 months preceding the claim.",
+        "title8": "8. Service Level and Performance",
+        "p8": "We strive to deliver high-quality services that meet or exceed industry standards. However, we do not guarantee specific business outcomes, sales results, or performance metrics. Service level expectations will be defined in your service agreement. We are committed to continuous improvement and will work collaboratively with you to optimize service delivery.",
+        "title9": "9. Termination and Cancellation",
+        "p9": "Either party may terminate services with appropriate notice as specified in your service agreement, typically 30 days written notice. Upon termination, all outstanding fees become immediately due. You remain responsible for all fees incurred up to the termination date. Early termination may result in early termination fees as specified in your service agreement. We reserve the right to suspend or terminate services immediately for non-payment or breach of these Terms.",
+        "title10": "10. Data Protection and Privacy",
+        "p10": "We comply with applicable data protection laws, including GDPR, CCPA, and local Philippine data protection regulations (Data Privacy Act of 2012). We implement appropriate technical and organizational measures to protect personal data. See our Privacy Policy for detailed information about how we collect, use, and protect your data.",
+        "title11": "11. Force Majeure",
+        "p11": "Neither party shall be liable for failure to perform obligations due to circumstances beyond reasonable control, including natural disasters, pandemics, war, terrorism, government actions, or infrastructure failures. Affected parties must notify the other promptly and make reasonable efforts to resume performance.",
+        "title12": "12. Governing Law and Dispute Resolution",
+        "p12": "These terms are governed by applicable international and Philippine law. Disputes will be resolved through binding arbitration in accordance with international arbitration standards, unless both parties agree to alternative resolution methods. The arbitration will be conducted in English, and the arbitrator's decision will be final and binding.",
+        "title13": "13. Modifications to Terms",
+        "p13": "We reserve the right to modify these Terms at any time. Material changes will be communicated to you via email or through our platform. Continued use of our services after changes constitutes acceptance of the modified Terms. If you do not agree to the modified Terms, you must discontinue use of our services.",
+        "title14": "14. Contact Information",
+        "p14": "For questions about these Terms of Service, please contact us through the contact form on our website or email us at legal@boostk.com. We aim to respond to all inquiries within 48 hours during business days."
+    }
+    ,
+    "PrivacyContent": {
+        "lastUpdated": "Last Updated: December 2024",
+        "title1": "1. Information We Collect",
+        "p1": "We collect information that you provide directly to us, including name, email address, company name, phone number, job title, business address, and any other information you choose to provide during consultations or service requests. We also collect information about your use of our services through analytics tools, including website usage patterns, page views, and interaction data. Additionally, we may collect information from third-party sources such as business directories or publicly available information to enhance our service delivery.",
+        "title2": "2. How We Use Your Information",
+        "p2": "We use the information we collect to provide, maintain, and improve our services, process your requests, communicate with you about your account and services, send you marketing communications (with your consent), respond to your inquiries, customize your experience, analyze usage patterns, and develop new service offerings. We also use information for security purposes, fraud prevention, and legal compliance.",
+        "title3": "3. Information Sharing and Disclosure",
+        "p3": "We do not sell your personal information. We may share your information with our service delivery teams in the Philippines who assist us in providing services, all of whom are bound by strict confidentiality and non-disclosure agreements. We may also share information with trusted service providers who assist in website operations, data analytics, or business functions, provided they agree to maintain confidentiality. We may disclose information if required by law, legal process, or government request, or to protect our rights, property, or safety, or that of our clients.",
+        "title4": "4. Data Security Measures",
+        "p4": "We implement appropriate technical and organizational measures to protect your personal information, including encryption of data in transit and at rest, access controls, regular security audits, employee training on data protection, and secure data storage systems. However, no method of transmission over the Internet or electronic storage is 100% secure, and we cannot guarantee absolute security. We encourage you to use strong passwords and notify us immediately if you suspect any unauthorized access.",
+        "title5": "5. Your Privacy Rights",
+        "p5": "Depending on your location, you may have certain rights regarding your personal information, including the right to access, update, correct, or delete your personal information, the right to object to processing, the right to data portability, the right to withdraw consent, and the right to lodge complaints with data protection authorities. To exercise these rights, please contact us using the information provided in the Contact section. We will respond to your request within 30 days, subject to applicable laws.",
+        "title6": "6. Data Retention",
+        "p6": "We retain your personal information for as long as necessary to provide our services, fulfill the purposes outlined in this policy, comply with legal obligations, resolve disputes, and enforce our agreements. When personal information is no longer needed, we will securely delete or anonymize it in accordance with our data retention policies and applicable laws.",
+        "title7": "7. International Data Transfers",
+        "p7": "Your information may be transferred to and processed in the Philippines, where our service delivery teams are located. We ensure appropriate safeguards are in place to protect your information during international transfers, including standard contractual clauses, adequacy decisions, and other legally recognized transfer mechanisms. By using our services, you consent to such transfers.",
+        "title8": "8. Cookies and Tracking Technologies",
+        "p8": "We use cookies and similar tracking technologies to track activity on our website, hold certain information, improve user experience, analyze trends, and gather demographic information. Cookies are small files stored on your device. You can instruct your browser to refuse all cookies or to indicate when a cookie is being sent. However, if you do not accept cookies, you may not be able to use some portions of our website. We use both session cookies (which expire when you close your browser) and persistent cookies (which stay on your device until deleted).",
+        "title9": "9. Third-Party Links and Services",
+        "p9": "Our website may contain links to third-party websites or services that are not owned or controlled by BOOSTK. We are not responsible for the privacy practices of these third parties. We encourage you to review the privacy policies of any third-party sites you visit. This Privacy Policy applies only to information collected by BOOSTK.",
+        "title10": "10. Children's Privacy",
+        "p10": "Our services are not directed to individuals under the age of 18 (\"minors\"). We do not knowingly collect personal information from minors. If you are a parent or guardian and believe your child has provided us with personal information, please contact us immediately, and we will delete such information from our systems.",
+        "title11": "11. Marketing Communications",
+        "p11": "We may send you marketing communications with your consent. You can opt out of receiving marketing emails at any time by using the unsubscribe link in our emails or by contacting us directly. We will continue to send essential service-related communications even if you opt out of marketing.",
+        "title12": "12. Business Transfers",
+        "p12": "In the event of a merger, acquisition, reorganization, or sale of assets, your personal information may be transferred to the acquiring entity. We will notify you via email and/or prominent notice on our website of any change in ownership or uses of your personal information, as well as any choices you may have regarding your personal information.",
+        "title13": "13. Changes to This Privacy Policy",
+        "p13": "We may update this Privacy Policy from time to time to reflect changes in our practices, technology, legal requirements, or other factors. We will notify you of any material changes by posting the new Privacy Policy on this page, updating the \"Last Updated\" date, and, where appropriate, sending you an email notification. Your continued use of our services after such changes constitutes acceptance of the updated Privacy Policy.",
+        "title14": "14. Contact Us",
+        "p14": "If you have questions, concerns, or requests regarding this Privacy Policy or our data practices, please contact us at privacy@boostk.com or through the contact form on our website. Our Data Protection Officer can be reached at dpo@boostk.com. We are committed to addressing your privacy concerns promptly and transparently."
+    },
+    "Header": {
+        "logoAlt": "BOOSTK logo",
+        "aria": {
+        "home": "Home"
+        },
+        "nav": {
+        "services": "Services",
+        "solution": "Solution",
+        "pricing": "Pricing",
+        "contact": "Contact"
+        },
+        "cta": {
+        "requestConsultation": "Request Consultation"
+        }
+    },
+    "home-header": {
+        "tsx": {
+        "logoAlt": "BOOSTK logo",
+        "aria": {
+            "home": "Home"
+        },
+        "nav": {
+            "services": "Services",
+            "solution": "Solution",
+            "pricing": "Pricing",
+            "contact": "Contact"
+        },
+        "cta": {
+            "requestConsultation": "Request Consultation"
+        }
+        }
+    },
+    "GlobalAdvantage": {
+        "title": "Why the Philippines is Your Global Advantage",
+        "item1": { "title": "#1 English-Speaking Workforce in Asia", "subtitle": "Ranked by EF EPI Index" },
+        "item2": { "title": "1-Hour Time Zone Alignment", "subtitle": "Perfect overlap with Korean & Japanese business hours" },
+        "item3": { "title": "1/3 the Cost of Western Talent", "subtitle": "Same quality, dramatically lower overhead" },
+        "item4": { "title": "20+ Years of BPO Excellence", "subtitle": "Proven track record serving global companies" },
+        "imageAlt": "Filipino professionals in modern office environment"
+    },
+    "GlobalImpact": {
+        "sectionTitle": "Global Impact",
+        "leadGrowth": "Lead Growth",
+        "newPartners": "New Partners",
+        "fasterSales": "Faster Sales"
+    },
+    "Hero": {
+        "headline": "Speak Local. Sell Global.",
+        "opening": "Exceptional products. World-class technology. Outstanding service. Don't let the English language barrier become the glass ceiling between your business and international opportunities.",
+        "quote": "It's not just your company all small and medium-sized Korean companies are in the same situation.",
+        "impact": "Language shouldn't limit greatness",
+        "ctaText": "Request Free Consultation",
+        "barrierTitle": "The Silent Barrier",
+        "barrierSubtitle": "Every day, opportunities pass by...",
+        "barrier": {
+        "item1": { "title": "Unanswered Emails" },
+        "item2": { "title": "Lost Conversations" },
+        "item3": { "title": "Missed Deals" }
+        }
+    }
+    ,
+    "FeaturesSection": {
+        "title": "Where Do You Feel the English Barrier Most?",
+        "subtitle": "Self-diagnose the gap stopping your global growth",
+        "demo": "Demo",
+        "feature1": {
+        "title": "Global Communication",
+        "questions": {
+            "1": "When you receive an English email, do you hesitate before replying?",
+            "2": "Are your proposals written in clear, confident English that impresses buyers?",
+            "3": "What if every message you send spoke perfectly to global clients?"
+        },
+        "solution": "BOOSTK writes, designs, and communicates in fluent business English — for you."
+        },
+        "feature2": {
+        "title": "Social & Content Strategy",
+        "questions": {
+            "1": "Do your social posts speak only to local audiences?",
+            "2": "Are global buyers even seeing your content?",
+            "3": "What if posts and visuals were written by an English-speaking team that knows your brand?"
+        },
+        "solution": "BOOSTK creates scroll-stopping, English-ready content for your global market."
+        },
+        "feature3": {
+        "title": "Sales & Market Development",
+        "questions": {
+            "1": "How many potential buyers have you lost because of unclear English?",
+            "2": "Do you have someone who can meet international clients confidently?",
+            "3": "What if your sales pipeline ran in English — generating revenue every month?"
+        },
+        "solution": "BOOSTK turns English into your sales advantage, not your weakness."
+        },
+        "feature4": {
+        "title": "Global Strategy & Planning",
+        "questions": {
+            "1": "Do you know how your competitors market in the U.S. or Europe?",
+            "2": "Are your investor decks and proposals ready for international partners?",
+            "3": "What if every document made investors and buyers say, ‘This looks global’?"
+        },
+        "solution": "BOOSTK builds your English strategy — from research to pitch."
+        }
+    }
+    ,
+    "SolutionSection": {
+        "headline": "BOOSTK — Your Global Business Headquarters.",
+        "intro": "We're not just another outsourcing company. Our English-proficient professionals in the BOOSTK act as your in-house Global Department, handling all English-driven operations such as marketing, sales, business planning, and client communication. You focus on your product. We'll handle your global communication.",
+        "benefits": {
+        "item1": "Marketing & Content Strategy",
+        "item2": "Sales & Lead Generation",
+        "item3": "Business Planning & Strategy",
+        "item4": "Global Client Communication"
+        },
+        "partnership": {
+        "title": "Partnership Model",
+        "desc": "We're embedded in your business as a remote extension of your team, not a vendor. Your success is our success."
+        }
+    }
+    ,
+    "Footer": {
+        "company": "Company",
+        "aboutUs": "About Us",
+        "ourTeam": "Our Team",
+        "careers": "Careers",
+        "legal": "Legal",
+        "termsOfService": "Terms of Service",
+        "privacyPolicy": "Privacy Policy",
+        "copyrightTagline": "Connecting Asian Innovation with Global Markets."
+    }
+    ,
+    "Testimonials": {
+        "sectionTitle": "When Your Team Speaks English, Opportunity Arrives",
+        "sectionSubtitle": "Proven results from companies just like yours",
+        "before": "Before",
+        "after": "After",
+        "results": {
+        "item1": {"metric": "$5K in new sales", "title": "New Sales Generated", "company": "Alex Kim", "quote": "From a regular glasses they created a marketing designed glasses"},
+        "item2": {"metric": "$48K in promo sales", "title": "Cap Campaign Sales", "company": "Jamie Reyes", "quote": "From a simple product shot to high-impact promo artwork"},
+        "item3": {"metric": "320 units sold", "title": "Rattan Storage Promo Sales", "company": "Mia Santos", "quote": "From in-store snapshot to clean, conversion-ready product ad"},
+        "item4": {"metric": "€18K in accessory sales", "title": "Clutch Campaign Revenue", "company": "Chris Bautista", "quote": "From catalog shot to premium brand visual"},
+        "item5": {"metric": "1,500 units sold", "title": "Backpack Campaign Sales", "company": "Rafael Tan", "quote": "From home photo to polished 50% OFF promo"},
+        "item6": {"metric": "$36K in footwear sales", "title": "Monk Strap Promo Revenue", "company": "Daniel Cho", "quote": "From casual table shot to studio-grade product ad"},
+        "item7": {"metric": "2.2x engagement", "title": "Aloha Tee Promo Artwork", "company": "Sean Rivera", "quote": "From raw product shot to eye-catching sale graphic"},
+        "item8": {"metric": "20% OFF campaign", "title": "Vintage Polo Sale Banner", "company": "Jasper Asmin", "quote": "From plain photo to polished discount promo"},
+        "item9": {"metric": "40% OFF campaign", "title": "Michael Kors Handbag Promo", "company": "Emiko Tanaka", "quote": "From casual snapshot to luxury sale design"}
+        },
+        "process": {
+        "title": "Simple. Fast. Effective.",
+        "subtitle": "3 steps to global growth",
+        "steps": {
+            "1": {"title": "Chat", "desc": "Tell us your story. We analyze your inputs to structure campaign parameters and identify opportunities."}, 
+            "2": {"title": "Match", "desc": "We identify and engage with your ideal audience, building authentic connections at scale."},
+            "3": {"title": "Grow", "desc": "Watch it happen. Your campaigns continuously improve as we drive steady, long-term growth."} 
+        }
+        }
+    },
+    "PricingSection": {
+        "title": "See What You Get",
+        "subtitle": "Not just services—real deliverables you can see and measure",
+        "whatYouGet": "What You'll Get:",
+        "bestForLabel": "Best for: ",
+        "badge": { "mostPopular": "Most Popular", "fullService": "Full-Service" },
+        "plans": {
+        "Starter": {
+            "name": "Starter",
+            "subtitle": "Get started with our basic plan",
+            "bestFor": "Individuals or small businesses",
+            "ctaText": "",
+            "featuresHeader": "Also Includes:",
+            "visual": [
+            { "label": "Live Chat Support", "desc": "" },
+            { "label": "Live chat (Korean office hours)", "desc": "" },
+            { "label": "", "desc": "" }
+            ],
+            "features": [
+            "Social media content (Facebook, Instagram, TikTok)",
+            "Email marketing campaigns",
+            "Video production & editing",
+            "Catalogue & ad design",
+            "Weekly performance reports"
+            ]
+        },    
+        "contentPresence": {
+            "name": "Content & Presence",
+            "subtitle": "Build your global brand visibility",
+            "bestFor": "Brands ready to speak English professionally",
+            "ctaText": "Start Creating Content",
+            "featuresHeader": "Also Includes:",
+            "visual": [
+            { "label": "Social Media Posts", "desc": "Transform product photos into scroll-stopping content" },
+            { "label": "Content Variety", "desc": "Stories, posts, ads - all professionally designed" },
+            { "label": "Video Production", "desc": "Professional video editing for YouTube & social" }
+            ],
+            "features": [
+            "Social media content (Facebook, Instagram, TikTok)",
+            "Email marketing campaigns",
+            "Video production & editing",
+            "Catalogue & ad design",
+            "Weekly performance reports"
+            ]
+        },
+        "salesCommerce": {
+            "name": "Sales & Commerce",
+            "subtitle": "Sell globally with full support",
+            "bestFor": "Companies actively selling in international markets",
+            "ctaText": "Grow Your Sales",
+            "featuresHeader": "Also Includes:",
+            "visual": [
+            { "label": "Product Listings", "desc": "Optimize listings for higher conversion rates" },
+            { "label": "Live Chat Support", "desc": "Real-time customer support during Korean hours" },
+            { "label": "Multi-Platform Management", "desc": "Amazon, Shopee, and beyond" }
+            ],
+            "features": [
+            "Marketplace management (Amazon, Shopee, Lazada)",
+            "Market research & competitor analysis",
+            "Live chat (Korean office hours)",
+            "Product listing optimization",
+            "Social media content (Facebook, Instagram, TikTok)",
+            "Email marketing campaigns",
+            "Video production & editing",
+            "Catalogue & ad design",
+            "Weekly performance reports"
+            ]
+        },
+        "enterpriseGrowth": {
+            "name": "Enterprise Growth",
+            "subtitle": "Full partnership development team",
+            "bestFor": "Businesses expanding aggressively into global markets",
+            "ctaText": "Build My Global Team",
+            "featuresHeader": "Also Includes:",
+            "visual": [
+            { "label": "Partnership Pipeline", "desc": "From prospect to partnership in 30-60 days" },
+            { "label": "Professional Materials", "desc": "Pitch decks, proposals, and trade show materials" },
+            { "label": "Your Dedicated Team", "desc": "2 specialists working full-time on your growth" }
+            ],
+            "features": [
+            "Active buyer prospecting",
+            "2 dedicated BD specialists",
+            "Partnership negotiation support",
+            "Enterprise priority support",
+            "Marketplace management (Amazon, Shopee, Lazada)",
+            "Market research & competitor analysis",
+            "Live chat (Korean office hours)",
+            "Product listing optimization",
+            "Social media content (Facebook, Instagram, TikTok)",
+            "Email marketing campaigns",
+            "Video production & editing",
+            "Catalogue & ad design",
+            "Weekly performance reports"
+            ]
+        }
+        },
+        "cancelNote": "Cancel anytime • No setup fees",
+        "inspiration": {
+        "title": "We Believe In You",
+        "subtitle": "We'll take the first small step toward the world together." 
+        }
+    },
+    "ClientChatWidget": {
+        "title": "BoostK Live Chat",
+        "subtitle": "Get Started",
+        "statusOnline": "We are online!",
+        "connectingBanner": "Connecting to chat...",
+        "intro": "Start a conversation with our team. We will respond as soon as possible!",
+        "active": {
+        "header": "Chat with Support",
+        "connected": "● Connected",
+        "connecting": "○ Connecting...",
+        "welcome": "Welcome {name}!",
+        "welcomeHelp": "An agent will respond shortly. Feel free to send your question.",
+        "inputPlaceholder": "Type a message...",
+        "connectingPlaceholder": "Waiting for connection...",
+        "sendTitle": "Send",
+        "waitingForAgent": "Waiting for agent...",
+        "disconnected": "Disconnected"
+        },
+        "preChatForm": {
+        "name": "Your Name",
+        "email": "Your Email",
+        "service": "What can we help you with? (optional)",
+        "submit": "Start Chat"
+        },
+        "notice": {
+        "title": "This is Live Chat with a Real Person",
+        "translation": "This chat uses Korean ↔ English translation.",
+        "disclaimer": "Translation may not be 100% accurate."
+        },
+        "aria": {
+        "openChat": "Open Chat"
+        }
+    },
+    "ContactModal": {
+    "title": "Request Consultation",
+    "titleHeader": "Request Consultation",
+    "description": "Send us a message",
+    "name": "Name",
+    "namePlaceholder": "Your name",
+    "email": "Contact Email",
+    "emailPlaceholder": "BoostK@example.com",
+    "serviceType": "Service Type",
+    "serviceTypePlaceholder": "Select a service",
+    "serviceOptions": {
+        "contentPresence": "Content & Presence",
+        "salesCommerce": "Sales & Commerce",
+        "enterpriseGrowth": "Enterprise Growth",
+        "custom": "Custom"
+    },
+    "message": "Message",
+    "messagePlaceholder": "Enter your message...",
+    "submit": "Submit",
+    "submitting": "Submitting...",
+    "toastSuccess": {
+        "title": "Form Submitted!",
+        "desc": "Our marketing team will respond to you immediately."
+    },
+    "toastError": {
+        "title": "Validation Error",
+        "desc": "Please check your input fields."
+    }
+    },
+    "validation": {
+    "contact": {
+        "name": {
+        "required": "Name is required",
+        "min": "Name must be at least 2 characters",
+        "max": "Name must not exceed 50 characters"
+        },
+        "email": {
+        "required": "Email is required",
+        "invalid": "Please enter a valid email address"
+        },
+        "serviceType": {
+        "required": "Please select a service type",
+        "invalid": "Invalid service type selected"
+        },
+        "message": {
+        "required": "Message is required",
+        "min": "Message must be at least 10 characters",
+        "max": "Message must not exceed 1000 characters"
+        }
+    },
+        "guest": {
+        "name": {
+            "required": "Name is required",
+            "min": "Name must be at least 2 characters",
+            "max": "Name must be at most 50 characters"
+        },
+        "email": {
+            "required": "Email is required",
+            "invalid": "Please enter a valid email address",
+            "max": "Email must be at most 254 characters"
+        }
+        }
+    }
+    }

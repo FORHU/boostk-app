@@ -4,14 +4,12 @@ import { LucideIcon } from 'lucide-react';
 interface SilentBarrierCardProps {
     icon: LucideIcon;
     title: string;
-    subtitle: string;
     delay?: string;
 }
 
 export const SilentBarrierCard: React.FC<SilentBarrierCardProps> = ({ 
     icon: Icon, 
     title, 
-    subtitle, 
     delay = "0s" 
 }) => {
     return (
@@ -30,7 +28,6 @@ export const SilentBarrierCard: React.FC<SilentBarrierCardProps> = ({
                         {title}
                     </h3>
                     <p className="text-slate-500 text-[10px] font-medium group-hover:text-slate-600 transition-colors duration-300 leading-tight">
-                        {subtitle}
                     </p>
                 </div>
             </div>

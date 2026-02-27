@@ -16,7 +16,7 @@ export const Calling  = () => {
                             We Believe In You
                         </h2>
                         <p className="text-lg text-blue-100 font-medium mb-10 max-w-2xl mx-auto leading-relaxed">
-                            We’ll take the first small step toward the world together. Join high-performing teams already using BOOSTK to drive global growth.
+                            We’ll take the first small step toward the world together.
                         </p>
                         <div className="flex flex-col sm:flex-row gap-4 w-full justify-center mb-8">
                             <button className="px-8 py-3.5 bg-white text-[#3b82f5] font-bold text-base rounded-lg 
@@ -26,9 +26,6 @@ export const Calling  = () => {
                                 Get Started Now
                             </button>
                         </div>
-                        <p className="text-[11px] text-blue-100 font-medium tracking-wide opacity-80">
-                            No credit card required • 14-day free trial • Cancel anytime
-                        </p>
                         </div>
                     </div>
                 </div>

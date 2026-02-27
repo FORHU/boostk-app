@@ -1,32 +1,11 @@
 import { SectionHeader } from '../SectionHeader'
-import { LucideIcon } from 'lucide-react';
 import { BarrierCard } from './BarrierCard';
 import { MessageSquare, Megaphone, Zap, Globe } from 'lucide-react';
-
-interface CardData {
-  id: string;
-  title: string;
-  question: React.ReactNode;
-  subtitle: string;
-  solutionTitle: string;
-  solutionText: string;
-  icon: LucideIcon;
-  iconDelay: string;
-  cardDelay: string;
-  videos: string[];
-}
-
-
-
-// --- Main App ---
 
 export default function Barrier() {
   return (
     <div className="relative w-full overflow-x-hidden">
-
-      {/* Simplified Background - Removed heavy gradients */}
       <section className="bg-blue-50/50 pt-14 pb-6 relative overflow-hidden border-t border-blue-100">
-
         <SectionHeader
           badgeText="Discover Our Solutions"
           badgeColor='blue'
@@ -35,72 +14,63 @@ export default function Barrier() {
           description="Every day, global opportunities are lost to simple language gaps. Hover over the cards to see how we solve your specific challenges."
         />
 
-        {/* Card Grid */}
-        <div className="mx-auto max-w-7xl px-6 md:px-12 lg:px-16">
+        <div className="mx-auto max-w-7xl px-6 md:px-9 lg:px-16">
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 pb-8">
             <BarrierCard
               title="Global Communication"
               question={
-                <>
-                  Hesitant proposals?<br />Unclear emails?
-                </>
+                <ul className="list-disc pl-5 space-y-2 text-sm sm:text-base text-slate-600">
+                  <li>When you receive an English email, do you hesitate before replying?</li>
+                  <li>Are your proposals written in clear, confident English that impresses buyers?</li>
+                  <li>What if every message you send spoke perfectly to global clients?</li>
+                </ul>
               }
-              subtitle="Reach global audiences effectively."
               solutionTitle="The Solution"
               solutionText="Professional English communication — handled for you."
               icon={MessageSquare}
-              videos={[
-                '/videos/hello13.mp4',
-                '/videos/frustrated.mp4'
-              ]}
+              videos={['/videos/hello13.mp4', '/videos/frustrated.mp4']}
             />
             <BarrierCard
               title="Social & Content Strategy"
               question={
-                <>
-                  Lost content?<br />Disconnected visuals?
-                </>
+                <ul className="list-disc pl-5 space-y-2 text-sm sm:text-base text-slate-600">
+                  <li>Do your social posts speak only to local audiences?</li>
+                  <li>Are global buyers even seeing your content?</li>
+                  <li>What if posts and visuals were written by an English-speaking team that knows your brand?</li>
+                </ul>
               }
-              subtitle="Communicate fluently with global buyers."
               solutionTitle="The Solution"
               solutionText="Engaging, global-ready social content and strategy."
               icon={Megaphone}
-              videos={[
-                '/videos/socialmedia.mp4',
-                '/videos/socialmedia2.mp4'
-              ]}
+              videos={['/videos/socialmedia.mp4', '/videos/socialmedia2.mp4']}
             />
             <BarrierCard
-              title="Sales & Market"
+              title="Sales & Market Development"
               question={
-                <>
-                  Lost buyers?<br />Unclear pitches?
-                </>
+                <ul className="list-disc pl-5 space-y-2 text-sm sm:text-base text-slate-600">
+                  <li>How many potential buyers have you lost because of unclear English?</li>
+                  <li>Do you have someone who can meet international clients confidently?</li>
+                  <li>What if your sales pipeline ran in English - generating revenue every month?</li>
+                </ul>
               }
-              subtitle="Build a high-revenue global pipeline."
               solutionTitle="The Solution"
               solutionText="Turning language into your primary sales advantage."
               icon={Zap}
-              videos={[
-                '/videos/marketing.mp4',
-                '/videos/marketing2.mp4'
-              ]}
+              videos={['/videos/marketing.mp4', '/videos/marketing2.mp4']}
             />
             <BarrierCard
-              title="Global Stratgey"
+              title="Global Strategy & Planning"
               question={
-                <>
-                  Limited insights?<br />Local-only decks?
-                </>
+                <ul className="list-disc pl-5 space-y-2 text-sm sm:text-base text-slate-600">
+                  <li>Do you know how your competitors market in the U.S. or Europe?</li>
+                  <li>Are your investor decks and proposals ready for internation partners?</li>
+                  <li>What if every document made investers and buyers say, 'This looks global'?</li>
+                </ul>
               }
-              subtitle="Master your international market entry."
               solutionTitle="The Solution"
               solutionText="Data-driven global strategy from research to pitch."
               icon={Globe}
-              videos={[
-                '/videos/planning.mp4',
-                'videos/plan.mp4'
-              ]}
+              videos={['/videos/planning.mp4', '/videos/plan.mp4']}
             />
           </div>
         </div>
