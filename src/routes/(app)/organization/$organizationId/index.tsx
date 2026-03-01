@@ -3,7 +3,7 @@ import { Filter, LayoutGrid, List, MoreVertical, Plus, Search } from "lucide-rea
 import { useId, useState } from "react";
 import { createProject, getOrganizationProjects } from "@/modules/project/project.serverFn";
 
-export const Route = createFileRoute("/(authenticated)/organization/$organizationId/")({
+export const Route = createFileRoute("/(app)/organization/$organizationId/")({
   component: RouteComponent,
   loader: async ({ context }) => {
     const projects = await getOrganizationProjects({ data: { orgId: context.organization.id } });

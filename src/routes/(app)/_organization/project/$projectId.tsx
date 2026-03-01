@@ -1,10 +1,10 @@
 import { createFileRoute, Link, Outlet, redirect } from "@tanstack/react-router";
 import { Building2, Copy, Link as LinkIcon } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { TopBar } from "@/components/TopBar";
 import { getProject } from "@/modules/project/project.serverFn";
 
-export const Route = createFileRoute("/(authenticated)/project/$projectId")({
+export const Route = createFileRoute("/(app)/_organization/project/$projectId")({
   component: RouteComponent,
   beforeLoad: async ({ params, context }) => {
     const project = await getProject({ data: { projectId: params.projectId, includeOrganization: true } });
@@ -25,10 +25,13 @@ function RouteComponent() {
 
   const [copied, setCopied] = useState(false);
   const path = `/widget/${project.apiKey.toLowerCase()}`;
-  const fullUrl = useMemo(() => {
-    if (typeof window === "undefined") return path; // SSR safety
-    return `${window.location.origin}${path}`;
-  }, [path]);
+  const [origin, setOrigin] = useState("");
+
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
+
+  const fullUrl = origin ? `${origin}${path}` : path;
 
   const handleCopy = async () => {
     try {

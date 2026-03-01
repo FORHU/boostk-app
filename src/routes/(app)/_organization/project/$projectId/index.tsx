@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Box, CheckCircle2, Database, GitBranch } from "lucide-react";
 
-export const Route = createFileRoute("/(authenticated)/project/$projectId/")({
+export const Route = createFileRoute("/(app)/_organization/project/$projectId/")({
   component: ProjectOverviewComponent,
 });
 

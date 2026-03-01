@@ -11,7 +11,7 @@ import { useChatSupportStore } from "../chat-support/-store/chat-support.store";
 import { EmptyTickets } from "./-components/EmptyTickets";
 import { ProjectSidebar } from "./-components/ProjectSidebar";
 
-export const Route = createFileRoute("/(authenticated)/project/$projectId_/chat-support")({
+export const Route = createFileRoute("/(app)/_organization/project/$projectId_/chat-support")({
   component: RouteComponent,
   loader: async ({ params }) => {
     const project = await getProject({ data: { projectId: params.projectId, includeOrganization: true } });

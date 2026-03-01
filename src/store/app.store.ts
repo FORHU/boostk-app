@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type { Message } from "@/notifier/core";
+import type { Route as AuthenticatedRoute } from "@/routes/(authenticated)/route";
 import SSEWorker from "../worker/sse.worker.ts?sharedworker";
 
 interface Project {
@@ -11,13 +12,15 @@ interface Project {
   updatedAt: string;
 }
 
+type AuthUser = ReturnType<typeof AuthenticatedRoute.useRouteContext>["authSession"]["user"];
+
 interface AppState {
-  userAuth: any | null;
+  userAuth: AuthUser;
   selectedOrganization: string | null;
   selectedProject: Project | null;
   // Fixed: Use the Message type instead of any
   lastSseEvent: Message | null;
-  setUserAuth: (user: any | null) => void;
+  setUserAuth: (user: AuthUser) => void;
   setSelectedOrganization: (orgId: string | null) => void;
   setSelectedProject: (project: Project | null) => void;
   initSSE: (userId: string) => void;
@@ -27,7 +30,7 @@ interface AppState {
 let currentConnectedUserId: string | null = null;
 
 export const useAppStore = create<AppState>()((set) => ({
-  userAuth: null,
+  userAuth: {} as AuthUser, // Initialized by Route beforeLoad
   selectedOrganization: null,
   selectedProject: null,
   lastSseEvent: null,

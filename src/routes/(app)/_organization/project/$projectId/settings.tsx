@@ -3,7 +3,7 @@ import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { z } from "zod";
 import { updateProjectDomains } from "@/modules/project/project.service";
 
-export const Route = createFileRoute("/(authenticated)/project/$projectId/settings")({
+export const Route = createFileRoute("/(app)/_organization/project/$projectId/settings")({
   component: ProjectSettingsComponent,
 });
 

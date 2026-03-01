@@ -3,7 +3,7 @@ import { Activity, Blocks, Building2, Cuboid, Receipt, Settings, Users } from "l
 import { TopBar } from "@/components/TopBar";
 import { getOrganization } from "@/modules/organization/organization.serverFn";
 
-export const Route = createFileRoute("/(authenticated)/organization/$organizationId")({
+export const Route = createFileRoute("/(app)/organization/$organizationId")({
   beforeLoad: async ({ params }) => {
     const organization = await getOrganization({ data: { orgId: params.organizationId } });
     if (!organization) throw redirect({ to: "/organization" });

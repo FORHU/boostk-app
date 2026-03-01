@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { TopBar } from "@/components/TopBar";
 import { CreateOrganizationForm } from "./-components/OrganizationForm";
 
-export const Route = createFileRoute("/(authenticated)/organization/create")({
+export const Route = createFileRoute("/(app)/organization/create")({
   component: RouteComponent,
 });
 

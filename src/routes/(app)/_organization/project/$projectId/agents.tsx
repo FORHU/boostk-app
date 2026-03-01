@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Copy, UserPlus } from "lucide-react";
 import { z } from "zod";
 
-export const Route = createFileRoute("/(authenticated)/project/$projectId/agents")({
+export const Route = createFileRoute("/(app)/_organization/project/$projectId/agents")({
   component: AgentsComponent,
 });
 

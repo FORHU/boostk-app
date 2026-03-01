@@ -4,7 +4,7 @@ import { useState } from "react";
 import { TopBar } from "@/components/TopBar";
 import { getOrganizations } from "@/modules/organization/organization.serverFn";
 
-export const Route = createFileRoute("/(authenticated)/organization/")({
+export const Route = createFileRoute("/(app)/organization/")({
   component: RouteComponent,
   loader: async () => {
     // TODO: Add organization filtering based on ownership

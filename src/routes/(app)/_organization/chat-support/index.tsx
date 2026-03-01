@@ -11,7 +11,7 @@ import { TicketDetailsSidebar } from "./-components/TicketDetailsSidebar";
 import { TicketTabs } from "./-components/TicketTabs";
 import { useChatSupportStore } from "./-store/chat-support.store";
 
-export const Route = createFileRoute("/(authenticated)/chat-support/")({
+export const Route = createFileRoute("/(app)/_organization/chat-support/")({
   component: RouteComponent,
   loader: async () => {
     // TODO: get project id from url
@@ -57,7 +57,7 @@ function RouteComponent() {
     }
   }, [tickets, activeTicketId, setActiveTicketId]);
 
-  const activeTicket = tickets?.find((t) => t.id === activeTicketId) || tickets?.[0];
+  const activeTicket = tickets?.find((t: any) => t.id === activeTicketId) || tickets?.[0];
 
   // Dynamic Topics Subscription
   useEffect(() => {
