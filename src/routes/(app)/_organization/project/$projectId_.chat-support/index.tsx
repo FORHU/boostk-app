@@ -3,15 +3,15 @@ import { useEffect } from "react";
 import { TopBar } from "@/components/TopBar";
 import { getProject } from "@/modules/project/project.serverFn";
 import { getTickets } from "@/modules/ticket/ticket.serverFn";
-import { ChatBox } from "../chat-support/-components/ChatBox";
-import { CustomerInfoSidebar } from "../chat-support/-components/CustomerInfoSidebar";
-import { TicketDetailsSidebar } from "../chat-support/-components/TicketDetailsSidebar";
-import { TicketTabs } from "../chat-support/-components/TicketTabs";
-import { useChatSupportStore } from "../chat-support/-store/chat-support.store";
-import { EmptyTickets } from "./-components/EmptyTickets";
-import { ProjectSidebar } from "./-components/ProjectSidebar";
+import { ProjectSidebar } from "@/routes/(app)/_organization/project/-components/ProjectSidebar";
+import { useChatSupportStore } from "@/routes/(app)/_organization/project/$projectId_.chat-support/-store/chat-support.store";
+import { EmptyTickets } from "../-components/EmptyTickets";
+import { ChatBox } from "./-components/ChatBox";
+import { CustomerInfoSidebar } from "./-components/CustomerInfoSidebar";
+import { TicketDetailsSidebar } from "./-components/TicketDetailsSidebar";
+import { TicketTabs } from "./-components/TicketTabs";
 
-export const Route = createFileRoute("/(app)/_organization/project/$projectId_/chat-support")({
+export const Route = createFileRoute("/(app)/_organization/project/$projectId_/chat-support/")({
   component: RouteComponent,
   loader: async ({ params }) => {
     const project = await getProject({ data: { projectId: params.projectId, includeOrganization: true } });
@@ -57,7 +57,7 @@ function RouteComponent() {
     );
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col h-full w-full bg-white font-sans text-gray-900 overflow-hidden">
       <TopBar>
         <div className="flex items-center gap-2">
           <Link to="/project/$projectId" params={{ projectId }} className="hover:text-gray-900 transition-colors">
@@ -69,9 +69,10 @@ function RouteComponent() {
       <div className="flex flex-1 overflow-hidden">
         <ProjectSidebar organizationId={project.organization?.id || ""} />
 
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex flex-col flex-1 overflow-y-auto border-blue-500 border-2">
           <TicketTabs tickets={tickets} isLoading={false} />
-          <div className="flex flex-1 overflow-hidden bg-white">
+
+          <div className="flex flex-1 overflow-hidden bg-white border-red-500 border-2">
             <TicketDetailsSidebar ticket={activeTicket} />
             <ChatBox ticket={activeTicket} />
             <CustomerInfoSidebar ticket={activeTicket} />

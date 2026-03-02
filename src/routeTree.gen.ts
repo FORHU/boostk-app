@@ -36,17 +36,16 @@ import { Route as appOrganizationCreateRouteImport } from './routes/(app)/organi
 import { Route as appOrganizationOrganizationIdRouteRouteImport } from './routes/(app)/organization/$organizationId/route'
 import { Route as DemoStartSsrIndexRouteImport } from './routes/demo/start.ssr.index'
 import { Route as appOrganizationOrganizationIdIndexRouteImport } from './routes/(app)/organization/$organizationId/index'
-import { Route as appOrganizationChatSupportIndexRouteImport } from './routes/(app)/_organization/chat-support/index'
 import { Route as DemoStartSsrSpaModeRouteImport } from './routes/demo/start.ssr.spa-mode'
 import { Route as DemoStartSsrFullSsrRouteImport } from './routes/demo/start.ssr.full-ssr'
 import { Route as DemoStartSsrDataOnlyRouteImport } from './routes/demo/start.ssr.data-only'
 import { Route as DemoPrismaDemoUserIdTodosRouteImport } from './routes/demo/prisma-demo/$userId/todos'
 import { Route as appOrganizationProjectProjectIdRouteImport } from './routes/(app)/_organization/project/$projectId'
 import { Route as appOrganizationProjectProjectIdIndexRouteImport } from './routes/(app)/_organization/project/$projectId/index'
-import { Route as appOrganizationProjectProjectIdChatSupportRouteImport } from './routes/(app)/_organization/project/$projectId_.chat-support'
 import { Route as appOrganizationProjectProjectIdSettingsRouteImport } from './routes/(app)/_organization/project/$projectId/settings'
 import { Route as appOrganizationProjectProjectIdLogsRouteImport } from './routes/(app)/_organization/project/$projectId/logs'
 import { Route as appOrganizationProjectProjectIdAgentsRouteImport } from './routes/(app)/_organization/project/$projectId/agents'
+import { Route as appOrganizationProjectProjectIdChatSupportIndexRouteImport } from './routes/(app)/_organization/project/$projectId_.chat-support/index'
 
 const DemoRouteRoute = DemoRouteRouteImport.update({
   id: '/demo',
@@ -182,12 +181,6 @@ const appOrganizationOrganizationIdIndexRoute =
     path: '/',
     getParentRoute: () => appOrganizationOrganizationIdRouteRoute,
   } as any)
-const appOrganizationChatSupportIndexRoute =
-  appOrganizationChatSupportIndexRouteImport.update({
-    id: '/chat-support/',
-    path: '/chat-support/',
-    getParentRoute: () => appOrganizationRoute,
-  } as any)
 const DemoStartSsrSpaModeRoute = DemoStartSsrSpaModeRouteImport.update({
   id: '/start/ssr/spa-mode',
   path: '/start/ssr/spa-mode',
@@ -221,12 +214,6 @@ const appOrganizationProjectProjectIdIndexRoute =
     path: '/',
     getParentRoute: () => appOrganizationProjectProjectIdRoute,
   } as any)
-const appOrganizationProjectProjectIdChatSupportRoute =
-  appOrganizationProjectProjectIdChatSupportRouteImport.update({
-    id: '/project/$projectId_/chat-support',
-    path: '/project/$projectId/chat-support',
-    getParentRoute: () => appOrganizationRoute,
-  } as any)
 const appOrganizationProjectProjectIdSettingsRoute =
   appOrganizationProjectProjectIdSettingsRouteImport.update({
     id: '/settings',
@@ -244,6 +231,12 @@ const appOrganizationProjectProjectIdAgentsRoute =
     id: '/agents',
     path: '/agents',
     getParentRoute: () => appOrganizationProjectProjectIdRoute,
+  } as any)
+const appOrganizationProjectProjectIdChatSupportIndexRoute =
+  appOrganizationProjectProjectIdChatSupportIndexRouteImport.update({
+    id: '/project/$projectId_/chat-support/',
+    path: '/project/$projectId/chat-support/',
+    getParentRoute: () => appOrganizationRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -274,14 +267,13 @@ export interface FileRoutesByFullPath {
   '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
   '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
   '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
-  '/chat-support/': typeof appOrganizationChatSupportIndexRoute
   '/organization/$organizationId/': typeof appOrganizationOrganizationIdIndexRoute
   '/demo/start/ssr/': typeof DemoStartSsrIndexRoute
   '/project/$projectId/agents': typeof appOrganizationProjectProjectIdAgentsRoute
   '/project/$projectId/logs': typeof appOrganizationProjectProjectIdLogsRoute
   '/project/$projectId/settings': typeof appOrganizationProjectProjectIdSettingsRoute
-  '/project/$projectId/chat-support': typeof appOrganizationProjectProjectIdChatSupportRoute
   '/project/$projectId/': typeof appOrganizationProjectProjectIdIndexRoute
+  '/project/$projectId/chat-support/': typeof appOrganizationProjectProjectIdChatSupportIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -308,14 +300,13 @@ export interface FileRoutesByTo {
   '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
   '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
   '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
-  '/chat-support': typeof appOrganizationChatSupportIndexRoute
   '/organization/$organizationId': typeof appOrganizationOrganizationIdIndexRoute
   '/demo/start/ssr': typeof DemoStartSsrIndexRoute
   '/project/$projectId/agents': typeof appOrganizationProjectProjectIdAgentsRoute
   '/project/$projectId/logs': typeof appOrganizationProjectProjectIdLogsRoute
   '/project/$projectId/settings': typeof appOrganizationProjectProjectIdSettingsRoute
-  '/project/$projectId/chat-support': typeof appOrganizationProjectProjectIdChatSupportRoute
   '/project/$projectId': typeof appOrganizationProjectProjectIdIndexRoute
+  '/project/$projectId/chat-support': typeof appOrganizationProjectProjectIdChatSupportIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -349,14 +340,13 @@ export interface FileRoutesById {
   '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
   '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
   '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
-  '/(app)/_organization/chat-support/': typeof appOrganizationChatSupportIndexRoute
   '/(app)/organization/$organizationId/': typeof appOrganizationOrganizationIdIndexRoute
   '/demo/start/ssr/': typeof DemoStartSsrIndexRoute
   '/(app)/_organization/project/$projectId/agents': typeof appOrganizationProjectProjectIdAgentsRoute
   '/(app)/_organization/project/$projectId/logs': typeof appOrganizationProjectProjectIdLogsRoute
   '/(app)/_organization/project/$projectId/settings': typeof appOrganizationProjectProjectIdSettingsRoute
-  '/(app)/_organization/project/$projectId_/chat-support': typeof appOrganizationProjectProjectIdChatSupportRoute
   '/(app)/_organization/project/$projectId/': typeof appOrganizationProjectProjectIdIndexRoute
+  '/(app)/_organization/project/$projectId_/chat-support/': typeof appOrganizationProjectProjectIdChatSupportIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -388,14 +378,13 @@ export interface FileRouteTypes {
     | '/demo/start/ssr/data-only'
     | '/demo/start/ssr/full-ssr'
     | '/demo/start/ssr/spa-mode'
-    | '/chat-support/'
     | '/organization/$organizationId/'
     | '/demo/start/ssr/'
     | '/project/$projectId/agents'
     | '/project/$projectId/logs'
     | '/project/$projectId/settings'
-    | '/project/$projectId/chat-support'
     | '/project/$projectId/'
+    | '/project/$projectId/chat-support/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -422,14 +411,13 @@ export interface FileRouteTypes {
     | '/demo/start/ssr/data-only'
     | '/demo/start/ssr/full-ssr'
     | '/demo/start/ssr/spa-mode'
-    | '/chat-support'
     | '/organization/$organizationId'
     | '/demo/start/ssr'
     | '/project/$projectId/agents'
     | '/project/$projectId/logs'
     | '/project/$projectId/settings'
-    | '/project/$projectId/chat-support'
     | '/project/$projectId'
+    | '/project/$projectId/chat-support'
   id:
     | '__root__'
     | '/'
@@ -462,14 +450,13 @@ export interface FileRouteTypes {
     | '/demo/start/ssr/data-only'
     | '/demo/start/ssr/full-ssr'
     | '/demo/start/ssr/spa-mode'
-    | '/(app)/_organization/chat-support/'
     | '/(app)/organization/$organizationId/'
     | '/demo/start/ssr/'
     | '/(app)/_organization/project/$projectId/agents'
     | '/(app)/_organization/project/$projectId/logs'
     | '/(app)/_organization/project/$projectId/settings'
-    | '/(app)/_organization/project/$projectId_/chat-support'
     | '/(app)/_organization/project/$projectId/'
+    | '/(app)/_organization/project/$projectId_/chat-support/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -672,13 +659,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof appOrganizationOrganizationIdIndexRouteImport
       parentRoute: typeof appOrganizationOrganizationIdRouteRoute
     }
-    '/(app)/_organization/chat-support/': {
-      id: '/(app)/_organization/chat-support/'
-      path: '/chat-support'
-      fullPath: '/chat-support/'
-      preLoaderRoute: typeof appOrganizationChatSupportIndexRouteImport
-      parentRoute: typeof appOrganizationRoute
-    }
     '/demo/start/ssr/spa-mode': {
       id: '/demo/start/ssr/spa-mode'
       path: '/start/ssr/spa-mode'
@@ -721,13 +701,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof appOrganizationProjectProjectIdIndexRouteImport
       parentRoute: typeof appOrganizationProjectProjectIdRoute
     }
-    '/(app)/_organization/project/$projectId_/chat-support': {
-      id: '/(app)/_organization/project/$projectId_/chat-support'
-      path: '/project/$projectId/chat-support'
-      fullPath: '/project/$projectId/chat-support'
-      preLoaderRoute: typeof appOrganizationProjectProjectIdChatSupportRouteImport
-      parentRoute: typeof appOrganizationRoute
-    }
     '/(app)/_organization/project/$projectId/settings': {
       id: '/(app)/_organization/project/$projectId/settings'
       path: '/settings'
@@ -748,6 +721,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/project/$projectId/agents'
       preLoaderRoute: typeof appOrganizationProjectProjectIdAgentsRouteImport
       parentRoute: typeof appOrganizationProjectProjectIdRoute
+    }
+    '/(app)/_organization/project/$projectId_/chat-support/': {
+      id: '/(app)/_organization/project/$projectId_/chat-support/'
+      path: '/project/$projectId/chat-support'
+      fullPath: '/project/$projectId/chat-support/'
+      preLoaderRoute: typeof appOrganizationProjectProjectIdChatSupportIndexRouteImport
+      parentRoute: typeof appOrganizationRoute
     }
   }
 }
@@ -778,16 +758,14 @@ const appOrganizationProjectProjectIdRouteWithChildren =
 
 interface appOrganizationRouteChildren {
   appOrganizationProjectProjectIdRoute: typeof appOrganizationProjectProjectIdRouteWithChildren
-  appOrganizationChatSupportIndexRoute: typeof appOrganizationChatSupportIndexRoute
-  appOrganizationProjectProjectIdChatSupportRoute: typeof appOrganizationProjectProjectIdChatSupportRoute
+  appOrganizationProjectProjectIdChatSupportIndexRoute: typeof appOrganizationProjectProjectIdChatSupportIndexRoute
 }
 
 const appOrganizationRouteChildren: appOrganizationRouteChildren = {
   appOrganizationProjectProjectIdRoute:
     appOrganizationProjectProjectIdRouteWithChildren,
-  appOrganizationChatSupportIndexRoute: appOrganizationChatSupportIndexRoute,
-  appOrganizationProjectProjectIdChatSupportRoute:
-    appOrganizationProjectProjectIdChatSupportRoute,
+  appOrganizationProjectProjectIdChatSupportIndexRoute:
+    appOrganizationProjectProjectIdChatSupportIndexRoute,
 }
 
 const appOrganizationRouteWithChildren = appOrganizationRoute._addFileChildren(
