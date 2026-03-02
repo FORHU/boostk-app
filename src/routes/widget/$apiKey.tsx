@@ -1,11 +1,14 @@
+import { useMutation } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { AnimatePresence, motion } from "framer-motion";
-import { Bot, Send, Sparkles } from "lucide-react";
+import { AnimatePresence } from "framer-motion";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { elysiaClient } from "@/lib/elysia-client";
 import { createTicket } from "@/modules/ticket/ticket.serverFn";
 import { validateWidgetAccess } from "@/modules/widget/widget.service";
-import { LeadForm } from "@/routes/widget/-components/LeadForm";
+import { ChatHeader } from "@/routes/widget/-components/ChatHeader";
+import { ChatInput } from "@/routes/widget/-components/ChatInput";
+import { ChatMessageBubble } from "@/routes/widget/-components/ChatMessageBubble";
+import { TicketForm } from "@/routes/widget/-components/TicketForm";
 
 export const Route = createFileRoute("/widget/$apiKey")({
   beforeLoad: async ({ params }) => {
@@ -30,140 +33,6 @@ export interface Message {
   targetLang?: string;
   sender: MessageSender;
   timestamp: string;
-}
-
-function ChatHeader() {
-  return (
-    <header className="flex-none bg-indigo-600 p-4 text-white flex items-center justify-between shadow-sm">
-      <div className="flex items-center gap-3">
-        <div className="bg-indigo-400/30 p-2 rounded-lg">
-          <Bot size={20} />
-        </div>
-        <div>
-          <h2 className="text-sm font-bold leading-none">Support Chat</h2>
-          <span className="text-[10px] text-indigo-200 flex items-center gap-1">
-            <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
-            Always active
-          </span>
-        </div>
-      </div>
-      <Sparkles size={16} className="text-indigo-300" />
-    </header>
-  );
-}
-
-function ChatMessageBubble({ msg, isStart, isEnd }: { msg: Message; isStart: boolean; isEnd: boolean }) {
-  const getRadiusClasses = () => {
-    const isUser = msg.sender === "user";
-    if (isStart && isEnd) return "rounded-2xl";
-    if (isUser) {
-      if (isStart) return "rounded-2xl rounded-br-none";
-      if (isEnd) return "rounded-2xl rounded-tr-none";
-      return "rounded-2xl rounded-tr-none rounded-br-none";
-    } else {
-      if (isStart) return "rounded-2xl rounded-bl-none";
-      if (isEnd) return "rounded-2xl rounded-tl-none";
-      return "rounded-2xl rounded-tl-none rounded-bl-none";
-    }
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 5 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -5 }}
-      layout
-      className={`flex flex-col ${msg.sender === "user" ? "items-end" : "items-start"} ${!isEnd ? "mb-1" : "mb-4"}`}
-    >
-      <div
-        className={`max-w-[85%] px-4 py-2 text-sm shadow-sm ${getRadiusClasses()} ${
-          msg.sender === "user" ? "bg-indigo-600 text-white" : "bg-white text-gray-800 border border-gray-100"
-        }`}
-      >
-        {/* Customer viewing their own message */}
-        {msg.sender === "user" ? (
-          <>
-            <p className="whitespace-pre-wrap">{msg.text}</p>
-            {msg.translatedText && (
-              <p className="mt-1 text-[11px] italic opacity-80 whitespace-pre-wrap text-indigo-200">
-                Translated: {msg.translatedText}
-              </p>
-            )}
-            {!msg.translatedText && msg.sourceLang !== msg.targetLang && msg.sourceLang && (
-              <p className="mt-1 text-[10px] italic opacity-60 flex items-center gap-1 text-indigo-200">
-                <span className="w-1 h-1 bg-white/60 rounded-full animate-pulse"></span> Translating...
-              </p>
-            )}
-          </>
-        ) : (
-          /* Customer viewing incoming Agent/Bot message */
-          <>
-            <p className="whitespace-pre-wrap">
-              {
-                msg.translatedText === "__TRANSLATION_ERROR__" ||
-                (!msg.translatedText && msg.sourceLang !== msg.targetLang && msg.sourceLang)
-                  ? msg.text // While loading or on error: Show original text as main
-                  : msg.translatedText || msg.text // When complete or no translation needed: Show translated text as main
-              }
-            </p>
-
-            {/* Bottom auxiliary text */}
-            {msg.translatedText === "__TRANSLATION_ERROR__" ? (
-              <p className="mt-1 text-[11px] italic opacity-80 whitespace-pre-wrap text-red-500">Translation error</p>
-            ) : !msg.translatedText && msg.sourceLang !== msg.targetLang && msg.sourceLang ? (
-              <p className="mt-1 text-[10px] italic opacity-80 flex items-center gap-1 text-gray-500">
-                <span className="w-1 h-1 bg-gray-400 rounded-full animate-pulse"></span> Translating...
-              </p>
-            ) : msg.translatedText || msg.sourceLang === msg.targetLang || !msg.sourceLang ? (
-              <p className="mt-1 text-[11px] italic opacity-70 whitespace-pre-wrap text-gray-500">
-                Original: {msg.text}
-              </p>
-            ) : null}
-          </>
-        )}
-      </div>
-      {isEnd && (
-        <span className="text-[10px] text-gray-400 mt-1 px-1">
-          {new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-        </span>
-      )}
-    </motion.div>
-  );
-}
-
-interface ChatInputProps {
-  input: string;
-  setInput: (val: string) => void;
-  onSend: (e: React.FormEvent) => void;
-}
-
-function ChatInput({ input, setInput, onSend }: ChatInputProps) {
-  return (
-    <motion.div
-      key="chat-input"
-      initial={{ y: 20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      exit={{ y: 20, opacity: 0 }}
-      className="p-3 bg-white border-t border-gray-100"
-    >
-      <form onSubmit={onSend} className="flex items-center gap-2">
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Type your message..."
-          className="flex-1 bg-gray-100 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
-        />
-        <button
-          type="submit"
-          disabled={!input.trim()}
-          className="bg-indigo-600 text-white p-2.5 rounded-xl active:scale-95 disabled:opacity-50"
-        >
-          <Send size={18} />
-        </button>
-      </form>
-    </motion.div>
-  );
 }
 
 // Hardcoded UI Translations (i18n)
@@ -213,7 +82,7 @@ function ChatWidget() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLeadCaptured, setIsLeadCaptured] = useState(false);
   const [showForm, setShowForm] = useState(false);
-  const [input, setInput] = useState("");
+
   const [activeTicketId, setActiveTicketId] = useState<string>();
   const [customerId, setCustomerId] = useState<string>();
   const [browserLanguage, setBrowserLanguage] = useState<string>("en");
@@ -374,13 +243,10 @@ function ChatWidget() {
     return () => controller.abort();
   }, [activeTicketId, customerId]);
 
-  // 4. LEAD SUBMIT
-  const handleLeadSubmit = async (data: { name: string; email: string }) => {
-    try {
-      const ticket = await createTicket({
-        data: { apiKey, name: data.name, email: data.email, browserLanguage },
-      });
-
+  // 4. LEAD SUBMIT (using React Query mutate)
+  const createTicketMutation = useMutation({
+    mutationFn: createTicket,
+    onSuccess: (ticket, variables) => {
       setActiveTicketId(ticket.id);
       setCustomerId(ticket.customerId);
       setIsLeadCaptured(true);
@@ -389,7 +255,7 @@ function ChatWidget() {
       const now = new Date().toISOString();
       const confId = `conf-${Date.now()}`;
       const noteId = `note-${Date.now()}`;
-      const confText = `Thanks, ${data.name}! Your reference: ${ticket.referenceId}`;
+      const confText = `Thanks, ${variables.data.name}! Your reference: ${ticket.referenceId}`;
       const noteText = "How can I help you today?";
 
       setMessages((prev) => [
@@ -413,26 +279,29 @@ function ChatWidget() {
       ]);
 
       if (browserLanguage !== "en" && !browserLanguage.startsWith("en-")) {
-        translateText(confText, browserLanguage, confId, data.name, ticket.referenceId);
+        translateText(confText, browserLanguage, confId, variables.data.name, ticket.referenceId);
         translateText(noteText, browserLanguage, noteId);
       }
-    } catch (error) {
+    },
+    onError: (error) => {
       console.error("Failed to create ticket", error);
-    }
+    },
+  });
+
+  const handleLeadSubmit = (data: { name: string; email: string }) => {
+    createTicketMutation.mutate({
+      data: { apiKey, name: data.name, email: data.email, browserLanguage },
+    });
   };
 
   // 5. SEND MESSAGE
-  const handleSendMessage = async (e: React.SyntheticEvent) => {
-    e.preventDefault();
-    if (!input.trim() || !activeTicketId || !customerId) return;
-
-    const currentInput = input;
-    setInput("");
+  const handleSendMessage = async (message: string) => {
+    if (!message.trim() || !activeTicketId || !customerId) return;
 
     try {
       await elysiaClient.api.messages.post({
         ticketId: activeTicketId,
-        content: currentInput,
+        content: message,
         senderId: customerId,
         senderType: "CUSTOMER",
       });
@@ -469,9 +338,9 @@ function ChatWidget() {
       <footer className="flex-none">
         <AnimatePresence mode="wait">
           {showForm && !isLeadCaptured ? (
-            <LeadForm key="lead-form" onSubmit={handleLeadSubmit} />
+            <TicketForm key="ticket-form" onSubmit={handleLeadSubmit} />
           ) : isLeadCaptured ? (
-            <ChatInput key="chat-input" input={input} setInput={setInput} onSend={handleSendMessage} />
+            <ChatInput key="chat-input" onSend={handleSendMessage} />
           ) : null}
         </AnimatePresence>
       </footer>
