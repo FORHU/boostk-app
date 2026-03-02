@@ -5,9 +5,9 @@ import { getProject } from "@/modules/project/project.serverFn";
 import { getTickets } from "@/modules/ticket/ticket.serverFn";
 import { ProjectSidebar } from "@/routes/(app)/_organization/project/-components/ProjectSidebar";
 import { useChatSupportStore } from "@/routes/(app)/_organization/project/$projectId_.chat-support/-store/chat-support.store";
-import { EmptyTickets } from "../-components/EmptyTickets";
 import { ChatBox } from "./-components/ChatBox";
 import { CustomerInfoSidebar } from "./-components/CustomerInfoSidebar";
+import { EmptyTickets } from "./-components/EmptyTickets";
 import { TicketDetailsSidebar } from "./-components/TicketDetailsSidebar";
 import { TicketTabs } from "./-components/TicketTabs";
 
@@ -51,7 +51,9 @@ function RouteComponent() {
 
         <div className="flex flex-1 overflow-hidden">
           <ProjectSidebar organizationId={project.organization?.id || ""} />
-          <EmptyTickets />
+          <div className="flex flex-1 overflow-hidden bg-white border-red-500 border-2">
+            <EmptyTickets />
+          </div>
         </div>
       </div>
     );
@@ -69,10 +71,10 @@ function RouteComponent() {
       <div className="flex flex-1 overflow-hidden">
         <ProjectSidebar organizationId={project.organization?.id || ""} />
 
-        <main className="flex flex-col flex-1 overflow-y-auto border-blue-500 border-2">
+        <main className="flex flex-col flex-1 overflow-y-auto">
           <TicketTabs tickets={tickets} isLoading={false} />
 
-          <div className="flex flex-1 overflow-hidden bg-white border-red-500 border-2">
+          <div className="flex flex-1 overflow-hidden bg-white">
             <TicketDetailsSidebar ticket={activeTicket} />
             <ChatBox ticket={activeTicket} />
             <CustomerInfoSidebar ticket={activeTicket} />

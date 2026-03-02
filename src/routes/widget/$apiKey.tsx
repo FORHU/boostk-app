@@ -131,15 +131,13 @@ function ChatMessageBubble({ msg, isStart, isEnd }: { msg: Message; isStart: boo
   );
 }
 
-function ChatInput({
-  input,
-  setInput,
-  onSend,
-}: {
+interface ChatInputProps {
   input: string;
   setInput: (val: string) => void;
   onSend: (e: React.FormEvent) => void;
-}) {
+}
+
+function ChatInput({ input, setInput, onSend }: ChatInputProps) {
   return (
     <motion.div
       key="chat-input"
@@ -442,6 +440,7 @@ function ChatWidget() {
       console.error("Failed to send message", error);
     }
   };
+  console.log("test 1", messages);
 
   return (
     <div className="flex flex-col h-screen max-h-screen bg-white overflow-hidden border border-gray-200">

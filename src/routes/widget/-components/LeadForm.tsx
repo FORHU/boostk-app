@@ -18,14 +18,8 @@ export function LeadForm({ onSubmit }: LeadFormProps) {
   const [showRef, setShowRef] = useState(false);
 
   const form = useForm({
-    defaultValues: {
-      name: "",
-      email: "",
-      referenceNumber: "",
-    } as z.infer<typeof leadSchema>,
-    validators: {
-      onChange: leadSchema,
-    },
+    defaultValues: { name: "", email: "", referenceNumber: "" } as z.infer<typeof leadSchema>,
+    validators: { onChange: leadSchema },
     onSubmit: async ({ value }) => onSubmit(value),
   });
 
