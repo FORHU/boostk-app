@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as DemoWidgetRouteImport } from './routes/demo-widget'
 import { Route as DemoRouteRouteImport } from './routes/demo/route'
 import { Route as authRouteRouteImport } from './routes/(auth)/route'
 import { Route as appRouteRouteImport } from './routes/(app)/route'
@@ -47,6 +48,11 @@ import { Route as appOrganizationProjectProjectIdLogsRouteImport } from './route
 import { Route as appOrganizationProjectProjectIdAgentsRouteImport } from './routes/(app)/_organization/project/$projectId/agents'
 import { Route as appOrganizationProjectProjectIdChatSupportIndexRouteImport } from './routes/(app)/_organization/project/$projectId_.chat-support/index'
 
+const DemoWidgetRoute = DemoWidgetRouteImport.update({
+  id: '/demo-widget',
+  path: '/demo-widget',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DemoRouteRoute = DemoRouteRouteImport.update({
   id: '/demo',
   path: '/demo',
@@ -242,6 +248,7 @@ const appOrganizationProjectProjectIdChatSupportIndexRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/demo': typeof DemoRouteRouteWithChildren
+  '/demo-widget': typeof DemoWidgetRoute
   '/signin': typeof authSigninRoute
   '/signup': typeof authSignupRoute
   '/demo/socket': typeof DemoSocketRoute
@@ -277,6 +284,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/demo-widget': typeof DemoWidgetRoute
   '/signin': typeof authSigninRoute
   '/signup': typeof authSignupRoute
   '/demo/socket': typeof DemoSocketRoute
@@ -314,6 +322,7 @@ export interface FileRoutesById {
   '/(app)': typeof appRouteRouteWithChildren
   '/(auth)': typeof authRouteRouteWithChildren
   '/demo': typeof DemoRouteRouteWithChildren
+  '/demo-widget': typeof DemoWidgetRoute
   '/(app)/_organization': typeof appOrganizationRouteWithChildren
   '/(auth)/signin': typeof authSigninRoute
   '/(auth)/signup': typeof authSignupRoute
@@ -353,6 +362,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/demo'
+    | '/demo-widget'
     | '/signin'
     | '/signup'
     | '/demo/socket'
@@ -388,6 +398,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/demo-widget'
     | '/signin'
     | '/signup'
     | '/demo/socket'
@@ -424,6 +435,7 @@ export interface FileRouteTypes {
     | '/(app)'
     | '/(auth)'
     | '/demo'
+    | '/demo-widget'
     | '/(app)/_organization'
     | '/(auth)/signin'
     | '/(auth)/signup'
@@ -464,12 +476,20 @@ export interface RootRouteChildren {
   appRouteRoute: typeof appRouteRouteWithChildren
   authRouteRoute: typeof authRouteRouteWithChildren
   DemoRouteRoute: typeof DemoRouteRouteWithChildren
+  DemoWidgetRoute: typeof DemoWidgetRoute
   WidgetApiKeyRoute: typeof WidgetApiKeyRoute
   WidgetAccessDeniedRoute: typeof WidgetAccessDeniedRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/demo-widget': {
+      id: '/demo-widget'
+      path: '/demo-widget'
+      fullPath: '/demo-widget'
+      preLoaderRoute: typeof DemoWidgetRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/demo': {
       id: '/demo'
       path: '/demo'
@@ -871,6 +891,7 @@ const rootRouteChildren: RootRouteChildren = {
   appRouteRoute: appRouteRouteWithChildren,
   authRouteRoute: authRouteRouteWithChildren,
   DemoRouteRoute: DemoRouteRouteWithChildren,
+  DemoWidgetRoute: DemoWidgetRoute,
   WidgetApiKeyRoute: WidgetApiKeyRoute,
   WidgetAccessDeniedRoute: WidgetAccessDeniedRoute,
 }
