@@ -2,6 +2,7 @@ import { useMutation } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { AnimatePresence } from "framer-motion";
 import { useRef, useState } from "react";
+import { createMessage } from "@/modules/message/message.serverFn";
 import { type CreateTicketResponse, createTicket } from "@/modules/ticket/ticket.serverFn";
 import { ChatHeader } from "@/routes/widget/-components/ChatHeader";
 import { ChatInput } from "@/routes/widget/-components/ChatInput";
@@ -144,21 +145,57 @@ function DemoChatWidget() {
     },
   });
 
-  const handleSendMessage = async (message: string) => {
-    if (!message.trim()) return;
-    // if (!activeTicketId || !customerId) return; // check ticket form successfully submitted
+  const createMessageMutation = useMutation({
+    mutationFn: createMessage,
+    onMutate: (variables) => {
+      const userMsgTempId = `user-temp-${Date.now()}`;
 
-    // Echo user's message immediately
-    const userMsgTempId = `user-${Date.now()}`;
-    setMessages((prev) => [
-      ...prev,
-      {
+      const optimisticMsg: Message = {
         id: userMsgTempId,
-        text: message,
+        text: "hello",
         sender: "user",
         timestamp: new Date().toISOString(),
+        sourceLang: variables.data.sourceLang,
+        targetLang: "en",
+      };
+      setMessages((prev) => [...prev, optimisticMsg]);
+
+      return { userMsgTempId };
+    },
+    onSuccess: (data, variables, context) => {
+      console.log(data);
+      console.log(variables);
+      console.log(context);
+      // Translation Plan for Optimistic UI:
+      // 1. We already added the message to the UI (Optimistic Update) in handleSendMessage.
+      // 2. This creates that "instant feel" the user expects.
+      // 3. When the backend responds (onSuccess), it will contain the saved data including `translatedText`.
+      // 4. Update the specific message in the state with the `translatedText` and real `id` from the backend.
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === context.userMsgTempId ? { ...msg, id: data.id, translatedText: data.translatedText } : msg,
+        ),
+      );
+    },
+    onError: (error) => {
+      console.error("Failed to send message", error.message);
+      // Revert optimistic update here if needed (could filter out the temp message)
+    },
+  });
+
+  const handleSendMessage = async (message: string) => {
+    if (!message.trim()) return;
+    if (!activeTicket) return; // Ensure ticket exists before sending
+
+    createMessageMutation.mutate({
+      data: {
+        ticketId: activeTicket.id,
+        content: message,
+        sender: "user",
+        sourceLang: langTemp,
+        targetLang: "en",
       },
-    ]);
+    });
   };
 
   return (
