@@ -1,6 +1,7 @@
 import { Bot, Sparkles } from "lucide-react";
+import { memo } from "react";
 
-export function ChatHeader() {
+export const ChatHeader = memo(function ChatHeader() {
   return (
     <header className="flex-none bg-indigo-600 p-4 text-white flex items-center justify-between shadow-sm">
       <div className="flex items-center gap-3">
@@ -18,4 +19,4 @@ export function ChatHeader() {
       <Sparkles size={16} className="text-indigo-300" />
     </header>
   );
-}
+});
