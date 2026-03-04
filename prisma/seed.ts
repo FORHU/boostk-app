@@ -6,11 +6,6 @@ const users = [
   {name: "Unverified User",email: "unverified@example.com",emailVerified: false,},
 ];
 
-const todos = [
-  { title: "Setup Tanstack Start", completed: true },
-  { title: "Setup Better Auth", completed: true },
-  { title: "Run Database Seed", completed: false },
-];
 
 const seed = async () => {
   console.log("🌱 Starting seed...");

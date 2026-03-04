@@ -5,11 +5,18 @@ import type { CreateOrganizationInput } from "./organization.schema";
 
 export const OrganizationService = {
   async create(data: CreateOrganizationInput, user: User) {
-    const org = await prisma.organization.create({ data });
+    const org = await prisma.organization.create({
+      data: {
+        ...data,
+        members: {
+          create: [{ userId: user.id, role: "OWNER" }],
+        },
+      },
+    });
 
     await prisma.user.update({
       where: { id: user.id },
-      data: { organization: { connect: { id: org.id } } },
+      data: { activeOrganization: { connect: { id: org.id } } },
     });
 
     return org;

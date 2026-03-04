@@ -18,11 +18,13 @@ model User {
   role   UserRole   @default(AGENT)
   status UserStatus @default(OFFLINE)
 
-  orgId        String?
-  organization Organization? @relation(fields: [orgId], references: [id])
+  orgId              String?
+  activeOrganization Organization? @relation("ActiveOrganization", fields: [orgId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  memberships Member[]
 
   sessions        Session[]
   accounts        Account[]
@@ -84,8 +86,9 @@ model Organization {
   name      String
   createdAt DateTime @default(now())
 
-  members  User[]
-  projects Project[]
+  members     Member[]
+  activeUsers User[]    @relation("ActiveOrganization")
+  projects    Project[]
 
   @@map("organizations")
 }
@@ -145,6 +148,22 @@ model Ticket {
   @@map("tickets")
 }
 
+model Member {
+  id             String       @id @default(cuid())
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  role           MemberRole   @default(MEMBER)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([userId, organizationId])
+  @@index([organizationId])
+  @@index([userId])
+  @@map("members")
+}
+
 model Message {
   id       String @id @default(cuid())
   ticketId String
@@ -186,4 +205,10 @@ enum SenderType {
   AGENT
   CUSTOMER
   SYSTEM
+}
+
+enum MemberRole {
+  OWNER
+  ADMIN
+  MEMBER
 }

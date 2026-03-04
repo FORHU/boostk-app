@@ -16,14 +16,17 @@ export const getOrganization = createServerFn({ method: "GET" })
     return organization;
   });
 
-export const getOrganizations = createServerFn({ method: "GET" }).handler(async () => {
-  const organizations = await prisma.organization.findMany({
-    include: {
-      _count: {
-        select: { members: true, projects: true },
+export const getOrganizations = createServerFn({ method: "GET" })
+  .inputValidator(z.object({ userId: z.string() }))
+  .handler(async ({ data }) => {
+    const organizations = await prisma.organization.findMany({
+      where: { members: { some: { userId: data.userId } } },
+      include: {
+        _count: {
+          select: { members: true, projects: true },
+        },
       },
-    },
-  });
+    });
 
-  return organizations;
-});
+    return organizations;
+  });

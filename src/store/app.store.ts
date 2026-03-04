@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import type { Message } from "@/notifier/core";
-import type { Route as AuthenticatedRoute } from "@/routes/(authenticated)/route";
+import type { Route as AppRoute } from "@/routes/(app)/route";
 import SSEWorker from "../worker/sse.worker.ts?sharedworker";
 
 interface Project {
@@ -12,7 +12,7 @@ interface Project {
   updatedAt: string;
 }
 
-type AuthUser = ReturnType<typeof AuthenticatedRoute.useRouteContext>["authSession"]["user"];
+type AuthUser = ReturnType<typeof AppRoute.useRouteContext>["authSession"]["user"];
 
 interface AppState {
   userAuth: AuthUser;

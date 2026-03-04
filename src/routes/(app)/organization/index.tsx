@@ -6,11 +6,9 @@ import { getOrganizations } from "@/modules/organization/organization.serverFn";
 
 export const Route = createFileRoute("/(app)/organization/")({
   component: RouteComponent,
-  loader: async () => {
-    // TODO: Add organization filtering based on ownership
-    // const { user } = context.authSession;
-
-    const organizations = await getOrganizations();
+  loader: async ({ context }) => {
+    const { user } = context.authSession;
+    const organizations = await getOrganizations({ data: { userId: user.id } });
 
     return { organizations };
   },
