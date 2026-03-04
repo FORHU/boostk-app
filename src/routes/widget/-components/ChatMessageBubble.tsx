@@ -16,6 +16,36 @@ export function ChatMessageBubble({ msg, isStart, isEnd }: { msg: Message; isSta
     }
   };
 
+  const renderAuxiliaryText = () => {
+    const { translatedText, text, sourceLang, targetLang } = msg;
+
+    const hasError = translatedText === "__TRANSLATION_ERROR__";
+    const isTranslating = !translatedText && sourceLang && sourceLang !== targetLang;
+
+    const isShowingTranslation = translatedText && !hasError && sourceLang !== targetLang;
+
+    const baseClass = "mt-1 text-[11px] italic opacity-80 whitespace-pre-wrap";
+
+    if (hasError) {
+      return <p className={`${baseClass} text-red-500`}>Translation error</p>;
+    }
+
+    if (isTranslating) {
+      return (
+        <p className={`${baseClass} text-[10px] text-gray-500 flex items-center gap-1`}>
+          <span className="w-1 h-1 bg-gray-400 rounded-full animate-pulse" />
+          Translating...
+        </p>
+      );
+    }
+
+    if (isShowingTranslation) {
+      return <p className={`${baseClass} text-gray-500 opacity-70`}>Original: {text}</p>;
+    }
+
+    return null;
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 5 }}
@@ -56,18 +86,7 @@ export function ChatMessageBubble({ msg, isStart, isEnd }: { msg: Message; isSta
               }
             </p>
 
-            {/* Bottom auxiliary text */}
-            {msg.translatedText === "__TRANSLATION_ERROR__" ? (
-              <p className="mt-1 text-[11px] italic opacity-80 whitespace-pre-wrap text-red-500">Translation error</p>
-            ) : !msg.translatedText && msg.sourceLang !== msg.targetLang && msg.sourceLang ? (
-              <p className="mt-1 text-[10px] italic opacity-80 flex items-center gap-1 text-gray-500">
-                <span className="w-1 h-1 bg-gray-400 rounded-full animate-pulse"></span> Translating...
-              </p>
-            ) : msg.translatedText || msg.sourceLang === msg.targetLang || !msg.sourceLang ? (
-              <p className="mt-1 text-[11px] italic opacity-70 whitespace-pre-wrap text-gray-500">
-                Original: {msg.text}
-              </p>
-            ) : null}
+            {renderAuxiliaryText()}
           </>
         )}
       </div>

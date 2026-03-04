@@ -27,6 +27,7 @@ const createTicketInputValidator = z.object({
 
 export const createTicket = createServerFn({ method: "POST" })
   .inputValidator(createTicketInputValidator)
+  // TODO: add middleware for domain and apiKey validation
   .handler(async ({ data }) => {
     const project = await prisma.project.findUnique({
       where: { apiKey: data.apiKey },
