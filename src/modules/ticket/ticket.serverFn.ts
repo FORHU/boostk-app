@@ -63,6 +63,10 @@ export const createTicket = createServerFn({ method: "POST" })
     return ticket;
   });
 
+type CreateTicketFn = typeof createTicket;
+type CreateTicketPromise = ReturnType<CreateTicketFn>;
+export type CreateTicketResponse = Awaited<CreateTicketPromise>;
+
 export const getProjectTickets = createServerFn({ method: "GET" })
   .inputValidator(z.object({ projectId: z.string().optional() }))
   .handler(async ({ data }) => {

@@ -2,7 +2,7 @@ import { useMutation } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { AnimatePresence } from "framer-motion";
 import { useRef, useState } from "react";
-import { createTicket } from "@/modules/ticket/ticket.serverFn";
+import { type CreateTicketResponse, createTicket } from "@/modules/ticket/ticket.serverFn";
 import { ChatHeader } from "@/routes/widget/-components/ChatHeader";
 import { ChatInput } from "@/routes/widget/-components/ChatInput";
 import { ChatMessageBubble } from "@/routes/widget/-components/ChatMessageBubble";
@@ -42,6 +42,43 @@ const getInitialMessage = (lang: string) => {
       return "Hi! Please introduce yourself to start the chat.";
   }
 };
+const getWelcomeMessage = (lang: string, name: string, referenceId: string) => {
+  switch (lang) {
+    case "ko":
+      return `안녕하세요, ${name}님! 참조 번호는 ${referenceId}입니다`;
+    case "es":
+      return `Hola, ${name}. Tu número de referencia es ${referenceId}.`;
+    case "fr":
+      return `Salut, ${name}! Votre numéro de référence est ${referenceId}.`;
+    case "de":
+      return `Hallo, ${name}! Ihre Referenznummer lautet ${referenceId}.`;
+    case "ja":
+      return `こんにちは、${name}さん！参照番号は${referenceId}です`;
+    case "zh":
+      return `你好，${name}！您的参考号是${referenceId}`;
+    default:
+      return `Hi, ${name}! Your reference number is ${referenceId}`;
+  }
+};
+
+const getHelpPrompt = (lang: string) => {
+  switch (lang) {
+    case "ko":
+      return "무엇을 도와드릴까요?";
+    case "es":
+      return "¿En qué puedo ayudarte?";
+    case "fr":
+      return "Comment puis-je vous aider?";
+    case "de":
+      return "Wie kann ich Ihnen helfen?";
+    case "ja":
+      return "どんな御用でしょうか？";
+    case "zh":
+      return "今天我能帮您什么忙？";
+    default:
+      return "How can I help you today?";
+  }
+};
 
 function DemoChatWidget() {
   const apiKey = "ch-api-cmlzm0zpw000101no0o5vhyua";
@@ -62,6 +99,8 @@ function DemoChatWidget() {
   const [showForm, setShowForm] = useState(true);
   const [isLeadCaptured, setIsLeadCaptured] = useState(false);
 
+  const [activeTicket, setActiveTicket] = useState<CreateTicketResponse>();
+
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const handleLeadSubmit = (data: { name: string; email: string }) => {
@@ -74,6 +113,31 @@ function DemoChatWidget() {
     mutationFn: createTicket,
     onSuccess: (ticket, variables) => {
       console.log(ticket, variables);
+      setActiveTicket(ticket);
+      setIsLeadCaptured(true);
+      setShowForm(false);
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: "welcome-message",
+          text: getWelcomeMessage("en", variables.data.name, ticket.referenceId),
+          translatedText: getWelcomeMessage(langTemp, variables.data.name, ticket.referenceId),
+          sourceLang: "en",
+          targetLang: langTemp,
+          sender: "bot",
+          timestamp: new Date().toISOString(),
+        },
+        {
+          id: "help-prompt",
+          text: getHelpPrompt("en"),
+          translatedText: getHelpPrompt(langTemp),
+          sourceLang: "en",
+          targetLang: langTemp,
+          sender: "bot",
+          timestamp: new Date().toISOString(),
+        },
+      ]);
     },
     onError: (error) => {
       console.error("Failed to create ticket", error.message);
