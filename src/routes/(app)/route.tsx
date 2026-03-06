@@ -1,26 +1,13 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { getOrganization } from "@/modules/organization/organization.serverFn";
 import { useAppStore } from "@/store/app.store";
 
 export const Route = createFileRoute("/(app)")({
   beforeLoad: async ({ context }) => {
     if (!context.authSession) throw redirect({ to: "/signin" });
 
-    const orgId = context.authSession.user.orgId;
-    const authUserOrg = orgId ? await getOrganization({ data: { orgId } }) : null;
-    const augmentedUser = { ...context.authSession.user, organization: authUserOrg };
-
-    useAppStore.setState({
-      userAuth: augmentedUser,
-      selectedOrganization: orgId ?? null,
-    });
-
     return {
-      authSession: {
-        ...context.authSession,
-        user: augmentedUser,
-      },
+      authSession: context.authSession,
     };
   },
   component: AuthenticatedLayout,

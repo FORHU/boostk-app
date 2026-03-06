@@ -19,13 +19,19 @@ export const OrganizationService = {
     return await prisma.organization.findMany();
   },
 
+  async get(id: string) {
+    return await prisma.organization.findUnique({
+      where: { id },
+    });
+  },
+
   // Get projects belonging to a specific Org
   async getProjects(organizationId: string) {
     const org = await prisma.organization.findUnique({
       where: { id: organizationId },
     });
 
-    if (!org) return null;
+    if (!org) return [];
 
     return await prisma.project.findMany({
       where: { orgId: organizationId },

@@ -2,7 +2,7 @@ import { useMutation } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { AnimatePresence } from "framer-motion";
 import { useRef, useState } from "react";
-import { createMessage } from "@/modules/message/message.serverFn";
+import { createMessageFn } from "@/modules/message/message.serverFn";
 import { type CreateTicketResponse, createTicket } from "@/modules/ticket/ticket.serverFn";
 import { ChatHeader } from "@/routes/widget/-components/ChatHeader";
 import { ChatInput } from "@/routes/widget/-components/ChatInput";
@@ -146,7 +146,7 @@ function DemoChatWidget() {
   });
 
   const createMessageMutation = useMutation({
-    mutationFn: createMessage,
+    mutationFn: createMessageFn,
     onMutate: (variables) => {
       const userMsgTempId = `user-temp-${Date.now()}`;
 
@@ -155,7 +155,7 @@ function DemoChatWidget() {
         text: "hello",
         sender: "user",
         timestamp: new Date().toISOString(),
-        sourceLang: variables.data.sourceLang,
+        sourceLang: langTemp,
         targetLang: "en",
       };
       setMessages((prev) => [...prev, optimisticMsg]);
@@ -173,7 +173,9 @@ function DemoChatWidget() {
       // 4. Update the specific message in the state with the `translatedText` and real `id` from the backend.
       setMessages((prev) =>
         prev.map((msg) =>
-          msg.id === context.userMsgTempId ? { ...msg, id: data.id, translatedText: data.translatedText } : msg,
+          msg.id === context.userMsgTempId
+            ? { ...msg, id: data.id, translatedText: data.translatedContent || undefined }
+            : msg,
         ),
       );
     },
@@ -191,9 +193,8 @@ function DemoChatWidget() {
       data: {
         ticketId: activeTicket.id,
         content: message,
-        sender: "user",
-        sourceLang: langTemp,
-        targetLang: "en",
+        senderId: "",
+        senderType: "CUSTOMER",
       },
     });
   };

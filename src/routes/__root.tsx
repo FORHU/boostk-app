@@ -4,7 +4,6 @@ import { createRootRouteWithContext, HeadContent, Scripts } from "@tanstack/reac
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { getAuthSessionFn } from "@/lib/auth-server";
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
-import StoreDevtools from "../lib/demo-store-devtools";
 import appCss from "../styles.css?url";
 
 interface MyRouterContext {
@@ -18,6 +17,11 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "BoostK!" },
+    ],
+    scripts: [
+      process.env.NODE_ENV === "development"
+        ? { src: "https://unpkg.com/react-scan/dist/auto.global.js", async: true }
+        : {},
     ],
     links: [{ rel: "stylesheet", href: appCss }],
   }),
@@ -45,7 +49,6 @@ function RootDocument({ children }: { children: React.ReactNode }) {
               render: <TanStackRouterDevtoolsPanel />,
             },
             TanStackQueryDevtools,
-            StoreDevtools,
           ]}
         />
         <Scripts />

@@ -10,52 +10,30 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as DemoWidgetRouteImport } from './routes/demo-widget'
-import { Route as DemoRouteRouteImport } from './routes/demo/route'
 import { Route as authRouteRouteImport } from './routes/(auth)/route'
 import { Route as appRouteRouteImport } from './routes/(app)/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as DemoIndexRouteImport } from './routes/demo/index'
 import { Route as WidgetAccessDeniedRouteImport } from './routes/widget/access-denied'
 import { Route as WidgetApiKeyRouteImport } from './routes/widget/$apiKey'
-import { Route as DemoTanstackQueryRouteImport } from './routes/demo/tanstack-query'
-import { Route as DemoTableRouteImport } from './routes/demo/table'
-import { Route as DemoStoreRouteImport } from './routes/demo/store'
-import { Route as DemoSocketRouteImport } from './routes/demo/socket'
+import { Route as ApiSseRouteImport } from './routes/api/sse'
 import { Route as authSignupRouteImport } from './routes/(auth)/signup'
 import { Route as authSigninRouteImport } from './routes/(auth)/signin'
-import { Route as appOrganizationRouteImport } from './routes/(app)/_organization'
-import { Route as DemoPrismaDemoIndexRouteImport } from './routes/demo/prisma-demo/index'
-import { Route as appOrganizationIndexRouteImport } from './routes/(app)/organization/index'
-import { Route as DemoStartServerFuncsRouteImport } from './routes/demo/start.server-funcs'
-import { Route as DemoStartApiRequestRouteImport } from './routes/demo/start.api-request'
-import { Route as DemoSseSampleRouteImport } from './routes/demo/sse/sample'
-import { Route as DemoFormSimpleRouteImport } from './routes/demo/form.simple'
-import { Route as DemoFormAddressRouteImport } from './routes/demo/form.address'
-import { Route as DemoApiTqTodosRouteImport } from './routes/demo/api.tq-todos'
-import { Route as DemoApiNamesRouteImport } from './routes/demo/api.names'
-import { Route as appOrganizationCreateRouteImport } from './routes/(app)/organization/create'
-import { Route as appOrganizationOrganizationIdRouteRouteImport } from './routes/(app)/organization/$organizationId/route'
-import { Route as DemoStartSsrIndexRouteImport } from './routes/demo/start.ssr.index'
-import { Route as appOrganizationOrganizationIdIndexRouteImport } from './routes/(app)/organization/$organizationId/index'
-import { Route as DemoStartSsrSpaModeRouteImport } from './routes/demo/start.ssr.spa-mode'
-import { Route as DemoStartSsrFullSsrRouteImport } from './routes/demo/start.ssr.full-ssr'
-import { Route as DemoStartSsrDataOnlyRouteImport } from './routes/demo/start.ssr.data-only'
-import { Route as DemoPrismaDemoUserIdTodosRouteImport } from './routes/demo/prisma-demo/$userId/todos'
-import { Route as appOrganizationProjectProjectIdRouteImport } from './routes/(app)/_organization/project/$projectId'
-import { Route as appOrganizationProjectProjectIdIndexRouteImport } from './routes/(app)/_organization/project/$projectId/index'
-import { Route as appOrganizationProjectProjectIdSettingsRouteImport } from './routes/(app)/_organization/project/$projectId/settings'
-import { Route as appOrganizationProjectProjectIdLogsRouteImport } from './routes/(app)/_organization/project/$projectId/logs'
-import { Route as appOrganizationProjectProjectIdAgentsRouteImport } from './routes/(app)/_organization/project/$projectId/agents'
-import { Route as appOrganizationProjectProjectIdChatSupportIndexRouteImport } from './routes/(app)/_organization/project/$projectId_.chat-support/index'
+import { Route as appOrganizationsIndexRouteImport } from './routes/(app)/organizations/index'
+import { Route as appOrgIndexRouteImport } from './routes/(app)/org/index'
+import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as appProjectProjectIdRouteImport } from './routes/(app)/project/$projectId'
+import { Route as appOrganizationsCreateRouteImport } from './routes/(app)/organizations/create'
+import { Route as appOrgOrganizationIdRouteRouteImport } from './routes/(app)/org/$organizationId/route'
+import { Route as appProjectProjectIdIndexRouteImport } from './routes/(app)/project/$projectId/index'
+import { Route as appOrgOrganizationIdIndexRouteImport } from './routes/(app)/org/$organizationId/index'
+import { Route as appProjectProjectIdSettingsRouteImport } from './routes/(app)/project/$projectId/settings'
+import { Route as appProjectProjectIdLogsRouteImport } from './routes/(app)/project/$projectId/logs'
+import { Route as appProjectProjectIdAgentsRouteImport } from './routes/(app)/project/$projectId/agents'
+import { Route as appProjectProjectIdChatSupportIndexRouteImport } from './routes/(app)/project/$projectId_.chat-support/index'
 
 const DemoWidgetRoute = DemoWidgetRouteImport.update({
   id: '/demo-widget',
   path: '/demo-widget',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DemoRouteRoute = DemoRouteRouteImport.update({
-  id: '/demo',
-  path: '/demo',
   getParentRoute: () => rootRouteImport,
 } as any)
 const authRouteRoute = authRouteRouteImport.update({
@@ -71,11 +49,6 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DemoIndexRoute = DemoIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => DemoRouteRoute,
-} as any)
 const WidgetAccessDeniedRoute = WidgetAccessDeniedRouteImport.update({
   id: '/widget/access-denied',
   path: '/widget/access-denied',
@@ -86,25 +59,10 @@ const WidgetApiKeyRoute = WidgetApiKeyRouteImport.update({
   path: '/widget/$apiKey',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DemoTanstackQueryRoute = DemoTanstackQueryRouteImport.update({
-  id: '/tanstack-query',
-  path: '/tanstack-query',
-  getParentRoute: () => DemoRouteRoute,
-} as any)
-const DemoTableRoute = DemoTableRouteImport.update({
-  id: '/table',
-  path: '/table',
-  getParentRoute: () => DemoRouteRoute,
-} as any)
-const DemoStoreRoute = DemoStoreRouteImport.update({
-  id: '/store',
-  path: '/store',
-  getParentRoute: () => DemoRouteRoute,
-} as any)
-const DemoSocketRoute = DemoSocketRouteImport.update({
-  id: '/socket',
-  path: '/socket',
-  getParentRoute: () => DemoRouteRoute,
+const ApiSseRoute = ApiSseRouteImport.update({
+  id: '/api/sse',
+  path: '/api/sse',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const authSignupRoute = authSignupRouteImport.update({
   id: '/signup',
@@ -116,283 +74,157 @@ const authSigninRoute = authSigninRouteImport.update({
   path: '/signin',
   getParentRoute: () => authRouteRoute,
 } as any)
-const appOrganizationRoute = appOrganizationRouteImport.update({
-  id: '/_organization',
+const appOrganizationsIndexRoute = appOrganizationsIndexRouteImport.update({
+  id: '/organizations/',
+  path: '/organizations/',
   getParentRoute: () => appRouteRoute,
 } as any)
-const DemoPrismaDemoIndexRoute = DemoPrismaDemoIndexRouteImport.update({
-  id: '/prisma-demo/',
-  path: '/prisma-demo/',
-  getParentRoute: () => DemoRouteRoute,
-} as any)
-const appOrganizationIndexRoute = appOrganizationIndexRouteImport.update({
-  id: '/organization/',
-  path: '/organization/',
+const appOrgIndexRoute = appOrgIndexRouteImport.update({
+  id: '/org/',
+  path: '/org/',
   getParentRoute: () => appRouteRoute,
 } as any)
-const DemoStartServerFuncsRoute = DemoStartServerFuncsRouteImport.update({
-  id: '/start/server-funcs',
-  path: '/start/server-funcs',
-  getParentRoute: () => DemoRouteRoute,
+const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
+  id: '/api/auth/$',
+  path: '/api/auth/$',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const DemoStartApiRequestRoute = DemoStartApiRequestRouteImport.update({
-  id: '/start/api-request',
-  path: '/start/api-request',
-  getParentRoute: () => DemoRouteRoute,
-} as any)
-const DemoSseSampleRoute = DemoSseSampleRouteImport.update({
-  id: '/sse/sample',
-  path: '/sse/sample',
-  getParentRoute: () => DemoRouteRoute,
-} as any)
-const DemoFormSimpleRoute = DemoFormSimpleRouteImport.update({
-  id: '/form/simple',
-  path: '/form/simple',
-  getParentRoute: () => DemoRouteRoute,
-} as any)
-const DemoFormAddressRoute = DemoFormAddressRouteImport.update({
-  id: '/form/address',
-  path: '/form/address',
-  getParentRoute: () => DemoRouteRoute,
-} as any)
-const DemoApiTqTodosRoute = DemoApiTqTodosRouteImport.update({
-  id: '/api/tq-todos',
-  path: '/api/tq-todos',
-  getParentRoute: () => DemoRouteRoute,
-} as any)
-const DemoApiNamesRoute = DemoApiNamesRouteImport.update({
-  id: '/api/names',
-  path: '/api/names',
-  getParentRoute: () => DemoRouteRoute,
-} as any)
-const appOrganizationCreateRoute = appOrganizationCreateRouteImport.update({
-  id: '/organization/create',
-  path: '/organization/create',
+const appProjectProjectIdRoute = appProjectProjectIdRouteImport.update({
+  id: '/project/$projectId',
+  path: '/project/$projectId',
   getParentRoute: () => appRouteRoute,
 } as any)
-const appOrganizationOrganizationIdRouteRoute =
-  appOrganizationOrganizationIdRouteRouteImport.update({
-    id: '/organization/$organizationId',
-    path: '/organization/$organizationId',
+const appOrganizationsCreateRoute = appOrganizationsCreateRouteImport.update({
+  id: '/organizations/create',
+  path: '/organizations/create',
+  getParentRoute: () => appRouteRoute,
+} as any)
+const appOrgOrganizationIdRouteRoute =
+  appOrgOrganizationIdRouteRouteImport.update({
+    id: '/org/$organizationId',
+    path: '/org/$organizationId',
     getParentRoute: () => appRouteRoute,
   } as any)
-const DemoStartSsrIndexRoute = DemoStartSsrIndexRouteImport.update({
-  id: '/start/ssr/',
-  path: '/start/ssr/',
-  getParentRoute: () => DemoRouteRoute,
-} as any)
-const appOrganizationOrganizationIdIndexRoute =
-  appOrganizationOrganizationIdIndexRouteImport.update({
+const appProjectProjectIdIndexRoute =
+  appProjectProjectIdIndexRouteImport.update({
     id: '/',
     path: '/',
-    getParentRoute: () => appOrganizationOrganizationIdRouteRoute,
+    getParentRoute: () => appProjectProjectIdRoute,
   } as any)
-const DemoStartSsrSpaModeRoute = DemoStartSsrSpaModeRouteImport.update({
-  id: '/start/ssr/spa-mode',
-  path: '/start/ssr/spa-mode',
-  getParentRoute: () => DemoRouteRoute,
-} as any)
-const DemoStartSsrFullSsrRoute = DemoStartSsrFullSsrRouteImport.update({
-  id: '/start/ssr/full-ssr',
-  path: '/start/ssr/full-ssr',
-  getParentRoute: () => DemoRouteRoute,
-} as any)
-const DemoStartSsrDataOnlyRoute = DemoStartSsrDataOnlyRouteImport.update({
-  id: '/start/ssr/data-only',
-  path: '/start/ssr/data-only',
-  getParentRoute: () => DemoRouteRoute,
-} as any)
-const DemoPrismaDemoUserIdTodosRoute =
-  DemoPrismaDemoUserIdTodosRouteImport.update({
-    id: '/prisma-demo/$userId/todos',
-    path: '/prisma-demo/$userId/todos',
-    getParentRoute: () => DemoRouteRoute,
-  } as any)
-const appOrganizationProjectProjectIdRoute =
-  appOrganizationProjectProjectIdRouteImport.update({
-    id: '/project/$projectId',
-    path: '/project/$projectId',
-    getParentRoute: () => appOrganizationRoute,
-  } as any)
-const appOrganizationProjectProjectIdIndexRoute =
-  appOrganizationProjectProjectIdIndexRouteImport.update({
+const appOrgOrganizationIdIndexRoute =
+  appOrgOrganizationIdIndexRouteImport.update({
     id: '/',
     path: '/',
-    getParentRoute: () => appOrganizationProjectProjectIdRoute,
+    getParentRoute: () => appOrgOrganizationIdRouteRoute,
   } as any)
-const appOrganizationProjectProjectIdSettingsRoute =
-  appOrganizationProjectProjectIdSettingsRouteImport.update({
+const appProjectProjectIdSettingsRoute =
+  appProjectProjectIdSettingsRouteImport.update({
     id: '/settings',
     path: '/settings',
-    getParentRoute: () => appOrganizationProjectProjectIdRoute,
+    getParentRoute: () => appProjectProjectIdRoute,
   } as any)
-const appOrganizationProjectProjectIdLogsRoute =
-  appOrganizationProjectProjectIdLogsRouteImport.update({
-    id: '/logs',
-    path: '/logs',
-    getParentRoute: () => appOrganizationProjectProjectIdRoute,
-  } as any)
-const appOrganizationProjectProjectIdAgentsRoute =
-  appOrganizationProjectProjectIdAgentsRouteImport.update({
+const appProjectProjectIdLogsRoute = appProjectProjectIdLogsRouteImport.update({
+  id: '/logs',
+  path: '/logs',
+  getParentRoute: () => appProjectProjectIdRoute,
+} as any)
+const appProjectProjectIdAgentsRoute =
+  appProjectProjectIdAgentsRouteImport.update({
     id: '/agents',
     path: '/agents',
-    getParentRoute: () => appOrganizationProjectProjectIdRoute,
+    getParentRoute: () => appProjectProjectIdRoute,
   } as any)
-const appOrganizationProjectProjectIdChatSupportIndexRoute =
-  appOrganizationProjectProjectIdChatSupportIndexRouteImport.update({
+const appProjectProjectIdChatSupportIndexRoute =
+  appProjectProjectIdChatSupportIndexRouteImport.update({
     id: '/project/$projectId_/chat-support/',
     path: '/project/$projectId/chat-support/',
-    getParentRoute: () => appOrganizationRoute,
+    getParentRoute: () => appRouteRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/demo': typeof DemoRouteRouteWithChildren
   '/demo-widget': typeof DemoWidgetRoute
   '/signin': typeof authSigninRoute
   '/signup': typeof authSignupRoute
-  '/demo/socket': typeof DemoSocketRoute
-  '/demo/store': typeof DemoStoreRoute
-  '/demo/table': typeof DemoTableRoute
-  '/demo/tanstack-query': typeof DemoTanstackQueryRoute
+  '/api/sse': typeof ApiSseRoute
   '/widget/$apiKey': typeof WidgetApiKeyRoute
   '/widget/access-denied': typeof WidgetAccessDeniedRoute
-  '/demo/': typeof DemoIndexRoute
-  '/organization/$organizationId': typeof appOrganizationOrganizationIdRouteRouteWithChildren
-  '/organization/create': typeof appOrganizationCreateRoute
-  '/demo/api/names': typeof DemoApiNamesRoute
-  '/demo/api/tq-todos': typeof DemoApiTqTodosRoute
-  '/demo/form/address': typeof DemoFormAddressRoute
-  '/demo/form/simple': typeof DemoFormSimpleRoute
-  '/demo/sse/sample': typeof DemoSseSampleRoute
-  '/demo/start/api-request': typeof DemoStartApiRequestRoute
-  '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
-  '/organization/': typeof appOrganizationIndexRoute
-  '/demo/prisma-demo/': typeof DemoPrismaDemoIndexRoute
-  '/project/$projectId': typeof appOrganizationProjectProjectIdRouteWithChildren
-  '/demo/prisma-demo/$userId/todos': typeof DemoPrismaDemoUserIdTodosRoute
-  '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
-  '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
-  '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
-  '/organization/$organizationId/': typeof appOrganizationOrganizationIdIndexRoute
-  '/demo/start/ssr/': typeof DemoStartSsrIndexRoute
-  '/project/$projectId/agents': typeof appOrganizationProjectProjectIdAgentsRoute
-  '/project/$projectId/logs': typeof appOrganizationProjectProjectIdLogsRoute
-  '/project/$projectId/settings': typeof appOrganizationProjectProjectIdSettingsRoute
-  '/project/$projectId/': typeof appOrganizationProjectProjectIdIndexRoute
-  '/project/$projectId/chat-support/': typeof appOrganizationProjectProjectIdChatSupportIndexRoute
+  '/org/$organizationId': typeof appOrgOrganizationIdRouteRouteWithChildren
+  '/organizations/create': typeof appOrganizationsCreateRoute
+  '/project/$projectId': typeof appProjectProjectIdRouteWithChildren
+  '/api/auth/$': typeof ApiAuthSplatRoute
+  '/org/': typeof appOrgIndexRoute
+  '/organizations/': typeof appOrganizationsIndexRoute
+  '/project/$projectId/agents': typeof appProjectProjectIdAgentsRoute
+  '/project/$projectId/logs': typeof appProjectProjectIdLogsRoute
+  '/project/$projectId/settings': typeof appProjectProjectIdSettingsRoute
+  '/org/$organizationId/': typeof appOrgOrganizationIdIndexRoute
+  '/project/$projectId/': typeof appProjectProjectIdIndexRoute
+  '/project/$projectId/chat-support/': typeof appProjectProjectIdChatSupportIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/demo-widget': typeof DemoWidgetRoute
   '/signin': typeof authSigninRoute
   '/signup': typeof authSignupRoute
-  '/demo/socket': typeof DemoSocketRoute
-  '/demo/store': typeof DemoStoreRoute
-  '/demo/table': typeof DemoTableRoute
-  '/demo/tanstack-query': typeof DemoTanstackQueryRoute
+  '/api/sse': typeof ApiSseRoute
   '/widget/$apiKey': typeof WidgetApiKeyRoute
   '/widget/access-denied': typeof WidgetAccessDeniedRoute
-  '/demo': typeof DemoIndexRoute
-  '/organization/create': typeof appOrganizationCreateRoute
-  '/demo/api/names': typeof DemoApiNamesRoute
-  '/demo/api/tq-todos': typeof DemoApiTqTodosRoute
-  '/demo/form/address': typeof DemoFormAddressRoute
-  '/demo/form/simple': typeof DemoFormSimpleRoute
-  '/demo/sse/sample': typeof DemoSseSampleRoute
-  '/demo/start/api-request': typeof DemoStartApiRequestRoute
-  '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
-  '/organization': typeof appOrganizationIndexRoute
-  '/demo/prisma-demo': typeof DemoPrismaDemoIndexRoute
-  '/demo/prisma-demo/$userId/todos': typeof DemoPrismaDemoUserIdTodosRoute
-  '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
-  '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
-  '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
-  '/organization/$organizationId': typeof appOrganizationOrganizationIdIndexRoute
-  '/demo/start/ssr': typeof DemoStartSsrIndexRoute
-  '/project/$projectId/agents': typeof appOrganizationProjectProjectIdAgentsRoute
-  '/project/$projectId/logs': typeof appOrganizationProjectProjectIdLogsRoute
-  '/project/$projectId/settings': typeof appOrganizationProjectProjectIdSettingsRoute
-  '/project/$projectId': typeof appOrganizationProjectProjectIdIndexRoute
-  '/project/$projectId/chat-support': typeof appOrganizationProjectProjectIdChatSupportIndexRoute
+  '/organizations/create': typeof appOrganizationsCreateRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
+  '/org': typeof appOrgIndexRoute
+  '/organizations': typeof appOrganizationsIndexRoute
+  '/project/$projectId/agents': typeof appProjectProjectIdAgentsRoute
+  '/project/$projectId/logs': typeof appProjectProjectIdLogsRoute
+  '/project/$projectId/settings': typeof appProjectProjectIdSettingsRoute
+  '/org/$organizationId': typeof appOrgOrganizationIdIndexRoute
+  '/project/$projectId': typeof appProjectProjectIdIndexRoute
+  '/project/$projectId/chat-support': typeof appProjectProjectIdChatSupportIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/(app)': typeof appRouteRouteWithChildren
   '/(auth)': typeof authRouteRouteWithChildren
-  '/demo': typeof DemoRouteRouteWithChildren
   '/demo-widget': typeof DemoWidgetRoute
-  '/(app)/_organization': typeof appOrganizationRouteWithChildren
   '/(auth)/signin': typeof authSigninRoute
   '/(auth)/signup': typeof authSignupRoute
-  '/demo/socket': typeof DemoSocketRoute
-  '/demo/store': typeof DemoStoreRoute
-  '/demo/table': typeof DemoTableRoute
-  '/demo/tanstack-query': typeof DemoTanstackQueryRoute
+  '/api/sse': typeof ApiSseRoute
   '/widget/$apiKey': typeof WidgetApiKeyRoute
   '/widget/access-denied': typeof WidgetAccessDeniedRoute
-  '/demo/': typeof DemoIndexRoute
-  '/(app)/organization/$organizationId': typeof appOrganizationOrganizationIdRouteRouteWithChildren
-  '/(app)/organization/create': typeof appOrganizationCreateRoute
-  '/demo/api/names': typeof DemoApiNamesRoute
-  '/demo/api/tq-todos': typeof DemoApiTqTodosRoute
-  '/demo/form/address': typeof DemoFormAddressRoute
-  '/demo/form/simple': typeof DemoFormSimpleRoute
-  '/demo/sse/sample': typeof DemoSseSampleRoute
-  '/demo/start/api-request': typeof DemoStartApiRequestRoute
-  '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
-  '/(app)/organization/': typeof appOrganizationIndexRoute
-  '/demo/prisma-demo/': typeof DemoPrismaDemoIndexRoute
-  '/(app)/_organization/project/$projectId': typeof appOrganizationProjectProjectIdRouteWithChildren
-  '/demo/prisma-demo/$userId/todos': typeof DemoPrismaDemoUserIdTodosRoute
-  '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
-  '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
-  '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
-  '/(app)/organization/$organizationId/': typeof appOrganizationOrganizationIdIndexRoute
-  '/demo/start/ssr/': typeof DemoStartSsrIndexRoute
-  '/(app)/_organization/project/$projectId/agents': typeof appOrganizationProjectProjectIdAgentsRoute
-  '/(app)/_organization/project/$projectId/logs': typeof appOrganizationProjectProjectIdLogsRoute
-  '/(app)/_organization/project/$projectId/settings': typeof appOrganizationProjectProjectIdSettingsRoute
-  '/(app)/_organization/project/$projectId/': typeof appOrganizationProjectProjectIdIndexRoute
-  '/(app)/_organization/project/$projectId_/chat-support/': typeof appOrganizationProjectProjectIdChatSupportIndexRoute
+  '/(app)/org/$organizationId': typeof appOrgOrganizationIdRouteRouteWithChildren
+  '/(app)/organizations/create': typeof appOrganizationsCreateRoute
+  '/(app)/project/$projectId': typeof appProjectProjectIdRouteWithChildren
+  '/api/auth/$': typeof ApiAuthSplatRoute
+  '/(app)/org/': typeof appOrgIndexRoute
+  '/(app)/organizations/': typeof appOrganizationsIndexRoute
+  '/(app)/project/$projectId/agents': typeof appProjectProjectIdAgentsRoute
+  '/(app)/project/$projectId/logs': typeof appProjectProjectIdLogsRoute
+  '/(app)/project/$projectId/settings': typeof appProjectProjectIdSettingsRoute
+  '/(app)/org/$organizationId/': typeof appOrgOrganizationIdIndexRoute
+  '/(app)/project/$projectId/': typeof appProjectProjectIdIndexRoute
+  '/(app)/project/$projectId_/chat-support/': typeof appProjectProjectIdChatSupportIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/demo'
     | '/demo-widget'
     | '/signin'
     | '/signup'
-    | '/demo/socket'
-    | '/demo/store'
-    | '/demo/table'
-    | '/demo/tanstack-query'
+    | '/api/sse'
     | '/widget/$apiKey'
     | '/widget/access-denied'
-    | '/demo/'
-    | '/organization/$organizationId'
-    | '/organization/create'
-    | '/demo/api/names'
-    | '/demo/api/tq-todos'
-    | '/demo/form/address'
-    | '/demo/form/simple'
-    | '/demo/sse/sample'
-    | '/demo/start/api-request'
-    | '/demo/start/server-funcs'
-    | '/organization/'
-    | '/demo/prisma-demo/'
+    | '/org/$organizationId'
+    | '/organizations/create'
     | '/project/$projectId'
-    | '/demo/prisma-demo/$userId/todos'
-    | '/demo/start/ssr/data-only'
-    | '/demo/start/ssr/full-ssr'
-    | '/demo/start/ssr/spa-mode'
-    | '/organization/$organizationId/'
-    | '/demo/start/ssr/'
+    | '/api/auth/$'
+    | '/org/'
+    | '/organizations/'
     | '/project/$projectId/agents'
     | '/project/$projectId/logs'
     | '/project/$projectId/settings'
+    | '/org/$organizationId/'
     | '/project/$projectId/'
     | '/project/$projectId/chat-support/'
   fileRoutesByTo: FileRoutesByTo
@@ -401,32 +233,17 @@ export interface FileRouteTypes {
     | '/demo-widget'
     | '/signin'
     | '/signup'
-    | '/demo/socket'
-    | '/demo/store'
-    | '/demo/table'
-    | '/demo/tanstack-query'
+    | '/api/sse'
     | '/widget/$apiKey'
     | '/widget/access-denied'
-    | '/demo'
-    | '/organization/create'
-    | '/demo/api/names'
-    | '/demo/api/tq-todos'
-    | '/demo/form/address'
-    | '/demo/form/simple'
-    | '/demo/sse/sample'
-    | '/demo/start/api-request'
-    | '/demo/start/server-funcs'
-    | '/organization'
-    | '/demo/prisma-demo'
-    | '/demo/prisma-demo/$userId/todos'
-    | '/demo/start/ssr/data-only'
-    | '/demo/start/ssr/full-ssr'
-    | '/demo/start/ssr/spa-mode'
-    | '/organization/$organizationId'
-    | '/demo/start/ssr'
+    | '/organizations/create'
+    | '/api/auth/$'
+    | '/org'
+    | '/organizations'
     | '/project/$projectId/agents'
     | '/project/$projectId/logs'
     | '/project/$projectId/settings'
+    | '/org/$organizationId'
     | '/project/$projectId'
     | '/project/$projectId/chat-support'
   id:
@@ -434,51 +251,35 @@ export interface FileRouteTypes {
     | '/'
     | '/(app)'
     | '/(auth)'
-    | '/demo'
     | '/demo-widget'
-    | '/(app)/_organization'
     | '/(auth)/signin'
     | '/(auth)/signup'
-    | '/demo/socket'
-    | '/demo/store'
-    | '/demo/table'
-    | '/demo/tanstack-query'
+    | '/api/sse'
     | '/widget/$apiKey'
     | '/widget/access-denied'
-    | '/demo/'
-    | '/(app)/organization/$organizationId'
-    | '/(app)/organization/create'
-    | '/demo/api/names'
-    | '/demo/api/tq-todos'
-    | '/demo/form/address'
-    | '/demo/form/simple'
-    | '/demo/sse/sample'
-    | '/demo/start/api-request'
-    | '/demo/start/server-funcs'
-    | '/(app)/organization/'
-    | '/demo/prisma-demo/'
-    | '/(app)/_organization/project/$projectId'
-    | '/demo/prisma-demo/$userId/todos'
-    | '/demo/start/ssr/data-only'
-    | '/demo/start/ssr/full-ssr'
-    | '/demo/start/ssr/spa-mode'
-    | '/(app)/organization/$organizationId/'
-    | '/demo/start/ssr/'
-    | '/(app)/_organization/project/$projectId/agents'
-    | '/(app)/_organization/project/$projectId/logs'
-    | '/(app)/_organization/project/$projectId/settings'
-    | '/(app)/_organization/project/$projectId/'
-    | '/(app)/_organization/project/$projectId_/chat-support/'
+    | '/(app)/org/$organizationId'
+    | '/(app)/organizations/create'
+    | '/(app)/project/$projectId'
+    | '/api/auth/$'
+    | '/(app)/org/'
+    | '/(app)/organizations/'
+    | '/(app)/project/$projectId/agents'
+    | '/(app)/project/$projectId/logs'
+    | '/(app)/project/$projectId/settings'
+    | '/(app)/org/$organizationId/'
+    | '/(app)/project/$projectId/'
+    | '/(app)/project/$projectId_/chat-support/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   appRouteRoute: typeof appRouteRouteWithChildren
   authRouteRoute: typeof authRouteRouteWithChildren
-  DemoRouteRoute: typeof DemoRouteRouteWithChildren
   DemoWidgetRoute: typeof DemoWidgetRoute
+  ApiSseRoute: typeof ApiSseRoute
   WidgetApiKeyRoute: typeof WidgetApiKeyRoute
   WidgetAccessDeniedRoute: typeof WidgetAccessDeniedRoute
+  ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -488,13 +289,6 @@ declare module '@tanstack/react-router' {
       path: '/demo-widget'
       fullPath: '/demo-widget'
       preLoaderRoute: typeof DemoWidgetRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/demo': {
-      id: '/demo'
-      path: '/demo'
-      fullPath: '/demo'
-      preLoaderRoute: typeof DemoRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/(auth)': {
@@ -518,13 +312,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/demo/': {
-      id: '/demo/'
-      path: '/'
-      fullPath: '/demo/'
-      preLoaderRoute: typeof DemoIndexRouteImport
-      parentRoute: typeof DemoRouteRoute
-    }
     '/widget/access-denied': {
       id: '/widget/access-denied'
       path: '/widget/access-denied'
@@ -539,33 +326,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WidgetApiKeyRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/demo/tanstack-query': {
-      id: '/demo/tanstack-query'
-      path: '/tanstack-query'
-      fullPath: '/demo/tanstack-query'
-      preLoaderRoute: typeof DemoTanstackQueryRouteImport
-      parentRoute: typeof DemoRouteRoute
-    }
-    '/demo/table': {
-      id: '/demo/table'
-      path: '/table'
-      fullPath: '/demo/table'
-      preLoaderRoute: typeof DemoTableRouteImport
-      parentRoute: typeof DemoRouteRoute
-    }
-    '/demo/store': {
-      id: '/demo/store'
-      path: '/store'
-      fullPath: '/demo/store'
-      preLoaderRoute: typeof DemoStoreRouteImport
-      parentRoute: typeof DemoRouteRoute
-    }
-    '/demo/socket': {
-      id: '/demo/socket'
-      path: '/socket'
-      fullPath: '/demo/socket'
-      preLoaderRoute: typeof DemoSocketRouteImport
-      parentRoute: typeof DemoRouteRoute
+    '/api/sse': {
+      id: '/api/sse'
+      path: '/api/sse'
+      fullPath: '/api/sse'
+      preLoaderRoute: typeof ApiSseRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/(auth)/signup': {
       id: '/(auth)/signup'
@@ -581,245 +347,141 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof authSigninRouteImport
       parentRoute: typeof authRouteRoute
     }
-    '/(app)/_organization': {
-      id: '/(app)/_organization'
-      path: ''
-      fullPath: ''
-      preLoaderRoute: typeof appOrganizationRouteImport
+    '/(app)/organizations/': {
+      id: '/(app)/organizations/'
+      path: '/organizations'
+      fullPath: '/organizations/'
+      preLoaderRoute: typeof appOrganizationsIndexRouteImport
       parentRoute: typeof appRouteRoute
     }
-    '/demo/prisma-demo/': {
-      id: '/demo/prisma-demo/'
-      path: '/prisma-demo'
-      fullPath: '/demo/prisma-demo/'
-      preLoaderRoute: typeof DemoPrismaDemoIndexRouteImport
-      parentRoute: typeof DemoRouteRoute
-    }
-    '/(app)/organization/': {
-      id: '/(app)/organization/'
-      path: '/organization'
-      fullPath: '/organization/'
-      preLoaderRoute: typeof appOrganizationIndexRouteImport
+    '/(app)/org/': {
+      id: '/(app)/org/'
+      path: '/org'
+      fullPath: '/org/'
+      preLoaderRoute: typeof appOrgIndexRouteImport
       parentRoute: typeof appRouteRoute
     }
-    '/demo/start/server-funcs': {
-      id: '/demo/start/server-funcs'
-      path: '/start/server-funcs'
-      fullPath: '/demo/start/server-funcs'
-      preLoaderRoute: typeof DemoStartServerFuncsRouteImport
-      parentRoute: typeof DemoRouteRoute
+    '/api/auth/$': {
+      id: '/api/auth/$'
+      path: '/api/auth/$'
+      fullPath: '/api/auth/$'
+      preLoaderRoute: typeof ApiAuthSplatRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/demo/start/api-request': {
-      id: '/demo/start/api-request'
-      path: '/start/api-request'
-      fullPath: '/demo/start/api-request'
-      preLoaderRoute: typeof DemoStartApiRequestRouteImport
-      parentRoute: typeof DemoRouteRoute
-    }
-    '/demo/sse/sample': {
-      id: '/demo/sse/sample'
-      path: '/sse/sample'
-      fullPath: '/demo/sse/sample'
-      preLoaderRoute: typeof DemoSseSampleRouteImport
-      parentRoute: typeof DemoRouteRoute
-    }
-    '/demo/form/simple': {
-      id: '/demo/form/simple'
-      path: '/form/simple'
-      fullPath: '/demo/form/simple'
-      preLoaderRoute: typeof DemoFormSimpleRouteImport
-      parentRoute: typeof DemoRouteRoute
-    }
-    '/demo/form/address': {
-      id: '/demo/form/address'
-      path: '/form/address'
-      fullPath: '/demo/form/address'
-      preLoaderRoute: typeof DemoFormAddressRouteImport
-      parentRoute: typeof DemoRouteRoute
-    }
-    '/demo/api/tq-todos': {
-      id: '/demo/api/tq-todos'
-      path: '/api/tq-todos'
-      fullPath: '/demo/api/tq-todos'
-      preLoaderRoute: typeof DemoApiTqTodosRouteImport
-      parentRoute: typeof DemoRouteRoute
-    }
-    '/demo/api/names': {
-      id: '/demo/api/names'
-      path: '/api/names'
-      fullPath: '/demo/api/names'
-      preLoaderRoute: typeof DemoApiNamesRouteImport
-      parentRoute: typeof DemoRouteRoute
-    }
-    '/(app)/organization/create': {
-      id: '/(app)/organization/create'
-      path: '/organization/create'
-      fullPath: '/organization/create'
-      preLoaderRoute: typeof appOrganizationCreateRouteImport
-      parentRoute: typeof appRouteRoute
-    }
-    '/(app)/organization/$organizationId': {
-      id: '/(app)/organization/$organizationId'
-      path: '/organization/$organizationId'
-      fullPath: '/organization/$organizationId'
-      preLoaderRoute: typeof appOrganizationOrganizationIdRouteRouteImport
-      parentRoute: typeof appRouteRoute
-    }
-    '/demo/start/ssr/': {
-      id: '/demo/start/ssr/'
-      path: '/start/ssr'
-      fullPath: '/demo/start/ssr/'
-      preLoaderRoute: typeof DemoStartSsrIndexRouteImport
-      parentRoute: typeof DemoRouteRoute
-    }
-    '/(app)/organization/$organizationId/': {
-      id: '/(app)/organization/$organizationId/'
-      path: '/'
-      fullPath: '/organization/$organizationId/'
-      preLoaderRoute: typeof appOrganizationOrganizationIdIndexRouteImport
-      parentRoute: typeof appOrganizationOrganizationIdRouteRoute
-    }
-    '/demo/start/ssr/spa-mode': {
-      id: '/demo/start/ssr/spa-mode'
-      path: '/start/ssr/spa-mode'
-      fullPath: '/demo/start/ssr/spa-mode'
-      preLoaderRoute: typeof DemoStartSsrSpaModeRouteImport
-      parentRoute: typeof DemoRouteRoute
-    }
-    '/demo/start/ssr/full-ssr': {
-      id: '/demo/start/ssr/full-ssr'
-      path: '/start/ssr/full-ssr'
-      fullPath: '/demo/start/ssr/full-ssr'
-      preLoaderRoute: typeof DemoStartSsrFullSsrRouteImport
-      parentRoute: typeof DemoRouteRoute
-    }
-    '/demo/start/ssr/data-only': {
-      id: '/demo/start/ssr/data-only'
-      path: '/start/ssr/data-only'
-      fullPath: '/demo/start/ssr/data-only'
-      preLoaderRoute: typeof DemoStartSsrDataOnlyRouteImport
-      parentRoute: typeof DemoRouteRoute
-    }
-    '/demo/prisma-demo/$userId/todos': {
-      id: '/demo/prisma-demo/$userId/todos'
-      path: '/prisma-demo/$userId/todos'
-      fullPath: '/demo/prisma-demo/$userId/todos'
-      preLoaderRoute: typeof DemoPrismaDemoUserIdTodosRouteImport
-      parentRoute: typeof DemoRouteRoute
-    }
-    '/(app)/_organization/project/$projectId': {
-      id: '/(app)/_organization/project/$projectId'
+    '/(app)/project/$projectId': {
+      id: '/(app)/project/$projectId'
       path: '/project/$projectId'
       fullPath: '/project/$projectId'
-      preLoaderRoute: typeof appOrganizationProjectProjectIdRouteImport
-      parentRoute: typeof appOrganizationRoute
+      preLoaderRoute: typeof appProjectProjectIdRouteImport
+      parentRoute: typeof appRouteRoute
     }
-    '/(app)/_organization/project/$projectId/': {
-      id: '/(app)/_organization/project/$projectId/'
+    '/(app)/organizations/create': {
+      id: '/(app)/organizations/create'
+      path: '/organizations/create'
+      fullPath: '/organizations/create'
+      preLoaderRoute: typeof appOrganizationsCreateRouteImport
+      parentRoute: typeof appRouteRoute
+    }
+    '/(app)/org/$organizationId': {
+      id: '/(app)/org/$organizationId'
+      path: '/org/$organizationId'
+      fullPath: '/org/$organizationId'
+      preLoaderRoute: typeof appOrgOrganizationIdRouteRouteImport
+      parentRoute: typeof appRouteRoute
+    }
+    '/(app)/project/$projectId/': {
+      id: '/(app)/project/$projectId/'
       path: '/'
       fullPath: '/project/$projectId/'
-      preLoaderRoute: typeof appOrganizationProjectProjectIdIndexRouteImport
-      parentRoute: typeof appOrganizationProjectProjectIdRoute
+      preLoaderRoute: typeof appProjectProjectIdIndexRouteImport
+      parentRoute: typeof appProjectProjectIdRoute
     }
-    '/(app)/_organization/project/$projectId/settings': {
-      id: '/(app)/_organization/project/$projectId/settings'
+    '/(app)/org/$organizationId/': {
+      id: '/(app)/org/$organizationId/'
+      path: '/'
+      fullPath: '/org/$organizationId/'
+      preLoaderRoute: typeof appOrgOrganizationIdIndexRouteImport
+      parentRoute: typeof appOrgOrganizationIdRouteRoute
+    }
+    '/(app)/project/$projectId/settings': {
+      id: '/(app)/project/$projectId/settings'
       path: '/settings'
       fullPath: '/project/$projectId/settings'
-      preLoaderRoute: typeof appOrganizationProjectProjectIdSettingsRouteImport
-      parentRoute: typeof appOrganizationProjectProjectIdRoute
+      preLoaderRoute: typeof appProjectProjectIdSettingsRouteImport
+      parentRoute: typeof appProjectProjectIdRoute
     }
-    '/(app)/_organization/project/$projectId/logs': {
-      id: '/(app)/_organization/project/$projectId/logs'
+    '/(app)/project/$projectId/logs': {
+      id: '/(app)/project/$projectId/logs'
       path: '/logs'
       fullPath: '/project/$projectId/logs'
-      preLoaderRoute: typeof appOrganizationProjectProjectIdLogsRouteImport
-      parentRoute: typeof appOrganizationProjectProjectIdRoute
+      preLoaderRoute: typeof appProjectProjectIdLogsRouteImport
+      parentRoute: typeof appProjectProjectIdRoute
     }
-    '/(app)/_organization/project/$projectId/agents': {
-      id: '/(app)/_organization/project/$projectId/agents'
+    '/(app)/project/$projectId/agents': {
+      id: '/(app)/project/$projectId/agents'
       path: '/agents'
       fullPath: '/project/$projectId/agents'
-      preLoaderRoute: typeof appOrganizationProjectProjectIdAgentsRouteImport
-      parentRoute: typeof appOrganizationProjectProjectIdRoute
+      preLoaderRoute: typeof appProjectProjectIdAgentsRouteImport
+      parentRoute: typeof appProjectProjectIdRoute
     }
-    '/(app)/_organization/project/$projectId_/chat-support/': {
-      id: '/(app)/_organization/project/$projectId_/chat-support/'
+    '/(app)/project/$projectId_/chat-support/': {
+      id: '/(app)/project/$projectId_/chat-support/'
       path: '/project/$projectId/chat-support'
       fullPath: '/project/$projectId/chat-support/'
-      preLoaderRoute: typeof appOrganizationProjectProjectIdChatSupportIndexRouteImport
-      parentRoute: typeof appOrganizationRoute
+      preLoaderRoute: typeof appProjectProjectIdChatSupportIndexRouteImport
+      parentRoute: typeof appRouteRoute
     }
   }
 }
 
-interface appOrganizationProjectProjectIdRouteChildren {
-  appOrganizationProjectProjectIdAgentsRoute: typeof appOrganizationProjectProjectIdAgentsRoute
-  appOrganizationProjectProjectIdLogsRoute: typeof appOrganizationProjectProjectIdLogsRoute
-  appOrganizationProjectProjectIdSettingsRoute: typeof appOrganizationProjectProjectIdSettingsRoute
-  appOrganizationProjectProjectIdIndexRoute: typeof appOrganizationProjectProjectIdIndexRoute
+interface appOrgOrganizationIdRouteRouteChildren {
+  appOrgOrganizationIdIndexRoute: typeof appOrgOrganizationIdIndexRoute
 }
 
-const appOrganizationProjectProjectIdRouteChildren: appOrganizationProjectProjectIdRouteChildren =
+const appOrgOrganizationIdRouteRouteChildren: appOrgOrganizationIdRouteRouteChildren =
   {
-    appOrganizationProjectProjectIdAgentsRoute:
-      appOrganizationProjectProjectIdAgentsRoute,
-    appOrganizationProjectProjectIdLogsRoute:
-      appOrganizationProjectProjectIdLogsRoute,
-    appOrganizationProjectProjectIdSettingsRoute:
-      appOrganizationProjectProjectIdSettingsRoute,
-    appOrganizationProjectProjectIdIndexRoute:
-      appOrganizationProjectProjectIdIndexRoute,
+    appOrgOrganizationIdIndexRoute: appOrgOrganizationIdIndexRoute,
   }
 
-const appOrganizationProjectProjectIdRouteWithChildren =
-  appOrganizationProjectProjectIdRoute._addFileChildren(
-    appOrganizationProjectProjectIdRouteChildren,
+const appOrgOrganizationIdRouteRouteWithChildren =
+  appOrgOrganizationIdRouteRoute._addFileChildren(
+    appOrgOrganizationIdRouteRouteChildren,
   )
 
-interface appOrganizationRouteChildren {
-  appOrganizationProjectProjectIdRoute: typeof appOrganizationProjectProjectIdRouteWithChildren
-  appOrganizationProjectProjectIdChatSupportIndexRoute: typeof appOrganizationProjectProjectIdChatSupportIndexRoute
+interface appProjectProjectIdRouteChildren {
+  appProjectProjectIdAgentsRoute: typeof appProjectProjectIdAgentsRoute
+  appProjectProjectIdLogsRoute: typeof appProjectProjectIdLogsRoute
+  appProjectProjectIdSettingsRoute: typeof appProjectProjectIdSettingsRoute
+  appProjectProjectIdIndexRoute: typeof appProjectProjectIdIndexRoute
 }
 
-const appOrganizationRouteChildren: appOrganizationRouteChildren = {
-  appOrganizationProjectProjectIdRoute:
-    appOrganizationProjectProjectIdRouteWithChildren,
-  appOrganizationProjectProjectIdChatSupportIndexRoute:
-    appOrganizationProjectProjectIdChatSupportIndexRoute,
+const appProjectProjectIdRouteChildren: appProjectProjectIdRouteChildren = {
+  appProjectProjectIdAgentsRoute: appProjectProjectIdAgentsRoute,
+  appProjectProjectIdLogsRoute: appProjectProjectIdLogsRoute,
+  appProjectProjectIdSettingsRoute: appProjectProjectIdSettingsRoute,
+  appProjectProjectIdIndexRoute: appProjectProjectIdIndexRoute,
 }
 
-const appOrganizationRouteWithChildren = appOrganizationRoute._addFileChildren(
-  appOrganizationRouteChildren,
-)
-
-interface appOrganizationOrganizationIdRouteRouteChildren {
-  appOrganizationOrganizationIdIndexRoute: typeof appOrganizationOrganizationIdIndexRoute
-}
-
-const appOrganizationOrganizationIdRouteRouteChildren: appOrganizationOrganizationIdRouteRouteChildren =
-  {
-    appOrganizationOrganizationIdIndexRoute:
-      appOrganizationOrganizationIdIndexRoute,
-  }
-
-const appOrganizationOrganizationIdRouteRouteWithChildren =
-  appOrganizationOrganizationIdRouteRoute._addFileChildren(
-    appOrganizationOrganizationIdRouteRouteChildren,
-  )
+const appProjectProjectIdRouteWithChildren =
+  appProjectProjectIdRoute._addFileChildren(appProjectProjectIdRouteChildren)
 
 interface appRouteRouteChildren {
-  appOrganizationRoute: typeof appOrganizationRouteWithChildren
-  appOrganizationOrganizationIdRouteRoute: typeof appOrganizationOrganizationIdRouteRouteWithChildren
-  appOrganizationCreateRoute: typeof appOrganizationCreateRoute
-  appOrganizationIndexRoute: typeof appOrganizationIndexRoute
+  appOrgOrganizationIdRouteRoute: typeof appOrgOrganizationIdRouteRouteWithChildren
+  appOrganizationsCreateRoute: typeof appOrganizationsCreateRoute
+  appProjectProjectIdRoute: typeof appProjectProjectIdRouteWithChildren
+  appOrgIndexRoute: typeof appOrgIndexRoute
+  appOrganizationsIndexRoute: typeof appOrganizationsIndexRoute
+  appProjectProjectIdChatSupportIndexRoute: typeof appProjectProjectIdChatSupportIndexRoute
 }
 
 const appRouteRouteChildren: appRouteRouteChildren = {
-  appOrganizationRoute: appOrganizationRouteWithChildren,
-  appOrganizationOrganizationIdRouteRoute:
-    appOrganizationOrganizationIdRouteRouteWithChildren,
-  appOrganizationCreateRoute: appOrganizationCreateRoute,
-  appOrganizationIndexRoute: appOrganizationIndexRoute,
+  appOrgOrganizationIdRouteRoute: appOrgOrganizationIdRouteRouteWithChildren,
+  appOrganizationsCreateRoute: appOrganizationsCreateRoute,
+  appProjectProjectIdRoute: appProjectProjectIdRouteWithChildren,
+  appOrgIndexRoute: appOrgIndexRoute,
+  appOrganizationsIndexRoute: appOrganizationsIndexRoute,
+  appProjectProjectIdChatSupportIndexRoute:
+    appProjectProjectIdChatSupportIndexRoute,
 }
 
 const appRouteRouteWithChildren = appRouteRoute._addFileChildren(
@@ -840,60 +502,15 @@ const authRouteRouteWithChildren = authRouteRoute._addFileChildren(
   authRouteRouteChildren,
 )
 
-interface DemoRouteRouteChildren {
-  DemoSocketRoute: typeof DemoSocketRoute
-  DemoStoreRoute: typeof DemoStoreRoute
-  DemoTableRoute: typeof DemoTableRoute
-  DemoTanstackQueryRoute: typeof DemoTanstackQueryRoute
-  DemoIndexRoute: typeof DemoIndexRoute
-  DemoApiNamesRoute: typeof DemoApiNamesRoute
-  DemoApiTqTodosRoute: typeof DemoApiTqTodosRoute
-  DemoFormAddressRoute: typeof DemoFormAddressRoute
-  DemoFormSimpleRoute: typeof DemoFormSimpleRoute
-  DemoSseSampleRoute: typeof DemoSseSampleRoute
-  DemoStartApiRequestRoute: typeof DemoStartApiRequestRoute
-  DemoStartServerFuncsRoute: typeof DemoStartServerFuncsRoute
-  DemoPrismaDemoIndexRoute: typeof DemoPrismaDemoIndexRoute
-  DemoPrismaDemoUserIdTodosRoute: typeof DemoPrismaDemoUserIdTodosRoute
-  DemoStartSsrDataOnlyRoute: typeof DemoStartSsrDataOnlyRoute
-  DemoStartSsrFullSsrRoute: typeof DemoStartSsrFullSsrRoute
-  DemoStartSsrSpaModeRoute: typeof DemoStartSsrSpaModeRoute
-  DemoStartSsrIndexRoute: typeof DemoStartSsrIndexRoute
-}
-
-const DemoRouteRouteChildren: DemoRouteRouteChildren = {
-  DemoSocketRoute: DemoSocketRoute,
-  DemoStoreRoute: DemoStoreRoute,
-  DemoTableRoute: DemoTableRoute,
-  DemoTanstackQueryRoute: DemoTanstackQueryRoute,
-  DemoIndexRoute: DemoIndexRoute,
-  DemoApiNamesRoute: DemoApiNamesRoute,
-  DemoApiTqTodosRoute: DemoApiTqTodosRoute,
-  DemoFormAddressRoute: DemoFormAddressRoute,
-  DemoFormSimpleRoute: DemoFormSimpleRoute,
-  DemoSseSampleRoute: DemoSseSampleRoute,
-  DemoStartApiRequestRoute: DemoStartApiRequestRoute,
-  DemoStartServerFuncsRoute: DemoStartServerFuncsRoute,
-  DemoPrismaDemoIndexRoute: DemoPrismaDemoIndexRoute,
-  DemoPrismaDemoUserIdTodosRoute: DemoPrismaDemoUserIdTodosRoute,
-  DemoStartSsrDataOnlyRoute: DemoStartSsrDataOnlyRoute,
-  DemoStartSsrFullSsrRoute: DemoStartSsrFullSsrRoute,
-  DemoStartSsrSpaModeRoute: DemoStartSsrSpaModeRoute,
-  DemoStartSsrIndexRoute: DemoStartSsrIndexRoute,
-}
-
-const DemoRouteRouteWithChildren = DemoRouteRoute._addFileChildren(
-  DemoRouteRouteChildren,
-)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   appRouteRoute: appRouteRouteWithChildren,
   authRouteRoute: authRouteRouteWithChildren,
-  DemoRouteRoute: DemoRouteRouteWithChildren,
   DemoWidgetRoute: DemoWidgetRoute,
+  ApiSseRoute: ApiSseRoute,
   WidgetApiKeyRoute: WidgetApiKeyRoute,
   WidgetAccessDeniedRoute: WidgetAccessDeniedRoute,
+  ApiAuthSplatRoute: ApiAuthSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

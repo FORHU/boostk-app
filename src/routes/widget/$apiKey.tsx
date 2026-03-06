@@ -2,7 +2,7 @@ import { useMutation } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { AnimatePresence } from "framer-motion";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { elysiaClient } from "@/lib/elysia-client";
+import { createMessageFn } from "@/modules/message/message.serverFn";
 import { createTicket } from "@/modules/ticket/ticket.serverFn";
 import { validateWidgetAccess } from "@/modules/widget/widget.service";
 import { ChatHeader } from "@/routes/widget/-components/ChatHeader";
@@ -166,81 +166,61 @@ function ChatWidget() {
   useEffect(() => {
     if (!activeTicketId || !customerId) return;
 
-    const controller = new AbortController();
+    const eventSource = new EventSource(`/api/sse?channelId=ticket_${activeTicketId}`);
 
-    const connect = async () => {
+    eventSource.onmessage = (event) => {
+      const rawData = event.data;
+      if (!rawData) return;
+
+      let parsed: Record<string, any>;
       try {
-        const response = await elysiaClient.api.notification
-          .listen({ channelId: `ticket_${activeTicketId}` })
-          .get({ fetch: { signal: controller.signal } });
-
-        if (response.error) return;
-
-        const stream = response.data as unknown as AsyncIterable<{ data: string }>;
-        for await (const chunk of stream) {
-          const rawData = chunk.data || chunk;
-          if (!rawData) continue;
-
-          // biome-ignore lint/suspicious/noExplicitAny: <TODO: type safety for SSE>
-          let parsed: Record<string, any>;
-          if (typeof rawData === "string") {
-            try {
-              parsed = JSON.parse(rawData);
-            } catch {
-              continue;
-            }
-          } else {
-            // biome-ignore lint/suspicious/noExplicitAny: <TODO: type safety for SSE>
-            parsed = rawData as Record<string, any>;
-          }
-
-          if (
-            parsed.type === "heartbeat" ||
-            parsed.message === "connected" ||
-            parsed.event === "system" ||
-            parsed.event === "heartbeat"
-          )
-            continue;
-
-          const msgData = parsed.data || parsed;
-
-          setMessages((prev) => {
-            const rawId = msgData.id || parsed.id || Date.now().toString();
-            const existingIndex = prev.findIndex((m) => m.id === rawId);
-            const backendSender = (msgData.senderType || parsed.senderType || "AGENT").toUpperCase();
-            const senderRole: MessageSender = backendSender === "CUSTOMER" ? "user" : "agent";
-
-            const newMessage = {
-              id: rawId,
-              text: msgData.content || msgData.message || parsed.content || parsed.message || "",
-              translatedText: msgData.translatedContent || parsed.translatedContent,
-              sourceLang: msgData.sourceLang || parsed.sourceLang,
-              targetLang: msgData.targetLang || parsed.targetLang,
-              sender: senderRole,
-              timestamp: msgData.createdAt || parsed.createdAt || new Date().toISOString(),
-            };
-
-            // Replace if existing, otherwise append
-            if (existingIndex !== -1) {
-              const updated = [...prev];
-              updated[existingIndex] = newMessage;
-              return updated;
-            }
-
-            return [...prev, newMessage];
-          });
-        }
-      } catch (err: unknown) {
-        if (err instanceof Error && err.name !== "AbortError") {
-          console.error("SSE Error:", err);
-        } else if (!(err instanceof Error)) {
-          console.error("SSE Error:", err);
-        }
+        parsed = JSON.parse(rawData);
+      } catch {
+        return;
       }
+
+      if (
+        parsed.type === "heartbeat" ||
+        parsed.message === "connected" ||
+        parsed.event === "system" ||
+        parsed.event === "heartbeat"
+      )
+        return;
+
+      const msgData = parsed.data || parsed;
+
+      setMessages((prev) => {
+        const rawId = msgData.id || parsed.id || Date.now().toString();
+        const existingIndex = prev.findIndex((m) => m.id === rawId);
+        const backendSender = (msgData.senderType || parsed.senderType || "AGENT").toUpperCase();
+        const senderRole: MessageSender = backendSender === "CUSTOMER" ? "user" : "agent";
+
+        const newMessage = {
+          id: rawId,
+          text: msgData.content || msgData.message || parsed.content || parsed.message || "",
+          translatedText: msgData.translatedContent || parsed.translatedContent,
+          sourceLang: msgData.sourceLang || parsed.sourceLang,
+          targetLang: msgData.targetLang || parsed.targetLang,
+          sender: senderRole,
+          timestamp: msgData.createdAt || parsed.createdAt || new Date().toISOString(),
+        };
+
+        // Replace if existing, otherwise append
+        if (existingIndex !== -1) {
+          const updated = [...prev];
+          updated[existingIndex] = newMessage;
+          return updated;
+        }
+
+        return [...prev, newMessage];
+      });
     };
 
-    connect();
-    return () => controller.abort();
+    eventSource.onerror = (err) => {
+      console.error("SSE Error:", err);
+    };
+
+    return () => eventSource.close();
   }, [activeTicketId, customerId]);
 
   // 4. LEAD SUBMIT (using React Query mutate)
@@ -299,11 +279,13 @@ function ChatWidget() {
     if (!message.trim() || !activeTicketId || !customerId) return;
 
     try {
-      await elysiaClient.api.messages.post({
-        ticketId: activeTicketId,
-        content: message,
-        senderId: customerId,
-        senderType: "CUSTOMER",
+      await createMessageFn({
+        data: {
+          ticketId: activeTicketId,
+          content: message,
+          senderId: customerId,
+          senderType: "CUSTOMER",
+        },
       });
     } catch (error) {
       console.error("Failed to send message", error);
