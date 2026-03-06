@@ -9,18 +9,28 @@ const REDIRECT_REASON = {
 } as const;
 
 export const authMiddleware = createMiddleware().server(async ({ next, request }) => {
-  const session = await auth.api.getSession({ headers: request.headers });
-  if (!session) throw redirect({ to: "/signin", search: { reason: REDIRECT_REASON.AUTH_REQUIRED } });
+  const authSession = await auth.api.getSession({ headers: request.headers });
+  if (!authSession) throw redirect({ to: "/signin", search: { reason: REDIRECT_REASON.AUTH_REQUIRED } });
 
-  return next({ context: { session } });
+  return next({ context: { authSession } });
 });
 
+export const ownerMiddleware = createMiddleware({ type: "function" })
+  .middleware([authMiddleware])
+  .server(async ({ next, context }) => {
+    const { user } = context.authSession;
+
+    if (user.role !== "OWNER") throw redirect({ to: "/" });
+
+    return next();
+  });
+
 export const assertLocalMiddleware = createMiddleware().server(async ({ next }) => {
-  if (!env.isLocal) throw redirect({ to: "/", search: { reason: REDIRECT_REASON.LOCAL_ONLY } });
+  if (env.NODE_ENV !== "development") throw redirect({ to: "/", search: { reason: REDIRECT_REASON.LOCAL_ONLY } });
 
   return next({
     context: {
-      isLocal: env.isLocal,
+      isLocal: env.NODE_ENV === "development",
     },
   });
 });
