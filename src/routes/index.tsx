@@ -1,87 +1,123 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from "@tanstack/react-router";
 
-export const Route = createFileRoute('/')({ component: App })
+export const Route = createFileRoute("/")({
+  component: LandingPage,
+});
 
-function App() {
+function LandingPage() {
   return (
-    <main className="page-wrap px-4 pb-8 pt-14">
-      <section className="island-shell rise-in relative overflow-hidden rounded-[2rem] px-6 py-10 sm:px-10 sm:py-14">
-        <div className="pointer-events-none absolute -left-20 -top-24 h-56 w-56 rounded-full bg-[radial-gradient(circle,rgba(79,184,178,0.32),transparent_66%)]" />
-        <div className="pointer-events-none absolute -bottom-20 -right-20 h-56 w-56 rounded-full bg-[radial-gradient(circle,rgba(47,106,74,0.18),transparent_66%)]" />
-        <p className="island-kicker mb-3">TanStack Start Base Template</p>
-        <h1 className="display-title mb-5 max-w-3xl text-4xl leading-[1.02] font-bold tracking-tight text-[var(--sea-ink)] sm:text-6xl">
-          Start simple, ship quickly.
-        </h1>
-        <p className="mb-8 max-w-2xl text-base text-[var(--sea-ink-soft)] sm:text-lg">
-          This base starter intentionally keeps things light: two routes, clean
-          structure, and the essentials you need to build from scratch.
-        </p>
-        <div className="flex flex-wrap gap-3">
-          <a
-            href="/about"
-            className="rounded-full border border-[rgba(50,143,151,0.3)] bg-[rgba(79,184,178,0.14)] px-5 py-2.5 text-sm font-semibold text-[var(--lagoon-deep)] no-underline transition hover:-translate-y-0.5 hover:bg-[rgba(79,184,178,0.24)]"
-          >
-            About This Starter
-          </a>
-          <a
-            href="https://tanstack.com/router"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-full border border-[rgba(23,58,64,0.2)] bg-white/50 px-5 py-2.5 text-sm font-semibold text-[var(--sea-ink)] no-underline transition hover:-translate-y-0.5 hover:border-[rgba(23,58,64,0.35)]"
-          >
-            Router Guide
-          </a>
+    <div className="min-h-screen bg-[#fafafa] text-[#1d1d1f] font-sans antialiased selection:bg-blue-100">
+      <nav className="fixed top-0 z-50 w-full border-b border-gray-100 bg-white/70 backdrop-blur-xl">
+        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
+          <div className="w-57.5 h-16 flex items-center px-6 pr-12">
+            <Link to="/" className="text-[22px] font-black text-blue-600 tracking-tight">
+              BOOSTK
+            </Link>
+          </div>
+          <button type="button" className="text-sm font-medium hover:text-blue-600 transition-colors">
+            Contact Us
+          </button>
         </div>
-      </section>
+      </nav>
 
-      <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {[
-          [
-            'Type-Safe Routing',
-            'Routes and links stay in sync across every page.',
-          ],
-          [
-            'Server Functions',
-            'Call server code from your UI without creating API boilerplate.',
-          ],
-          [
-            'Streaming by Default',
-            'Ship progressively rendered responses for faster experiences.',
-          ],
-          [
-            'Tailwind Native',
-            'Design quickly with utility-first styling and reusable tokens.',
-          ],
-        ].map(([title, desc], index) => (
-          <article
-            key={title}
-            className="island-shell feature-card rise-in rounded-2xl p-5"
-            style={{ animationDelay: `${index * 90 + 80}ms` }}
-          >
-            <h2 className="mb-2 text-base font-semibold text-[var(--sea-ink)]">
-              {title}
-            </h2>
-            <p className="m-0 text-sm text-[var(--sea-ink-soft)]">{desc}</p>
-          </article>
-        ))}
-      </section>
+      <main className="relative pt-16 pb-20">
+        <div className="mx-auto max-w-5xl px-6">
+          <section className="relative flex min-h-[90vh] flex-col justify-center px-6 py-16">
+            <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_50%_120%,rgba(37,99,235,0.08),rgba(255,255,255,0))]" />
 
-      <section className="island-shell mt-8 rounded-2xl p-6">
-        <p className="island-kicker mb-2">Quick Start</p>
-        <ul className="m-0 list-disc space-y-2 pl-5 text-sm text-[var(--sea-ink-soft)]">
-          <li>
-            Edit <code>src/routes/index.tsx</code> to customize the home page.
-          </li>
-          <li>
-            Update <code>src/components/Header.tsx</code> and{' '}
-            <code>src/components/Footer.tsx</code> for brand links.
-          </li>
-          <li>
-            Add routes in <code>src/routes</code> and tweak visual tokens in{' '}
-            <code>src/styles.css</code>.
-          </li>
-        </ul>
-      </section>
-    </main>
-  )
+            <div className="mx-auto max-w-6xl w-full">
+              <p className="mb-6 text-sm font-bold uppercase tracking-[0.2em] text-blue-600 sm:text-base">
+                Now Expanding Korean Excellence
+              </p>
+
+              <div className="mb-12 space-y-2">
+                <h1 className="text-6xl font-black tracking-[-0.04em] text-slate-900 sm:text-8xl md:text-[9rem] leading-[0.85]">
+                  Speak Local.
+                </h1>
+                <h1 className="text-6xl font-black tracking-[-0.04em] text-blue-600 sm:text-8xl md:text-[9rem] leading-[0.85]">
+                  Sell Global.
+                </h1>
+              </div>
+
+              <div className="mt-16 grid grid-cols-1 gap-12 border-t border-slate-200 pt-12 md:grid-cols-2">
+                <div>
+                  <p className="text-2xl font-medium leading-tight tracking-tight text-slate-900 sm:text-3xl">
+                    Exceptional products. <br />
+                    World-class technology. <br />
+                    Outstanding service.
+                  </p>
+                </div>
+
+                <div className="flex flex-col items-start justify-between gap-8">
+                  <p className="max-w-md text-lg leading-relaxed text-slate-500">
+                    Don’t let the English language barrier become the glass ceiling between your business and
+                    international opportunities. We bridge the gap for Korean SMEs.
+                  </p>
+
+                  <button
+                    type="button"
+                    className="group flex items-center gap-3 rounded-full bg-slate-900 px-2 py-2 pr-6 font-semibold text-white transition-all duration-300 hover:bg-blue-600 hover:shadow-xl hover:shadow-blue-200 active:scale-95"
+                  >
+                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white transition-transform duration-300 group-hover:rotate-[-45deg]">
+                      <svg
+                        aria-hidden="true"
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M5 12h14m-7-7 7 7-7 7" />
+                      </svg>
+                    </span>
+
+                    <span className="text-lg tracking-tight">Request Free Consultation</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <div className="mt-40 grid gap-6 md:grid-cols-3">
+            {[
+              { key: "localization", title: "Localization", desc: "Native-level cultural adaptation.", icon: "🌐" },
+              { key: "market-entry", title: "Market Entry", desc: "Strategic global distribution.", icon: "🚀" },
+              { key: "scale", title: "Scale", desc: "Turning SMEs into global leaders.", icon: "📈" },
+            ].map((feature) => (
+              <div
+                key={`${feature.key}`}
+                className="group relative overflow-hidden rounded-[2.5rem] bg-[#f5f5f7] p-10 transition-all duration-500 hover:bg-[#ecece0e] dark:bg-zinc-900"
+              >
+                <div className="flex flex-col h-full justify-between">
+                  <div>
+                    <h3 className="text-2xl font-semibold tracking-tight text-black dark:text-white">
+                      {feature.title}
+                    </h3>
+                    <p className="mt-3 text-lg font-medium leading-tight text-gray-500 transition-colors group-hover:text-gray-900 dark:text-zinc-400 dark:group-hover:text-zinc-200">
+                      {feature.desc}
+                    </p>
+                  </div>
+
+                  {/* Subtle decorative element for that premium feel */}
+                  <div className="mt-8 text-4xl opacity-20 grayscale transition-all duration-500 group-hover:scale-110 group-hover:opacity-100 group-hover:grayscale-0">
+                    {feature.icon}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </main>
+
+      <footer className="mt-20 border-t border-gray-100 py-10 text-center">
+        <p className="text-xs font-medium tracking-widest text-gray-400 uppercase">
+          Empowering Korean SMEs for the Global Stage
+        </p>
+      </footer>
+    </div>
+  );
 }
