@@ -7,18 +7,24 @@ import { requireAuthMiddleware } from "../auth/auth.middleware";
 
 export const requireOrganizationMiddleware = createMiddleware({ type: "function" })
   .middleware([requireAuthMiddleware])
-  .inputValidator(z.object({ organizationId: z.string() }))
   .server(async ({ next, context, data }) => {
-    const membership = await prisma.member.findFirst({
+    const result = z.object({ organizationId: z.string() }).safeParse(data);
+
+    if (!result.success) {
+      throw redirect({ to: "/dashboard/organizations", search: { reason: REDIRECT_REASON.SERVER_ERROR } });
+    }
+
+    const organization = await prisma.organization.findFirst({
       where: {
-        organizationId: data.organizationId,
-        userId: context.authSession.user.id,
+        id: result.data.organizationId,
+        members: { some: { userId: context.authSession.user.id } },
       },
+      include: { members: true },
     });
 
-    if (!membership) {
+    if (!organization) {
       throw redirect({ to: "/dashboard/organizations", search: { reason: REDIRECT_REASON.PERMISSION_DENIED } });
     }
 
-    return next({ context: { membership } });
+    return next({ context: { organization } });
   });
