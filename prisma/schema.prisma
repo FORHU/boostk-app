@@ -23,7 +23,7 @@ model User {
   members     Member[]
   invitations Invitation[]
 
-  @@map("user")
+  @@map("users")
 }
 
 model Session {
@@ -41,7 +41,7 @@ model Session {
 
   @@unique([token])
   @@index([userId])
-  @@map("session")
+  @@map("sessions")
 }
 
 model Account {
@@ -61,7 +61,7 @@ model Account {
   updatedAt             DateTime  @updatedAt
 
   @@index([userId])
-  @@map("account")
+  @@map("accounts")
 }
 
 model Verification {
@@ -73,7 +73,7 @@ model Verification {
   updatedAt  DateTime @updatedAt
 
   @@index([identifier])
-  @@map("verification")
+  @@map("verifications")
 }
 
 model Organization {
@@ -85,9 +85,10 @@ model Organization {
   metadata    String?
   members     Member[]
   invitations Invitation[]
+  projects    Project[]
 
   @@unique([slug])
-  @@map("organization")
+  @@map("organizations")
 }
 
 model Member {
@@ -101,7 +102,7 @@ model Member {
 
   @@index([organizationId])
   @@index([userId])
-  @@map("member")
+  @@map("members")
 }
 
 model Invitation {
@@ -118,5 +119,19 @@ model Invitation {
 
   @@index([organizationId])
   @@index([email])
-  @@map("invitation")
+  @@map("invitations")
+}
+
+model Project {
+  id   String  @id @default(cuid())
+  name String
+  logo String?
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("projects")
 }
