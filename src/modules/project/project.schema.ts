@@ -3,7 +3,7 @@ import { z } from "zod";
 export const createProjectSchema = z.object({
   name: z.string().min(1, "Name is required"),
   logo: z.string().optional(),
-  organizationId: z.string(),
+  organizationId: z.string().min(1, "Org ID is required"),
 });
 export type CreateProjectInput = z.infer<typeof createProjectSchema>;
 

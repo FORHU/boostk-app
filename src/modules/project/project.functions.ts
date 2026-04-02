@@ -4,8 +4,8 @@ import { createProject } from "@/modules/project/project.service";
 import { requireOrganizationMiddleware } from "../organization/organization.middleware";
 
 export const createProjectFn = createServerFn({ method: "POST" })
-  .inputValidator(createProjectSchema)
   .middleware([requireOrganizationMiddleware])
+  .inputValidator(createProjectSchema)
   .handler(async ({ data }) => {
     const project = await createProject(data);
 
