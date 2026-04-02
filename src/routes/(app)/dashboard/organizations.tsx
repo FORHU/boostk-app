@@ -1,8 +1,8 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import { authQueries } from "@/modules/auth/auth.queries";
-import { getActiveOrganizationFn, listOrganizationsFn } from "@/modules/organizations/organizations.functions";
+import { getActiveOrganizationFn, listOrganizationsFn } from "@/modules/organization/organization.functions";
 
 export const Route = createFileRoute("/(app)/dashboard/organizations")({
   loader: async () => {
@@ -48,7 +48,6 @@ function OrganizationsPage() {
       await router.invalidate();
     } catch (error) {
       console.error("Failed to set active organization", error);
-      alert("Failed to switch organization. Did you run 'npx prisma db push'?");
     } finally {
       setSwitchingId(null);
     }
@@ -125,7 +124,9 @@ function OrganizationsPage() {
                   </div>
                 ) : (
                   organizations.map((org) => (
-                    <div
+                    <Link
+                      to="/dashboard/org/$organizationId"
+                      params={{ organizationId: org.id }}
                       key={org.id}
                       className="flex items-center justify-between p-4 rounded-lg border bg-background hover:bg-accent/50 transition-colors"
                     >
@@ -148,7 +149,7 @@ function OrganizationsPage() {
                       >
                         {switchingId === org.id ? "Switching..." : org.id === activeOrg?.id ? "Current" : "Switch"}
                       </button>
-                    </div>
+                    </Link>
                   ))
                 )}
               </div>
