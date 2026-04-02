@@ -3,9 +3,9 @@ import { authClient } from "@/lib/auth-client";
 
 export const Route = createFileRoute("/(app)")({
   beforeLoad: ({ context }) => {
-    if (!context.authSession) {
-      throw redirect({ to: "/signin" });
-    }
+    if (!context.authSession) throw redirect({ to: "/signin" });
+
+    return { authSession: context.authSession };
   },
   component: AppLayout,
 });

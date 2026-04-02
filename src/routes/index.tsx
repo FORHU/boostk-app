@@ -50,7 +50,7 @@ function LandingPage() {
 
                 <div className="flex flex-col items-start justify-between gap-8">
                   <p className="max-w-md text-lg leading-relaxed text-slate-500">
-                    Don’t let the English language barrier become the glass ceiling between your business and
+                    Don't let the English language barrier become the glass ceiling between your business and
                     international opportunities. We bridge the gap for Korean SMEs.
                   </p>
 
@@ -58,7 +58,7 @@ function LandingPage() {
                     type="button"
                     className="group flex items-center gap-3 rounded-full bg-slate-900 px-2 py-2 pr-6 font-semibold text-white transition-all duration-300 hover:bg-blue-600 hover:shadow-xl hover:shadow-blue-200 active:scale-95"
                   >
-                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white transition-transform duration-300 group-hover:rotate-[-45deg]">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white transition-transform duration-300 group-hover:-rotate-45">
                       <svg
                         aria-hidden="true"
                         xmlns="http://www.w3.org/2000/svg"
