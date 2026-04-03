@@ -11,9 +11,7 @@ import {
 } from "lucide-react";
 import type * as React from "react";
 import { NavMain } from "@/components/layout/nav-main";
-import { NavUser } from "@/components/layout/nav-user";
-import { TeamSwitcher } from "@/components/layout/team-switcher";
-import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail } from "@/components/ui/sidebar";
+import { Sidebar, SidebarContent, SidebarFooter, SidebarRail, SidebarTrigger } from "@/components/ui/sidebar";
 
 const data = {
   teams: [
@@ -105,14 +103,11 @@ const data = {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader>
-        <TeamSwitcher teams={data.teams} />
-      </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser />
+        <SidebarTrigger />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

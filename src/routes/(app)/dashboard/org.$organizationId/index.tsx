@@ -1,6 +1,6 @@
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Plus, Search } from "lucide-react";
 import { Suspense, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -157,9 +157,9 @@ const OrgProjects = ({ organizationId }: { organizationId: string }) => {
     <div className="lg:col-span-4 space-y-6">
       <h2>Projects</h2>
       {projects.map((project) => (
-        <div key={project.id}>
+        <Link to="/dashboard/project/$projectId" params={{ projectId: project.id }} key={project.id}>
           <h3>{project.name}</h3>
-        </div>
+        </Link>
       ))}
     </div>
   );
