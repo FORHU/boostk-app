@@ -15,6 +15,30 @@ const config = defineConfig({
     viteReact(),
     nitro({ preset: "bun" }),
   ],
+  build: {
+    rollupOptions: {
+      onLog(level, log, handler) {
+        if (log.code === "MODULE_LEVEL_DIRECTIVE") return;
+        handler(level, log);
+      },
+      output: {
+        manualChunks(id) {
+          if (id.includes("node_modules/react") || id.includes("node_modules/react-dom")) {
+            return "vendor-react";
+          }
+          if (id.includes("node_modules/@tanstack")) {
+            return "vendor-tanstack";
+          }
+          if (id.includes("node_modules/better-auth")) {
+            return "vendor-better-auth";
+          }
+          if (id.includes("node_modules/zod")) {
+            return "vendor-zod";
+          }
+        },
+      },
+    },
+  },
 });
 
 export default config;
