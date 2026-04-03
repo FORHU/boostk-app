@@ -30,7 +30,7 @@ export function NavMain({
 }) {
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>Platform</SidebarGroupLabel>
+      <SidebarGroupLabel>Super Admin</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => (
           <Collapsible

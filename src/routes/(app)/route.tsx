@@ -39,12 +39,6 @@ function AppLayout() {
               <RouterBreadcrumb />
             </div>
           </header>
-          <div>
-            <button type="button" onClick={handleSignout}>
-              Logout
-            </button>
-          </div>
-          <pre>{JSON.stringify(authSession, null, 2)}</pre>
           <Outlet />
         </SidebarInset>
       </SidebarProvider>

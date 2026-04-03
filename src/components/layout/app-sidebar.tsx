@@ -1,106 +1,61 @@
 import {
-  AudioLinesIcon,
-  BookOpenIcon,
-  BotIcon,
+  BuildingIcon,
   FrameIcon,
-  GalleryVerticalEndIcon,
+  GraduationCapIcon,
   MapIcon,
   PieChartIcon,
   Settings2Icon,
-  TerminalIcon,
-  TerminalSquareIcon,
+  TagIcon,
+  UsersIcon,
+  ZapIcon,
 } from "lucide-react";
 import type * as React from "react";
 import { NavMain } from "@/components/layout/nav-main";
-import { NavProjects } from "@/components/layout/nav-projects";
 import { NavUser } from "@/components/layout/nav-user";
 import { TeamSwitcher } from "@/components/layout/team-switcher";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail } from "@/components/ui/sidebar";
 
-// This is sample data.
 const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/laugh-orange-cat.gif",
-  },
   teams: [
     {
-      name: "Acme Inc",
-      logo: <GalleryVerticalEndIcon />,
+      name: "BoostK Team",
+      logo: <ZapIcon />,
       plan: "Enterprise",
     },
     {
-      name: "Acme Corp.",
-      logo: <AudioLinesIcon />,
+      name: "Chumme Team",
+      logo: <UsersIcon />,
       plan: "Startup",
     },
     {
-      name: "Evil Corp.",
-      logo: <TerminalIcon />,
+      name: "Cheapest Go Team",
+      logo: <TagIcon />,
+      plan: "Startup",
+    },
+    {
+      name: "OJT Team",
+      logo: <GraduationCapIcon />,
       plan: "Free",
     },
   ],
   navMain: [
     {
-      title: "Playground",
+      title: "Management",
       url: "#",
-      icon: <TerminalSquareIcon />,
+      icon: <BuildingIcon />,
       isActive: true,
       items: [
         {
-          title: "History",
-          url: "#",
+          title: "Organizations",
+          url: "/dashboard/organizations",
         },
         {
-          title: "Starred",
-          url: "#",
+          title: "Projects",
+          url: "/dashboard/projects",
         },
         {
           title: "Settings",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Models",
-      url: "#",
-      icon: <BotIcon />,
-      items: [
-        {
-          title: "Genesis",
-          url: "#",
-        },
-        {
-          title: "Explorer",
-          url: "#",
-        },
-        {
-          title: "Quantum",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Documentation",
-      url: "#",
-      icon: <BookOpenIcon />,
-      items: [
-        {
-          title: "Introduction",
-          url: "#",
-        },
-        {
-          title: "Get Started",
-          url: "#",
-        },
-        {
-          title: "Tutorials",
-          url: "#",
-        },
-        {
-          title: "Changelog",
-          url: "#",
+          url: "/dashboard/settings",
         },
       ],
     },
@@ -155,7 +110,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser />
