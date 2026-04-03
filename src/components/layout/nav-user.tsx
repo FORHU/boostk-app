@@ -1,7 +1,7 @@
 "use client";
 
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { useRouter } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { BadgeCheckIcon, BellIcon, ChevronsUpDownIcon, CreditCardIcon, LogOutIcon, SparklesIcon } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -18,25 +18,32 @@ import { authClient } from "@/lib/auth-client";
 import { authQueries } from "@/modules/auth/auth.queries";
 
 export function NavUser() {
-  const router = useRouter();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const { isMobile } = useSidebar();
-  // TODO: investigate why useSuspenseQuery is not working (marked return data as non-nullable)
+
+  // TODO: investigate why useSuspenseQuery is not working (return data can be nullable)
   const { data: authSession } = useSuspenseQuery(authQueries.authUser());
 
   if (!authSession) {
     console.error("No auth session. Redirecting to login.");
-    router.navigate({ to: "/signin" });
+    navigate({ to: "/signin" });
     return null;
   }
 
   const { user } = authSession;
 
   const handleLogout = async () => {
-    await authClient.signOut();
+    queryClient.clear();
     await queryClient.invalidateQueries();
-    router.navigate({ to: "/signin" });
+    await authClient.signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          navigate({ to: "/signin" });
+        },
+      },
+    });
   };
 
   return (

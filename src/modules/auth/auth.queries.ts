@@ -7,6 +7,6 @@ export const authQueries = {
     queryOptions({
       queryKey: [...authQueries.all, "user"],
       queryFn: () => getAuthUserSessionFn(),
-      staleTime: 5000,
+      staleTime: 60 * 1000, // 1 minute
     }),
 };

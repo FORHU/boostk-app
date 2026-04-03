@@ -1,4 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { AuthGuard } from "@/components/guards/auth-guard";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/")({
   component: LandingPage,
@@ -14,9 +16,21 @@ function LandingPage() {
               BOOSTK
             </Link>
           </div>
-          <button type="button" className="text-sm font-medium hover:text-blue-600 transition-colors">
-            Contact Us
-          </button>
+          <div className="flex flex-row items-center gap-4">
+            <AuthGuard>
+              <Link to="/dashboard/organizations" className="text-sm font-medium hover:text-blue-600 transition-colors">
+                <Button>Dashboard</Button>
+              </Link>
+            </AuthGuard>
+            <AuthGuard requireAuth={false}>
+              <Link to="/signup" className="text-sm font-medium hover:text-blue-600 transition-colors">
+                Sign Up
+              </Link>
+              <Link to="/signin" className="text-sm font-medium hover:text-blue-600 transition-colors">
+                <Button>Sign In</Button>
+              </Link>
+            </AuthGuard>
+          </div>
         </div>
       </nav>
 
@@ -102,7 +116,6 @@ function LandingPage() {
                     </p>
                   </div>
 
-                  {/* Subtle decorative element for that premium feel */}
                   <div className="mt-8 text-4xl opacity-20 grayscale transition-all duration-500 group-hover:scale-110 group-hover:opacity-100 group-hover:grayscale-0">
                     {feature.icon}
                   </div>

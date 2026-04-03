@@ -1,9 +1,8 @@
-import { createFileRoute, Outlet, redirect, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { RouterBreadcrumb } from "@/components/layout/RouterBreadcrumb";
 import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { authClient } from "@/lib/auth-client";
 
 export const Route = createFileRoute("/(app)")({
   beforeLoad: ({ context }) => {
@@ -15,18 +14,6 @@ export const Route = createFileRoute("/(app)")({
 });
 
 function AppLayout() {
-  const navigate = useNavigate();
-  const { authSession } = Route.useRouteContext();
-
-  const handleSignout = async () => {
-    await authClient.signOut({
-      fetchOptions: {
-        onSuccess: () => {
-          navigate({ to: "/signin" });
-        },
-      },
-    });
-  };
   return (
     <div className="flex flex-col h-screen">
       <SidebarProvider>
