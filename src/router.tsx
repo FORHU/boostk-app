@@ -1,6 +1,7 @@
 import { QueryClient } from "@tanstack/react-query";
 import { createRouter } from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
+import type { BreadcrumbValue } from "@/components/layout/RouterBreadcrumb";
 import { routeTree } from "./routeTree.gen";
 
 export function getRouter() {
@@ -25,5 +26,9 @@ export function getRouter() {
 declare module "@tanstack/react-router" {
   interface Register {
     router: ReturnType<typeof getRouter>;
+  }
+
+  interface StaticDataRouteOption {
+    breadcrumb?: BreadcrumbValue;
   }
 }
