@@ -126,9 +126,11 @@ model Invitation {
 }
 
 model Project {
-  id   String  @id @default(cuid())
-  name String
-  logo String?
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  logo        String?
+  slug        String  @unique
 
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)

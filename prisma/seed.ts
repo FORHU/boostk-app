@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import userSeeder from "./seeds/user.seeder";
 import organizationSeeder from "./seeds/organization.seeder";
+import projectSeeder from "./seeds/project.seeder";
 
 const sampleDataForhu = {
   organizations: { name: "Forhu", slug: "forhu" },
@@ -10,6 +11,11 @@ const sampleDataForhu = {
     { email: "forhu-user1@example.com", name: "Forhu User1", role: "user" },
     { email: "forhu-user2@example.com", name: "Forhu User2", role: "user" },
     { email: "forhu-user3@example.com", name: "Forhu User3", role: "user" },
+  ],
+  projects: [
+    { name: "Boostk", slug: "boostk", description: "Human and AI collaboration platform" },
+    { name: "Chumme", slug: "chumme", description: "Social Media for fan groups and influencer" },
+    { name: "Cheapest Go", slug: "cheapest-go", description: "Hotel and Flight Booking" },
   ],
 };
 
@@ -22,17 +28,26 @@ const sampleData = {
     { email: "organization1-user2@example.com", name: "Organization 1 User2", role: "user" },
     { email: "organization1-user3@example.com", name: "Organization 1 User3", role: "user" },
   ],
+  projects: [
+    { name: "Project 1", slug: "project-1", description: "Project 1" },
+    { name: "Project 2", slug: "project-2", description: "Project 2" },
+    { name: "Project 3", slug: "project-3", description: "Project 3" },
+  ],
 };
 
 async function main() {
   console.log("🌱 Starting database seeding...");
 
   try {
+    // TODO: Seed super admin
+
     await organizationSeeder(sampleDataForhu);
     await userSeeder(sampleDataForhu);
+    await projectSeeder(sampleDataForhu);
 
     await organizationSeeder(sampleData);
     await userSeeder(sampleData);
+    await projectSeeder(sampleData);
 
     console.log("✅ Seeding completed successfully.");
   } catch (error) {
