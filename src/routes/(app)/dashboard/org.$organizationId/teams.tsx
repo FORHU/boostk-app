@@ -10,10 +10,8 @@ function OrganizationTeamsPage() {
     <div>
       <h1>Teams - {organizationId}</h1>
       <div>
-        <div>Search filter</div>
-        <div>Invite members</div>
+        <div>Welcome to Organization Teams Page</div>
       </div>
-      <div>Table of users in this organization</div>
     </div>
   );
 }
