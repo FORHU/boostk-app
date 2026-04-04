@@ -13,3 +13,8 @@ export const updateProjectSchema = z.object({
   logo: z.string().optional(),
 });
 export type UpdateProjectInput = z.infer<typeof updateProjectSchema>;
+
+export const getProjectSchema = z.object({
+  projectId: z.string().min(1, "Project ID is required"),
+});
+export type GetProjectInput = z.infer<typeof getProjectSchema>;
