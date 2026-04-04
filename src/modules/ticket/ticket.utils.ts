@@ -1,0 +1,19 @@
+import { prisma } from "@/lib/prisma";
+
+export async function generateTicketReferenceNumber(): Promise<string> {
+  const prefix = "TK";
+
+  // Characters that aren't easily confused (No 0, O, 1, I, L)
+  const charset = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
+  let result = "";
+  for (let i = 0; i < 6; i++) {
+    result += charset.charAt(Math.floor(Math.random() * charset.length));
+  }
+
+  const reference = `${prefix}-${result}`;
+
+  const exists = await prisma.ticket.findUnique({ where: { referenceNumber: reference } });
+  if (exists) return generateTicketReferenceNumber();
+
+  return reference;
+}
