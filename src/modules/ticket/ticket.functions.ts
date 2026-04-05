@@ -125,3 +125,15 @@ export const getTicketCookieFn = createServerFn({ method: "GET" }).handler(async
 
   return ticket;
 });
+
+export const getProjectTicketsFn = createServerFn({ method: "GET" })
+  .inputValidator(z.object({ projectId: z.string().min(1) }))
+  .handler(async ({ data }) => {
+    const tickets = await prisma.ticket.findMany({
+      where: { projectId: data.projectId },
+      include: {
+        customer: true,
+      },
+    });
+    return tickets;
+  });
