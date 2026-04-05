@@ -1,76 +1,72 @@
-import { createFileRoute, notFound, useRouter } from "@tanstack/react-router";
+import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { createFileRoute, notFound } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
 import { Bot, Send, Sparkles } from "lucide-react";
-import { memo, useRef, useState } from "react";
-import TicketCustomerForm from "@/components/chat-support/CustomerForm";
+import type { Project, TicketMessage } from "prisma/generated/client";
+import { Suspense, useState } from "react";
+import TicketChatMessageBubble from "@/components/chat-support/TicketChatMessageBubble";
 import { getProjectPublicFn } from "@/modules/project/project.functions";
-import { getTicketCookieFn, setTicketCookieFn } from "@/modules/ticket/ticket.functions";
+import { getTicketCookieFn } from "@/modules/ticket/ticket.functions";
+import { createTicketMessageFn } from "@/modules/ticket-message/ticket-message.functions";
+import { ticketMessageQueries } from "@/modules/ticket-message/ticket-message.queries";
 
 export const Route = createFileRoute("/(public)/support/$projectId/chat-widget")({
   beforeLoad: async ({ params }) => {
     const project = await getProjectPublicFn({ data: { projectId: params.projectId } });
     if (!project) throw notFound();
 
-    return { project };
-  },
-  loader: async () => {
     const ticket = await getTicketCookieFn();
-    return { ticket };
+
+    return { project, ticket };
   },
-  component: ChatWidgetPage,
+  loader: ({ context }) => {
+    context.queryClient.ensureQueryData(ticketMessageQueries.getTicketMessages());
+  },
+  component: RouteComponent,
 });
 
-function ChatWidgetPage() {
-  const { project } = Route.useRouteContext();
-  const { ticket } = Route.useLoaderData();
-
-  const router = useRouter();
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  const handleCreateTicket = async () => {
-    await setTicketCookieFn({ data: { value: "Test 5" } });
-    await router.invalidate();
-  };
+function RouteComponent() {
+  const { project, ticket } = Route.useRouteContext();
+  console.log("project", project);
+  console.log("ticket", ticket);
 
   return (
     <div className="flex flex-col h-screen max-h-screen bg-white overflow-hidden">
-      <ChatHeader />
+      <ChatHeader project={project} />
 
-      <main ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50 scroll-smooth pb-4">
-        <p>Chat Here</p>
-        <button type="button" onClick={handleCreateTicket}>
-          Create Ticket
-        </button>
-      </main>
+      <div className="flex-1 overflow-y-auto p-2 bg-slate-50 scroll-smooth pb-4">
+        <Suspense fallback={<div className="flex items-center justify-center h-full">Loading messages...</div>}>
+          <TicketMessageList />
+        </Suspense>
+      </div>
 
-      <AnimatePresence>
-        {!ticket ? (
-          <motion.div
-            key="ticket-form"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 8 }}
-            transition={{ duration: 0.15, ease: "easeOut" }}
-          >
-            <TicketCustomerForm projectId={project.id} />
-          </motion.div>
-        ) : ticket ? (
-          <motion.div
-            key="chat-input"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 8 }}
-            transition={{ duration: 0.15, ease: "easeOut" }}
-          >
-            <ChatInput />
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
+      {!ticket ? (
+        <motion.div
+          key="ticket-form"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 8 }}
+          transition={{ duration: 0.15, ease: "easeOut" }}
+        >
+          <p>Ticket Customer Form</p>
+          {/* <TicketCustomerForm projectId={project.id} /> */}
+        </motion.div>
+      ) : ticket ? (
+        <motion.div
+          key="chat-input"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 8 }}
+          transition={{ duration: 0.15, ease: "easeOut" }}
+        >
+          <ChatInput ticketId={ticket.id} />
+        </motion.div>
+      ) : null}
     </div>
   );
 }
 
-const ChatHeader = memo(function ChatHeader() {
+const ChatHeader = ({ project }: { project: Project }) => {
   return (
     <header className="flex-none bg-indigo-600 p-4 text-white flex items-center justify-between shadow-sm">
       <div className="flex items-center gap-3">
@@ -78,7 +74,7 @@ const ChatHeader = memo(function ChatHeader() {
           <Bot size={20} />
         </div>
         <div>
-          <h2 className="text-sm font-bold leading-none">Support Chat</h2>
+          <h2 className="text-sm font-bold leading-none">{project.name} Support Chat</h2>
           <span className="text-[10px] text-indigo-200 flex items-center gap-1">
             <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
             Always active
@@ -88,17 +84,76 @@ const ChatHeader = memo(function ChatHeader() {
       <Sparkles size={16} className="text-indigo-300" />
     </header>
   );
-});
+};
 
-const ChatInput = () => {
-  const [message, setMessage] = useState("");
+const TicketMessageList = () => {
+  const { data: ticketMessages } = useSuspenseQuery(ticketMessageQueries.getTicketMessages());
 
-  const handleSubmit = (e: React.SubmitEvent) => {
+  if (!ticketMessages) return <div>No messages</div>;
+
+  return (
+    <AnimatePresence mode="popLayout">
+      {ticketMessages.length === 0 ? (
+        <motion.div
+          key="empty-state"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 8 }}
+          transition={{ duration: 0.15, ease: "easeOut" }}
+          className="flex items-center justify-center h-full"
+        >
+          <p className="text-center text-gray-500 text-sm">No messages yet</p>
+        </motion.div>
+      ) : (
+        ticketMessages.map((msg, index) => {
+          const prevMsg = ticketMessages[index - 1];
+          const nextMsg = ticketMessages[index + 1];
+
+          const isSameGroup = (m1?: TicketMessage, m2?: TicketMessage) => {
+            if (!m1 || !m2) return false;
+            if (m1.userId !== m2.userId) return false;
+            if (m1.customerId !== m2.customerId) return false;
+            return Math.abs(new Date(m2.createdAt).getTime() - new Date(m1.createdAt).getTime()) <= 30000;
+          };
+
+          const isStart = !isSameGroup(prevMsg, msg);
+          const isEnd = !isSameGroup(msg, nextMsg);
+
+          return <TicketChatMessageBubble key={msg.id} msg={msg} isStart={isStart} isEnd={isEnd} />;
+        })
+      )}
+    </AnimatePresence>
+  );
+};
+
+interface ChatInputProps {
+  ticketId: string;
+  //   onNewMessage: (msg: TicketMessage) => void;
+}
+
+const ChatInput = ({ ticketId }: ChatInputProps) => {
+  const queryClient = useQueryClient();
+  const [message, setMessage] = useState<string>("");
+  //   const { lastMessage } = useNotifications(`ticket_${ticketId}`);
+
+  const createTicketMessageMutation = useMutation({
+    mutationKey: ticketMessageQueries.all,
+    mutationFn: createTicketMessageFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ticketMessageQueries.all });
+    },
+    onError: (error) => {
+      console.log("error", error);
+    },
+  });
+
+  const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
-    if (message.trim()) {
-      console.log("message", message);
-      setMessage("");
-    }
+    const trimmed = message.trim();
+    if (!trimmed) return;
+
+    createTicketMessageMutation.mutate({ data: { content: trimmed, contentType: "TEXT", ticketId } });
+    setMessage("");
   };
 
   return (
@@ -109,11 +164,12 @@ const ChatInput = () => {
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           placeholder="Type your message..."
-          className="flex-1 bg-gray-100 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+          disabled={createTicketMessageMutation.isPending}
+          className="flex-1 bg-gray-100 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-60"
         />
         <button
           type="submit"
-          disabled={!message.trim()}
+          disabled={!message.trim() || createTicketMessageMutation.isPending}
           className="bg-indigo-600 text-white p-2.5 rounded-xl active:scale-95 disabled:opacity-50"
         >
           <Send size={18} />
