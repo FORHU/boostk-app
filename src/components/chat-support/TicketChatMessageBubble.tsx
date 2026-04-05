@@ -24,20 +24,19 @@ const TicketChatMessageBubble = ({ msg, isStart, isEnd }: TicketChatMessageBubbl
   const isCustomer = msg.customerId !== null;
 
   return (
-    <>
-      {isStart && (
-        <p className="text-[10px] text-muted-foreground text-right my-1">{msg.createdAt.toLocaleTimeString()}</p>
-      )}
+    <div className={cn("flex flex-col", isCustomer ? "items-end" : "items-start")}>
+      {isStart && <p className="text-[10px] text-muted-foreground my-1">{msg.createdAt.toLocaleTimeString()}</p>}
       <div
         className={cn(
-          `mb-0.5 max-w-[60%] px-4 py-2 text-sm shadow-sm ${getRadiusClasses(isCustomer, isStart, isEnd)}`,
-          isCustomer ? "ml-auto bg-primary text-primary-foreground" : "mr-auto bg-secondary text-secondary-foreground",
+          "mb-0.5 max-w-[60%] px-4 py-2 text-sm shadow-sm w-fit",
+          getRadiusClasses(isCustomer, isStart, isEnd),
+          isCustomer ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground",
         )}
         style={{ "--radius": "0.325rem" } as React.CSSProperties}
       >
-        <p>{msg.content}</p>
+        <p className="whitespace-pre-wrap wrap-break-word">{msg.content}</p>
       </div>
-    </>
+    </div>
   );
 };
 
