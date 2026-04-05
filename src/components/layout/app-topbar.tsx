@@ -55,7 +55,14 @@ export default function AppTopbar() {
 
         <div className="flex items-center gap-4">
           <DropdownMenu>
-            <DropdownMenuTrigger render={<div className="aria-expanded:bg-muted" />}>
+            <DropdownMenuTrigger
+              render={
+                <button
+                  type="button"
+                  className="aria-expanded:bg-muted cursor-pointer border-none bg-transparent p-0 outline-none"
+                />
+              }
+            >
               <Avatar>
                 <AvatarImage className="size-8" src={"/avatars/laugh-orange-cat.gif"} alt={user.name} />
                 <AvatarFallback>CN</AvatarFallback>
