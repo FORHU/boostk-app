@@ -21,3 +21,12 @@ export const getProjectFn = createServerFn({ method: "GET" })
 
     return project;
   });
+
+// TODO: make this more secure
+export const getProjectPublicFn = createServerFn({ method: "GET" })
+  .inputValidator(getProjectSchema)
+  .handler(async ({ data }) => {
+    const project = await getProjectById(data.projectId);
+
+    return project;
+  });
