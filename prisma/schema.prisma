@@ -20,8 +20,9 @@ model User {
   sessions      Session[]
   accounts      Account[]
 
-  members     Member[]
-  invitations Invitation[]
+  members        Member[]
+  invitations    Invitation[]
+  ticketMessages TicketMessage[]
 
   @@map("users")
 }
@@ -157,7 +158,8 @@ model Customer {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  tickets Ticket[]
+  tickets        Ticket[]
+  ticketMessages TicketMessage[]
 
   @@map("customers")
 }
@@ -182,12 +184,18 @@ model Ticket {
 }
 
 model TicketMessage {
-  id          String @id @default(cuid())
+  id          String                   @id @default(cuid())
   content     String
-  contentType String @default("text")
+  contentType TicketMessageContentType @default(TEXT)
 
   ticketId String
   ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id])
+
+  customerId String?
+  customer   Customer? @relation(fields: [customerId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -204,4 +212,10 @@ enum TicketPriority {
   LOW
   MEDIUM
   HIGH
+}
+
+enum TicketMessageContentType {
+  TEXT
+  IMAGE
+  FILE
 }
