@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { CreateCustomerSchema } from "@/modules/customer/customer.schema";
 import { generateTicketReferenceNumber } from "@/modules/ticket/ticket.utils";
 import { createCustomer } from "../customer/customer.service";
+import { requireProjectMiddleware } from "../project/project.middleware";
 import { GetTicketByReferenceNumberSchema, UpsertTicketSessionInput } from "./ticket.schema";
 import { createTicket, getTicketByReferenceNumber } from "./ticket.service";
 
@@ -131,6 +132,18 @@ export const getProjectTicketsFn = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const tickets = await prisma.ticket.findMany({
       where: { projectId: data.projectId },
+      include: {
+        customer: true,
+      },
+    });
+    return tickets;
+  });
+
+export const getAuthUserTicketsFn = createServerFn({ method: "GET" })
+  .middleware([requireProjectMiddleware])
+  .handler(async ({ context }) => {
+    const tickets = await prisma.ticket.findMany({
+      where: { projectId: context.project.id },
       include: {
         customer: true,
       },

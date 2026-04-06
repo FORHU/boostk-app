@@ -25,3 +25,14 @@ export const getTicketByReferenceNumber = async (referenceNumber: string) => {
 
   return ticket;
 };
+
+export const getProjectTickets = async (projectId: string) => {
+  const tickets = await prisma.ticket.findMany({
+    where: { projectId },
+    include: {
+      customer: true,
+    },
+  });
+
+  return tickets;
+};

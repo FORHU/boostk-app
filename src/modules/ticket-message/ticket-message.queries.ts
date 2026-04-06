@@ -1,11 +1,17 @@
 import { queryOptions } from "@tanstack/react-query";
-import { getTicketMessagesFn } from "./ticket-message.functions";
+import { getCustomerTicketMessagesFn, getTicketMessagesFn } from "@/modules/ticket-message/ticket-message.functions";
 
 export const ticketMessageQueries = {
   all: ["ticket-messages"],
-  getTicketMessages: () =>
+  getTicketMessages: (ticketId: string) =>
     queryOptions({
-      queryKey: [...ticketMessageQueries.all],
-      queryFn: () => getTicketMessagesFn(),
+      queryKey: [...ticketMessageQueries.all, ticketId],
+      queryFn: () => getTicketMessagesFn({ data: ticketId }),
+      enabled: !!ticketId,
+    }),
+  getCustomerTicketMessages: () =>
+    queryOptions({
+      queryKey: [...ticketMessageQueries.all, "customer"],
+      queryFn: () => getCustomerTicketMessagesFn(),
     }),
 };

@@ -3,17 +3,18 @@ import { createFileRoute, notFound } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { Bot, Send, Sparkles } from "lucide-react";
 import type { Project, Ticket, TicketMessage } from "prisma/generated/client";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import TicketChatMessageBubble from "@/components/chat-support/TicketChatMessageBubble";
 import TicketCustomerForm from "@/components/chat-support/TicketCustomerForm";
-import { useNotifications } from "@/hooks/use-notifications";
-import { getProjectPublicFn } from "@/modules/project/project.functions";
+import { socket } from "@/lib/socket";
 import { getTicketCookieFn } from "@/modules/ticket/ticket.functions";
-import { createTicketMessageFn } from "@/modules/ticket-message/ticket-message.functions";
+import { createCustomerTicketMessageFn } from "@/modules/ticket-message/ticket-message.functions";
 import { ticketMessageQueries } from "@/modules/ticket-message/ticket-message.queries";
 
 export const Route = createFileRoute("/(public)/support/$projectId/chat-widget")({
   beforeLoad: async ({ params }) => {
+    // using projectFunctions since the import was replaced accidentally
+    const { getProjectPublicFn } = await import("@/modules/project/project.functions");
     const project = await getProjectPublicFn({ data: { projectId: params.projectId } });
     if (!project) throw notFound();
 
@@ -22,7 +23,7 @@ export const Route = createFileRoute("/(public)/support/$projectId/chat-widget")
     return { project, ticket };
   },
   loader: ({ context }) => {
-    context.queryClient.ensureQueryData(ticketMessageQueries.getTicketMessages());
+    context.queryClient.ensureQueryData(ticketMessageQueries.getCustomerTicketMessages());
   },
   component: RouteComponent,
 });
@@ -87,9 +88,11 @@ const ChatHeader = ({ project }: { project: Project }) => {
 };
 
 const TicketMessageList = () => {
-  const { data: ticketMessages } = useSuspenseQuery(ticketMessageQueries.getTicketMessages());
+  const { data: ticketMessages } = useSuspenseQuery(ticketMessageQueries.getCustomerTicketMessages());
 
-  if (!ticketMessages) return <div>No messages</div>;
+  if (!ticketMessages) {
+    return <div className="flex items-center justify-center h-full">Please create a ticket to start chatting</div>;
+  }
 
   return (
     <>
@@ -127,9 +130,22 @@ const TicketMessageList = () => {
 };
 
 const ChatListener = ({ ticket }: { ticket: Ticket }) => {
-  const { lastMessage: _lastMessage } = useNotifications({ role: "customer", ticketId: ticket.id });
   const queryClient = useQueryClient();
-  queryClient.invalidateQueries({ queryKey: ticketMessageQueries.all });
+
+  useEffect(() => {
+    socket.emit("join_room", ticket.id);
+
+    const handleNewMessage = () => {
+      queryClient.invalidateQueries({ queryKey: ticketMessageQueries.all });
+    };
+
+    socket.on("receive_message", handleNewMessage);
+
+    return () => {
+      socket.emit("leave_room", ticket.id);
+      socket.off("receive_message", handleNewMessage);
+    };
+  }, [ticket.id, queryClient]);
 
   return null;
 };
@@ -140,9 +156,12 @@ const ChatInput = ({ ticket }: { ticket: Ticket }) => {
 
   const createTicketMessageMutation = useMutation({
     mutationKey: ticketMessageQueries.all,
-    mutationFn: createTicketMessageFn,
-    onSuccess: () => {
+    mutationFn: createCustomerTicketMessageFn,
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ticketMessageQueries.all });
+      if (data) {
+        socket.emit("new_message", { room: ticket.id });
+      }
     },
     onError: (error) => {
       console.log("error", error);

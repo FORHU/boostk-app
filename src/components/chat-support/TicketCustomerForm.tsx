@@ -1,21 +1,25 @@
 import { useForm } from "@tanstack/react-form";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { ArrowRight, Hash, Mail, User } from "lucide-react";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { getFieldInvalid } from "@/lib/form-utils";
+import { socket } from "@/lib/socket";
 import { upsertTicketSessionFn } from "@/modules/ticket/ticket.functions";
 import { UpsertTicketSessionInput } from "@/modules/ticket/ticket.schema";
 
 export default function TicketCustomerForm({ projectId }: { projectId: string }) {
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const upsertTicketSessionMutation = useMutation({
     mutationFn: upsertTicketSessionFn,
     onSuccess: async (data) => {
       console.log("data", data);
+      socket.emit("ticket_created", { projectRoom: `project_${projectId}` });
+      queryClient.invalidateQueries();
       await router.invalidate();
     },
     onError: (error: unknown) => {
