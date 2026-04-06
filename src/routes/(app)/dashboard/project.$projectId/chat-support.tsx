@@ -2,7 +2,7 @@ import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-q
 import { createFileRoute } from "@tanstack/react-router";
 import { Send, UserCircle2 } from "lucide-react";
 import type { Project, Ticket } from "prisma/generated/client";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { socket } from "@/lib/socket";
 import { ticketQueries } from "@/modules/ticket/query.queries";
 import type { TicketWithCustomer } from "@/modules/ticket/ticket.types";
@@ -63,8 +63,23 @@ const TicketList = ({
 }) => {
   const { data: tickets } = useSuspenseQuery(ticketQueries.getProjectTickets(project.id));
 
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const handleWheel = (e: React.WheelEvent) => {
+    if (scrollRef.current) {
+      if (e.deltaY !== 0) {
+        scrollRef.current.scrollLeft += e.deltaY;
+        e.preventDefault();
+      }
+    }
+  };
+
   return (
-    <div className="px-2 h-14 flex flex-row gap-2 overflow-x-auto border-b bg-slate-50 items-center shrink-0">
+    <div
+      ref={scrollRef}
+      onWheel={handleWheel}
+      style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+      className="px-2 h-14 flex flex-row gap-2 overflow-x-auto border-b bg-slate-50 items-center shrink-0"
+    >
       {tickets.map((ticket) => (
         <div key={ticket.id} className="h-full py-2">
           <button
@@ -78,7 +93,7 @@ const TicketList = ({
               >
                 {ticket.customer.name}
               </span>
-              <span className="text-xs text-gray-500 truncate">Ticket #{ticket.referenceNumber?.slice(0, 8)}</span>
+              <span className="text-[8px] text-gray-500 truncate">{ticket.referenceNumber?.slice(0, 8)}</span>
             </div>
             {ticket.status === "OPEN" && <span className="w-2 h-2 bg-green-500 rounded-full shrink-0"></span>}
           </button>
