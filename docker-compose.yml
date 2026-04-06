@@ -1,0 +1,23 @@
+services:
+  # Backend (Hono / Socket.io)
+  backend:
+    build: ./hono
+    ports:
+      - "3001:3001"
+    env_file: .env
+
+  # Frontend (TanStack Start)
+  frontend:
+    build:
+      context: .
+      args:
+        - DATABASE_URL=${DATABASE_URL}
+        - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
+        - BETTER_AUTH_URL=${BETTER_AUTH_URL}
+        - VITE_SOCKET_URL=${VITE_SOCKET_URL}
+        - OPENAI_API_KEY=${OPENAI_API_KEY}
+    ports:
+      - "3000:3000"
+    env_file: .env
+    depends_on:
+      - backend
