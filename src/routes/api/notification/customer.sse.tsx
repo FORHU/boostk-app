@@ -83,7 +83,7 @@ export const Route = createFileRoute("/api/notification/customer/sse")({
                     channel.ack(msg);
                   } catch (error) {
                     console.error("[SSE] Failed to parse RabbitMQ message", error);
-                    channel.nack(msg, false, false)
+                    channel.nack(msg, false, false);
                   }
                 });
               },

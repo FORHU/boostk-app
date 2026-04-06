@@ -5,8 +5,8 @@ const io = new Server();
 const engine = new Engine({
   path: "/socket.io/",
   cors: {
-    origin: "*", 
-  }
+    origin: "*",
+  },
 });
 
 io.bind(engine);

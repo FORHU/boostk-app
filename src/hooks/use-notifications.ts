@@ -65,7 +65,7 @@ export function useNotifications(config: NotificationConfig) {
       console.log("[SSE] Closing connection");
       eventSource.close();
     };
-  }, [config.role, config.userId, config.projectId, config.ticketId]); 
+  }, [config.role, config.userId, config.projectId, config.ticketId]);
 
   return { lastMessage, status };
 }
