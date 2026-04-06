@@ -5,27 +5,31 @@ import z from "zod";
 import { EventType, type Message } from "@/lib/notifier/core";
 import { connection, EXCHANGE_NAME } from "@/lib/rabbitmq";
 
-const SseSchema = z.object({
-  userId: z.string().min(1).default("anonymous"),
-  projectId: z
-    .string()
-    .regex(/^[a-zA-Z0-9-]+$/)
-    .optional(),
+const CustomerSseSchema = z.object({
   ticketId: z
     .string()
     .regex(/^[a-zA-Z0-9-]+$/)
     .optional(),
+  customerId: z.string().min(1).default("anonymous"),
 });
 
-export const Route = createFileRoute("/api/notification/sse")({
+export const Route = createFileRoute("/api/notification/customer/sse")({
   server: {
     handlers: {
       GET: async ({ request }) => {
         const url = new URL(request.url);
-        const result = SseSchema.safeParse(Object.fromEntries(url.searchParams.entries()));
+        const result = CustomerSseSchema.safeParse(Object.fromEntries(url.searchParams.entries()));
         if (!result.success) return Response.json({ error: "Invalid parameters" }, { status: 400 });
 
-        const { userId, projectId, ticketId } = result.data;
+        const { ticketId, customerId } = result.data;
+
+        if (ticketId) {
+          const ticketBelongsToCustomer = true;
+
+          if (!ticketBelongsToCustomer) {
+            return new Response("Forbidden: You do not own this ticket", { status: 403 });
+          }
+        }
 
         const encoder = new TextEncoder();
         let sseChannelWrapper: ChannelWrapper;
@@ -33,7 +37,7 @@ export const Route = createFileRoute("/api/notification/sse")({
         const stream = new ReadableStream({
           start(controller) {
             const sendSseMessage = (message: Message) => {
-              const sseString = `id: ${message.id || ""}\nevent: ${message.event}\ndata: ${JSON.stringify(message.data)}\n\n`;
+              const sseString = `id: ${message.id || ``}\nevent: ${message.event}\ndata: ${JSON.stringify(message.data)}\n\n`;
               controller.enqueue(encoder.encode(sseString));
             };
 
@@ -51,29 +55,21 @@ export const Route = createFileRoute("/api/notification/sse")({
               });
             }, 8000);
 
-            // Create a rabbitmq channel for the user
             sseChannelWrapper = connection.createChannel({
               setup: async (channel: ConfirmChannel) => {
-                const tempQueue = await channel.assertQueue("", {
-                  exclusive: true,
-                  autoDelete: true,
-                });
+                const tempQueue = await channel.assertQueue("", { exclusive: true, autoDelete: true });
                 const sseQueue = tempQueue.queue;
 
-                await channel.bindQueue(sseQueue, EXCHANGE_NAME, "test.queue");
+                // 3. Bind to the Customer's global events (e.g., "New notification")
+                await channel.bindQueue(sseQueue, EXCHANGE_NAME, `customer.${customerId}.*`);
 
-                // Bind to project and ticket queues
-                if (projectId) {
-                  await channel.bindQueue(sseQueue, EXCHANGE_NAME, `project.${projectId}.*`);
-                }
+                // 4. Bind to the specific ticket ONLY because we verified ownership above
                 if (ticketId) {
                   await channel.bindQueue(sseQueue, EXCHANGE_NAME, `ticket.${ticketId}.*`);
                 }
 
-                // Consume messages and push to SSE stream
                 await channel.consume(sseQueue, (msg) => {
                   if (!msg) return;
-
                   try {
                     const payload = JSON.parse(msg.content.toString());
                     console.log("[SSE] Received message from rabbitmq:", payload);
@@ -84,11 +80,9 @@ export const Route = createFileRoute("/api/notification/sse")({
                       id: payload.id,
                     });
 
-                    // Acknowledge the message only on success
                     channel.ack(msg);
                   } catch (error) {
                     console.error("[SSE] Failed to parse RabbitMQ message", error);
-                    // Nack the message so it gets removed from the queue and doesn't block other messages.
                     channel.nack(msg, false, false)
                   }
                 });
@@ -96,13 +90,13 @@ export const Route = createFileRoute("/api/notification/sse")({
             });
 
             sseChannelWrapper.on("error", (err) => {
-              console.error(`[SSE] RabbitMQ Channel Error for User ${userId}:`, err);
+              console.error(`[SSE] RabbitMQ Channel Error for Customer ${customerId}:`, err);
               // TODO: Send an SSE event to the client telling them
               // the real-time connection degraded, so they know to refresh or rely on standard polling.
             });
 
             request.signal.addEventListener("abort", () => {
-              console.log(`[SSE] Client ${userId} disconnected. Cleaning up...`);
+              console.log(`[SSE] Client ${customerId} disconnected. Cleaning up...`);
               clearInterval(timer);
 
               if (sseChannelWrapper) {
