@@ -62,12 +62,12 @@ export const Footer = () => {
       <div id="chat-widget-wrapper" className="antialiased">
         <div
           id="chat-iframe-container"
-          className={`fixed bottom-24 right-5 w-[90vw] sm:w-[380px] h-[600px] max-h-[80vh] z-[999999] transition-all duration-300 ease-out origin-bottom-right ${
+          className={`fixed bottom-24 right-5 w-[90vw] sm:w-[380px] h-[600px] max-h-[80vh] z-999999 transition-all duration-300 ease-out origin-bottom-right ${
             isChatOpen ? "scale-100 opacity-100 visible" : "scale-75 opacity-0 invisible pointer-events-none"
           }`}
         >
           <iframe
-            src="http://localhost:3000/support/cmnniwojo0006z8sba724kar3/chat-widget"
+            src="/support/cmnniwojo0006z8sba724kar3/chat-widget"
             className="w-full h-full border-none rounded-2xl shadow-2xl ring-1 ring-black/5"
             title="Chat Support"
           ></iframe>
