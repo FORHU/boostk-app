@@ -166,7 +166,6 @@ const ChatInput = ({ ticket }: { ticket: Ticket }) => {
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           placeholder="Type your message..."
-          disabled={createTicketMessageMutation.isPending}
           className="flex-1 bg-gray-100 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-60"
         />
         <button
