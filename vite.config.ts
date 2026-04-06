@@ -13,7 +13,7 @@ const config = defineConfig({
     tailwindcss(),
     tanstackStart(),
     viteReact(),
-    nitro({ preset: "bun" }),
+    nitro({ preset: "bun", plugins: ["./src/modules/plugins/rabbitmq.plugin.ts"] }),
   ],
   build: {
     rollupOptions: {
