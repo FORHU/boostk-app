@@ -43,7 +43,7 @@ export default function TicketCustomerForm({ projectId }: { projectId: string })
 
   return (
     <motion.div
-      initial={{ y: 20, opacity: 0 }}
+      initial={false}
       animate={{ y: 0, opacity: 1 }}
       exit={{ y: 50, opacity: 0 }}
       className="p-4 bg-white border-t border-gray-100 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] w-full mx-auto"

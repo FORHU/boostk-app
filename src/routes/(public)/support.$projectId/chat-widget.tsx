@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, notFound } from "@tanstack/react-router";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { Bot, Send, Sparkles } from "lucide-react";
 import type { Project, TicketMessage } from "prisma/generated/client";
 import { Suspense, useState } from "react";
@@ -9,6 +9,7 @@ import { getProjectPublicFn } from "@/modules/project/project.functions";
 import { getTicketCookieFn } from "@/modules/ticket/ticket.functions";
 import { createTicketMessageFn } from "@/modules/ticket-message/ticket-message.functions";
 import { ticketMessageQueries } from "@/modules/ticket-message/ticket-message.queries";
+import TicketCustomerForm from "@/components/chat-support/TicketCustomerForm";
 
 export const Route = createFileRoute("/(public)/support/$projectId/chat-widget")({
   beforeLoad: async ({ params }) => {
@@ -27,8 +28,6 @@ export const Route = createFileRoute("/(public)/support/$projectId/chat-widget")
 
 function RouteComponent() {
   const { project, ticket } = Route.useRouteContext();
-  console.log("project", project);
-  console.log("ticket", ticket);
 
   return (
     <div className="flex flex-col h-screen max-h-screen bg-white overflow-hidden">
@@ -43,13 +42,12 @@ function RouteComponent() {
       {!ticket ? (
         <motion.div
           key="ticket-form"
-          initial={{ opacity: 0, y: 8 }}
+          initial={false}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 8 }}
           transition={{ duration: 0.15, ease: "easeOut" }}
         >
-          <p>Ticket Customer Form</p>
-          {/* <TicketCustomerForm projectId={project.id} /> */}
+          <TicketCustomerForm projectId={project.id} />
         </motion.div>
       ) : ticket ? (
         <motion.div
@@ -92,7 +90,7 @@ const TicketMessageList = () => {
   if (!ticketMessages) return <div>No messages</div>;
 
   return (
-    <AnimatePresence mode="popLayout">
+    <>  
       {ticketMessages.length === 0 ? (
         <motion.div
           key="empty-state"
@@ -122,7 +120,7 @@ const TicketMessageList = () => {
           return <TicketChatMessageBubble key={msg.id} msg={msg} isStart={isStart} isEnd={isEnd} />;
         })
       )}
-    </AnimatePresence>
+    </>
   );
 };
 
