@@ -34,7 +34,14 @@ const TicketChatMessageBubble = ({ msg, isStart, isEnd }: TicketChatMessageBubbl
         )}
         style={{ "--radius": "0.325rem" } as React.CSSProperties}
       >
-        <p className="whitespace-pre-wrap wrap-break-word">{msg.content}</p>
+        {!isCustomer && (msg as any).translatedContent ? (
+          <div>
+            <p className="whitespace-pre-wrap wrap-break-word">{(msg as any).translatedContent}</p>
+            <p className="text-[10px] mt-1 pt-1 border-t opacity-70">Original: {msg.content}</p>
+          </div>
+        ) : (
+          <p className="whitespace-pre-wrap wrap-break-word">{msg.content}</p>
+        )}
       </div>
     </div>
   );

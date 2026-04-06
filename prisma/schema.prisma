@@ -151,6 +151,7 @@ model Customer {
   email    String
   phone    String?
   metadata String?
+  language String  @default("en")
 
   projectId String
   project   Project @relation(fields: [projectId], references: [id])
@@ -184,9 +185,11 @@ model Ticket {
 }
 
 model TicketMessage {
-  id          String                   @id @default(cuid())
-  content     String
-  contentType TicketMessageContentType @default(TEXT)
+  id               String                   @id @default(cuid())
+  content          String
+  contentType      TicketMessageContentType @default(TEXT)
+  translatedContent String?
+  originalLanguage  String?
 
   ticketId String
   ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)

@@ -202,7 +202,23 @@ const UserChatMessages = ({ ticket }: { ticket: Ticket }) => {
               <div
                 className={`px-4 py-2 rounded-2xl text-sm ${isAgent ? "bg-indigo-600 text-white rounded-br-none" : "bg-gray-100 text-gray-800 rounded-bl-none"}`}
               >
-                {msg.content}
+                {!isAgent && msg.translatedContent ? (
+                  <div>
+                    <div>{msg.translatedContent}</div>
+                    <div className="text-[10px] mt-1 pt-1 border-t border-gray-200 text-gray-500">
+                      Original: {msg.content}
+                    </div>
+                  </div>
+                ) : isAgent && msg.translatedContent ? (
+                  <div>
+                    <div>{msg.content}</div>
+                    <div className="text-[10px] mt-1 pt-1 border-t border-indigo-500 text-indigo-200">
+                      Translated: {msg.translatedContent}
+                    </div>
+                  </div>
+                ) : (
+                  msg.content
+                )}
               </div>
             </div>
           );
