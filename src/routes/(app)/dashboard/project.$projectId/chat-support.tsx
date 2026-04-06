@@ -43,7 +43,7 @@ function ProjectChatSupportPage() {
       <Suspense fallback={<div className="p-4 h-14">Loading project tickets...</div>}>
         <TicketList project={project} selectedTicket={selectedTicket} onSelectTicket={setSelectedTicket} />
       </Suspense>
-      <div className="flex-1 flex flex-row overflow-hidden">
+      <div className="flex-1 flex flex-row overflow-hidden min-h-0">
         <TicketDetails ticket={selectedTicket} />
         <ChatWindow ticket={selectedTicket} />
         <CustomerDetails ticket={selectedTicket} />
@@ -93,7 +93,9 @@ const TicketList = ({
               >
                 {ticket.customer.name}
               </span>
-              <span className="text-[8px] text-gray-500 truncate">{ticket.referenceNumber?.slice(0, 8)}</span>
+              <span className="text-[8px] text-gray-500 truncate font-medium">
+                Ticket #{ticket.referenceNumber?.slice(0, 8)}
+              </span>
             </div>
             {ticket.status === "OPEN" && <span className="w-2 h-2 bg-green-500 rounded-full shrink-0"></span>}
           </button>
@@ -107,7 +109,7 @@ const TicketDetails = ({ ticket }: { ticket: Ticket | null }) => {
   if (!ticket) return <div className="h-full w-1/4 border-r bg-slate-50 p-4"></div>;
 
   return (
-    <div className="h-full w-1/4 border-r bg-slate-50 p-4 shrink-0 overflow-y-auto">
+    <div className="h-full w-1/4 border-r bg-slate-50 p-4 min-w-0 overflow-y-auto">
       <h3 className="font-bold text-lg mb-4 text-slate-800">Details</h3>
       <div className="space-y-4">
         <div>
@@ -147,7 +149,7 @@ const ChatWindow = ({ ticket }: { ticket: Ticket | null }) => {
   }
 
   return (
-    <div className="h-full w-1/2 flex flex-col bg-white border-r relative shrink-0">
+    <div className="h-full w-1/2 flex flex-col bg-white border-r relative min-w-0">
       <Suspense fallback={<div className="flex-1 flex items-center justify-center p-4">Loading messages...</div>}>
         <UserChatMessages ticket={ticket} />
       </Suspense>
@@ -258,7 +260,7 @@ const CustomerDetails = ({ ticket }: { ticket: TicketWithCustomer | null }) => {
   if (!ticket) return <div className="h-full w-1/4 bg-slate-50 p-4"></div>;
 
   return (
-    <div className="h-full w-1/4 bg-slate-50 p-4 shrink-0 overflow-y-auto">
+    <div className="h-full w-1/4 bg-slate-50 p-4 min-w-0 overflow-y-auto">
       <h3 className="font-bold text-lg mb-4 text-slate-800">Customer Details</h3>
       <div className="flex flex-col items-center mb-6">
         <UserCircle2 size={64} className="text-gray-300 mb-2" strokeWidth={1} />
