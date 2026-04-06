@@ -10,6 +10,7 @@ export enum EventType {
   CHAT_MESSAGE = "chat_message",
 
   TEST = "test",
+  ERROR = "error",
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: <TODO: fix any type here later>

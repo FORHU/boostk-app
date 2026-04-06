@@ -13,7 +13,7 @@ export const Route = createFileRoute("/(app)")({
 
 function AppLayout() {
   const { authSession } = Route.useRouteContext();
-  const { status, lastMessage } = useNotifications(authSession.user.id);
+  const { status, lastMessage } = useNotifications({ role: "user", userId: authSession.user.id });
 
   console.log("[AppLayout] Status:", status);
   console.log("[AppLayout] Last Message:", lastMessage);

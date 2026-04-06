@@ -2,14 +2,15 @@ import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-q
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { Bot, Send, Sparkles } from "lucide-react";
-import type { Project, TicketMessage } from "prisma/generated/client";
+import type { Project, Ticket, TicketMessage } from "prisma/generated/client";
 import { Suspense, useState } from "react";
 import TicketChatMessageBubble from "@/components/chat-support/TicketChatMessageBubble";
+import TicketCustomerForm from "@/components/chat-support/TicketCustomerForm";
+import { useNotifications } from "@/hooks/use-notifications";
 import { getProjectPublicFn } from "@/modules/project/project.functions";
 import { getTicketCookieFn } from "@/modules/ticket/ticket.functions";
 import { createTicketMessageFn } from "@/modules/ticket-message/ticket-message.functions";
 import { ticketMessageQueries } from "@/modules/ticket-message/ticket-message.queries";
-import TicketCustomerForm from "@/components/chat-support/TicketCustomerForm";
 
 export const Route = createFileRoute("/(public)/support/$projectId/chat-widget")({
   beforeLoad: async ({ params }) => {
@@ -57,7 +58,8 @@ function RouteComponent() {
           exit={{ opacity: 0, y: 8 }}
           transition={{ duration: 0.15, ease: "easeOut" }}
         >
-          <ChatInput ticketId={ticket.id} />
+          <ChatListener ticket={ticket} />
+          <ChatInput ticket={ticket} />
         </motion.div>
       ) : null}
     </div>
@@ -90,7 +92,7 @@ const TicketMessageList = () => {
   if (!ticketMessages) return <div>No messages</div>;
 
   return (
-    <>  
+    <>
       {ticketMessages.length === 0 ? (
         <motion.div
           key="empty-state"
@@ -124,15 +126,17 @@ const TicketMessageList = () => {
   );
 };
 
-interface ChatInputProps {
-  ticketId: string;
-  //   onNewMessage: (msg: TicketMessage) => void;
-}
+const ChatListener = ({ ticket }: { ticket: Ticket }) => {
+  const { lastMessage: _lastMessage } = useNotifications({ role: "customer", ticketId: ticket.id });
+  const queryClient = useQueryClient();
+  queryClient.invalidateQueries({ queryKey: ticketMessageQueries.all });
 
-const ChatInput = ({ ticketId }: ChatInputProps) => {
+  return null;
+};
+
+const ChatInput = ({ ticket }: { ticket: Ticket }) => {
   const queryClient = useQueryClient();
   const [message, setMessage] = useState<string>("");
-  //   const { lastMessage } = useNotifications(`ticket_${ticketId}`);
 
   const createTicketMessageMutation = useMutation({
     mutationKey: ticketMessageQueries.all,
@@ -150,7 +154,7 @@ const ChatInput = ({ ticketId }: ChatInputProps) => {
     const trimmed = message.trim();
     if (!trimmed) return;
 
-    createTicketMessageMutation.mutate({ data: { content: trimmed, contentType: "TEXT", ticketId } });
+    createTicketMessageMutation.mutate({ data: { content: trimmed, contentType: "TEXT", ticketId: ticket.id } });
     setMessage("");
   };
 

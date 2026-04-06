@@ -1,14 +1,29 @@
 import { useEffect, useState } from "react";
 import { EventType, type Message } from "@/lib/notifier/core";
 
-export function useNotifications(userId: string) {
+interface NotificationConfig {
+  role: "user" | "customer";
+  userId?: string;
+  projectId?: string;
+  ticketId?: string;
+}
+
+export function useNotifications(config: NotificationConfig) {
   const [lastMessage, setLastMessage] = useState<Message | null>(null);
   const [status, setStatus] = useState<"connecting" | "connected" | "disconnected">("connecting");
 
   useEffect(() => {
-    if (!userId || typeof window === "undefined") return;
+    if (typeof window === "undefined") return;
 
-    const eventSource = new EventSource(`/api/notification/sse?userId=${userId}`);
+    // Dynamically build the correct URL based on the role
+    const baseUrl = config.role === "user" ? "/api/notification/sse" : "/api/notification/customer/sse";
+    const url = new URL(baseUrl, window.location.origin);
+
+    if (config.userId) url.searchParams.append("userId", config.userId);
+    if (config.projectId) url.searchParams.append("projectId", config.projectId);
+    if (config.ticketId) url.searchParams.append("ticketId", config.ticketId);
+
+    const eventSource = new EventSource(url.toString());
 
     const handleMessage = (e: MessageEvent) => {
       try {
@@ -17,7 +32,7 @@ export function useNotifications(userId: string) {
 
         setLastMessage({ event: e.type as EventType, data: data });
       } catch (err) {
-        console.error("Error parsing SSE data", err);
+        console.error("[SSE] Error parsing SSE data", err);
       }
     };
 
@@ -27,7 +42,7 @@ export function useNotifications(userId: string) {
       handleMessage(e);
     });
     eventSource.addEventListener(EventType.HEARTBEAT, () => {
-      console.log("[SSE] Heartbeat received");
+      // console.log("[SSE] Heartbeat received"); // commented out to reduce console spam
     });
 
     // Business Logic Handlers
@@ -50,7 +65,7 @@ export function useNotifications(userId: string) {
       console.log("[SSE] Closing connection");
       eventSource.close();
     };
-  }, [userId]);
+  }, [config.role, config.userId, config.projectId, config.ticketId]); 
 
   return { lastMessage, status };
 }
