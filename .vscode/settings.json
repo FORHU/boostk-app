@@ -33,6 +33,8 @@
     "source.organizeImports.biome": "explicit",
     "source.fixAll.biome": "explicit"
   },
+  "editor.defaultFormatter": "biomejs.biome",
+  "editor.formatOnSave": true,
   "cSpell.words": [
     "ABCDEFGHJKMNPQRSTUVWXYZ",
     "amqp",

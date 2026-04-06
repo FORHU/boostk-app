@@ -8,7 +8,7 @@ interface UserSeederData {
 
 export default async function userSeeder(data: UserSeederData) {
   const { organizations, users } = data;
-  const password = "password123!";
+  const password = "Password123!";
 
   console.log("👤 Seeding users and linking to organizations...");
 
