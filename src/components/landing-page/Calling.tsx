@@ -1,3 +1,5 @@
+import { Heart } from "lucide-react";
+
 export const Calling = () => {
   return (
     <section className="py-12 md:py-24 bg-white overflow-hidden">
@@ -7,9 +9,7 @@ export const Calling = () => {
           <div className="absolute bottom-0 left-0 w-64 h-64 bg-white opacity-5 rounded-full translate-y-1/2 -translate-x-1/2 blur-2xl"></div>
           <div className="relative z-10 flex flex-col items-center">
             <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center mb-6 shadow-lg shadow-white/20">
-              <span className="material-symbols-outlined text-[#ec4899] text-3xl drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]">
-                favorite
-              </span>
+              <Heart className="text-[#ec4899] drop-shadow-[0_0_5px_rgba(236,72,153,0.3)]" size={30} strokeWidth={2} />
             </div>
             <h2 className="text-3xl md:text-5xl font-display font-extrabold text-white mb-6 tracking-tight leading-tight ">
               We Believe In You
