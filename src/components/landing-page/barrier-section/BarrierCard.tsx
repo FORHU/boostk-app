@@ -20,7 +20,7 @@ export const BarrierCard: React.FC<BarrierCardProps> = React.memo(
     const playCounts = useRef<number[]>([]);
     const [videosFinished, setVideosFinished] = useState<boolean[]>([]);
     const [isVisible, setIsVisible] = useState(false);
-    const [isVideoActive, setIsVideoActive] = useState(false);
+    const [isVideoActive, setIsVideoActive] = useState(true);
     const isReplaying = useRef<boolean[]>([]);
 
     // Sync state and refs when videos prop changes
@@ -137,7 +137,6 @@ export const BarrierCard: React.FC<BarrierCardProps> = React.memo(
       setIsVideoActive((prev) => !prev);
     }, []);
 
-
     return (
       <button
         ref={cardRef}
@@ -180,7 +179,7 @@ export const BarrierCard: React.FC<BarrierCardProps> = React.memo(
                           className="h-full w-full object-cover"
                           muted
                           playsInline
-                          preload="none"
+                          preload="metadata"
                           poster={videoUrl.replace(/\.(mp4|webm)$/, ".jpg")}
                           onError={(e) => {
                             // Fallback poster if custom one fails

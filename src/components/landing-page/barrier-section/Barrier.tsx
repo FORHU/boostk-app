@@ -19,7 +19,7 @@ export default function Barrier() {
             <BarrierCard
               title="Global Communication"
               question={
-                <ul className="list-disc pl-5 space-y-2 text-sm sm:text-base text-slate-600">
+                <ul className="list-disc pl-5 space-y-1 text-[13px] leading-snug text-slate-600">
                   <li>When you receive an English email, do you hesitate before replying?</li>
                   <li>Are your proposals written in clear, confident English that impresses buyers?</li>
                   <li>What if every message you send spoke perfectly to global clients?</li>
@@ -33,7 +33,7 @@ export default function Barrier() {
             <BarrierCard
               title="Social & Content Strategy"
               question={
-                <ul className="list-disc pl-5 space-y-2 text-sm sm:text-base text-slate-600">
+                <ul className="list-disc pl-5 space-y-1 text-[13px] leading-snug text-slate-600">
                   <li>Do your social posts speak only to local audiences?</li>
                   <li>Are global buyers even seeing your content?</li>
                   <li>What if posts and visuals were written by an English-speaking team that knows your brand?</li>
@@ -47,7 +47,7 @@ export default function Barrier() {
             <BarrierCard
               title="Sales & Market Development"
               question={
-                <ul className="list-disc pl-5 space-y-2 text-sm sm:text-base text-slate-600">
+                <ul className="list-disc pl-5 space-y-1 text-[13px] leading-snug text-slate-600">
                   <li>How many potential buyers have you lost because of unclear English?</li>
                   <li>Do you have someone who can meet international clients confidently?</li>
                   <li>What if your sales pipeline ran in English - generating revenue every month?</li>
@@ -61,7 +61,7 @@ export default function Barrier() {
             <BarrierCard
               title="Global Strategy & Planning"
               question={
-                <ul className="list-disc pl-5 space-y-2 text-sm sm:text-base text-slate-600">
+                <ul className="list-disc pl-5 space-y-1 text-[13px] leading-snug text-slate-600">
                   <li>Do you know how your competitors market in the U.S. or Europe?</li>
                   <li>Are your investor decks and proposals ready for international partners?</li>
                   <li>What if every document made investors and buyers say, 'This looks global'?</li>
