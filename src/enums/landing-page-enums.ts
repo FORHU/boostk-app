@@ -1,3 +1,6 @@
+import type { LucideIcon } from "lucide-react";
+import { ArrowUp, Gauge, Globe, PlusCircle, TrendingUp, Zap } from "lucide-react";
+
 export interface SectionHeaderProps {
   // Badge props
   badgeText: string;
@@ -18,7 +21,7 @@ export interface SectionHeaderProps {
 export type AccentType = "graph" | "globe" | "bolt";
 
 export interface MetricData {
-  icon: string;
+  icon: LucideIcon;
   accent: AccentType;
   title: string;
   value: string;
@@ -33,21 +36,21 @@ export const METRICS_DATA: MetricData[] = [
     title: "Lead Growth",
     value: "180%",
     subtext: "Year over year",
-    icon: "trending_up",
+    icon: TrendingUp,
     accent: "graph",
   },
   {
     title: "Global Partners",
     value: "94+",
     subtext: "New Partners",
-    icon: "public",
+    icon: Globe,
     accent: "globe",
   },
   {
     title: "Deal Velocity",
     value: "3x",
     subtext: "Faster Sales",
-    icon: "bolt",
+    icon: Zap,
     accent: "bolt",
   },
 ];
@@ -56,10 +59,10 @@ export const STAGGER_CLASSES = ["md:mt-0", "md:mt-6", "md:mt-12"] as const;
 
 export const ANIMATION_DELAYS = ["0s", "1.5s", "0.7s"] as const;
 
-export const ACCENT_ICONS = {
-  graph: "arrow_upward",
-  globe: "add_circle",
-  bolt: "speed",
+export const ACCENT_ICONS: Record<AccentType, LucideIcon> = {
+  graph: ArrowUp,
+  globe: PlusCircle,
+  bolt: Gauge,
 } as const;
 
 export const colorConfig = {

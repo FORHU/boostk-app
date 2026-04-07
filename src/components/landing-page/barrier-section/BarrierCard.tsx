@@ -13,51 +13,59 @@ interface BarrierCardProps {
 
 export const BarrierCard: React.FC<BarrierCardProps> = React.memo(
   ({ title, question, solutionTitle, solutionText, icon: Icon, videos }) => {
-    const cardRef = useRef<HTMLDivElement>(null);
+    const cardRef = useRef<HTMLButtonElement>(null);
     const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
     const timeoutRefs = useRef<(ReturnType<typeof setTimeout> | null)[]>([]);
 
-    const playCounts = useRef<number[]>(new Array(videos.length).fill(0));
-    const [videosFinished, setVideosFinished] = useState<boolean[]>(new Array(videos.length).fill(false));
-    const isVisible = useRef(false);
+    const playCounts = useRef<number[]>([]);
+    const [videosFinished, setVideosFinished] = useState<boolean[]>([]);
+    const [isVisible, setIsVisible] = useState(false);
     const [isVideoActive, setIsVideoActive] = useState(false);
-    const isReplaying = useRef<boolean>(false);
+    const isReplaying = useRef<boolean[]>([]);
+
+    // Sync state and refs when videos prop changes
+    useEffect(() => {
+      playCounts.current = new Array(videos.length).fill(0);
+      isReplaying.current = new Array(videos.length).fill(false);
+      setVideosFinished(new Array(videos.length).fill(false));
+    }, [videos]);
 
     const handleVideoEnded = useCallback(
       (index: number, videoElement: HTMLVideoElement) => {
-        if (isReplaying.current) return;
+        if (isReplaying.current[index]) return;
 
         const newCount = playCounts.current[index] + 1;
         playCounts.current[index] = newCount;
 
         if (newCount < 10) {
-          if (isVideoActive && isVisible.current && !videosFinished[index]) {
-            isReplaying.current = true;
+          if (isVideoActive && isVisible && !videosFinished[index]) {
+            isReplaying.current[index] = true;
 
-            if (timeoutRefs.current[index]) {
-              clearTimeout(timeoutRefs.current[index]!);
+            const currentTimeout = timeoutRefs.current[index];
+            if (currentTimeout) {
+              clearTimeout(currentTimeout);
               timeoutRefs.current[index] = null;
             }
 
             timeoutRefs.current[index] = setTimeout(() => {
               try {
-                if (videoElement && isVideoActive && isVisible.current && !videosFinished[index]) {
+                if (videoElement && isVideoActive && isVisible && !videosFinished[index]) {
                   videoElement
                     .play()
                     .then(() => {
-                      isReplaying.current = false;
+                      isReplaying.current[index] = false;
                       timeoutRefs.current[index] = null;
                     })
                     .catch(() => {
-                      isReplaying.current = false;
+                      isReplaying.current[index] = false;
                       timeoutRefs.current[index] = null;
                     });
                 } else {
-                  isReplaying.current = false;
+                  isReplaying.current[index] = false;
                   timeoutRefs.current[index] = null;
                 }
               } catch {
-                isReplaying.current = false;
+                isReplaying.current[index] = false;
                 timeoutRefs.current[index] = null;
               }
             }, 100);
@@ -70,7 +78,7 @@ export const BarrierCard: React.FC<BarrierCardProps> = React.memo(
           });
         }
       },
-      [isVideoActive, videosFinished],
+      [isVideoActive, isVisible, videosFinished],
     );
 
     // Cleanup timeouts on unmount
@@ -87,9 +95,11 @@ export const BarrierCard: React.FC<BarrierCardProps> = React.memo(
       const observer = new IntersectionObserver(
         (entries) => {
           entries.forEach((entry) => {
-            isVisible.current = entry.isIntersecting;
+            setIsVisible(entry.isIntersecting);
             if (!entry.isIntersecting) {
-              videoRefs.current.forEach((video) => video?.pause());
+              videoRefs.current.forEach((video) => {
+                video?.pause();
+              });
             }
           });
         },
@@ -112,7 +122,7 @@ export const BarrierCard: React.FC<BarrierCardProps> = React.memo(
       videoRefs.current.forEach((video, index) => {
         if (!video) return;
 
-        const shouldPlay = isVideoActive && isVisible.current && !videosFinished[index];
+        const shouldPlay = isVideoActive && isVisible && !videosFinished[index];
 
         if (shouldPlay) {
           video.play().catch(() => {});
@@ -120,15 +130,22 @@ export const BarrierCard: React.FC<BarrierCardProps> = React.memo(
           video.pause();
         }
       });
-    }, [isVideoActive, isVisible.current, videosFinished]);
+    }, [isVideoActive, isVisible, videosFinished]);
 
     // Toggle video playback on click
-    const handleCardClick = () => {
+    const handleCardClick = useCallback(() => {
       setIsVideoActive((prev) => !prev);
-    };
+    }, []);
+
 
     return (
-      <div ref={cardRef} className="group relative h-auto md:h-[600px] w-full cursor-pointer" onClick={handleCardClick}>
+      <button
+        ref={cardRef}
+        type="button"
+        className="group relative h-auto md:h-[600px] w-full cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-xl border-none p-0 bg-transparent text-left"
+        onClick={handleCardClick}
+        aria-label={`Toggle animation for ${title}`}
+      >
         <div className="relative h-full w-full">
           {/* Floating Icon Box */}
           <div className="absolute -top-6 -left-6 z-20 h-20 w-20 icon-float">
@@ -153,7 +170,7 @@ export const BarrierCard: React.FC<BarrierCardProps> = React.memo(
               <div className="mt-4 h-70 w-full rounded-t-lg bg-blue-50/30 p-3">
                 <div className="grid h-full w-full grid-cols-1 grid-rows-2 gap-2">
                   {videos.map((videoUrl, idx) => (
-                    <div key={idx} className="relative overflow-hidden rounded-lg bg-white shadow-sm">
+                    <div key={videoUrl} className="relative overflow-hidden rounded-lg bg-white shadow-sm">
                       {videoUrl.endsWith(".mp4") || videoUrl.endsWith(".webm") ? (
                         <video
                           ref={(el) => {
@@ -197,7 +214,7 @@ export const BarrierCard: React.FC<BarrierCardProps> = React.memo(
             </div>
           </div>
         </div>
-      </div>
+      </button>
     );
   },
 );

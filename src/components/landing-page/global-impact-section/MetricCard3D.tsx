@@ -1,3 +1,4 @@
+import type { LucideIcon } from "lucide-react";
 import { ACCENT_ICONS, type AccentType, type MetricData } from "@/enums/landing-page-enums";
 
 const AccentDecoration = ({ type }: { type: AccentType }) => {
@@ -94,18 +95,20 @@ const AccentDecoration = ({ type }: { type: AccentType }) => {
   );
 };
 
-const FloatingIcon = ({ icon, delay }: { icon: string; delay?: string }) => (
+const FloatingIcon = ({ icon: Icon, delay }: { icon: LucideIcon; delay?: string }) => (
   <div
     className="absolute -left-4 -top-12 z-40 animate-bob pointer-events-none transform-3d"
     style={{ animationDelay: delay }}
   >
     <div className="bg-white p-3 rounded-xl shadow-2xl shadow-blue-500/30 border-2 border-blue-50 w-12 h-12 flex items-center justify-center transform transition-transform duration-500 group-hover:scale-125 group-hover:rotate-6">
-      <span className="material-symbols-outlined text-3xl text-primary">{icon}</span>
+      <Icon className="text-primary" size={28} strokeWidth={2.5} />
     </div>
   </div>
 );
 
 export const MetricCard3D = ({ icon, accent, title, value, subtext, delay, children, className = "" }: MetricData) => {
+  const FooterIcon = ACCENT_ICONS[accent];
+
   return (
     <div className={`relative group scale-65 ${className}`}>
       <FloatingIcon icon={icon} delay={delay} />
@@ -131,11 +134,10 @@ export const MetricCard3D = ({ icon, accent, title, value, subtext, delay, child
           {/* Footer */}
           <div className="relative z-20 border-t-2 border-slate-50 pt-2">
             <p className="text-sm font-bold text-primary flex items-center">
-              <span className="material-symbols-outlined text-base mr-2">{ACCENT_ICONS[accent]}</span>
+              <FooterIcon size={18} className="mr-2" strokeWidth={3} />
               {subtext}
             </p>
           </div>
-
           {children}
         </div>
 
@@ -147,3 +149,5 @@ export const MetricCard3D = ({ icon, accent, title, value, subtext, delay, child
     </div>
   );
 };
+
+MetricCard3D.displayName = "MetricCard3D";
