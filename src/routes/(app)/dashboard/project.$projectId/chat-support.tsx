@@ -182,6 +182,8 @@ const UserChatMessages = ({ ticket }: { ticket: Ticket }) => {
       {messages.length === 0 ? (
         <div className="m-auto text-gray-400 text-sm">No messages yet. Say hi!</div>
       ) : (
+        // TODO: add type structure to messages
+        // biome-ignore lint/suspicious/noExplicitAny: <ticket message type is not properly typed>
         messages.map((msg: any) => {
           // If userId is present, it's an agent. If customerId, it's a customer.
           const isAgent = !!msg.userId;
