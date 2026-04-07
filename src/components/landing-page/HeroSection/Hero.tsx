@@ -52,7 +52,7 @@ export const Hero = () => {
                   <div className="aspect-20/9 bg-slate-100 relative group overflow-hidden">
                     <video
                       className="w-full h-full object-cover"
-                      controls={false} // Remove controls to prevent user from replaying manually
+                      controls={true}
                       preload="metadata"
                       autoPlay
                       muted

@@ -1,3 +1,21 @@
+import {
+  BarChart,
+  Brain,
+  FileText,
+  FolderOpen,
+  Globe,
+  Handshake,
+  Headset,
+  Megaphone,
+  MessageCircle,
+  PlayCircle,
+  Rocket,
+  ShoppingCart,
+  Store,
+  TrendingUp,
+  Users,
+  Zap,
+} from "lucide-react";
 import { SectionHeader } from "../SectionHeader";
 import { PriceCard } from "./PriceCard";
 
@@ -18,7 +36,7 @@ export const Pricing = () => {
             price="199"
             subtitle="Get started with our basic plan"
             bestFor="Individuals or small businesses"
-            icons={["shopping_cart", "chat_bubble_outline", "support_agent", "bolt"]}
+            icons={[ShoppingCart, MessageCircle, Headset, Zap]}
             features={["Live Chat Support", "Live chat (Korean office hours)"]}
             cta="Get Started"
             badge="Best Value"
@@ -28,7 +46,7 @@ export const Pricing = () => {
             price="399"
             subtitle="Build your global brand visibility"
             bestFor="Brands ready to speak English professionally"
-            icons={["psychology", "campaign", "play_circle", "edit_document"]}
+            icons={[Brain, Megaphone, PlayCircle, FileText]}
             features={[
               "Social Media Posts",
               "Content Variety",
@@ -46,7 +64,7 @@ export const Pricing = () => {
             price="999"
             subtitle="Sell globally with full support"
             bestFor="Companies actively selling in international markets"
-            icons={["trending_up", "storefront", "bar_chart", "language"]}
+            icons={[TrendingUp, Store, BarChart, Globe]}
             features={[
               "Product Listings",
               "Live Chat Support",
@@ -68,7 +86,7 @@ export const Pricing = () => {
             price="2599"
             subtitle="Full partnership development team"
             bestFor="Businesses expanding aggressively into global markets"
-            icons={["rocket_launch", "handshake", "folder_open", "groups"]}
+            icons={[Rocket, Handshake, FolderOpen, Users]}
             features={[
               "Partnership Pipeline",
               "Professional Materials",
