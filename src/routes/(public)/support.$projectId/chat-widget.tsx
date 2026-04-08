@@ -90,19 +90,25 @@ const ChatHeader = ({
   ticketSessions: (Ticket & { customer: { name: string | null } | null })[];
 }) => {
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const handleSwitchSession = async (referenceNumber: string) => {
     await setTicketCookieFn({ data: { value: referenceNumber } });
+    await queryClient.invalidateQueries({ queryKey: ticketMessageQueries.all });
     router.invalidate();
   };
 
   const handleRemoveSession = async (referenceNumber: string) => {
     await removeTicketSessionFn({ data: { referenceNumber } });
+    if (activeTicket?.referenceNumber === referenceNumber) {
+      await queryClient.invalidateQueries({ queryKey: ticketMessageQueries.all });
+    }
     router.invalidate();
   };
 
   const handleNewSession = async () => {
     await setTicketCookieFn({ data: { value: "" } });
+    await queryClient.invalidateQueries({ queryKey: ticketMessageQueries.all });
     router.invalidate();
   };
 
