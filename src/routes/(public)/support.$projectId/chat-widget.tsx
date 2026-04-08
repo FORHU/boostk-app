@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, notFound, useRouter } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { Bot, PlusCircle, Send, Sparkles, Trash2 } from "lucide-react";
+import { Bot, MessageCircle, PlusCircle, Send, Trash2 } from "lucide-react";
 import type { Project, Ticket, TicketMessage } from "prisma/generated/client";
 import { Suspense, useEffect, useState } from "react";
 import TicketChatMessageBubble from "@/components/chat-support/TicketChatMessageBubble";
@@ -13,6 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { socket } from "@/lib/socket";
 import {
   getTicketCookieFn,
@@ -129,17 +130,30 @@ const ChatHeader = ({
 
       <DropdownMenu>
         <DropdownMenuTrigger>
-          <button
-            type="button"
-            className="flex items-center gap-1.5 p-1.5 rounded-md hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-white/20"
-          >
-            <Sparkles size={16} className="text-indigo-300" />
-            {ticketSessions && ticketSessions.length > 0 && (
-              <span className="text-[10px] font-bold bg-white/20 px-1.5 py-0.5 rounded-full min-w-5 text-center">
-                {ticketSessions.length}
-              </span>
-            )}
-          </button>
+          <Tooltip>
+            <TooltipTrigger>
+              <button
+                type="button"
+                aria-label="Active sessions"
+                className="flex items-center gap-3 px-3 py-2 w-full rounded-md hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-white/20 text-slate-200 text-left"
+              >
+                <div className="relative flex shrink-0">
+                  <span className="text-sm font-medium mr-2">Sessions</span>
+
+                  <MessageCircle size={20} className="text-indigo-300" />
+                  {ticketSessions && ticketSessions.length > 0 && (
+                    <span className="absolute top-0 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm translate-x-1/4 -translate-y-1/4">
+                      {ticketSessions.length > 99 ? "99+" : ticketSessions.length}
+                    </span>
+                  )}
+                </div>
+              </button>
+            </TooltipTrigger>
+
+            <TooltipContent side="bottom" className="bg-slate-800 text-slate-100 border-slate-700">
+              <p>Sessions</p>
+            </TooltipContent>
+          </Tooltip>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-[240px] max-w-[calc(100vw-32px)]">
           {ticketSessions && ticketSessions.length > 0 ? (
