@@ -58,20 +58,13 @@ export const Hero = () => {
                       muted
                       playsInline
                       onEnded={(e) => {
-                        // Increment count and replay until 10 total plays
                         const next = heroVideoPlayCount.current + 1;
                         heroVideoPlayCount.current = next;
-
-                        console.log(`Hero video played ${next} times`); //for debugging
 
                         if (next < 10) {
                           try {
                             e.currentTarget.play();
-                          } catch (err) {
-                            console.log("Video replay failed:", err);
-                          }
-                        } else {
-                          console.log("Hero video reached 10 plays, stopping");
+                          } catch {}
                         }
                       }}
                     >
