@@ -10,6 +10,8 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@plugin 'tailwind-scrollbar';
+
 body {
   @apply m-0;
   font-family:

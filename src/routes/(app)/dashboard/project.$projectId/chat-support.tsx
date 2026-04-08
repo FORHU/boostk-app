@@ -65,11 +65,22 @@ const TicketList = ({
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const handleWheel = (e: React.WheelEvent) => {
-    if (scrollRef.current) {
-      if (e.deltaY !== 0) {
-        scrollRef.current.scrollLeft += e.deltaY;
-        e.preventDefault();
-      }
+    const el = scrollRef.current;
+    if (!el) return;
+
+    if (e.deltaY !== 0) {
+      // Determine if the user is hitting the absolute left or right boundaries and prevent page scroll
+      const isAtStart = el.scrollLeft === 0;
+      const isAtEnd = el.scrollLeft >= el.scrollWidth - el.clientWidth - 1;
+
+      const tryingToScrollLeft = e.deltaY < 0;
+      const tryingToScrollRight = e.deltaY > 0;
+
+      if (isAtStart && tryingToScrollLeft) return;
+      if (isAtEnd && tryingToScrollRight) return;
+
+      el.scrollLeft += e.deltaY;
+      e.preventDefault();
     }
   };
 
@@ -77,8 +88,7 @@ const TicketList = ({
     <div
       ref={scrollRef}
       onWheel={handleWheel}
-      style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-      className="px-2 h-14 flex flex-row gap-2 overflow-x-auto border-b bg-slate-50 items-center shrink-0"
+      className="px-2 h-20 flex flex-row gap-2 overflow-x-auto border-b bg-slate-50 items-center shrink-0 scrollbar-thin scrollbar-thumb-slate-400 scrollbar-track-transparent hover:scrollbar-thumb-slate-500"
     >
       {tickets.map((ticket) => (
         <div key={ticket.id} className="h-full py-2">
