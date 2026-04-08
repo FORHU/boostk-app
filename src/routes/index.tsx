@@ -3,8 +3,8 @@ import Barrier from "@/components/landing-page/barrier-section/Barrier";
 import { Calling } from "@/components/landing-page/Calling";
 import { Footer } from "@/components/landing-page/Footer";
 import { Global } from "@/components/landing-page/global-impact-section/Global";
-import { Hero } from "@/components/landing-page/HeroSection/Hero";
 import { HeadquartersSection } from "@/components/landing-page/headquarters-section/HeadquartersSection";
+import { Hero } from "@/components/landing-page/hero-section/Hero";
 import { Pricing } from "@/components/landing-page/pricing-section/Pricing";
 import { Steps } from "@/components/landing-page/steps-section/Steps";
 
