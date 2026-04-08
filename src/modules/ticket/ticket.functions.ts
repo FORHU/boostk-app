@@ -10,6 +10,24 @@ import { requireProjectMiddleware } from "../project/project.middleware";
 import { GetTicketByReferenceNumberSchema, UpsertTicketSessionInput } from "./ticket.schema";
 import { createTicket, getTicketByReferenceNumber } from "./ticket.service";
 
+// Helper function to manage ticket session cookies
+const addTicketToSession = (referenceNumber: string) => {
+  // set cookie for 1 day
+  setCookie("ticketReferenceNumber", referenceNumber, { maxAge: 60 * 60 * 24, path: "/" });
+  const sessionsRaw = getCookie("ticketSessions") || "[]";
+  let sessions: string[] = [];
+  try {
+    sessions = JSON.parse(sessionsRaw);
+    if (!Array.isArray(sessions)) sessions = [];
+  } catch {
+    sessions = [];
+  }
+  if (!sessions.includes(referenceNumber)) {
+    sessions.push(referenceNumber);
+    setCookie("ticketSessions", JSON.stringify(sessions), { maxAge: 60 * 60 * 24, path: "/" });
+  }
+};
+
 // TODO: clean up createTicketFn and upsertTicketSessionFn
 export const createTicketFn = createServerFn({ method: "POST" })
   .inputValidator(CreateCustomerSchema)
@@ -35,8 +53,7 @@ export const createTicketFn = createServerFn({ method: "POST" })
       customerId: customer.id,
     });
 
-    // set cookie for 1 day
-    setCookie("ticketReferenceNumber", ticket.referenceNumber, { maxAge: 60 * 60 * 24 });
+    addTicketToSession(ticket.referenceNumber);
 
     return { customer, ticket };
   });
@@ -48,8 +65,7 @@ export const upsertTicketSessionFn = createServerFn({ method: "POST" })
       const ticket = await getTicketByReferenceNumber(data.referenceNumber);
       if (!ticket) throw new Error("Invalid ticket reference number");
 
-      // set cookie for 1 day
-      setCookie("ticketReferenceNumber", ticket.referenceNumber, { maxAge: 60 * 60 * 24 });
+      addTicketToSession(ticket.referenceNumber);
       return ticket;
     }
     const project = await prisma.project.findUnique({
@@ -73,8 +89,7 @@ export const upsertTicketSessionFn = createServerFn({ method: "POST" })
       customerId: customer.id,
     });
 
-    // set cookie for 1 day
-    setCookie("ticketReferenceNumber", ticket.referenceNumber, { maxAge: 60 * 60 * 24 });
+    addTicketToSession(ticket.referenceNumber);
 
     return { customer, ticket };
   });
@@ -94,10 +109,10 @@ export const getTicketByReferenceNumberFn = createServerFn({ method: "GET" })
   });
 
 export const setTicketCookieFn = createServerFn({ method: "POST" })
-  .inputValidator(z.object({ value: z.string().min(1) }))
+  .inputValidator(z.object({ value: z.string() }))
   .handler(async ({ data }) => {
     setCookie("ticketReferenceNumber", data.value, {
-      maxAge: 60 * 60 * 24, // 1 day
+      maxAge: data.value ? 60 * 60 * 24 : 0, // 1 day if set, else clear
       path: "/",
     });
 
@@ -125,6 +140,53 @@ export const getTicketCookieFn = createServerFn({ method: "GET" }).handler(async
   }
 
   return ticket;
+});
+
+export const removeTicketSessionFn = createServerFn({ method: "POST" })
+  .inputValidator(z.object({ referenceNumber: z.string() }))
+  .handler(async ({ data }) => {
+    const sessionsRaw = getCookie("ticketSessions") || "[]";
+    let sessions: string[] = [];
+    try {
+      sessions = JSON.parse(sessionsRaw);
+      if (!Array.isArray(sessions)) sessions = [];
+    } catch {
+      sessions = [];
+    }
+
+    sessions = sessions.filter((ref) => ref !== data.referenceNumber);
+    setCookie("ticketSessions", JSON.stringify(sessions), { maxAge: 60 * 60 * 24, path: "/" });
+
+    const currentTicket = getCookie("ticketReferenceNumber");
+    if (currentTicket === data.referenceNumber) {
+      setCookie("ticketReferenceNumber", "", { maxAge: 0, path: "/" });
+    }
+    return true;
+  });
+
+export const getTicketSessionsCookieFn = createServerFn({ method: "GET" }).handler(async () => {
+  const sessionsRaw = getCookie("ticketSessions") || "[]";
+  let sessions: string[] = [];
+  try {
+    sessions = JSON.parse(sessionsRaw);
+    if (!Array.isArray(sessions)) sessions = [];
+  } catch {
+    sessions = [];
+  }
+
+  if (sessions.length === 0) return [];
+
+  const tickets = await prisma.ticket.findMany({
+    where: { referenceNumber: { in: sessions } },
+    include: {
+      customer: true,
+    },
+  });
+
+  // Preserve the order from the cookie array
+  return sessions
+    .map((ref) => tickets.find((t) => t.referenceNumber === ref))
+    .filter((t): t is NonNullable<typeof t> => t !== undefined);
 });
 
 export const getProjectTicketsFn = createServerFn({ method: "GET" })
