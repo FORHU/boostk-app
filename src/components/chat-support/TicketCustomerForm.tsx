@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { ArrowRight, Hash, Mail, User } from "lucide-react";
+import { useState } from "react";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { getFieldInvalid } from "@/lib/form-utils";
@@ -13,6 +14,8 @@ import { UpsertTicketSessionInput } from "@/modules/ticket/ticket.schema";
 export default function TicketCustomerForm({ projectId }: { projectId: string }) {
   const router = useRouter();
   const queryClient = useQueryClient();
+
+  const [showReferenceNumberField, setShowReferenceNumberField] = useState<boolean>(false);
 
   const upsertTicketSessionMutation = useMutation({
     mutationFn: upsertTicketSessionFn,
@@ -59,7 +62,7 @@ export default function TicketCustomerForm({ projectId }: { projectId: string })
           await form.handleSubmit();
         }}
       >
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
           <form.Field name="name">
             {(field) => {
               const isInvalid = getFieldInvalid(field, form);
@@ -114,37 +117,44 @@ export default function TicketCustomerForm({ projectId }: { projectId: string })
               );
             }}
           </form.Field>
+
+          {showReferenceNumberField && (
+            <form.Field name="referenceNumber">
+              {(field) => {
+                const isInvalid = getFieldInvalid(field, form);
+
+                return (
+                  <Field data-invalid={isInvalid}>
+                    <FieldLabel htmlFor={field.name}>Reference Number (optional)</FieldLabel>
+
+                    <div className="relative">
+                      <Hash size={14} className="absolute left-3 top-3 text-gray-400" />
+                      <Input
+                        id={field.name}
+                        type="tel"
+                        value={field.state.value ?? ""}
+                        onBlur={field.handleBlur}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        placeholder="Reference Number"
+                        className="pl-9"
+                      />
+                    </div>
+
+                    {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                  </Field>
+                );
+              }}
+            </form.Field>
+          )}
         </div>
 
-        <div className="mb-3">
-          <form.Field name="referenceNumber">
-            {(field) => {
-              const isInvalid = getFieldInvalid(field, form);
-
-              return (
-                <Field data-invalid={isInvalid}>
-                  <FieldLabel htmlFor={field.name}>Reference Number (optional)</FieldLabel>
-
-                  <div className="relative">
-                    <Hash size={14} className="absolute left-3 top-3 text-gray-400" />
-                    <Input
-                      id={field.name}
-                      type="tel"
-                      value={field.state.value ?? ""}
-                      onBlur={field.handleBlur}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                      placeholder="Reference Number"
-                      className="pl-9"
-                    />
-                  </div>
-
-                  {isInvalid && <FieldError errors={field.state.meta.errors} />}
-                </Field>
-              );
-            }}
-          </form.Field>
-        </div>
-
+        <button
+          type="button"
+          className="p-0 m-0 text-xs"
+          onClick={() => setShowReferenceNumberField(!showReferenceNumberField)}
+        >
+          {showReferenceNumberField ? "Hide Reference Number" : "Already have a reference number?"}
+        </button>
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(isSubmitting) => (
             <Field>
