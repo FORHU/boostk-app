@@ -1,3 +1,3 @@
 import { io } from "socket.io-client";
 
-export const socket = io(process.env.VITE_SOCKET_URL);
+export const socket = io("https://ws.boostk.com");

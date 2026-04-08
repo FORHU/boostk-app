@@ -8,6 +8,8 @@ interface NotificationConfig {
   ticketId?: string;
 }
 
+// TODO: remove this hook, it's not used anywhere
+// or make it work? xD
 export function useNotifications(config: NotificationConfig) {
   const [lastMessage, setLastMessage] = useState<Message | null>(null);
   const [status, setStatus] = useState<"connecting" | "connected" | "disconnected">("connecting");
