@@ -1,7 +1,7 @@
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Building2, Globe, LayoutGrid, MoreVertical, Plus, Search, Users2 } from "lucide-react";
+import { ArrowRight, Building2, Globe, LayoutGrid, Loader2, MoreVertical, Plus, Search, Users2 } from "lucide-react";
 import { Suspense, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -35,6 +35,7 @@ export const Route = createFileRoute("/(app)/dashboard/organizations")({
 
 function OrganizationsPage() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
   const { data: organizations } = useSuspenseQuery(organizationQueries.getAuthOrganization());
 
   const filteredOrgs = organizations.filter(
@@ -53,7 +54,7 @@ function OrganizationsPage() {
             <p className="text-muted-foreground">Manage your organizations or switch between workspaces.</p>
           </div>
           <div className="flex items-center gap-3">
-            <Sheet>
+            <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
               <SheetTrigger
                 render={
                   <Button className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm">
@@ -61,13 +62,15 @@ function OrganizationsPage() {
                   </Button>
                 }
               />
-              <SheetContent side="right" className="sm:max-w-md">
-                <SheetHeader>
-                  <SheetTitle>Create Organization</SheetTitle>
-                  <SheetDescription>Set up a new organization to start managing teams and projects.</SheetDescription>
+              <SheetContent side="right" className="sm:max-w-md flex flex-col gap-0 overflow-y-auto">
+                <SheetHeader className="mb-6 text-left">
+                  <SheetTitle className="text-xl">Create Organization</SheetTitle>
+                  <SheetDescription className="text-sm mt-1.5">
+                    Set up a new organization to start managing teams and projects.
+                  </SheetDescription>
                 </SheetHeader>
-                <div className="py-6 px-1">
-                  <OrganizationFormBase />
+                <div className="p-4 h-full flex flex-col">
+                  <OrganizationFormBase onSuccess={() => setIsSheetOpen(false)} />
                 </div>
               </SheetContent>
             </Sheet>
@@ -209,8 +212,8 @@ function OrganizationCard({ org }: { org: OrganizationOmit }) {
     </Link>
   );
 }
-
-const OrganizationFormBase = () => {
+// TODO: move the logic of close modal to not affect the rendering of other page content
+const OrganizationFormBase = ({ onSuccess }: { onSuccess: () => void }) => {
   const queryClient = useQueryClient();
 
   const createOrganizationMutation = useMutation({
@@ -218,6 +221,8 @@ const OrganizationFormBase = () => {
     mutationFn: createOrganizationFn,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: organizationQueries.all });
+      createOrganizationForm.reset();
+      onSuccess();
     },
     onError: (error) => {
       console.error(error);
@@ -230,7 +235,7 @@ const OrganizationFormBase = () => {
       logo: "",
     } as CreateOrganizationInput,
     validators: {
-      onBlur: createOrganizationSchema,
+      onChange: createOrganizationSchema,
       onSubmit: createOrganizationSchema,
     },
     onSubmit: async ({ value }) => {
@@ -240,7 +245,7 @@ const OrganizationFormBase = () => {
 
   return (
     <form
-      className="space-y-6 pt-2"
+      className="space-y-5 flex flex-col flex-1"
       onSubmit={async (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -251,8 +256,10 @@ const OrganizationFormBase = () => {
         {(field) => {
           const isInvalid = getFieldInvalid(field, createOrganizationForm);
           return (
-            <Field data-invalid={isInvalid}>
-              <FieldLabel htmlFor={field.name}>Organization Name</FieldLabel>
+            <Field data-invalid={isInvalid} className="space-y-1.5">
+              <FieldLabel htmlFor={field.name} className="text-sm font-medium">
+                Organization Name
+              </FieldLabel>
               <Input
                 id={field.name}
                 name={field.name}
@@ -261,9 +268,9 @@ const OrganizationFormBase = () => {
                 onChange={(e) => field.handleChange(e.target.value)}
                 aria-invalid={isInvalid}
                 placeholder="e.g. Acme Corp"
-                className="rounded-lg h-11"
+                className="rounded-lg h-11 bg-white dark:bg-slate-950 transition-colors focus-visible:ring-primary/50"
               />
-              {isInvalid && <FieldError errors={field.state.meta.errors} />}
+              {isInvalid && <FieldError errors={field.state.meta.errors} className="text-xs text-destructive mt-1" />}
             </Field>
           );
         }}
@@ -271,8 +278,10 @@ const OrganizationFormBase = () => {
 
       <createOrganizationForm.Field name="logo">
         {(field) => (
-          <Field>
-            <FieldLabel htmlFor={field.name}>Logo URL (Optional)</FieldLabel>
+          <Field className="space-y-1.5">
+            <FieldLabel htmlFor={field.name} className="text-sm font-medium">
+              Logo URL <span className="text-muted-foreground font-normal">(Optional)</span>
+            </FieldLabel>
             <Input
               id={field.name}
               name={field.name}
@@ -280,19 +289,31 @@ const OrganizationFormBase = () => {
               onBlur={field.handleBlur}
               onChange={(e) => field.handleChange(e.target.value)}
               placeholder="https://example.com/logo.png"
-              className="rounded-lg h-11"
+              className="rounded-lg h-11 bg-white dark:bg-slate-950 transition-colors focus-visible:ring-primary/50"
             />
+            <p className="text-[13px] text-muted-foreground mt-1.5">
+              Provide a direct link to an image (PNG, JPG, or SVG).
+            </p>
           </Field>
         )}
       </createOrganizationForm.Field>
 
-      <Button
-        type="submit"
-        disabled={createOrganizationMutation.isPending}
-        className="w-full h-11 bg-primary hover:bg-primary/90 text-white font-medium rounded-lg"
-      >
-        {createOrganizationMutation.isPending ? "Creating..." : "Create Organization"}
-      </Button>
+      <div className="pt-4 mt-auto">
+        <Button
+          type="submit"
+          disabled={createOrganizationMutation.isPending}
+          className="w-full h-11 font-medium rounded-lg shadow-sm transition-all active:scale-[0.98]"
+        >
+          {createOrganizationMutation.isPending ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Creating...
+            </>
+          ) : (
+            "Create Organization"
+          )}
+        </Button>
+      </div>
     </form>
   );
 };
