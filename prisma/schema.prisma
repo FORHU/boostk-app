@@ -193,9 +193,9 @@ model Ticket {
 }
 
 model TicketMessage {
-  id               String                   @id @default(cuid())
-  content          String
-  contentType      TicketMessageContentType @default(TEXT)
+  id                String                   @id @default(cuid())
+  content           String
+  contentType       TicketMessageContentType @default(TEXT)
   translatedContent String?
   originalLanguage  String?
 
