@@ -24,6 +24,8 @@ model User {
   invitations    Invitation[]
   ticketMessages TicketMessage[]
 
+  teamMembers TeamMember[]
+
   @@map("users")
 }
 
@@ -38,7 +40,9 @@ model Session {
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  activeOrganizationId String? // try to not use this, use context instead
+  // try to not use this fields, use context instead
+  activeOrganizationId String?
+  activeTeamId         String?
 
   @@unique([token])
   @@index([userId])
@@ -90,6 +94,7 @@ model Organization {
   projects    Project[]
 
   organizationRoles OrganizationRole[]
+  teams             Team[]
 
   @@unique([slug])
   @@map("organizations")
@@ -114,8 +119,9 @@ model Invitation {
   id             String       @id @default(cuid())
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  email          String
+  teamId         String?
   role           String?
+  email          String
   status         String       @default("pending")
   expiresAt      DateTime
   createdAt      DateTime     @default(now())
@@ -237,4 +243,30 @@ model OrganizationRole {
   @@index([organizationId])
   @@index([role])
   @@map("organizationRole")
+}
+
+model Team {
+  id             String       @id
+  name           String
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime
+  updatedAt      DateTime?    @updatedAt
+  teamMembers    TeamMember[]
+
+  @@index([organizationId])
+  @@map("team")
+}
+
+model TeamMember {
+  id        String    @id
+  teamId    String
+  team      Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime?
+
+  @@index([teamId])
+  @@index([userId])
+  @@map("teamMember")
 }

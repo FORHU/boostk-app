@@ -18,6 +18,10 @@ export const auth = betterAuth({
       dynamicAccessControl: {
         enabled: true,
       },
+      teams: {
+        enabled: true,
+        allowRemovingAllTeams: false,
+      },
     }),
   ],
 });
