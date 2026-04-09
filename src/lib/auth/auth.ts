@@ -1,5 +1,5 @@
-import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
+import { betterAuth } from "better-auth/minimal";
 import { organization } from "better-auth/plugins";
 import { accessControl } from "@/lib/auth/permissions";
 import { prisma } from "@/lib/prisma";
