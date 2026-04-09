@@ -26,6 +26,11 @@ model User {
 
   teamMembers TeamMember[]
 
+  role       String?
+  banned     Boolean?  @default(false)
+  banReason  String?
+  banExpires DateTime?
+
   @@map("users")
 }
 
@@ -43,6 +48,8 @@ model Session {
   // try to not use this fields, use context instead
   activeOrganizationId String?
   activeTeamId         String?
+
+  impersonatedBy String?
 
   @@unique([token])
   @@index([userId])
