@@ -89,6 +89,8 @@ model Organization {
   invitations Invitation[]
   projects    Project[]
 
+  organizationRoles OrganizationRole[]
+
   @@unique([slug])
   @@map("organizations")
 }
@@ -221,4 +223,18 @@ enum TicketMessageContentType {
   TEXT
   IMAGE
   FILE
+}
+
+model OrganizationRole {
+  id             String       @id
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  role           String
+  permission     String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime?    @updatedAt
+
+  @@index([organizationId])
+  @@index([role])
+  @@map("organizationRole")
 }
