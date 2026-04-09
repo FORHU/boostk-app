@@ -17,6 +17,8 @@ import { Route as authSigninRouteImport } from './routes/(auth)/signin'
 import { Route as ApiNotificationSseRouteImport } from './routes/api/notification/sse'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as appDashboardOrganizationsRouteImport } from './routes/(app)/dashboard/organizations'
+import { Route as appDashboardadminRouteRouteImport } from './routes/(app)/dashboard/(admin)/route'
+import { Route as appDashboardadminIndexRouteImport } from './routes/(app)/dashboard/(admin)/index'
 import { Route as ApiNotificationCustomerSseRouteImport } from './routes/api/notification/customer.sse'
 import { Route as publicSupportProjectIdChatWidgetRouteImport } from './routes/(public)/support.$projectId/chat-widget'
 import { Route as appDashboardProjectProjectIdRouteRouteImport } from './routes/(app)/dashboard/project.$projectId/route'
@@ -72,6 +74,16 @@ const appDashboardOrganizationsRoute =
     path: '/dashboard/organizations',
     getParentRoute: () => appRouteRoute,
   } as any)
+const appDashboardadminRouteRoute = appDashboardadminRouteRouteImport.update({
+  id: '/dashboard/(admin)',
+  path: '/dashboard',
+  getParentRoute: () => appRouteRoute,
+} as any)
+const appDashboardadminIndexRoute = appDashboardadminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => appDashboardadminRouteRoute,
+} as any)
 const ApiNotificationCustomerSseRoute =
   ApiNotificationCustomerSseRouteImport.update({
     id: '/api/notification/customer/sse',
@@ -167,6 +179,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/signin': typeof authSigninRoute
   '/signup': typeof authSignupRoute
+  '/dashboard': typeof appDashboardadminRouteRouteWithChildren
   '/dashboard/organizations': typeof appDashboardOrganizationsRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/notification/sse': typeof ApiNotificationSseRoute
@@ -174,6 +187,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/project/$projectId': typeof appDashboardProjectProjectIdRouteRouteWithChildren
   '/support/$projectId/chat-widget': typeof publicSupportProjectIdChatWidgetRoute
   '/api/notification/customer/sse': typeof ApiNotificationCustomerSseRoute
+  '/dashboard/': typeof appDashboardadminIndexRoute
   '/dashboard/org/$organizationId/billing': typeof appDashboardOrgOrganizationIdBillingRoute
   '/dashboard/org/$organizationId/integrations': typeof appDashboardOrgOrganizationIdIntegrationsRoute
   '/dashboard/org/$organizationId/settings': typeof appDashboardOrgOrganizationIdSettingsRoute
@@ -195,6 +209,7 @@ export interface FileRoutesByTo {
   '/api/notification/sse': typeof ApiNotificationSseRoute
   '/support/$projectId/chat-widget': typeof publicSupportProjectIdChatWidgetRoute
   '/api/notification/customer/sse': typeof ApiNotificationCustomerSseRoute
+  '/dashboard': typeof appDashboardadminIndexRoute
   '/dashboard/org/$organizationId/billing': typeof appDashboardOrgOrganizationIdBillingRoute
   '/dashboard/org/$organizationId/integrations': typeof appDashboardOrgOrganizationIdIntegrationsRoute
   '/dashboard/org/$organizationId/settings': typeof appDashboardOrgOrganizationIdSettingsRoute
@@ -214,6 +229,7 @@ export interface FileRoutesById {
   '/(auth)': typeof authRouteRouteWithChildren
   '/(auth)/signin': typeof authSigninRoute
   '/(auth)/signup': typeof authSignupRoute
+  '/(app)/dashboard/(admin)': typeof appDashboardadminRouteRouteWithChildren
   '/(app)/dashboard/organizations': typeof appDashboardOrganizationsRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/notification/sse': typeof ApiNotificationSseRoute
@@ -221,6 +237,7 @@ export interface FileRoutesById {
   '/(app)/dashboard/project/$projectId': typeof appDashboardProjectProjectIdRouteRouteWithChildren
   '/(public)/support/$projectId/chat-widget': typeof publicSupportProjectIdChatWidgetRoute
   '/api/notification/customer/sse': typeof ApiNotificationCustomerSseRoute
+  '/(app)/dashboard/(admin)/': typeof appDashboardadminIndexRoute
   '/(app)/dashboard/org/$organizationId/billing': typeof appDashboardOrgOrganizationIdBillingRoute
   '/(app)/dashboard/org/$organizationId/integrations': typeof appDashboardOrgOrganizationIdIntegrationsRoute
   '/(app)/dashboard/org/$organizationId/settings': typeof appDashboardOrgOrganizationIdSettingsRoute
@@ -239,6 +256,7 @@ export interface FileRouteTypes {
     | '/'
     | '/signin'
     | '/signup'
+    | '/dashboard'
     | '/dashboard/organizations'
     | '/api/auth/$'
     | '/api/notification/sse'
@@ -246,6 +264,7 @@ export interface FileRouteTypes {
     | '/dashboard/project/$projectId'
     | '/support/$projectId/chat-widget'
     | '/api/notification/customer/sse'
+    | '/dashboard/'
     | '/dashboard/org/$organizationId/billing'
     | '/dashboard/org/$organizationId/integrations'
     | '/dashboard/org/$organizationId/settings'
@@ -267,6 +286,7 @@ export interface FileRouteTypes {
     | '/api/notification/sse'
     | '/support/$projectId/chat-widget'
     | '/api/notification/customer/sse'
+    | '/dashboard'
     | '/dashboard/org/$organizationId/billing'
     | '/dashboard/org/$organizationId/integrations'
     | '/dashboard/org/$organizationId/settings'
@@ -285,6 +305,7 @@ export interface FileRouteTypes {
     | '/(auth)'
     | '/(auth)/signin'
     | '/(auth)/signup'
+    | '/(app)/dashboard/(admin)'
     | '/(app)/dashboard/organizations'
     | '/api/auth/$'
     | '/api/notification/sse'
@@ -292,6 +313,7 @@ export interface FileRouteTypes {
     | '/(app)/dashboard/project/$projectId'
     | '/(public)/support/$projectId/chat-widget'
     | '/api/notification/customer/sse'
+    | '/(app)/dashboard/(admin)/'
     | '/(app)/dashboard/org/$organizationId/billing'
     | '/(app)/dashboard/org/$organizationId/integrations'
     | '/(app)/dashboard/org/$organizationId/settings'
@@ -372,6 +394,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/organizations'
       preLoaderRoute: typeof appDashboardOrganizationsRouteImport
       parentRoute: typeof appRouteRoute
+    }
+    '/(app)/dashboard/(admin)': {
+      id: '/(app)/dashboard/(admin)'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof appDashboardadminRouteRouteImport
+      parentRoute: typeof appRouteRoute
+    }
+    '/(app)/dashboard/(admin)/': {
+      id: '/(app)/dashboard/(admin)/'
+      path: '/'
+      fullPath: '/dashboard/'
+      preLoaderRoute: typeof appDashboardadminIndexRouteImport
+      parentRoute: typeof appDashboardadminRouteRoute
     }
     '/api/notification/customer/sse': {
       id: '/api/notification/customer/sse'
@@ -481,6 +517,20 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface appDashboardadminRouteRouteChildren {
+  appDashboardadminIndexRoute: typeof appDashboardadminIndexRoute
+}
+
+const appDashboardadminRouteRouteChildren: appDashboardadminRouteRouteChildren =
+  {
+    appDashboardadminIndexRoute: appDashboardadminIndexRoute,
+  }
+
+const appDashboardadminRouteRouteWithChildren =
+  appDashboardadminRouteRoute._addFileChildren(
+    appDashboardadminRouteRouteChildren,
+  )
+
 interface appDashboardOrgOrganizationIdRouteRouteChildren {
   appDashboardOrgOrganizationIdBillingRoute: typeof appDashboardOrgOrganizationIdBillingRoute
   appDashboardOrgOrganizationIdIntegrationsRoute: typeof appDashboardOrgOrganizationIdIntegrationsRoute
@@ -539,12 +589,14 @@ const appDashboardProjectProjectIdRouteRouteWithChildren =
   )
 
 interface appRouteRouteChildren {
+  appDashboardadminRouteRoute: typeof appDashboardadminRouteRouteWithChildren
   appDashboardOrganizationsRoute: typeof appDashboardOrganizationsRoute
   appDashboardOrgOrganizationIdRouteRoute: typeof appDashboardOrgOrganizationIdRouteRouteWithChildren
   appDashboardProjectProjectIdRouteRoute: typeof appDashboardProjectProjectIdRouteRouteWithChildren
 }
 
 const appRouteRouteChildren: appRouteRouteChildren = {
+  appDashboardadminRouteRoute: appDashboardadminRouteRouteWithChildren,
   appDashboardOrganizationsRoute: appDashboardOrganizationsRoute,
   appDashboardOrgOrganizationIdRouteRoute:
     appDashboardOrgOrganizationIdRouteRouteWithChildren,
