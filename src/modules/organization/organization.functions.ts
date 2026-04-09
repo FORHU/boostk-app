@@ -2,7 +2,7 @@ import { redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { REDIRECT_REASON } from "@/enums/enums";
-import { auth } from "@/lib/auth";
+import { auth } from "@/lib/auth/auth";
 import { generateSlug } from "@/lib/utils";
 import { requireAuthMiddleware } from "@/modules/auth/auth.middleware";
 import { requireOrganizationMiddleware } from "@/modules/organization/organization.middleware";
