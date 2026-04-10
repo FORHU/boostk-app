@@ -3,6 +3,7 @@ import type { QueryClient } from "@tanstack/react-query";
 import { createRootRouteWithContext, HeadContent, Scripts } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "sonner";
 import { authQueries } from "@/modules/auth/auth.queries";
 import appCss from "../styles.css?url";
 
@@ -38,6 +39,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body className="font-sans antialiased wrap-anywhere selection:bg-red-500" suppressHydrationWarning>
         <TooltipProvider>{children}</TooltipProvider>
+        <Toaster position="top-right" />
 
         <TanStackDevtools
           config={{
