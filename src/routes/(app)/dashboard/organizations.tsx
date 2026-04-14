@@ -1,11 +1,29 @@
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Building2, Globe, LayoutGrid, Loader2, MoreVertical, Plus, Search, Users2 } from "lucide-react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import {
+  ArrowRight,
+  Building2,
+  Copy,
+  Globe,
+  LayoutGrid,
+  Loader2,
+  MoreVertical,
+  Plus,
+  Search,
+  Settings,
+  Users2,
+} from "lucide-react";
 import { Suspense, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -160,6 +178,7 @@ function OrganizationsListItems({ filteredOrgs }: { filteredOrgs: OrganizationOm
 }
 
 function OrganizationCard({ org }: { org: OrganizationOmit }) {
+  const navigate = useNavigate();
   return (
     <Link to="/dashboard/org/$organizationId" params={{ organizationId: org.id }}>
       <Card className="group transition-all hover:shadow-md hover:border-primary/50 cursor-pointer overflow-hidden border-foreground/10 bg-card/30 backdrop-blur-xs">
@@ -171,13 +190,45 @@ function OrganizationCard({ org }: { org: OrganizationOmit }) {
                 {org.name.substring(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"
-            >
-              <MoreVertical className="h-4 w-4" />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                }
+              />
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    navigator.clipboard.writeText(org.id);
+                  }}
+                >
+                  <Copy className="mr-2 h-4 w-4" />
+                  Copy Organization ID
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    navigate({ to: "/dashboard/org/$organizationId/settings", params: { organizationId: org.id } });
+                  }}
+                >
+                  <Settings className="mr-2 h-4 w-4" />
+                  Settings
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
           <div className="mt-4">
             <CardTitle className="text-lg group-hover:text-primary transition-colors text-foreground">
