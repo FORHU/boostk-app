@@ -39,6 +39,7 @@ export const getOrganizationFn = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     return context.organization;
   });
+export type GetOrganizationReturn = Awaited<ReturnType<typeof getOrganizationFn>>;
 
 // session based active organization
 export const getActiveOrganizationFn = createServerFn({ method: "GET" })

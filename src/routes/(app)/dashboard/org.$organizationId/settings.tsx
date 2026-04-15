@@ -1,17 +1,12 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { OrganizationUpdateForms } from "@/components/organization/OrganizationUpdateForms";
-import { organizationQueries } from "@/modules/organization/organization.queries";
 
 export const Route = createFileRoute("/(app)/dashboard/org/$organizationId/settings")({
   component: OrganizationSettingsPage,
 });
 
 function OrganizationSettingsPage() {
-  const { organizationId } = Route.useParams();
-  const { data: organizations } = useSuspenseQuery(organizationQueries.getAuthOrganization());
-  
-  const organization = organizations.find((org) => org.id === organizationId);
+  const { organization } = Route.useRouteContext();
 
   if (!organization) {
     return (
