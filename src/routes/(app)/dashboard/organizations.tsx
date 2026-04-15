@@ -1,7 +1,18 @@
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowRight, Building2, Copy, Globe, LayoutGrid, MoreVertical, Plus, Search, Settings, Users2 } from "lucide-react";
+import {
+  ArrowRight,
+  Building2,
+  Copy,
+  Globe,
+  LayoutGrid,
+  MoreVertical,
+  Plus,
+  Search,
+  Settings,
+  Users2,
+} from "lucide-react";
 import { Suspense, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
