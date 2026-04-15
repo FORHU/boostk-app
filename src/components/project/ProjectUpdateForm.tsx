@@ -21,7 +21,8 @@ export function ProjectUpdateForm({ projectId }: Props) {
   const [{ data: projectData }, { data: authSession }] = useSuspenseQueries({
     queries: [projectQueries.getById(projectId), authQueries.authUser()],
   });
-  const project = projectData!;
+
+  const project = projectData as NonNullable<typeof projectData>;
   const members = project.organization.members;
 
   const [name, setName] = useState(project.name);
@@ -300,7 +301,7 @@ export function ProjectUpdateForm({ projectId }: Props) {
                     },
                     cancel: {
                       label: "Cancel",
-                      onClick: () => { },
+                      onClick: () => {},
                     },
                   });
                 }}
