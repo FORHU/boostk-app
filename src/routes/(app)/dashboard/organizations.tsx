@@ -1,7 +1,7 @@
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Building2, LayoutGrid, Loader2, Plus, Users2 } from "lucide-react";
+import { Building2, LayoutGrid, Plus, Users2 } from "lucide-react";
 import OrganizationList from "@/components/organization/organization-list";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
