@@ -2,10 +2,10 @@ import { useForm } from "@tanstack/react-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Building2, LayoutGrid, Plus, Users2 } from "lucide-react";
-import { useState } from "react";
 import OrganizationList from "@/components/organization/organization-list";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -23,8 +23,6 @@ export const Route = createFileRoute("/(app)/dashboard/organizations")({
 });
 
 function OrganizationsPage() {
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
-
   return (
     <div className="w-full">
       <div className="flex-1 space-y-8 p-8 pt-6 max-w-7xl mx-auto">
@@ -35,7 +33,7 @@ function OrganizationsPage() {
             <p className="text-muted-foreground">Manage your organizations or switch between workspaces.</p>
           </div>
           <div className="flex items-center gap-3">
-            <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+            <Sheet>
               <SheetTrigger
                 render={
                   <Button className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm">
@@ -43,15 +41,13 @@ function OrganizationsPage() {
                   </Button>
                 }
               />
-              <SheetContent side="right" className="sm:max-w-md flex flex-col gap-0 overflow-y-auto">
-                <SheetHeader className="mb-6 text-left">
-                  <SheetTitle className="text-xl">Create Organization</SheetTitle>
-                  <SheetDescription className="text-sm mt-1.5">
-                    Set up a new organization to start managing teams and projects.
-                  </SheetDescription>
+              <SheetContent side="right" className="sm:max-w-md">
+                <SheetHeader>
+                  <SheetTitle>Create Organization</SheetTitle>
+                  <SheetDescription>Set up a new organization to start managing teams and projects.</SheetDescription>
                 </SheetHeader>
-                <div className="p-4 h-full flex flex-col">
-                  <OrganizationFormBase onSuccess={() => setIsSheetOpen(false)} />
+                <div className="py-6 px-1">
+                  <OrganizationFormBase />
                 </div>
               </SheetContent>
             </Sheet>
@@ -108,8 +104,6 @@ const OrganizationFormBase = () => {
     mutationFn: createOrganizationFn,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: organizationQueries.all });
-      createOrganizationForm.reset();
-      onSuccess();
     },
     onError: (error) => {
       console.error(error);
@@ -122,7 +116,7 @@ const OrganizationFormBase = () => {
       logo: "",
     } as CreateOrganizationInput,
     validators: {
-      onChange: createOrganizationSchema,
+      onBlur: createOrganizationSchema,
       onSubmit: createOrganizationSchema,
     },
     onSubmit: async ({ value }) => {
@@ -132,7 +126,7 @@ const OrganizationFormBase = () => {
 
   return (
     <form
-      className="space-y-5 flex flex-col flex-1"
+      className="space-y-6 pt-2"
       onSubmit={async (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -143,10 +137,8 @@ const OrganizationFormBase = () => {
         {(field) => {
           const isInvalid = getFieldInvalid(field, createOrganizationForm);
           return (
-            <Field data-invalid={isInvalid} className="space-y-1.5">
-              <FieldLabel htmlFor={field.name} className="text-sm font-medium">
-                Organization Name
-              </FieldLabel>
+            <Field data-invalid={isInvalid}>
+              <FieldLabel htmlFor={field.name}>Organization Name</FieldLabel>
               <Input
                 id={field.name}
                 name={field.name}
@@ -155,9 +147,9 @@ const OrganizationFormBase = () => {
                 onChange={(e) => field.handleChange(e.target.value)}
                 aria-invalid={isInvalid}
                 placeholder="e.g. Acme Corp"
-                className="rounded-lg h-11 bg-white dark:bg-slate-950 transition-colors focus-visible:ring-primary/50"
+                className="rounded-lg h-11"
               />
-              {isInvalid && <FieldError errors={field.state.meta.errors} className="text-xs text-destructive mt-1" />}
+              {isInvalid && <FieldError errors={field.state.meta.errors} />}
             </Field>
           );
         }}
@@ -165,10 +157,8 @@ const OrganizationFormBase = () => {
 
       <createOrganizationForm.Field name="logo">
         {(field) => (
-          <Field className="space-y-1.5">
-            <FieldLabel htmlFor={field.name} className="text-sm font-medium">
-              Logo URL <span className="text-muted-foreground font-normal">(Optional)</span>
-            </FieldLabel>
+          <Field>
+            <FieldLabel htmlFor={field.name}>Logo URL (Optional)</FieldLabel>
             <Input
               id={field.name}
               name={field.name}
@@ -176,31 +166,19 @@ const OrganizationFormBase = () => {
               onBlur={field.handleBlur}
               onChange={(e) => field.handleChange(e.target.value)}
               placeholder="https://example.com/logo.png"
-              className="rounded-lg h-11 bg-white dark:bg-slate-950 transition-colors focus-visible:ring-primary/50"
+              className="rounded-lg h-11"
             />
-            <p className="text-[13px] text-muted-foreground mt-1.5">
-              Provide a direct link to an image (PNG, JPG, or SVG).
-            </p>
           </Field>
         )}
       </createOrganizationForm.Field>
 
-      <div className="pt-4 mt-auto">
-        <Button
-          type="submit"
-          disabled={createOrganizationMutation.isPending}
-          className="w-full h-11 font-medium rounded-lg shadow-sm transition-all active:scale-[0.98]"
-        >
-          {createOrganizationMutation.isPending ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Creating...
-            </>
-          ) : (
-            "Create Organization"
-          )}
-        </Button>
-      </div>
+      <Button
+        type="submit"
+        disabled={createOrganizationMutation.isPending}
+        className="w-full h-11 bg-primary hover:bg-primary/90 text-white font-medium rounded-lg"
+      >
+        {createOrganizationMutation.isPending ? "Creating..." : "Create Organization"}
+      </Button>
     </form>
   );
 };
