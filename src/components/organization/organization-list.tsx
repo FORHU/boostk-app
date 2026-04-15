@@ -58,8 +58,14 @@ export default OrganizationList;
 const OrganizationCard = ({ organization }: { organization: GetAuthOrganization }) => {
   const navigate = useNavigate();
   return (
-    <Link to="/dashboard/org/$organizationId" params={{ organizationId: organization.id }}>
-      <Card className="border-foreground/10 shadow-none group transition-all">
+    <Card className="relative border-foreground/10 shadow-none group/card overflow-hidden transition-all hover:bg-muted/5">
+      <Link
+        to="/dashboard/org/$organizationId"
+        params={{ organizationId: organization.id }}
+        className="absolute inset-0 z-0"
+        aria-label={`Open ${organization.name}`}
+      />
+      <div className="relative z-10 pointer-events-none flex flex-col h-full">
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between w-full">
             <Avatar className="h-12 w-12 rounded-none shrink-0">
@@ -74,7 +80,7 @@ const OrganizationCard = ({ organization }: { organization: GetAuthOrganization 
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="pointer-events-auto h-8 w-8 text-muted-foreground hover:text-foreground opacity-0 group-hover/card:opacity-100 transition-opacity"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -112,26 +118,28 @@ const OrganizationCard = ({ organization }: { organization: GetAuthOrganization 
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-          <div className="mt-4">
+          <div className="mt-4 ">
             <CardTitle className="text-xl font-semibold leading-tight truncate">{organization.name}</CardTitle>
             <CardDescription className="text-xs text-muted-foreground">
               Members
-              <OrganizationMembers organization={organization} />
+              <div className="pointer-events-auto">
+                <OrganizationMembers organization={organization} />
+              </div>
             </CardDescription>
           </div>
         </CardHeader>
-        <CardFooter className="py-2 flex justify-between bg-muted/20">
+        <CardFooter className="py-2 mt-auto flex justify-between bg-muted/20 border-t border-foreground/5">
           <span className="flex items-center gap-1.5 font-medium text-foreground/60">
             <LayoutGrid className="h-3 w-3" />
             {organization._count.projects} Projects
           </span>
 
-          <span className="flex items-center gap-1 text-primary opacity-0 group-hover:opacity-100 transition-opacity font-medium">
+          <span className="flex items-center gap-1 text-primary opacity-0 group-hover/card:opacity-100 transition-opacity font-medium">
             Open organization <ArrowRight className="h-3 w-3" />
           </span>
         </CardFooter>
-      </Card>
-    </Link>
+      </div>
+    </Card>
   );
 };
 
@@ -142,7 +150,10 @@ export const OrganizationsSkeleton = () => {
         // biome-ignore lint/suspicious/noArrayIndexKey: <index is safe to use here>
         <Card key={index} className="border-foreground/10 shadow-none">
           <CardHeader className="pb-4">
-            <Skeleton className="h-11 w-11 rounded-xl" />
+            <div className="flex items-center justify-between w-full">
+              <Skeleton className="h-12 w-12 rounded-none" />
+              <Skeleton className="h-8 w-8 rounded-md" />
+            </div>
             <div className="mt-4 space-y-2">
               <Skeleton className="h-5 w-2/3" />
               <Skeleton className="h-4 w-1/3" />
@@ -166,7 +177,7 @@ const OrganizationMembers = ({ organization }: { organization: GetAuthOrganizati
   const remainingCount = totalCount - 3;
 
   return (
-    <div className="flex items-center -space-x-2">
+    <div className="flex items-center -space-x-2 pointer-events-auto">
       {displayedMembers.map((member) => (
         <Tooltip key={member.id}>
           <TooltipTrigger>
@@ -188,7 +199,7 @@ const OrganizationMembers = ({ organization }: { organization: GetAuthOrganizati
           <TooltipTrigger>
             <Link
               to="/dashboard/organizations"
-              className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-background bg-muted text-[10px] font-medium transition-all hover:bg-accent hover:z-10 hover:scale-110 cursor-pointer"
+              className="relative z-20 flex h-6 w-6 items-center justify-center rounded-full border-2 border-background bg-muted text-[10px] font-medium transition-all hover:bg-accent hover:z-30 hover:scale-110 cursor-pointer"
             >
               +{remainingCount}
             </Link>

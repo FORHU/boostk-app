@@ -1,7 +1,7 @@
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Building2, LayoutGrid, Plus, Users2 } from "lucide-react";
+import { Building2, LayoutGrid, Loader2, Plus, Users2 } from "lucide-react";
 import OrganizationList from "@/components/organization/organization-list";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,7 +46,7 @@ function OrganizationsPage() {
                   <SheetTitle>Create Organization</SheetTitle>
                   <SheetDescription>Set up a new organization to start managing teams and projects.</SheetDescription>
                 </SheetHeader>
-                <div className="py-6 px-1">
+                <div className="p-4 h-full flex flex-col">
                   <OrganizationFormBase />
                 </div>
               </SheetContent>
@@ -104,6 +104,7 @@ const OrganizationFormBase = () => {
     mutationFn: createOrganizationFn,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: organizationQueries.all });
+      createOrganizationForm.reset();
     },
     onError: (error) => {
       console.error(error);
