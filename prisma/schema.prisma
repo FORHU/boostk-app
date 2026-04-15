@@ -75,13 +75,13 @@ model Verification {
 }
 
 model Organization {
-  id          String       @id @default(cuid())
+  id          String             @id @default(cuid())
   name        String
-  slug        String       @unique
+  slug        String             @unique
   logo        String?
-  status      Status       @default(ACTIVE)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  status      OrganizationStatus @default(ACTIVE)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
   metadata    String?
   invitations Invitation[]
   members     Member[]
@@ -124,17 +124,17 @@ model Invitation {
 }
 
 model Project {
-  id             String       @id @default(cuid())
+  id             String        @id @default(cuid())
   name           String
   description    String?
   logo           String?
-  slug           String       @unique
-  status         Status       @default(ACTIVE)
+  slug           String        @unique
+  status         ProjectStatus @default(ACTIVE)
   organizationId String
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
   customers      Customer[]
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   tickets        Ticket[]
 
   @@map("projects")
@@ -208,7 +208,13 @@ enum TicketMessageContentType {
   FILE
 }
 
-enum Status {
+enum OrganizationStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum ProjectStatus {
   ACTIVE
   INACTIVE
   ARCHIVED
