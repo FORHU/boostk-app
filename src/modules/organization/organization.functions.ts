@@ -1,5 +1,6 @@
 import { redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
+import { OrganizationStatus } from "prisma/generated/enums";
 import { z } from "zod";
 import { REDIRECT_REASON } from "@/enums/enums";
 import { auth } from "@/lib/auth";
@@ -18,18 +19,14 @@ export const getAuthOrganizationsFn = createServerFn({ method: "GET" })
     });
 
     const orgIds = authOrgs.map((org) => org.id);
-    const dbOrgs = await prisma.organization.findMany({
-      where: { id: { in: orgIds } },
-      select: { id: true, status: true },
+    const authOrganization = await prisma.organization.findMany({
+      where: {
+        id: { in: orgIds },
+        status: OrganizationStatus.ACTIVE,
+      },
     });
 
-    return authOrgs.map((org) => {
-      const dbOrg = dbOrgs.find((d) => d.id === org.id);
-      return {
-        ...org,
-        status: dbOrg?.status ?? "ACTIVE",
-      };
-    });
+    return authOrganization;
   });
 
 // url based active organization
