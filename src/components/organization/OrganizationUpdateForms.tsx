@@ -1,48 +1,51 @@
-"use client"
+"use client";
 
-import { Copy, AlertTriangle } from "lucide-react"
-import { toast } from "sonner"
-import { useForm } from "@tanstack/react-form"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { useNavigate } from "@tanstack/react-router"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Field, FieldLabel } from "@/components/ui/field"
-import { organizationQueries } from "@/modules/organization/organization.queries"
-import { deactivateOrganizationFn, updateOrganizationFn } from "@/modules/organization/organization.functions"
-import { updateOrganizationSchema } from "@/modules/organization/organization.schema"
+import { useForm } from "@tanstack/react-form";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
+import { AlertTriangle, Copy } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Field, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import {
+  deactivateOrganizationFn,
+  type GetOrganizationReturn,
+  updateOrganizationFn,
+} from "@/modules/organization/organization.functions";
+import { organizationQueries } from "@/modules/organization/organization.queries";
+import { updateOrganizationSchema } from "@/modules/organization/organization.schema";
 
-interface OrganizationUpdateFormsProps {
-  organization: {
-    id: string;
-    name: string;
-    slug: string;
-    status?: string | null;
-  }
-}
-
-export function OrganizationUpdateForms({ organization }: OrganizationUpdateFormsProps) {
-  const queryClient = useQueryClient()
-  const navigate = useNavigate()
+export function OrganizationUpdateForms({ organization }: { organization: GetOrganizationReturn }) {
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const updateMutation = useMutation({
     mutationFn: updateOrganizationFn,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: organizationQueries.all })
-      toast.success("Organization updated successfully")
+      queryClient.invalidateQueries({ queryKey: organizationQueries.all });
+      toast.success("Organization updated successfully");
     },
-  })
+    onError: (error) => {
+      console.log(error);
+      toast.error("Failed to update organization");
+    },
+  });
 
   const deactivateMutation = useMutation({
     mutationFn: deactivateOrganizationFn,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: organizationQueries.all })
-      toast.success("Organization deactivated")
-      navigate({ to: "/dashboard/organizations" })
+      queryClient.invalidateQueries({ queryKey: organizationQueries.all });
+      toast.success("Organization deactivated");
+      navigate({ to: "/dashboard/organizations" });
     },
-  })
+    onError: (error) => {
+      console.log(error);
+      toast.error("Failed to deactivate organization");
+    },
+  });
 
-  const isDeactivated = organization.status === "INACTIVE"
+  const isDeactivated = organization.status === "INACTIVE";
 
   const form = useForm({
     defaultValues: {
@@ -50,17 +53,18 @@ export function OrganizationUpdateForms({ organization }: OrganizationUpdateForm
       name: organization.name,
     },
     validators: {
-      onBlur: updateOrganizationSchema,
+      onChange: updateOrganizationSchema,
+      onSubmit: updateOrganizationSchema,
     },
     onSubmit: async ({ value }) => {
-      await updateMutation.mutateAsync({ data: value })
+      await updateMutation.mutateAsync({ data: value });
     },
-  })
+  });
 
   const handleCopySlug = () => {
-    navigator.clipboard.writeText(organization.slug)
-    toast.success("Organization slug copied to clipboard")
-  }
+    navigator.clipboard.writeText(organization.slug);
+    toast.success("Organization slug copied to clipboard");
+  };
 
   return (
     <div className="space-y-10 max-w-4xl">
@@ -70,17 +74,18 @@ export function OrganizationUpdateForms({ organization }: OrganizationUpdateForm
           <span>This organization is deactivated. Settings are read-only.</span>
         </div>
       )}
+
       {/* Organization Details */}
       <section className="space-y-4">
         <div>
           <h2 className="text-xl font-semibold text-foreground">Organization details</h2>
         </div>
-        
-        <form 
+
+        <form
           onSubmit={(e) => {
-            e.preventDefault()
-            e.stopPropagation()
-            form.handleSubmit()
+            e.preventDefault();
+            e.stopPropagation();
+            form.handleSubmit();
           }}
           className="space-y-6 rounded-xl border bg-card p-6 shadow-xs"
         >
@@ -91,10 +96,10 @@ export function OrganizationUpdateForms({ organization }: OrganizationUpdateForm
                   Organization name
                 </FieldLabel>
                 <div className="w-full max-w-md">
-                  <Input 
+                  <Input
                     id={field.name}
                     name={field.name}
-                    value={field.state.value} 
+                    value={field.state.value}
                     onBlur={field.handleBlur}
                     onChange={(e) => field.handleChange(e.target.value)}
                     placeholder="e.g. Acme Corp"
@@ -113,18 +118,18 @@ export function OrganizationUpdateForms({ organization }: OrganizationUpdateForm
             </FieldLabel>
             <div className="w-full max-w-md flex gap-2">
               <div className="relative flex-1">
-                <Input 
-                  id="org-slug" 
-                  value={organization.slug} 
+                <Input
+                  id="org-slug"
+                  value={organization.slug}
                   readOnly
                   placeholder="organization-slug"
                   className="h-10 bg-muted/30 border-border/50 pr-20"
                 />
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   size="sm"
-                  onClick={handleCopySlug} 
-                  type="button" 
+                  onClick={handleCopySlug}
+                  type="button"
                   className="absolute right-1 top-1 h-8 px-2 text-xs hover:bg-muted/50"
                 >
                   <Copy className="mr-1.5 h-3.5 w-3.5" />
@@ -136,11 +141,16 @@ export function OrganizationUpdateForms({ organization }: OrganizationUpdateForm
 
           {!isDeactivated && (
             <div className="flex justify-end gap-3 pt-4 border-t border-border/40 mt-6">
-              <Button variant="ghost" type="button" onClick={() => form.reset()} className="h-9 px-4 text-muted-foreground hover:text-foreground">
+              <Button
+                variant="ghost"
+                type="button"
+                onClick={() => form.reset()}
+                className="h-9 px-4 text-muted-foreground hover:text-foreground"
+              >
                 Cancel
               </Button>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 disabled={updateMutation.isPending || !form.state.canSubmit}
                 className="h-9 px-6 bg-primary text-primary-foreground hover:bg-primary/90"
               >
@@ -168,16 +178,16 @@ export function OrganizationUpdateForms({ organization }: OrganizationUpdateForm
                   Deactivating this organization will also hide its projects
                 </p>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  Make sure you have backed up any necessary data before deactivating. 
-                  You can reactivate it later from the admin dashboard.
+                  Make sure you have backed up any necessary data before deactivating. You can reactivate it later from
+                  the admin dashboard.
                 </p>
               </div>
             </div>
-            
+
             <div className="flex justify-end">
-              <Button 
-                variant="destructive" 
-                type="button" 
+              <Button
+                variant="destructive"
+                type="button"
                 className="h-10 px-6"
                 disabled={deactivateMutation.isPending}
                 onClick={() => {
@@ -191,7 +201,7 @@ export function OrganizationUpdateForms({ organization }: OrganizationUpdateForm
                       label: "Cancel",
                       onClick: () => {},
                     },
-                  })
+                  });
                 }}
               >
                 {deactivateMutation.isPending ? "Deactivating..." : "Deactivate organization"}
@@ -201,5 +211,5 @@ export function OrganizationUpdateForms({ organization }: OrganizationUpdateForm
         </section>
       )}
     </div>
-  )
+  );
 }
