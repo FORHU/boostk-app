@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
-import { createProjectSchema, getProjectSchema } from "@/modules/project/project.schema";
-import { createProject, getProjectById } from "@/modules/project/project.service";
+import { createProjectSchema, getProjectSchema, updateProjectSchema } from "@/modules/project/project.schema";
+import { createProject, getProjectById, updateProject } from "@/modules/project/project.service";
 import { requireOrganizationMiddleware } from "../organization/organization.middleware";
 import { requireProjectMiddleware } from "./project.middleware";
 
@@ -9,7 +9,6 @@ export const createProjectFn = createServerFn({ method: "POST" })
   .inputValidator(createProjectSchema)
   .handler(async ({ data }) => {
     const project = await createProject(data);
-
     return project;
   });
 
@@ -18,7 +17,14 @@ export const getProjectFn = createServerFn({ method: "GET" })
   .inputValidator(getProjectSchema)
   .handler(async ({ data }) => {
     const project = await getProjectById(data.projectId);
+    return project;
+  });
 
+export const updateProjectFn = createServerFn({ method: "POST" })
+  .middleware([requireProjectMiddleware])
+  .inputValidator(updateProjectSchema)
+  .handler(async ({ data }) => {
+    const project = await updateProject(data);
     return project;
   });
 
@@ -27,6 +33,5 @@ export const getProjectPublicFn = createServerFn({ method: "GET" })
   .inputValidator(getProjectSchema)
   .handler(async ({ data }) => {
     const project = await getProjectById(data.projectId);
-
     return project;
   });
