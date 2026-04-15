@@ -1,6 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { getOrgProjectsFn } from "@/modules/organization/organization.functions";
-import { getProjectFn, updateProjectFn } from "./project.functions";
+import { deactivateProjectFn, getProjectFn, updateProjectFn } from "./project.functions";
 
 export const projectQueries = {
   all: ["projects"],
@@ -19,5 +19,8 @@ export const projectQueries = {
 export const projectMutations = {
   update: () => ({
     mutationFn: updateProjectFn,
+  }),
+  deactivate: () => ({
+    mutationFn: deactivateProjectFn,
   }),
 };

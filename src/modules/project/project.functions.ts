@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { createProjectSchema, getProjectSchema, updateProjectSchema } from "@/modules/project/project.schema";
-import { createProject, getProjectById, updateProject } from "@/modules/project/project.service";
+import { createProject, deactivateProject, getProjectById, updateProject } from "@/modules/project/project.service";
 import { requireOrganizationMiddleware } from "../organization/organization.middleware";
 import { requireProjectMiddleware } from "./project.middleware";
 
@@ -25,6 +25,14 @@ export const updateProjectFn = createServerFn({ method: "POST" })
   .inputValidator(updateProjectSchema)
   .handler(async ({ data }) => {
     const project = await updateProject(data);
+    return project;
+  });
+
+export const deactivateProjectFn = createServerFn({ method: "POST" })
+  .middleware([requireProjectMiddleware])
+  .inputValidator(getProjectSchema)
+  .handler(async ({ data }) => {
+    const project = await deactivateProject(data.projectId);
     return project;
   });
 

@@ -1,5 +1,5 @@
-import { useMutation, useQueryClient, useSuspenseQueries, useSuspenseQuery } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
+import { useMutation, useQueryClient, useSuspenseQueries } from "@tanstack/react-query";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { AlertTriangle, BarChart2, Globe, Loader2, RefreshCcw } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -8,7 +8,6 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { authQueries } from "@/modules/auth/auth.queries";
-import { organizationQueries } from "@/modules/organization/organization.queries";
 import { projectMutations, projectQueries } from "@/modules/project/project.queries";
 
 interface Props {
@@ -17,13 +16,13 @@ interface Props {
 
 export function ProjectUpdateForm({ projectId }: Props) {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const [{ data: projectData }, { data: authSession }] = useSuspenseQueries({
     queries: [projectQueries.getById(projectId), authQueries.authUser()],
   });
   const project = projectData!;
-
-  const { data: members } = useSuspenseQuery(organizationQueries.getMembers(project.organizationId));
+  const members = project.organization.members;
 
   const [name, setName] = useState(project.name);
   const [saving, setSaving] = useState(false);
@@ -36,6 +35,17 @@ export function ProjectUpdateForm({ projectId }: Props) {
     },
     onError: () => toast.error("Failed to update project."),
   });
+  const deactivate = useMutation({
+    ...projectMutations.deactivate(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: projectQueries.all });
+      toast.success("Project deactivated.");
+      navigate({ to: "/dashboard/project/$projectId/settings", params: { projectId } });
+    },
+    onError: () => toast.error("Failed to deactivate project."),
+  });
+
+  const isDeactivated = project.status === "INACTIVE";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,6 +60,12 @@ export function ProjectUpdateForm({ projectId }: Props) {
 
   return (
     <div className="space-y-10 max-w-4xl mx-auto pb-20">
+      {isDeactivated && (
+        <div className="flex items-center gap-3 rounded-xl border border-yellow-500/30 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-700 dark:text-yellow-400">
+          <AlertTriangle className="h-4 w-4 shrink-0" />
+          <span>This project is deactivated. Settings are read-only.</span>
+        </div>
+      )}
       {/* General */}
       <div className="space-y-4">
         <h2 className="text-xl font-normal">Project details</h2>
@@ -68,6 +84,8 @@ export function ProjectUpdateForm({ projectId }: Props) {
                     onChange={(e) => setName(e.target.value)}
                     placeholder="e.g. Acme Support Hub"
                     className="rounded-md"
+                    readOnly={isDeactivated}
+                    disabled={isDeactivated}
                   />
                 </div>
               </div>
@@ -99,21 +117,23 @@ export function ProjectUpdateForm({ projectId }: Props) {
             </CardContent>
 
             <CardFooter className="justify-end py-4 px-6 bg-background border-t border-border">
-              <Button
-                type="submit"
-                size="sm"
-                disabled={saving || !name.trim()}
-                className="bg-primary text-primary-foreground hover:bg-primary/90 rounded font-normal px-6 shadow-none"
-              >
-                {saving ? (
-                  <>
-                    <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
-                    Saving...
-                  </>
-                ) : (
-                  "Save changes"
-                )}
-              </Button>
+              {!isDeactivated && (
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={saving || !name.trim()}
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 rounded font-normal px-6 shadow-none"
+                >
+                  {saving ? (
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+                      Saving...
+                    </>
+                  ) : (
+                    "Save changes"
+                  )}
+                </Button>
+              )}
             </CardFooter>
           </form>
         </Card>
@@ -249,28 +269,48 @@ export function ProjectUpdateForm({ projectId }: Props) {
       </div>
 
       {/* Deactivate */}
-      <div className="space-y-4 pb-12">
-        <h2 className="text-xl font-semibold text-foreground">Danger zone</h2>
-        <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-6 space-y-6">
-          <div className="flex items-start gap-4">
-            <div className="rounded-full bg-destructive/10 p-2 shrink-0">
-              <AlertTriangle className="h-5 w-5 text-destructive" />
+      {!isDeactivated && (
+        <div className="space-y-4 pb-12">
+          <h2 className="text-xl font-semibold text-foreground">Danger zone</h2>
+          <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-6 space-y-6">
+            <div className="flex items-start gap-4">
+              <div className="rounded-full bg-destructive/10 p-2 shrink-0">
+                <AlertTriangle className="h-5 w-5 text-destructive" />
+              </div>
+              <div className="space-y-1">
+                <p className="font-semibold text-destructive leading-none pt-1">Deactivate this project</p>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Deactivating a project will make it inactive and hide it from the dashboard.
+                </p>
+              </div>
             </div>
-            <div className="space-y-1">
-              <p className="font-semibold text-destructive leading-none pt-1">Deactivate this project</p>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Deactivating a project will make it inactive and hide it from the dashboard.
-              </p>
-            </div>
-          </div>
 
-          <div className="flex justify-end">
-            <Button variant="destructive" type="button" className="h-10 px-6">
-              Deactivate project
-            </Button>
+            <div className="flex justify-end">
+              <Button
+                variant="destructive"
+                type="button"
+                className="h-10 px-6"
+                disabled={deactivate.isPending}
+                onClick={() => {
+                  toast("Are you sure you want to deactivate this project?", {
+                    description: "This will make the project inactive and hide it from the dashboard.",
+                    action: {
+                      label: "Deactivate",
+                      onClick: () => deactivate.mutate({ data: { projectId } }),
+                    },
+                    cancel: {
+                      label: "Cancel",
+                      onClick: () => { },
+                    },
+                  });
+                }}
+              >
+                {deactivate.isPending ? "Deactivating..." : "Deactivate project"}
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

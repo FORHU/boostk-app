@@ -14,6 +14,17 @@ export const getProjectsByOrgId = async (organizationId: string) => {
 export const getProjectById = async (projectId: string) => {
   const project = await prisma.project.findUnique({
     where: { id: projectId },
+    include: {
+      organization: {
+        include: {
+          members: {
+            include: {
+              user: true,
+            },
+          },
+        },
+      },
+    },
   });
 
   return project;
@@ -34,6 +45,15 @@ export const updateProject = async (data: UpdateProjectInput) => {
   const project = await prisma.project.update({
     where: { id: data.projectId },
     data: { name: data.name },
+  });
+
+  return project;
+};
+
+export const deactivateProject = async (projectId: string) => {
+  const project = await prisma.project.update({
+    where: { id: projectId },
+    data: { status: "INACTIVE" },
   });
 
   return project;
