@@ -257,9 +257,7 @@ export function ProjectUpdateForm({ projectId }: Props) {
               <AlertTriangle className="h-5 w-5 text-destructive" />
             </div>
             <div className="space-y-1">
-              <p className="font-semibold text-destructive leading-none pt-1">
-                Deactivate this project
-              </p>
+              <p className="font-semibold text-destructive leading-none pt-1">Deactivate this project</p>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 Deactivating a project will make it inactive and hide it from the dashboard.
               </p>
@@ -267,11 +265,7 @@ export function ProjectUpdateForm({ projectId }: Props) {
           </div>
 
           <div className="flex justify-end">
-            <Button
-              variant="destructive"
-              type="button"
-              className="h-10 px-6"
-            >
+            <Button variant="destructive" type="button" className="h-10 px-6">
               Deactivate project
             </Button>
           </div>

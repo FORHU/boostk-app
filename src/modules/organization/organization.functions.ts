@@ -3,11 +3,11 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { REDIRECT_REASON } from "@/enums/enums";
 import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import { generateSlug } from "@/lib/utils";
 import { requireAuthMiddleware } from "@/modules/auth/auth.middleware";
 import { requireOrganizationMiddleware } from "@/modules/organization/organization.middleware";
 import { getProjectsByOrgId } from "@/modules/project/project.service";
-import { prisma } from "@/lib/prisma";
 import { createOrganizationSchema, updateOrganizationSchema } from "./organization.schema";
 
 export const getAuthOrganizationsFn = createServerFn({ method: "GET" })
