@@ -1,10 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { generateSlug } from "@/lib/utils";
-import type { CreateProjectInput } from "./project.schema";
+import type { CreateProjectInput, UpdateProjectInput } from "./project.schema";
 
 export const getProjectsByOrgId = async (organizationId: string) => {
   const projects = await prisma.project.findMany({
     where: { organizationId },
+    orderBy: { createdAt: "asc" },
   });
 
   return projects;
@@ -13,6 +14,17 @@ export const getProjectsByOrgId = async (organizationId: string) => {
 export const getProjectById = async (projectId: string) => {
   const project = await prisma.project.findUnique({
     where: { id: projectId },
+    include: {
+      organization: {
+        include: {
+          members: {
+            include: {
+              user: true,
+            },
+          },
+        },
+      },
+    },
   });
 
   return project;
@@ -24,6 +36,24 @@ export const createProject = async (data: CreateProjectInput) => {
       ...data,
       slug: generateSlug(data.name),
     },
+  });
+
+  return project;
+};
+
+export const updateProject = async (data: UpdateProjectInput) => {
+  const project = await prisma.project.update({
+    where: { id: data.projectId },
+    data: { name: data.name },
+  });
+
+  return project;
+};
+
+export const deactivateProject = async (projectId: string) => {
+  const project = await prisma.project.update({
+    where: { id: projectId },
+    data: { status: "INACTIVE" },
   });
 
   return project;
