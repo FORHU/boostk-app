@@ -57,5 +57,8 @@
     "Shopee",
     "topbar",
     "VITE"
-  ]
+  ],
+  "[prisma]": {
+    "editor.defaultFormatter": "Prisma.prisma"
+  }
 }

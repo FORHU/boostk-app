@@ -1,20 +1,23 @@
-import { useForm } from "@tanstack/react-form";
-import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, LayoutGrid, MessageSquare, MoreVertical, Plus, Search, Users } from "lucide-react";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { ArrowRight, Copy, LayoutGrid, MessageSquare, MoreVertical, Plus, Search, Settings, Users } from "lucide-react";
 import type { Project } from "prisma/generated/client";
 import { Suspense, useState } from "react";
+import { toast } from "sonner";
+import { ProjectCreateForm } from "@/components/project/ProjectCreateForm";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Field, FieldError, FieldLabel } from "@/components/ui/field";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getFieldInvalid } from "@/lib/form-utils";
-import { createProjectFn } from "@/modules/project/project.functions";
 import { projectQueries } from "@/modules/project/project.queries";
-import { type CreateProjectInput, createProjectSchema } from "@/modules/project/project.schema";
 
 export const Route = createFileRoute("/(app)/dashboard/org/$organizationId/")({
   loader: ({ context, params }) => {
@@ -58,7 +61,7 @@ function OrganizationPage() {
                 </SheetDescription>
               </SheetHeader>
               <div className="py-6 px-1">
-                <ProjectForm organizationId={organizationId} />
+                <ProjectCreateForm organizationId={organizationId} />
               </div>
             </SheetContent>
           </Sheet>
@@ -142,6 +145,7 @@ function ProjectsList({ filteredProjects }: { filteredProjects: Project[] }) {
 }
 
 function ProjectCard({ project }: { project: Project }) {
+  const navigate = useNavigate();
   return (
     <Link to="/dashboard/project/$projectId" params={{ projectId: project.id }}>
       <Card className="group transition-all hover:shadow-md hover:border-primary/50 cursor-pointer overflow-hidden border-foreground/10">
@@ -153,13 +157,50 @@ function ProjectCard({ project }: { project: Project }) {
                 {project.name.substring(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"
-            >
-              <MoreVertical className="h-4 w-4" />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                    className="h-8 w-8 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                }
+              />
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem
+                  className="text-[11px] py-2 cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigator.clipboard.writeText(project.id);
+                    toast.success("Project ID copied to clipboard");
+                  }}
+                >
+                  <Copy className="mr-2 h-3.5 w-3.5" />
+                  <span>Copy project ID</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-[11px] py-2 cursor-pointer"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    navigate({
+                      to: "/dashboard/project/$projectId/settings",
+                      params: { projectId: project.id },
+                    });
+                  }}
+                >
+                  <Settings className="mr-2 h-3.5 w-3.5" />
+                  <span>Settings</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
           <div className="mt-4">
             <CardTitle className="text-lg group-hover:text-primary transition-colors text-foreground">
@@ -182,94 +223,6 @@ function ProjectCard({ project }: { project: Project }) {
     </Link>
   );
 }
-
-const ProjectForm = ({ organizationId }: { organizationId: string }) => {
-  const queryClient = useQueryClient();
-
-  const createProjectMutation = useMutation({
-    mutationKey: ["create", "project"],
-    mutationFn: createProjectFn,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: projectQueries.all });
-    },
-    onError: (error) => {
-      console.error(error);
-    },
-  });
-
-  const createProjectForm = useForm({
-    defaultValues: {
-      name: "",
-      organizationId,
-      logo: "",
-    } as CreateProjectInput,
-    validators: {
-      onBlur: createProjectSchema,
-      onSubmit: createProjectSchema,
-    },
-    onSubmit: async ({ value }) => {
-      await createProjectMutation.mutateAsync({ data: value });
-    },
-  });
-
-  return (
-    <form
-      className="space-y-6 pt-2"
-      onSubmit={async (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        await createProjectForm.handleSubmit();
-      }}
-    >
-      <createProjectForm.Field name="name">
-        {(field) => {
-          const isInvalid = getFieldInvalid(field, createProjectForm);
-          return (
-            <Field data-invalid={isInvalid}>
-              <FieldLabel htmlFor={field.name}>Project Name</FieldLabel>
-              <Input
-                id={field.name}
-                name={field.name}
-                value={field.state.value}
-                onBlur={field.handleBlur}
-                onChange={(e) => field.handleChange(e.target.value)}
-                aria-invalid={isInvalid}
-                placeholder="e.g. Acme Support Hub"
-                className="rounded-lg h-11"
-              />
-              {isInvalid && <FieldError errors={field.state.meta.errors} />}
-            </Field>
-          );
-        }}
-      </createProjectForm.Field>
-
-      <createProjectForm.Field name="logo">
-        {(field) => (
-          <Field>
-            <FieldLabel htmlFor={field.name}>Logo URL (Optional)</FieldLabel>
-            <Input
-              id={field.name}
-              name={field.name}
-              value={field.state.value}
-              onBlur={field.handleBlur}
-              onChange={(e) => field.handleChange(e.target.value)}
-              placeholder="https://example.com/logo.png"
-              className="rounded-lg h-11"
-            />
-          </Field>
-        )}
-      </createProjectForm.Field>
-
-      <Button
-        type="submit"
-        disabled={createProjectMutation.isPending}
-        className="w-full h-11 bg-primary hover:bg-primary/90 text-white font-medium rounded-lg"
-      >
-        {createProjectMutation.isPending ? "Creating..." : "Create Project"}
-      </Button>
-    </form>
-  );
-};
 
 const OrgProjectsSkeleton = () => {
   return (

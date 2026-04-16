@@ -2,9 +2,10 @@ import { prisma } from "@/lib/prisma";
 import userSeeder from "./seeds/user.seeder";
 import organizationSeeder from "./seeds/organization.seeder";
 import projectSeeder from "./seeds/project.seeder";
+import { OrganizationStatus, ProjectStatus } from "./generated/enums";
 
 const sampleDataForhu = {
-  organizations: { name: "Forhu", slug: "forhu" },
+  organizations: { name: "Forhu", slug: "forhu", status: OrganizationStatus.ACTIVE },
   users: [
     { email: "forhu-admin@example.com", name: "Forhu Admin", role: "admin" },
     { email: "forhu-agent@example.com", name: "Forhu Agent", role: "agent" },
@@ -13,14 +14,14 @@ const sampleDataForhu = {
     { email: "forhu-user3@example.com", name: "Forhu User3", role: "user" },
   ],
   projects: [
-    { name: "Boostk", slug: "boostk", description: "Human and AI collaboration platform" },
-    { name: "Chumme", slug: "chumme", description: "Social Media for fan groups and influencer" },
-    { name: "Cheapest Go", slug: "cheapest-go", description: "Hotel and Flight Booking" },
+    { name: "Boostk", slug: "boostk", status: ProjectStatus.ACTIVE, description: "Human and AI collaboration platform" },
+    { name: "Chumme", slug: "chumme", status: ProjectStatus.ACTIVE, description: "Social Media for fan groups and influencer" },
+    { name: "Cheapest Go", slug: "cheapest-go", status: ProjectStatus.ACTIVE, description: "Hotel and Flight Booking" },
   ],
 };
 
 const sampleData = {
-  organizations: { name: "Organization 1", slug: "organization-1" },
+  organizations: { name: "Organization 1", slug: "organization-1", status: OrganizationStatus.ACTIVE },
   users: [
     { email: "organization1-admin@example.com", name: "Organization 1 Admin", role: "admin" },
     { email: "organization1-agent@example.com", name: "Organization 1 Agent", role: "agent" },
@@ -29,9 +30,9 @@ const sampleData = {
     { email: "organization1-user3@example.com", name: "Organization 1 User3", role: "user" },
   ],
   projects: [
-    { name: "Project 1", slug: "project-1", description: "Project 1" },
-    { name: "Project 2", slug: "project-2", description: "Project 2" },
-    { name: "Project 3", slug: "project-3", description: "Project 3" },
+    { name: "Project 1", slug: "project-1", status: ProjectStatus.ACTIVE, description: "Project 1" },
+    { name: "Project 2", slug: "project-2", status: ProjectStatus.ACTIVE, description: "Project 2" },
+    { name: "Project 3", slug: "project-3", status: ProjectStatus.ACTIVE, description: "Project 3" },
   ],
 };
 

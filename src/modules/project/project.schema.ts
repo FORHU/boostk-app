@@ -8,7 +8,7 @@ export const createProjectSchema = z.object({
 export type CreateProjectInput = z.infer<typeof createProjectSchema>;
 
 export const updateProjectSchema = z.object({
-  id: z.string(),
+  projectId: z.string(),
   name: z.string().min(1, "Name is required"),
   logo: z.string().optional(),
 });
