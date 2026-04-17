@@ -106,6 +106,9 @@ model Organization {
   organizationRoles OrganizationRole[]
   teams             Team[]
 
+  planId String?
+  plan   SubscriptionPlan? @relation(fields: [planId], references: [id])
+
   @@map("organizations")
 }
 
@@ -247,6 +250,7 @@ model OrganizationRole {
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   role           String
   permission     String
+  isDefaultRole  Boolean      @default(false)
   createdAt      DateTime     @default(now())
   updatedAt      DateTime?    @updatedAt
   members        Member[]
@@ -299,4 +303,31 @@ model GlobalRole {
 enum GenderType {
   MALE
   FEMALE
+}
+
+model SubscriptionPlan {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  
+  scopes      String[] 
+
+  organizations Organization[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("subscription_plans")
+}
+
+model OrganizationRoleTemplate {
+  id          String   @id @default(cuid())
+  roleName    String   @unique
+  description String?
+  permission  String   
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("organization_role_templates")
 }
