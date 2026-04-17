@@ -21,7 +21,7 @@ function RouteComponent() {
       >
         <AdminSidebar />
         <SidebarInset>
-          <div className="flex-1 overflow-auto">
+          <div className="flex-1 min-h-[calc(100vh-44px)] overflow-auto">
             <Outlet />
           </div>
         </SidebarInset>
