@@ -12,6 +12,17 @@ export const auth = betterAuth({
     enabled: true,
   },
   baseURL: process.env.BETTER_AUTH_URL,
+  user: {
+    additionalFields: {
+      gender: {
+        type: "string",
+      },
+      globalRoleId: {
+        type: "string",
+        required: false,
+      },
+    },
+  },
   plugins: [
     admin(),
     organization({
