@@ -2,22 +2,16 @@ import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/prisma";
 import { GenderType } from "prisma/generated/enums";
 
-export const seedUsersList = [
-  { email: "admin1@example.com", name: "System Admin 1", role: "admin" },
-  { email: "admin2@example.com", name: "System Admin 2", role: "admin" },
-  { email: "member1@example.com", name: "System Member 1", role: "member" },
-  { email: "member2@example.com", name: "System Member 2", role: "member" },
-  { email: "agent1@example.com", name: "System Agent 1", role: "agent" },
-  { email: "agent2@example.com", name: "System Agent 2", role: "agent" },
-  { email: "agent3@example.com", name: "System Agent 3", role: "agent" },
+export const admins = [
+  { email: "owner@example.com", name: "System Owner", role: "owner" },
 ];
 
-export default async function userSeeder() {
+export default async function adminSeeder() {
   const password = "Password123!";
 
-  console.log("👤 Seeding core platform users...");
+  console.log("👤 Seeding system owner...");
 
-  for (const userData of seedUsersList) {
+  for (const userData of admins) {
     try {
       await ensureUser(userData, password);
     } catch (error: any) {
