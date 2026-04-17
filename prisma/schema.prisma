@@ -13,6 +13,7 @@ model User {
   id             String          @id @default(cuid())
   email          String          @unique
   name           String
+  gender         GenderType
   emailVerified  Boolean         @default(false)
   image          String?
   createdAt      DateTime        @default(now())
@@ -29,6 +30,9 @@ model User {
   banned     Boolean?  @default(false)
   banReason  String?
   banExpires DateTime?
+
+  globalRole   GlobalRole? @relation(fields: [globalRoleId], references: [id])
+  globalRoleId String?
 
   @@map("users")
 }
@@ -50,7 +54,6 @@ model Session {
 
   impersonatedBy String?
 
-  @@unique([token])
   @@index([userId])
   @@map("sessions")
 }
@@ -107,14 +110,15 @@ model Organization {
 }
 
 model Member {
-  id             String       @id @default(cuid())
+  id             String           @id @default(cuid())
   organizationId String
   userId         String
-  role           String       @default("member")
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roleId         String
+  role           OrganizationRole @relation(fields: [roleId], references: [id])
 
   @@index([organizationId])
   @@index([userId])
@@ -245,6 +249,7 @@ model OrganizationRole {
   permission     String
   createdAt      DateTime     @default(now())
   updatedAt      DateTime?    @updatedAt
+  members        Member[]
 
   @@index([organizationId])
   @@index([role])
@@ -275,4 +280,23 @@ model TeamMember {
   @@index([teamId])
   @@index([userId])
   @@map("teamMember")
+}
+
+model GlobalRole {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  permissions String[]
+
+  users User[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("global_roles")
+}
+
+enum GenderType {
+  MALE
+  FEMALE
 }
