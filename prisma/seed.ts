@@ -1,10 +1,10 @@
 import { prisma } from "@/lib/prisma";
-import userSeeder from "./seeds/user.seeder";
-import organizationSeeder from "./seeds/organization.seeder";
-import projectSeeder from "./seeds/project.seeder";
-import planSeeder from "./seeds/plan.seeder";
-import roleTemplateSeeder from "./seeds/role-template.seeder";
-import adminSeeder from "./seeds/admin.seeder";
+import userSeeder from "./seeders/user.seeder";
+import organizationSeeder from "./seeders/organization.seeder";
+import projectSeeder from "./seeders/project.seeder";
+import planSeeder from "./seeders/plan.seeder";
+import roleTemplateSeeder from "./seeders/role-template.seeder";
+import adminSeeder from "./seeders/admin.seeder";
 
 async function main() {
   console.log("🌱 Starting database seeding...");
