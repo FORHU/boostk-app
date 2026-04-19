@@ -13,9 +13,12 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 import { getFieldInvalid } from "@/lib/form-utils";
 import { createOrganizationFn } from "@/modules/organization/organization.functions";
 import { organizationQueries } from "@/modules/organization/organization.queries";
-import { type CreateOrganizationInput, createOrganizationSchema } from "@/modules/organization/organization.schema";
+import { type CreateOrganizationIxnput, createOrganizationSchema } from "@/modules/organization/organization.schema";
 
 export const Route = createFileRoute("/(app)/dashboard/organizations")({
+  beforeLoad: ({ context }) => {
+    // check if super admin
+  },
   loader: ({ context }) => {
     context.queryClient.ensureQueryData(organizationQueries.getAuthOrganization());
   },
