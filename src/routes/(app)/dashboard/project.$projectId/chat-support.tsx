@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Download, FileText, Image, Loader2, Paperclip, Plus, Send, Smile, UserCircle2, X, Zap } from "lucide-react";
 import type { Project } from "prisma/generated/client";
 import { Suspense, useEffect, useRef, useState } from "react";
+import { QuickReplies } from "@/components/chat-support/QuickReplies";
 import { socket } from "@/lib/socket";
 import { ticketQueries } from "@/modules/ticket/query.queries";
 import type { TicketWithCustomer } from "@/modules/ticket/ticket.types";
@@ -264,9 +265,9 @@ const UserChatMessages = ({ ticket }: { ticket: TicketWithCustomer }) => {
               className={`flex gap-3 max-w-[85%] ${isAgent ? "self-end flex-row-reverse" : "self-start"}`}
             >
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${isAgent ? "bg-[#0037b0]-100" : "bg-gray-200"}`}
+                className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${isAgent ? "bg-[#0037b0]/10" : "bg-gray-200"}`}
               >
-                <UserCircle2 size={20} className={isAgent ? "text-[#0037b0]-600" : "text-gray-500"} />
+                <UserCircle2 size={20} className={isAgent ? "text-[#0037b0]" : "text-gray-500"} />
               </div>
 
               <div className={`flex flex-col gap-1 ${isAgent ? "items-end" : "items-start"}`}>
@@ -344,8 +345,9 @@ const UserChatInput = ({ ticket }: { ticket: TicketWithCustomer }) => {
   const queryClient = useQueryClient();
   const [message, setMessage] = useState("");
   const [attachOpen, setAttachOpen] = useState(false);
+  const [showQuickResponses, setShowQuickResponses] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // File upload preview state
   const [uploads, setUploads] = useState<
     Array<{
       id: string;
@@ -359,6 +361,11 @@ const UserChatInput = ({ ticket }: { ticket: TicketWithCustomer }) => {
   >([]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const quickResponsesRef = useRef<HTMLDivElement>(null);
+  const attachMenuRef = useRef<HTMLDivElement>(null);
+  const zapButtonRef = useRef<HTMLButtonElement>(null);
+  const paperclipButtonRef = useRef<HTMLButtonElement>(null);
+  const emojiButtonRef = useRef<HTMLButtonElement>(null);
 
   const createMessageMutation = useMutation({
     mutationFn: createUserTicketMessageFn,
@@ -368,6 +375,25 @@ const UserChatInput = ({ ticket }: { ticket: TicketWithCustomer }) => {
     },
   });
 
+  // Close all popups when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+      const isInsideQuickReplies = quickResponsesRef.current?.contains(target);
+      const isInsideAttachMenu = attachMenuRef.current?.contains(target);
+      const isZapButton = zapButtonRef.current?.contains(target);
+      const isPaperclipButton = paperclipButtonRef.current?.contains(target);
+      const isEmojiButton = emojiButtonRef.current?.contains(target);
+
+      if (!isInsideQuickReplies && !isInsideAttachMenu && !isZapButton && !isPaperclipButton && !isEmojiButton) {
+        setShowQuickResponses(false);
+        setAttachOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const handleFileSelect = (type: "image" | "document") => {
     if (!fileInputRef.current) return;
     fileInputRef.current.accept = type === "image" ? "image/*" : ".pdf,.doc,.docx,.txt";
@@ -375,7 +401,6 @@ const UserChatInput = ({ ticket }: { ticket: TicketWithCustomer }) => {
     setAttachOpen(false);
   };
 
-  // Simulate upload progress
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
@@ -420,6 +445,11 @@ const UserChatInput = ({ ticket }: { ticket: TicketWithCustomer }) => {
     });
   };
 
+  const handleQuickReply = (replyText: string) => {
+    setMessage(replyText);
+    setShowQuickResponses(false);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if ((!message.trim() && !uploads.length) || createMessageMutation.isPending) return;
@@ -439,6 +469,7 @@ const UserChatInput = ({ ticket }: { ticket: TicketWithCustomer }) => {
   return (
     <div className="p-3 bg-white border-t border-gray-100 shrink-0">
       <input ref={fileInputRef} type="file" onChange={handleFileChange} className="hidden" multiple />
+
       {uploads.length > 0 && (
         <div className="mb-3 flex gap-2 overflow-x-auto pb-1">
           {uploads.map((u) => (
@@ -450,7 +481,7 @@ const UserChatInput = ({ ticket }: { ticket: TicketWithCustomer }) => {
               {u.type === "image" && u.preview ? (
                 <img src={u.preview} alt="" className="w-full h-full object-cover" />
               ) : (
-                <FileText size={24} className="text-indigo-600" />
+                <FileText size={24} className="text-[#0037b0]" />
               )}
 
               {u.progress < 100 && (
@@ -471,10 +502,21 @@ const UserChatInput = ({ ticket }: { ticket: TicketWithCustomer }) => {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="flex items-center gap-2">
-        <div className="flex items-center gap-1 px-2 border-r border-gray-200">
+      {/* Quick Responses Popup */}
+      {showQuickResponses && (
+        <QuickReplies
+          ref={quickResponsesRef}
+          onSelectReply={handleQuickReply}
+          onClose={() => setShowQuickResponses(false)}
+        />
+      )}
+
+      <form onSubmit={handleSubmit} className="flex items-end gap-2">
+        <div className="flex items-center gap-1 px-2 border-r border-gray-200 shrink-0 self-end">
           <button
+            ref={zapButtonRef}
             type="button"
+            onClick={() => setShowQuickResponses(!showQuickResponses)}
             className="p-2 text-[#0037b0] hover:bg-[#0037b0]/10 transition-colors"
             style={{ borderRadius: "5px" }}
           >
@@ -482,6 +524,7 @@ const UserChatInput = ({ ticket }: { ticket: TicketWithCustomer }) => {
           </button>
           <div className="relative">
             <button
+              ref={paperclipButtonRef}
               type="button"
               onClick={() => setAttachOpen(!attachOpen)}
               className="p-2 text-gray-500 hover:bg-gray-100 transition-colors"
@@ -491,6 +534,7 @@ const UserChatInput = ({ ticket }: { ticket: TicketWithCustomer }) => {
             </button>
             {attachOpen && (
               <div
+                ref={attachMenuRef}
                 className="absolute bottom-full left-0 mb-2 w-40 bg-white shadow-xl border border-gray-100 py-1 z-50"
                 style={{ borderRadius: "5px" }}
               >
@@ -513,18 +557,20 @@ const UserChatInput = ({ ticket }: { ticket: TicketWithCustomer }) => {
           </div>
         </div>
 
-        <input
-          type="text"
+        <textarea
+          ref={textareaRef}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           placeholder={uploads.length ? `Message with ${uploads.length} file(s)...` : "Type a reply..."}
-          className="flex-1 bg-gray-100 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#0037b0] disabled:opacity-60"
-          style={{ borderRadius: "5px" }}
+          className="flex-1 bg-gray-100 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#0037b0] disabled:opacity-60 resize-none overflow-y-auto"
+          style={{ borderRadius: "5px", lineHeight: "24px", minHeight: "42px" }}
           disabled={uploading}
+          rows={2}
         />
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0 self-end">
           <button
+            ref={emojiButtonRef}
             type="button"
             className="p-2 text-gray-500 hover:text-[#0037b0] transition-colors"
             style={{ borderRadius: "5px" }}
