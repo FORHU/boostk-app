@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Download, FileText, Image, Loader2, Paperclip, Send, Smile, UserCircle2, X, Zap } from "lucide-react";
+import { Download, FileText, Image, Loader2, Paperclip, Plus, Send, Smile, UserCircle2, X, Zap } from "lucide-react";
 import type { Project } from "prisma/generated/client";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { socket } from "@/lib/socket";
@@ -129,7 +129,8 @@ const TicketDetails = ({ ticket }: { ticket: TicketWithCustomer | null }) => {
             type="text"
             value={ticket.customer.name}
             readOnly
-            className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm outline-none"
+            className="w-full px-3 py-2 bg-white border border-gray-200 text-sm outline-none"
+            style={{ borderRadius: "5px" }}
           />
         </div>
         <div>
@@ -138,7 +139,10 @@ const TicketDetails = ({ ticket }: { ticket: TicketWithCustomer | null }) => {
         </div>
         <div>
           <span className="block text-xs text-gray-500 font-medium uppercase mb-1">Assignee</span>
-          <select className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm outline-none">
+          <select
+            className="w-full px-3 py-2 bg-white border border-gray-200 text-sm outline-none"
+            style={{ borderRadius: "5px" }}
+          >
             <option>Alex Mercer</option>
             <option>Support Josie</option>
           </select>
@@ -151,7 +155,8 @@ const TicketDetails = ({ ticket }: { ticket: TicketWithCustomer | null }) => {
           <span className="block text-xs text-gray-500 font-medium uppercase mb-1">Status</span>
           <select
             defaultValue={ticket.status}
-            className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm outline-none"
+            className="w-full px-3 py-2 bg-white border border-gray-200 text-sm outline-none"
+            style={{ borderRadius: "5px" }}
           >
             <option value="OPEN">Open</option>
             <option value="PENDING">Pending</option>
@@ -163,7 +168,8 @@ const TicketDetails = ({ ticket }: { ticket: TicketWithCustomer | null }) => {
           <span className="block text-xs text-gray-500 font-medium uppercase mb-1">Priority</span>
           <select
             defaultValue={ticket.priority}
-            className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm outline-none capitalize"
+            className="w-full px-3 py-2 bg-white border border-gray-200 text-sm outline-none capitalize"
+            style={{ borderRadius: "5px" }}
           >
             <option value="LOW">Low</option>
             <option value="NORMAL">Normal</option>
@@ -181,7 +187,8 @@ const TicketDetails = ({ ticket }: { ticket: TicketWithCustomer | null }) => {
             type="text"
             value={ticket.id}
             readOnly
-            className="w-full px-3 py-2 bg-gray-100 border border-gray-200 rounded-lg text-sm outline-none cursor-not-allowed"
+            className="w-full px-3 py-2 bg-gray-100 border border-gray-200 text-sm outline-none cursor-not-allowed"
+            style={{ borderRadius: "5px" }}
           />
         </div>
       </div>
@@ -202,8 +209,17 @@ const ChatWindow = ({ ticket }: { ticket: TicketWithCustomer | null }) => {
   return (
     <div className="h-full w-1/2 flex flex-col bg-white border-r relative min-w-0">
       <div className="px-4 py-3 border-b bg-indigo-50 flex items-center gap-3">
-        <div className="w-8 h-8 rounded-full bg-indigo-200 flex items-center justify-center">
-          <UserCircle2 size={18} className="text-[#0037b0]" />
+        <div className="relative shrink-0" style={{ width: 40, height: 40 }}>
+          <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#0037b0] to-[#0037b0] flex items-center justify-center shadow-md">
+            <span className="text-xl font-bold text-white">
+              {ticket.customer.name
+                .split(" ")
+                .map((n) => n[0])
+                .join("")
+                .slice(0, 2)
+                .toUpperCase()}
+            </span>
+          </div>
         </div>
         <span className="font-medium text-slate-700">{ticket.customer.name}</span>
       </div>
@@ -266,7 +282,7 @@ const UserChatMessages = ({ ticket }: { ticket: TicketWithCustomer }) => {
                 {msg.content && (
                   <div
                     style={{ borderRadius: "5px" }}
-                    className={`px-4 py-2 rounded-2xl text-sm ${isAgent ? "bg-[#0037b0] text-white rounded-br-none" : "bg-gray-100 text-gray-800 rounded-bl-none"}`}
+                    className={`px-4 py-2 text-sm ${isAgent ? "bg-[#0037b0] text-white" : "bg-gray-100 text-gray-800"}`}
                   >
                     {!isAgent && msg.translatedContent ? (
                       <div>
@@ -291,7 +307,8 @@ const UserChatMessages = ({ ticket }: { ticket: TicketWithCustomer }) => {
                 {msg.attachments?.map((att: any) => (
                   <div
                     key={att.id || att.name}
-                    className={`p-3 rounded-xl border flex items-center gap-3 min-w-[260px] ${isAgent ? "bg-indigo-700 border-indigo-500" : "bg-white border-gray-200"}`}
+                    className={`p-3 border flex items-center gap-3 min-w-[260px] ${isAgent ? "bg-indigo-700 border-indigo-500" : "bg-white border-gray-200"}`}
+                    style={{ borderRadius: "5px" }}
                   >
                     <div
                       className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${isAgent ? "bg-indigo-800" : "bg-indigo-50"}`}
@@ -427,7 +444,8 @@ const UserChatInput = ({ ticket }: { ticket: TicketWithCustomer }) => {
           {uploads.map((u) => (
             <div
               key={u.id}
-              className="relative w-16 h-16 rounded-lg border border-slate-200 overflow-hidden shrink-0 bg-slate-100 flex items-center justify-center"
+              className="relative w-16 h-16 border border-slate-200 overflow-hidden shrink-0 bg-slate-100 flex items-center justify-center"
+              style={{ borderRadius: "5px" }}
             >
               {u.type === "image" && u.preview ? (
                 <img src={u.preview} alt="" className="w-full h-full object-cover" />
@@ -455,32 +473,40 @@ const UserChatInput = ({ ticket }: { ticket: TicketWithCustomer }) => {
 
       <form onSubmit={handleSubmit} className="flex items-center gap-2">
         <div className="flex items-center gap-1 px-2 border-r border-gray-200">
-          <button type="button" className="p-2 text-[#0037b0] hover:bg-[#0037b0]-50 rounded-lg transition-colors">
+          <button
+            type="button"
+            className="p-2 text-[#0037b0] hover:bg-[#0037b0]/10 transition-colors"
+            style={{ borderRadius: "5px" }}
+          >
             <Zap size={20} />
           </button>
           <div className="relative">
             <button
               type="button"
               onClick={() => setAttachOpen(!attachOpen)}
-              className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 text-gray-500 hover:bg-gray-100 transition-colors"
+              style={{ borderRadius: "5px" }}
             >
               <Paperclip size={20} />
             </button>
             {attachOpen && (
-              <div className="absolute bottom-full left-0 mb-2 w-40 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-50">
+              <div
+                className="absolute bottom-full left-0 mb-2 w-40 bg-white shadow-xl border border-gray-100 py-1 z-50"
+                style={{ borderRadius: "5px" }}
+              >
                 <button
                   type="button"
                   onClick={() => handleFileSelect("image")}
                   className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 flex items-center gap-2 text-gray-700"
                 >
-                  <Image size={16} className="text-[#0037b0]-600" /> Image
+                  <Image size={16} className="text-[#0037b0]" /> Image
                 </button>
                 <button
                   type="button"
                   onClick={() => handleFileSelect("document")}
                   className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 flex items-center gap-2 text-gray-700"
                 >
-                  <FileText size={16} className="text-[#0037b0]-600" /> Document
+                  <FileText size={16} className="text-[#0037b0]" /> Document
                 </button>
               </div>
             )}
@@ -492,18 +518,24 @@ const UserChatInput = ({ ticket }: { ticket: TicketWithCustomer }) => {
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           placeholder={uploads.length ? `Message with ${uploads.length} file(s)...` : "Type a reply..."}
-          className="flex-1 bg-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#0037b0]-500 disabled:opacity-60"
+          className="flex-1 bg-gray-100 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#0037b0] disabled:opacity-60"
+          style={{ borderRadius: "5px" }}
           disabled={uploading}
         />
 
         <div className="flex items-center gap-2">
-          <button type="button" className="p-2 text-gray-500 hover:text-[#0037b0]-600 transition-colors">
+          <button
+            type="button"
+            className="p-2 text-gray-500 hover:text-[#0037b0] transition-colors"
+            style={{ borderRadius: "5px" }}
+          >
             <Smile size={20} />
           </button>
           <button
             type="submit"
             disabled={(!message.trim() && !uploads.length) || createMessageMutation.isPending || uploading}
-            className="bg-[#0037b0] text-white p-2.5 rounded-xl active:scale-95 disabled:opacity-50"
+            className="bg-[#0037b0] text-white p-2.5 active:scale-95 disabled:opacity-50"
+            style={{ borderRadius: "5px" }}
           >
             <Send size={18} fill="currentColor" />
           </button>
@@ -515,59 +547,112 @@ const UserChatInput = ({ ticket }: { ticket: TicketWithCustomer }) => {
 
 // Right column: agent profile and notes
 const CustomerDetails = ({ ticket }: { ticket: TicketWithCustomer | null }) => {
+  const [note, setNote] = useState("");
+  const [savedNotes, setSavedNotes] = useState<string[]>([]);
+
+  const handleSaveNote = () => {
+    if (note.trim()) {
+      setSavedNotes([...savedNotes, note.trim()]);
+      setNote("");
+    }
+  };
+
+  const handleCancel = () => {
+    setNote("");
+  };
+
   if (!ticket) return <div className="h-full w-1/4 bg-slate-50 p-4"></div>;
 
+  const agentName = "Alex Mercer";
+  const agentEmail = "alec.merker@gmail.com";
+  const agentInitials = "AM";
+
   return (
-    <div className="h-full w-1/4 bg-slate-50 p-4 min-w-0 overflow-y-auto">
-      <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-200">
-        <div className="w-10 h-10 rounded-full bg-[#0037b0]-100 flex items-center justify-center">
-          <UserCircle2 size={24} className="text-[#0037b0]-600" />
-        </div>
-        <div>
-          <h4 className="font-bold text-sm text-slate-800">Alex Mercer</h4>
-          <p className="text-xs text-gray-500">alec.mercker@gmail.com</p>
-        </div>
-      </div>
-
-      <div className="mb-6">
-        <h5 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-3">About Agent</h5>
-        <div className="space-y-3">
-          <div>
-            <span className="text-xs text-gray-500 block">Email</span>
-            <p className="text-sm font-medium text-[#0037b0]">alec.mercker@gmail.com</p>
+    <div className="h-full w-1/4 bg-[#F0F3FF] flex flex-col overflow-y-auto">
+      <div className="flex-1 overflow-auto">
+        <div className="flex flex-row items-start pt-5 px-5 pb-1 gap-3">
+          <div className="relative shrink-0" style={{ width: 40, height: 40 }}>
+            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#0037b0] to-[#0037b0] flex items-center justify-center shadow-md">
+              <span className="text-xl font-bold text-white">{agentInitials}</span>
+            </div>
           </div>
-          <div>
-            <span className="text-xs text-gray-500 block">Phone</span>
-            <p className="text-sm font-medium">63974586421</p>
+          <div className="flex flex-col justify-center">
+            <span className="text-base font-bold text-[#202631]">{agentName}</span>
           </div>
         </div>
-      </div>
 
-      <div>
-        <h5 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-3">Notes</h5>
-        <textarea
-          placeholder="Type a note here..."
-          className="w-full h-24 p-3 text-xs bg-white border border-gray-200 rounded-lg resize-none outline-none focus:ring-2 focus:ring-[#0037b0]-500"
-        />
-        <div className="flex justify-end gap-2 mt-2">
-          <button type="button" className="px-3 py-1.5 text-xs text-gray-500">
-            Cancel
-          </button>
+        <div className="flex flex-row items-center px-4 pt-3 pb-1 gap-2">
           <button
             type="button"
-            className="px-3 py-1.5 text-xs bg-[#0037b0]-600 text-white rounded-md hover:bg-[#0037b0]-700"
+            className="flex-1 flex items-center justify-center py-3 px-4 bg-white text-xs font-medium text-[#222933] shadow-sm hover:bg-gray-50 transition-colors"
+            style={{ borderRadius: "5px" }}
           >
-            Save Note
+            Edit Profile
+          </button>
+        </div>
+        <div className="mt-4 bg-[#EFF2FE] h-[6px]" />
+
+        <div className="px-5 pt-4 pb-10">
+          <h4 className="font-bold text-lg mb-4 text-slate-800">About Agent</h4>
+          <div className="space-y-3">
+            <div className="flex justify-between items-center py-2 border-b border-[#E8EAEF]">
+              <span className="text-xs font-medium text-gray-500">EMAIL</span>
+              <p className="text-sm font-medium text-[#1357CA]">{agentEmail}</p>
+            </div>
+            <div className="flex justify-between items-center py-2">
+              <span className="text-xs font-medium text-gray-500">CONTACT NUMBER</span>
+              <p className="text-sm font-medium text-[#252C37]">63974586421</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-[#EFF2FE] h-[6px]" />
+
+        <div className="px-5 pt-6 pb-2">
+          <h5 className="text-xs font-medium text-gray-500 mb-3">NOTES</h5>
+
+          <div className="relative px-4 pt-4 pb-10 bg-white border border-[#F0F1F3]" style={{ borderRadius: "5px" }}>
+            <textarea
+              className="w-full bg-transparent resize-none outline-none text-sm text-[#202631] caret-[#1357CA]"
+              style={{ minHeight: 80, borderRadius: "5px" }}
+              placeholder="Type a note here..."
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+            />
+            <div className="absolute bottom-3 right-4 flex flex-row items-center gap-3">
+              <button
+                type="button"
+                onClick={handleCancel}
+                className="text-xs font-medium text-[#535663] bg-transparent border-none cursor-pointer p-0 hover:text-gray-800"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveNote}
+                className="text-xs font-medium text-[#1559CA] bg-transparent border-none cursor-pointer p-0 hover:text-[#0037b0]"
+              >
+                Save Note
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="px-6 pb-6 pt-2">
+          <button
+            type="button"
+            onClick={() => {
+              const textarea = document.querySelector("textarea");
+              if (textarea) textarea.focus();
+            }}
+            className="w-full flex flex-row items-center justify-center gap-2 py-3 bg-[#E3EAFB] border border-[#A4BDEC] cursor-pointer hover:bg-[#d0ddf5] transition-colors"
+            style={{ borderRadius: "5px" }}
+          >
+            <Plus size={10} className="text-[#0D53C9]" />
+            <span className="text-xs font-semibold text-[#0D53C9]">Add Note</span>
           </button>
         </div>
       </div>
-
-      <button
-        type="button"
-        className="w-full mt-4 py-2 text-xs text-[#0037b0]-600 border border-[#0037b0]-200 rounded-lg hover:bg-[#0037b0]-50"
-      >
-        + Add Note
-      </button>
     </div>
   );
 };
