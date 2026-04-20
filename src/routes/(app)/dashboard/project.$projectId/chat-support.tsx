@@ -203,8 +203,9 @@ const ChatWindow = ({ ticket }: { ticket: TicketWithCustomer | null }) => {
     <div className="h-full w-1/2 flex flex-col bg-white border-r relative min-w-0">
       <div className="px-4 py-3 border-b bg-indigo-50 flex items-center gap-3">
         <div className="w-8 h-8 rounded-full bg-indigo-200 flex items-center justify-center">
-          <UserCircle2 size={18} className="text-indigo-600" />
+          <UserCircle2 size={18} className="text-[#0037b0]" />
         </div>
+        <span className="font-medium text-slate-700">{ticket.customer.name}</span>
       </div>
 
       <Suspense fallback={<div className="flex-1 flex items-center justify-center p-4">Loading messages...</div>}>
@@ -247,9 +248,9 @@ const UserChatMessages = ({ ticket }: { ticket: TicketWithCustomer }) => {
               className={`flex gap-3 max-w-[85%] ${isAgent ? "self-end flex-row-reverse" : "self-start"}`}
             >
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${isAgent ? "bg-indigo-100" : "bg-gray-200"}`}
+                className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${isAgent ? "bg-[#0037b0]-100" : "bg-gray-200"}`}
               >
-                <UserCircle2 size={20} className={isAgent ? "text-indigo-600" : "text-gray-500"} />
+                <UserCircle2 size={20} className={isAgent ? "text-[#0037b0]-600" : "text-gray-500"} />
               </div>
 
               <div className={`flex flex-col gap-1 ${isAgent ? "items-end" : "items-start"}`}>
@@ -264,7 +265,8 @@ const UserChatMessages = ({ ticket }: { ticket: TicketWithCustomer }) => {
 
                 {msg.content && (
                   <div
-                    className={`px-4 py-2 rounded-2xl text-sm ${isAgent ? "bg-indigo-600 text-white rounded-br-none" : "bg-gray-100 text-gray-800 rounded-bl-none"}`}
+                    style={{ borderRadius: "5px" }}
+                    className={`px-4 py-2 rounded-2xl text-sm ${isAgent ? "bg-[#0037b0] text-white rounded-br-none" : "bg-gray-100 text-gray-800 rounded-bl-none"}`}
                   >
                     {!isAgent && msg.translatedContent ? (
                       <div>
@@ -276,7 +278,7 @@ const UserChatMessages = ({ ticket }: { ticket: TicketWithCustomer }) => {
                     ) : isAgent && msg.translatedContent ? (
                       <div>
                         <div>{msg.content}</div>
-                        <div className="text-[10px] mt-1 pt-1 border-t border-indigo-500 text-indigo-200">
+                        <div className="text-[10px] mt-1 pt-1 border-t border-[#0037b0]-500 text-[#0037b0]-200">
                           Translated: {msg.translatedContent}
                         </div>
                       </div>
@@ -453,7 +455,7 @@ const UserChatInput = ({ ticket }: { ticket: TicketWithCustomer }) => {
 
       <form onSubmit={handleSubmit} className="flex items-center gap-2">
         <div className="flex items-center gap-1 px-2 border-r border-gray-200">
-          <button type="button" className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
+          <button type="button" className="p-2 text-[#0037b0] hover:bg-[#0037b0]-50 rounded-lg transition-colors">
             <Zap size={20} />
           </button>
           <div className="relative">
@@ -471,14 +473,14 @@ const UserChatInput = ({ ticket }: { ticket: TicketWithCustomer }) => {
                   onClick={() => handleFileSelect("image")}
                   className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 flex items-center gap-2 text-gray-700"
                 >
-                  <Image size={16} className="text-indigo-600" /> Image
+                  <Image size={16} className="text-[#0037b0]-600" /> Image
                 </button>
                 <button
                   type="button"
                   onClick={() => handleFileSelect("document")}
                   className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 flex items-center gap-2 text-gray-700"
                 >
-                  <FileText size={16} className="text-indigo-600" /> Document
+                  <FileText size={16} className="text-[#0037b0]-600" /> Document
                 </button>
               </div>
             )}
@@ -490,18 +492,18 @@ const UserChatInput = ({ ticket }: { ticket: TicketWithCustomer }) => {
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           placeholder={uploads.length ? `Message with ${uploads.length} file(s)...` : "Type a reply..."}
-          className="flex-1 bg-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-60"
+          className="flex-1 bg-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#0037b0]-500 disabled:opacity-60"
           disabled={uploading}
         />
 
         <div className="flex items-center gap-2">
-          <button type="button" className="p-2 text-gray-500 hover:text-indigo-600 transition-colors">
+          <button type="button" className="p-2 text-gray-500 hover:text-[#0037b0]-600 transition-colors">
             <Smile size={20} />
           </button>
           <button
             type="submit"
             disabled={(!message.trim() && !uploads.length) || createMessageMutation.isPending || uploading}
-            className="bg-indigo-600 text-white p-2.5 rounded-xl active:scale-95 disabled:opacity-50"
+            className="bg-[#0037b0] text-white p-2.5 rounded-xl active:scale-95 disabled:opacity-50"
           >
             <Send size={18} fill="currentColor" />
           </button>
@@ -518,8 +520,8 @@ const CustomerDetails = ({ ticket }: { ticket: TicketWithCustomer | null }) => {
   return (
     <div className="h-full w-1/4 bg-slate-50 p-4 min-w-0 overflow-y-auto">
       <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-200">
-        <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center">
-          <UserCircle2 size={24} className="text-indigo-600" />
+        <div className="w-10 h-10 rounded-full bg-[#0037b0]-100 flex items-center justify-center">
+          <UserCircle2 size={24} className="text-[#0037b0]-600" />
         </div>
         <div>
           <h4 className="font-bold text-sm text-slate-800">Alex Mercer</h4>
@@ -532,7 +534,7 @@ const CustomerDetails = ({ ticket }: { ticket: TicketWithCustomer | null }) => {
         <div className="space-y-3">
           <div>
             <span className="text-xs text-gray-500 block">Email</span>
-            <p className="text-sm font-medium text-indigo-600">alec.mercker@gmail.com</p>
+            <p className="text-sm font-medium text-[#0037b0]">alec.mercker@gmail.com</p>
           </div>
           <div>
             <span className="text-xs text-gray-500 block">Phone</span>
@@ -545,13 +547,16 @@ const CustomerDetails = ({ ticket }: { ticket: TicketWithCustomer | null }) => {
         <h5 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-3">Notes</h5>
         <textarea
           placeholder="Type a note here..."
-          className="w-full h-24 p-3 text-xs bg-white border border-gray-200 rounded-lg resize-none outline-none focus:ring-2 focus:ring-indigo-500"
+          className="w-full h-24 p-3 text-xs bg-white border border-gray-200 rounded-lg resize-none outline-none focus:ring-2 focus:ring-[#0037b0]-500"
         />
         <div className="flex justify-end gap-2 mt-2">
           <button type="button" className="px-3 py-1.5 text-xs text-gray-500">
             Cancel
           </button>
-          <button type="button" className="px-3 py-1.5 text-xs bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
+          <button
+            type="button"
+            className="px-3 py-1.5 text-xs bg-[#0037b0]-600 text-white rounded-md hover:bg-[#0037b0]-700"
+          >
             Save Note
           </button>
         </div>
@@ -559,7 +564,7 @@ const CustomerDetails = ({ ticket }: { ticket: TicketWithCustomer | null }) => {
 
       <button
         type="button"
-        className="w-full mt-4 py-2 text-xs text-indigo-600 border border-indigo-200 rounded-lg hover:bg-indigo-50"
+        className="w-full mt-4 py-2 text-xs text-[#0037b0]-600 border border-[#0037b0]-200 rounded-lg hover:bg-[#0037b0]-50"
       >
         + Add Note
       </button>
