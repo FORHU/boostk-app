@@ -1,13 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import {
   BarChart3,
+  Check,
   CheckCircle2,
+  ChevronDown,
   Clock,
   Copy,
   ExternalLink,
   LaptopMinimalCheck,
   MessageCircle,
   MessageSquare,
+  Search,
   Settings,
   ShieldCheck,
   TrendingUp,
@@ -26,20 +29,39 @@ function ProjectPage() {
   const { project } = Route.useRouteContext();
   const [copied, setCopied] = useState(false);
   const [showInstallPopup, setShowInstallPopup] = useState(false);
+  const [origin, setOrigin] = useState("");
   const installButtonRef = useRef<HTMLButtonElement>(null);
   const popupRef = useRef<HTMLDivElement>(null);
+  const [statusOpen, setStatusOpen] = useState(false);
+  const [categoryOpen, setCategoryOpen] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState("active");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const statusButtonRef = useRef<HTMLButtonElement>(null);
+  const categoryButtonRef = useRef<HTMLButtonElement>(null);
+  const statusPopupRef = useRef<HTMLDivElement>(null);
+  const categoryPopupRef = useRef<HTMLDivElement>(null);
 
-  const snippet = `<script src="${window.location.origin}/support/${project.id}/widget.js" async></script>`;
-
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(snippet);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  // Close popup when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      // Status dropdown
+      if (
+        statusPopupRef.current &&
+        !statusPopupRef.current.contains(event.target as Node) &&
+        statusButtonRef.current &&
+        !statusButtonRef.current.contains(event.target as Node)
+      ) {
+        setStatusOpen(false);
+      }
+      // Category dropdown
+      if (
+        categoryPopupRef.current &&
+        !categoryPopupRef.current.contains(event.target as Node) &&
+        categoryButtonRef.current &&
+        !categoryButtonRef.current.contains(event.target as Node)
+      ) {
+        setCategoryOpen(false);
+      }
+      // Installation popup
       if (
         popupRef.current &&
         !popupRef.current.contains(event.target as Node) &&
@@ -53,14 +75,26 @@ function ProjectPage() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
+
+  const snippet = `<script src="${origin}/support/${project.id}/widget.js" async></script>`;
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(snippet);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
     <div className="flex-1 space-y-8 p-8 pt-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Avatar className="h-12 w-12 rounded-xl">
+          <Avatar className="h-12 w-12 rounded-[10px]">
             <AvatarImage src={project.logo || "/avatars/laugh-orange-cat.gif"} />
-            <AvatarFallback className="rounded-xl bg-primary/10 text-primary font-bold text-lg">
+            <AvatarFallback className="rounded-[10px] bg-primary/10 text-primary font-bold text-lg">
               {project.name.substring(0, 2).toUpperCase()}
             </AvatarFallback>
           </Avatar>
@@ -76,14 +110,14 @@ function ProjectPage() {
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-3 relative">
+        <div className="flex rounded-[5px] items-center gap-3 relative">
           {/* Quick Installation Button with Popup */}
           <div className="relative">
             <Button
               ref={installButtonRef}
               variant="outline"
               size="sm"
-              className="h-9"
+              className="h-9 rounded-[5px]"
               onClick={() => setShowInstallPopup(!showInstallPopup)}
             >
               <LaptopMinimalCheck className="mr-2 h-4 w-4" />
@@ -93,7 +127,7 @@ function ProjectPage() {
               <div
                 ref={popupRef}
                 style={{ borderRadius: "10px" }}
-                className="absolute left-full right-0 mt-2 w-[500px] max-w-[90vw] bg-background rounded-xl shadow-2xl border border-foreground/10 z-50"
+                className="absolute left-full right-0 mt-2 w-[500px] max-w-[90vw] bg-background rounded-[10px] shadow-2xl border border-foreground/10 z-50"
               >
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-foreground/10">
@@ -128,7 +162,7 @@ function ProjectPage() {
                     <h4 className="text-xs font-semibold text-foreground mb-2">Manual Direct Link</h4>
                     <div className="flex items-center justify-between p-2 rounded-lg border border-foreground/5 bg-muted/30">
                       <code className="text-[11px] truncate max-w-[200px] md:max-w-xs opacity-70">
-                        {`${window.location.origin}/support/${project.id}/chat-widget`}
+                        {`${origin}/support/${project.id}/chat-widget`}
                       </code>
                       <a
                         href={`/support/${project.id}/chat-widget`}
@@ -152,12 +186,15 @@ function ProjectPage() {
             )}
           </div>
 
-          <Button variant="outline" size="sm" className="h-9">
+          <Button variant="outline" size="sm" className="h-9 rounded-[5px]">
             <Settings className="mr-2 h-4 w-4" />
             Project Settings
           </Button>
           <a href={`/support/${project.id}/chat-widget`} target="_blank" rel="noopener noreferrer">
-            <Button size="sm" className="h-9 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm">
+            <Button
+              size="sm"
+              className="h-9 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm rounded-[5px]"
+            >
               <MessageCircle className="mr-2 h-4 w-4" />
               Test Chat Widget
               <ExternalLink className="ml-2 h-3 w-3 opacity-50" />
@@ -181,7 +218,7 @@ function ProjectPage() {
           { title: "Daily Messages", value: "142", trend: "+12% growth", icon: BarChart3, color: "text-purple-500" },
         ].map((stat, idx) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: <placeholder>
-          <Card key={idx} className="border-foreground/10 bg-card/50 shadow-xs">
+          <Card key={idx} className="border-foreground/10 bg-card/50 shadow-xs rounded-[5px]">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
               <stat.icon className={`h-4 w-4 ${stat.color} opacity-70`} />
@@ -195,6 +232,99 @@ function ProjectPage() {
             </CardContent>
           </Card>
         ))}
+      </div>
+      {/* Search & Filter Bar */}
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-row items-center gap-2 p-2 bg-surface-container-lowest rounded-[10px] shadow-sm border border-foreground/10 w-full">
+          {/* Search Input */}
+          <div className="flex-1 relative flex items-center min-w-[200px]">
+            <Search className="absolute left-3 h-4 w-4 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Search for Agents, Customers, Departments or keywords..."
+              className="w-full pl-10 pr-4 py-2 bg-transparent border-none text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-0"
+            />
+          </div>
+          {/* Divider */}
+          <div className="w-px h-6 bg-foreground/10 mx-1 hidden sm:block" />
+          <div className="hidden sm:flex flex-row items-center gap-2 pr-2">
+            {/* Status Dropdown */}
+            <div className="relative">
+              <button
+                ref={statusButtonRef}
+                type="button"
+                onClick={() => setStatusOpen(!statusOpen)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-[5px] text-sm font-medium text-foreground hover:bg-muted/50 transition-colors whitespace-nowrap"
+              >
+                Status: {selectedStatus === "active" ? "Active" : "Inactive"}
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              </button>
+              {statusOpen && (
+                <div
+                  ref={statusPopupRef}
+                  className="absolute top-full left-0 mt-1 w-32 bg-background rounded-[5px] shadow-lg border border-foreground/10 z-50 py-1"
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedStatus("active");
+                      setStatusOpen(false);
+                    }}
+                    className="w-full text-left px-3 py-1.5 text-sm hover:bg-muted/50 flex items-center justify-between"
+                  >
+                    Active
+                    {selectedStatus === "active" && <Check className="h-3.5 w-3.5 text-primary" />}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedStatus("inactive");
+                      setStatusOpen(false);
+                    }}
+                    className="w-full text-left px-3 py-1.5 text-sm hover:bg-muted/50 flex items-center justify-between"
+                  >
+                    Inactive
+                    {selectedStatus === "inactive" && <Check className="h-3.5 w-3.5 text-primary" />}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Category Dropdown */}
+            <div className="relative">
+              <button
+                ref={categoryButtonRef}
+                type="button"
+                onClick={() => setCategoryOpen(!categoryOpen)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-[5px] text-sm font-medium text-foreground hover:bg-muted/50 transition-colors whitespace-nowrap"
+              >
+                Category: {selectedCategory === "all" ? "All" : selectedCategory}
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              </button>
+              {categoryOpen && (
+                <div
+                  ref={categoryPopupRef}
+                  className="absolute top-full left-0 mt-1 w-32 bg-background rounded-[5px] shadow-lg border border-foreground/10 z-50 py-1"
+                >
+                  {["All", "Support", "Sales", "Billing"].map((cat) => (
+                    <button
+                      type="button"
+                      key={cat}
+                      onClick={() => {
+                        setSelectedCategory(cat);
+                        setCategoryOpen(false);
+                      }}
+                      className="w-full text-left px-3 py-1.5 text-sm hover:bg-muted/50 flex items-center justify-between capitalize"
+                    >
+                      {cat === "all" ? "All" : cat}
+                      {selectedCategory === cat && <Check className="h-3.5 w-3.5 text-primary" />}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Recent Activity */}
