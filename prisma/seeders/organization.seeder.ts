@@ -1,109 +1,47 @@
 import { prisma } from "@/lib/prisma";
-import crypto from "crypto";
-import { OrganizationStatus } from "prisma/generated/enums";
-import { seedUsersList } from "./user.seeder";
 
-export default async function organizationSeeder() {
-  console.log("🏢 Seeding organizations and linking users...");
-
-  const allPlans = await prisma.subscriptionPlan.findMany({
-    orderBy: { createdAt: "asc" }
+export async function seedOrganizations() {
+  const free = await prisma.subscriptionPlan.findUnique({
+    where: { name: "FREE" },
   });
 
-  if (allPlans.length === 0) {
-    console.error("❌ No subscription plans found. Seed plans before organizations.");
-    return;
+  const pro = await prisma.subscriptionPlan.findUnique({
+    where: { name: "PRO" },
+  });
+
+  const enterprise = await prisma.subscriptionPlan.findUnique({
+    where: { name: "ENTERPRISE" },
+  });
+
+  if (!free || !pro || !enterprise) {
+    throw new Error("Plans not found, please seed plans first");
   }
 
-  const templates = await prisma.organizationRoleTemplate.findMany();
+  const organizations = [
+    {
+      name: "BoostK",
+      slug: "boostk",
+      planId: enterprise.id,
+    },
+    {
+      name: "Forhu",
+      slug: "forhu",
+      planId: pro.id,
+    },
+    {
+      name: "Test Org",
+      slug: "test-org",
+      planId: free.id,
+    },
+  ];
 
-  for (let i = 0; i < seedUsersList.length; i++) {
-    const userData = seedUsersList[i];
-    const plan = allPlans[i % allPlans.length];
-    
-    try {
-      // Find the user in the database
-      const user = await prisma.user.findUnique({ where: { email: userData.email } });
-      if (!user) {
-        console.error(`❌ User ${userData.email} not found. Skipping organization creation.`);
-        continue;
-      }
+  for (const org of organizations) {
+    await prisma.organization.upsert({
+      where: { slug: org.slug },
+      update: org,
+      create: org,
+    });
 
-      const orgName = `${userData.name}'s Organization`;
-      const orgSlug = `${userData.email.split("@")[0]}-org`;
-
-      const createdOrg = await prisma.organization.upsert({
-        where: { slug: orgSlug },
-        update: { 
-          name: orgName,
-          planId: plan.id,
-          status: OrganizationStatus.ACTIVE
-        },
-        create: {
-          name: orgName,
-          slug: orgSlug,
-          planId: plan.id,
-          status: OrganizationStatus.ACTIVE
-        },
-      });
-      console.log(`✅ Upsert organization: ${orgName} (${plan.name} Plan)`);
-
-      // Seed organization roles from templates
-      for (const t of templates) {
-        let orgRole = await prisma.organizationRole.findFirst({
-          where: {
-            organizationId: createdOrg.id,
-            role: t.roleName
-          }
-        });
-
-        if (!orgRole) {
-          orgRole = await prisma.organizationRole.create({
-            data: {
-              id: crypto.randomUUID(),
-              organizationId: createdOrg.id,
-              role: t.roleName,
-              permission: t.permission,
-              isDefaultRole: true
-            }
-          });
-        }
-      }
-
-      // Link the current user as the Organization Admin (admin role)
-      let adminRole = await prisma.organizationRole.findFirst({
-        where: { organizationId: createdOrg.id, role: "admin" }
-      });
-
-      if (!adminRole) {
-        console.warn(`⚠️  Admin role template not found for ${orgName}. Linking as first available role.`);
-        adminRole = await prisma.organizationRole.findFirst({ where: { organizationId: createdOrg.id } });
-      }
-
-      if (adminRole) {
-        const existingMember = await prisma.member.findFirst({
-          where: { userId: user.id, organizationId: createdOrg.id }
-        });
-
-        if (!existingMember) {
-           await prisma.member.create({
-             data: {
-               userId: user.id,
-               organizationId: createdOrg.id,
-               roleId: adminRole.id,
-             }
-           });
-           console.log(`🔗 Linked ${user.name} to ${orgName} as ${adminRole.role}`);
-        } else {
-           await prisma.member.update({
-             where: { id: existingMember.id },
-             data: { roleId: adminRole.id }
-           });
-        }
-      }
-      
-    } catch (error: any) {
-      console.error(`❌ Error seeding organization for ${userData.email}:`, error.message);
-    }
+    console.log(`✅ Upserted organization: ${org.name}`);
   }
 }

@@ -1,22 +1,37 @@
 import { prisma } from "@/lib/prisma";
-import userSeeder from "./seeders/user.seeder";
-import organizationSeeder from "./seeders/organization.seeder";
-import projectSeeder from "./seeders/project.seeder";
-import planSeeder from "./seeders/plan.seeder";
-import roleTemplateSeeder from "./seeders/role-template.seeder";
-import adminSeeder from "./seeders/admin.seeder";
+
+import { seedUsers } from "./seeders/user.seeder";
+import { seedOrganizations } from "./seeders/organization.seeder";
+import { plansSeeder } from "./seeders/plan.seeder";
+import { boostKRolesSeeder, forhuRolesSeeder, testOrgRolesSeeder } from "./seeders/organization-roles.seeder";
+import roleTemplateSeeder from "./seeders/organization-role-template.seeder";
+import { boostkMemberSeeder, forhuMemberSeeder, testOrgMemberSeeder } from "./seeders/organization-members.seeder";
+import organizationRoleTemplateSeeder from "./seeders/organization-role-template.seeder";
+import { boostKProjectsSeeder, forhuProjectsSeeder, testOrgProjectsSeeder } from "./seeders/project.seeder";
 
 async function main() {
   console.log("🌱 Starting database seeding...");
 
   try {
-    await planSeeder();
     await roleTemplateSeeder();
+    await plansSeeder();
+    
+    await seedUsers();
 
-    await adminSeeder();
-    await userSeeder();
-    await organizationSeeder();
-    await projectSeeder();
+    await seedOrganizations();
+    await organizationRoleTemplateSeeder();
+    
+    await boostKRolesSeeder();
+    await boostkMemberSeeder();
+    await boostKProjectsSeeder();
+
+    await forhuRolesSeeder();
+    await forhuMemberSeeder();
+    await forhuProjectsSeeder();
+
+    await testOrgRolesSeeder();
+    await testOrgMemberSeeder();
+    await testOrgProjectsSeeder();
 
     console.log("✅ Seeding completed successfully.");
   } catch (error) {

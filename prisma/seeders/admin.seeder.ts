@@ -2,9 +2,7 @@ import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/prisma";
 import { GenderType } from "prisma/generated/enums";
 
-export const admins = [
-  { email: "owner@example.com", name: "System Owner", role: "owner" },
-];
+export const admins = [{ email: "owner@example.com", name: "System Owner", role: "owner" }];
 
 export default async function adminSeeder() {
   const password = "Password123!";
@@ -20,7 +18,7 @@ export default async function adminSeeder() {
   }
 }
 
-const assignRandomGender = () => Math.random() < 0.5 ? GenderType.MALE : GenderType.FEMALE;
+const assignRandomGender = () => (Math.random() < 0.5 ? GenderType.MALE : GenderType.FEMALE);
 
 async function ensureUser(userData: { email: string; name: string; role: string }, password: string) {
   let user = await prisma.user.findUnique({
@@ -46,7 +44,7 @@ async function ensureUser(userData: { email: string; name: string; role: string 
         where: { id: user.id },
         data: {
           emailVerified: true,
-          // global role logic if applicable elsewhere, but skip for basic user 
+          // global role logic if applicable elsewhere, but skip for basic user
         },
       });
       console.log(`✅ Created user: ${userData.email}`);
