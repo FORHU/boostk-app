@@ -43,7 +43,7 @@ type Conversation = {
   lastMessage: string;
   timestamp: Date;
   unreadCount: number;
-  priority: "Urgent" | "High" | "Normal" | "Low";
+  priority: "Urgent" | "High" | "Low";
   status: "open" | "pending" | "resolved" | "closed";
   department: "support" | "sales" | "billing";
   online: boolean;
@@ -74,7 +74,7 @@ const mockConversations: Conversation[] = [
     lastMessage: "Thank you for the update on the shipping times.",
     timestamp: new Date(Date.now() - 1000 * 60 * 30),
     unreadCount: 0,
-    priority: "Normal",
+    priority: "Low",
     status: "pending",
     department: "sales",
     online: false,
@@ -116,7 +116,7 @@ const mockConversations: Conversation[] = [
     lastMessage: "When will the new feature be released?",
     timestamp: new Date(Date.now() - 1000 * 60 * 120),
     unreadCount: 0,
-    priority: "Normal",
+    priority: "Low",
     status: "pending",
     department: "sales",
     online: false,
@@ -145,7 +145,7 @@ const mockConversations: Conversation[] = [
     lastMessage: "The recent update seems to have fixed the bug.",
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48),
     unreadCount: 0,
-    priority: "Normal",
+    priority: "Low",
     status: "resolved",
     department: "support",
     online: false,
@@ -159,7 +159,7 @@ const mockConversations: Conversation[] = [
     lastMessage: "Thanks for resolving my issue.",
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 72),
     unreadCount: 0,
-    priority: "Normal",
+    priority: "Low",
     status: "resolved",
     department: "support",
     online: false,
@@ -187,7 +187,7 @@ const mockConversations: Conversation[] = [
     lastMessage: "The new feature works perfectly.",
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 120),
     unreadCount: 0,
-    priority: "Normal",
+    priority: "Low",
     status: "resolved",
     department: "support",
     online: false,
@@ -229,7 +229,7 @@ const mockConversations: Conversation[] = [
     lastMessage: "I haven't received my order confirmation yet.",
     timestamp: new Date(Date.now() - 1000 * 60 * 10),
     unreadCount: 1,
-    priority: "Normal",
+    priority: "Low",
     status: "open",
     department: "support",
     online: true,
@@ -550,7 +550,6 @@ function ProjectPage() {
         </div>
 
         {/* Stats Grid */}
-        {/* Stats Grid */}
         <div className="grid gap-4 md:grid-cols-3">
           {/* Active Chats Card – clickable */}
           <Card
@@ -604,8 +603,8 @@ function ProjectPage() {
         </div>
 
         {/* Search & Filter Bar */}
-        <div className="px-4 py-2">
-          <div className="flex flex-row items-center gap-2 p-1.5 bg-surface-container-lowest rounded-[10px] shadow-sm border border-foreground/10">
+        <div className="px-0 py-2">
+          <div className="flex flex-row items-center gap-2 p-1.5 bg-surface-container-lowest rounded-[8px] shadow-sm border border-foreground/10">
             <div className="flex-1 relative flex items-center min-w-[200px]">
               <Search className="absolute left-3 h-4 w-4 text-muted-foreground" />
               <input
@@ -642,8 +641,7 @@ function ProjectPage() {
                       }}
                       className="w-full text-left px-3 py-1.5 text-sm hover:bg-muted/50 flex items-center justify-between"
                     >
-                      All
-                      {selectedStatus === "all" && <Check className="h-3.5 w-3.5 text-primary" />}
+                      All {selectedStatus === "all" && <Check className="h-3.5 w-3.5 text-primary" />}
                     </button>
                     <button
                       type="button"
@@ -653,8 +651,7 @@ function ProjectPage() {
                       }}
                       className="w-full text-left px-3 py-1.5 text-sm hover:bg-muted/50 flex items-center justify-between"
                     >
-                      Active
-                      {selectedStatus === "active" && <Check className="h-3.5 w-3.5 text-primary" />}
+                      Active {selectedStatus === "active" && <Check className="h-3.5 w-3.5 text-primary" />}
                     </button>
                     <button
                       type="button"
@@ -664,8 +661,7 @@ function ProjectPage() {
                       }}
                       className="w-full text-left px-3 py-1.5 text-sm hover:bg-muted/50 flex items-center justify-between"
                     >
-                      Inactive
-                      {selectedStatus === "inactive" && <Check className="h-3.5 w-3.5 text-primary" />}
+                      Inactive {selectedStatus === "inactive" && <Check className="h-3.5 w-3.5 text-primary" />}
                     </button>
                   </div>
                 )}
@@ -690,7 +686,7 @@ function ProjectPage() {
                     ref={priorityPopupRef}
                     className="absolute top-full left-0 mt-1 w-32 bg-background rounded-[5px] shadow-lg border border-foreground/10 z-50 py-1"
                   >
-                    {["all", "urgent", "high", "normal", "low"].map((priority) => (
+                    {["all", "urgent", "high", "low"].map((priority) => (
                       <button
                         type="button"
                         key={priority}
@@ -745,7 +741,7 @@ function ProjectPage() {
           </div>
         </div>
 
-        {/* Conversation List - Scrollable + shadcn Pagination */}
+        {/* Conversation List - Scrollable */}
         <div className="flex-1 min-h-0">
           <Card className="h-full flex flex-col border-foreground/10 bg-card/50 shadow-xs rounded-[5px] overflow-hidden">
             <CardHeader className="py-3 px-4 shrink-0 flex flex-row items-center justify-between">
@@ -796,12 +792,14 @@ function ProjectPage() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
                             <span className="font-medium text-sm text-foreground truncate">{conv.name}</span>
-                            {conv.priority !== "Normal" && conv.priority !== "Low" && (
+                            {conv.priority && (
                               <span
                                 className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
                                   conv.priority === "Urgent"
                                     ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                                    : "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
+                                    : conv.priority === "High"
+                                      ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
+                                      : "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
                                 }`}
                               >
                                 {conv.priority}
