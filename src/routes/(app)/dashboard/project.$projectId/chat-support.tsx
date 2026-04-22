@@ -1,6 +1,19 @@
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Download, FileText, Image, Loader2, Paperclip, Plus, Send, Smile, UserCircle2, X, Zap } from "lucide-react";
+import {
+  Download,
+  FileText,
+  Image,
+  Loader2,
+  Mic,
+  Paperclip,
+  Plus,
+  Send,
+  Smile,
+  UserCircle2,
+  X,
+  Zap,
+} from "lucide-react";
 import type { Project } from "prisma/generated/client";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { QuickReplies } from "@/components/chat-support/QuickReplies";
@@ -236,10 +249,18 @@ const ChatWindow = ({ ticket }: { ticket: TicketWithCustomer | null }) => {
 const UserChatMessages = ({ ticket }: { ticket: TicketWithCustomer }) => {
   const { data: messages } = useSuspenseQuery(ticketMessageQueries.getTicketMessages(ticket.id));
   const queryClient = useQueryClient();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Socket: join room and listen for new messages
   useEffect(() => {
     socket.emit("join_room", ticket.id);
-    const handleNewMessage = () => queryClient.invalidateQueries({ queryKey: ticketMessageQueries.all });
+    const handleNewMessage = () => {
+      queryClient.invalidateQueries({ queryKey: ticketMessageQueries.all });
+      // Scroll after new message is added (query will refetch)
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
+    };
     socket.on("receive_message", handleNewMessage);
 
     return () => {
@@ -247,6 +268,11 @@ const UserChatMessages = ({ ticket }: { ticket: TicketWithCustomer }) => {
       socket.off("receive_message", handleNewMessage);
     };
   }, [ticket.id, queryClient]);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: messages must trigger scroll on updates
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
+  }, [messages]);
 
   return (
     <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
@@ -265,7 +291,9 @@ const UserChatMessages = ({ ticket }: { ticket: TicketWithCustomer }) => {
               className={`flex gap-3 max-w-[85%] ${isAgent ? "self-end flex-row-reverse" : "self-start"}`}
             >
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${isAgent ? "bg-[#0037b0]/10" : "bg-gray-200"}`}
+                className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                  isAgent ? "bg-[#0037b0]/10" : "bg-gray-200"
+                }`}
               >
                 <UserCircle2 size={20} className={isAgent ? "text-[#0037b0]" : "text-gray-500"} />
               </div>
@@ -308,11 +336,15 @@ const UserChatMessages = ({ ticket }: { ticket: TicketWithCustomer }) => {
                 {msg.attachments?.map((att: any) => (
                   <div
                     key={att.id || att.name}
-                    className={`p-3 border flex items-center gap-3 min-w-[260px] ${isAgent ? "bg-indigo-700 border-indigo-500" : "bg-white border-gray-200"}`}
+                    className={`p-3 border flex items-center gap-3 min-w-[260px] ${
+                      isAgent ? "bg-indigo-700 border-indigo-500" : "bg-white border-gray-200"
+                    }`}
                     style={{ borderRadius: "5px" }}
                   >
                     <div
-                      className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${isAgent ? "bg-indigo-800" : "bg-indigo-50"}`}
+                      className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
+                        isAgent ? "bg-indigo-800" : "bg-indigo-50"
+                      }`}
                     >
                       <FileText size={20} className={isAgent ? "text-indigo-200" : "text-indigo-600"} />
                     </div>
@@ -325,7 +357,9 @@ const UserChatMessages = ({ ticket }: { ticket: TicketWithCustomer }) => {
                     <button
                       type="button"
                       onClick={() => window.open(att.url, "_blank")}
-                      className={`p-2 rounded-full transition-colors ${isAgent ? "text-indigo-200 hover:bg-indigo-800" : "text-indigo-600 hover:bg-indigo-50"}`}
+                      className={`p-2 rounded-full transition-colors ${
+                        isAgent ? "text-indigo-200 hover:bg-indigo-800" : "text-indigo-600 hover:bg-indigo-50"
+                      }`}
                     >
                       <Download size={16} />
                     </button>
@@ -336,6 +370,8 @@ const UserChatMessages = ({ ticket }: { ticket: TicketWithCustomer }) => {
           );
         })
       )}
+      {/* Empty div for scrolling to the bottom */}
+      <div ref={messagesEndRef} />
     </div>
   );
 };
@@ -493,7 +529,7 @@ const UserChatInput = ({ ticket }: { ticket: TicketWithCustomer }) => {
               <button
                 type="button"
                 onClick={() => removeUpload(u.id)}
-                className="absolute top-0.5 right-0.5 w-5 h-5 bg-black/60 text-white rounded-full flex items-center justify-center hover:bg-black/80"
+                className="absolute top-0.5 right-0.5 w-5 h-5 bg-black/60 text-white rounded-full flex items-center justify-center hover:bg-indigo-50"
               >
                 <X size={10} strokeWidth={3} />
               </button>
@@ -514,6 +550,13 @@ const UserChatInput = ({ ticket }: { ticket: TicketWithCustomer }) => {
       <form onSubmit={handleSubmit} className="flex items-end gap-2">
         <div className="flex items-center gap-1 px-2 border-r border-gray-200 shrink-0 self-end">
           <button
+            type="button"
+            className="p-2 text-[#0037b0] hover:bg-[#0037b0]/10 transition-colors"
+            style={{ borderRadius: "5px" }}
+          >
+            <Mic size={20} />
+          </button>
+          <button
             ref={zapButtonRef}
             type="button"
             onClick={() => setShowQuickResponses(!showQuickResponses)}
@@ -527,7 +570,7 @@ const UserChatInput = ({ ticket }: { ticket: TicketWithCustomer }) => {
               ref={paperclipButtonRef}
               type="button"
               onClick={() => setAttachOpen(!attachOpen)}
-              className="p-2 text-gray-500 hover:bg-gray-100 transition-colors"
+              className="p-2 text-[#0037b0] hover:bg-[#0037b0]/10 transition-colors"
               style={{ borderRadius: "5px" }}
             >
               <Paperclip size={20} />
@@ -541,14 +584,14 @@ const UserChatInput = ({ ticket }: { ticket: TicketWithCustomer }) => {
                 <button
                   type="button"
                   onClick={() => handleFileSelect("image")}
-                  className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 flex items-center gap-2 text-gray-700"
+                  className="w-full text-left px-3 py-2 text-xs hover:bg-[#0037b0]/10 flex items-center gap-2 text-gray-700"
                 >
                   <Image size={16} className="text-[#0037b0]" /> Image
                 </button>
                 <button
                   type="button"
                   onClick={() => handleFileSelect("document")}
-                  className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 flex items-center gap-2 text-gray-700"
+                  className="w-full text-left px-3 py-2 text-xs hover:bg-[#0037b0]/10 flex items-center gap-2 text-gray-700"
                 >
                   <FileText size={16} className="text-[#0037b0]" /> Document
                 </button>
@@ -572,7 +615,7 @@ const UserChatInput = ({ ticket }: { ticket: TicketWithCustomer }) => {
           <button
             ref={emojiButtonRef}
             type="button"
-            className="p-2 text-gray-500 hover:text-[#0037b0] transition-colors"
+            className="p-2 text-[#0037b0] hover:bg-[#0037b0]/10 transition-colors"
             style={{ borderRadius: "5px" }}
           >
             <Smile size={20} />
