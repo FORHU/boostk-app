@@ -10,7 +10,7 @@ import {
   Plus,
   Send,
   Smile,
-  UserCircle2,
+  SquareUser,
   X,
   Zap,
 } from "lucide-react";
@@ -224,7 +224,7 @@ const ChatWindow = ({ ticket }: { ticket: TicketWithCustomer | null }) => {
     <div className="h-full w-1/2 flex flex-col bg-white border-r relative min-w-0">
       <div className="px-4 py-3 border-b bg-indigo-50 flex items-center gap-3">
         <div className="relative shrink-0" style={{ width: 40, height: 40 }}>
-          <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#0037b0] to-[#0037b0] flex items-center justify-center shadow-md">
+          <div className="absolute inset-0 rounded-[5px] bg-gradient-to-br from-[#0037b0] to-[#0037b0] flex items-center justify-center shadow-md">
             <span className="text-xl font-bold text-white">
               {ticket.customer.name
                 .split(" ")
@@ -291,11 +291,11 @@ const UserChatMessages = ({ ticket }: { ticket: TicketWithCustomer }) => {
               className={`flex gap-3 max-w-[85%] ${isAgent ? "self-end flex-row-reverse" : "self-start"}`}
             >
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                className={`w-8 h-8 rounded-[5px] flex items-center justify-center shrink-0 ${
                   isAgent ? "bg-[#0037b0]/10" : "bg-gray-200"
                 }`}
               >
-                <UserCircle2 size={20} className={isAgent ? "text-[#0037b0]" : "text-gray-500"} />
+                <SquareUser size={20} className={isAgent ? "text-[#0037b0]" : "text-gray-500"} />
               </div>
 
               <div className={`flex flex-col gap-1 ${isAgent ? "items-end" : "items-start"}`}>
@@ -311,7 +311,7 @@ const UserChatMessages = ({ ticket }: { ticket: TicketWithCustomer }) => {
                 {msg.content && (
                   <div
                     style={{ borderRadius: "5px" }}
-                    className={`px-4 py-2 text-sm ${isAgent ? "bg-[#0037b0] text-white" : "bg-gray-100 text-gray-800"}`}
+                    className={`px-4 py-2 text-sm ${isAgent ? "bg-[#ebf2ff] text-black" : "bg-gray-100 text-gray-800"}`}
                   >
                     {!isAgent && msg.translatedContent ? (
                       <div>
@@ -661,7 +661,7 @@ const CustomerDetails = ({ ticket }: { ticket: TicketWithCustomer | null }) => {
       <div className="flex-1 overflow-auto">
         <div className="flex flex-row items-start pt-5 px-5 pb-1 gap-3">
           <div className="relative shrink-0" style={{ width: 40, height: 40 }}>
-            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#0037b0] to-[#0037b0] flex items-center justify-center shadow-md">
+            <div className="absolute inset-0 rounded-[5px] bg-gradient-to-br from-[#0037b0] to-[#0037b0] flex items-center justify-center shadow-md">
               <span className="text-xl font-bold text-white">{agentInitials}</span>
             </div>
           </div>
