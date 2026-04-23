@@ -147,8 +147,6 @@ const TicketDetails = ({ ticket }: { ticket: TicketWithCustomer | null }) => {
   const priorityButtonRef = useRef<HTMLButtonElement>(null);
   const priorityPopupRef = useRef<HTMLDivElement>(null);
 
-  const [copied, setCopied] = useState(false);
-
   const handleCopyId = () => {
     if (!ticket) return;
     navigator.clipboard.writeText(ticket.id);
@@ -559,7 +557,6 @@ const UserChatMessages = ({ ticket }: { ticket: TicketWithCustomer }) => {
             </Fragment>
           );
         })
-
       )}
       {/* Empty div for scrolling to the bottom */}
       <div ref={messagesEndRef} />
