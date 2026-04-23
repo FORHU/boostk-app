@@ -2,17 +2,23 @@ import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-q
 import { createFileRoute } from "@tanstack/react-router";
 import {
   ChevronDown,
+  ChevronUp,
   Copy,
   Download,
+  ExternalLink,
   FileText,
   Image,
   Loader2,
   Mic,
+  MoreVertical,
   Paperclip,
+  Pencil,
   Plus,
+  RotateCcw,
   Send,
   Smile,
   SquareUser,
+  Trash2,
   X,
   Zap,
 } from "lucide-react";
@@ -147,6 +153,11 @@ const TicketDetails = ({ ticket }: { ticket: TicketWithCustomer | null }) => {
   const priorityButtonRef = useRef<HTMLButtonElement>(null);
   const priorityPopupRef = useRef<HTMLDivElement>(null);
 
+  const [submitOpen, setSubmitOpen] = useState(false);
+  const submitButtonRef = useRef<HTMLButtonElement>(null);
+  const submitPopupRef = useRef<HTMLDivElement>(null);
+  const [submitStatus, setSubmitStatus] = useState("OPEN");
+
   const handleCopyId = () => {
     if (!ticket) return;
     navigator.clipboard.writeText(ticket.id);
@@ -189,10 +200,21 @@ const TicketDetails = ({ ticket }: { ticket: TicketWithCustomer | null }) => {
       ) {
         setPriorityOpen(false);
       }
+
+      // Submit outside click
+      if (
+        submitOpen &&
+        submitButtonRef.current &&
+        !submitButtonRef.current.contains(target) &&
+        submitPopupRef.current &&
+        !submitPopupRef.current.contains(target)
+      ) {
+        setSubmitOpen(false);
+      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [assigneeOpen, statusOpen, priorityOpen]);
+  }, [assigneeOpen, statusOpen, priorityOpen, submitOpen]);
 
   if (!ticket) return <div className="h-full w-1/4 border-r border-slate-100 bg-white p-4"></div>;
 
@@ -206,12 +228,28 @@ const TicketDetails = ({ ticket }: { ticket: TicketWithCustomer | null }) => {
       </div>
       <div className="space-y-6">
         <div>
-          <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1.5">Requester</span>
+          <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1.5">
+            Department
+          </span>
           <div
             className="px-3 py-2 bg-slate-50 border border-slate-200 text-sm text-slate-700 font-medium"
             style={{ borderRadius: "6px" }}
           >
-            {ticket.customer.name}
+            Support
+          </div>
+        </div>
+        <div>
+          <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1.5">
+            Requester
+          </span>
+          <div
+            className="px-3 py-2 bg-slate-50 border border-slate-200 text-sm text-slate-700 font-medium flex items-center justify-between"
+            style={{ borderRadius: "6px" }}
+          >
+            <span>{ticket.customer.name}</span>
+            <span className="text-[10px] font-bold text-slate-400 bg-white border border-slate-200 px-1.5 py-0.5 rounded uppercase">
+              {ticket.customer.language}
+            </span>
           </div>
         </div>
         <div>
@@ -263,7 +301,9 @@ const TicketDetails = ({ ticket }: { ticket: TicketWithCustomer | null }) => {
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1.5">Status</span>
+            <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1.5">
+              Current Status
+            </span>
             <div className="relative">
               <button
                 ref={statusButtonRef}
@@ -280,7 +320,7 @@ const TicketDetails = ({ ticket }: { ticket: TicketWithCustomer | null }) => {
                   ref={statusPopupRef}
                   className="absolute top-full left-0 mt-1.5 w-full bg-white border border-slate-200 rounded-lg shadow-xl z-20 p-1 animate-in fade-in zoom-in-95 duration-100"
                 >
-                  {["OPEN", "PENDING", "RESOLVED", "CLOSED"].map((status, idx, arr) => (
+                  {["OPEN", "CLOSED"].map((status, idx, arr) => (
                     <div key={status}>
                       <button
                         type="button"
@@ -317,7 +357,7 @@ const TicketDetails = ({ ticket }: { ticket: TicketWithCustomer | null }) => {
                   ref={priorityPopupRef}
                   className="absolute top-full left-0 mt-1.5 w-full bg-white border border-slate-200 rounded-lg shadow-xl z-20 p-1 animate-in fade-in zoom-in-95 duration-100"
                 >
-                  {["LOW", "NORMAL", "HIGH", "URGENT"].map((priority, idx, arr) => (
+                  {["LOW", "NORMAL", "HIGH"].map((priority, idx, arr) => (
                     <div key={priority}>
                       <button
                         type="button"
@@ -337,15 +377,27 @@ const TicketDetails = ({ ticket }: { ticket: TicketWithCustomer | null }) => {
             </div>
           </div>
         </div>
-        <div>
-          <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1.5">Created On</span>
-          <p className="text-sm font-medium text-slate-600 px-1">
-            {new Date(ticket.createdAt).toLocaleDateString(undefined, {
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-            })}
-          </p>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1.5">Created On</span>
+            <p className="text-sm font-medium text-slate-600 px-1">
+              {new Date(ticket.createdAt).toLocaleDateString(undefined, {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })}
+            </p>
+          </div>
+          <div>
+            <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1.5">Last Active</span>
+            <p className="text-sm font-medium text-slate-600 px-1">
+              {new Date(ticket.updatedAt).toLocaleDateString(undefined, {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })}
+            </p>
+          </div>
         </div>
         <div>
           <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1.5">Ticket ID</span>
@@ -365,6 +417,63 @@ const TicketDetails = ({ ticket }: { ticket: TicketWithCustomer | null }) => {
             >
               <Copy className="h-3.5 w-3.5" />
             </button>
+          </div>
+
+          <div className="pt-4 flex justify-end">
+            <div className="relative flex items-stretch shadow-sm">
+              <button
+                type="button"
+                className="text-white text-sm py-2 px-4 transition-colors flex items-center gap-1.5"
+                style={{ 
+                  backgroundColor: "#203a68ff", 
+                  borderTopLeftRadius: "4px", 
+                  borderBottomLeftRadius: "4px" 
+                }}
+              >
+                <span className="opacity-100">Submit Status as</span>
+                <span>
+                  <span className="font-bold capitalize">{submitStatus.toLowerCase()}</span>
+                </span>
+              </button>
+              <button
+                ref={submitButtonRef}
+                type="button"
+                onClick={() => setSubmitOpen(!submitOpen)}
+                className="text-white px-3 border-l border-white/10 transition-colors"
+                style={{ 
+                  backgroundColor: "#203a68ff", 
+                  borderTopRightRadius: "4px", 
+                  borderBottomRightRadius: "4px" 
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#7f9bd7")}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#203a68ff")}
+              >
+                <ChevronDown className="h-4 w-4 opacity-80" />
+              </button>
+
+              {submitOpen && (
+                <div
+                  ref={submitPopupRef}
+                  className="absolute top-full right-0 mt-1.5 w-48 bg-white border border-slate-200 rounded-lg shadow-xl z-20 p-1 animate-in fade-in slide-in-from-top-2 duration-100"
+                >
+                  {["OPEN", "CLOSED"].map((status, idx, arr) => (
+                    <div key={status}>
+                      <button
+                        type="button"
+                        className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 rounded-md transition-colors font-medium text-slate-700"
+                        onClick={() => {
+                          setSubmitStatus(status);
+                          setSubmitOpen(false);
+                        }}
+                      >
+                        <span className="font-bold capitalize">{status.toLowerCase()}</span>
+                      </button>
+                      {idx !== arr.length - 1 && <div className="h-px bg-slate-100 my-1 mx-2" />}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -824,19 +933,18 @@ const UserChatInput = ({ ticket }: { ticket: TicketWithCustomer }) => {
 
 // Right column: agent profile and notes
 const CustomerDetails = ({ ticket }: { ticket: TicketWithCustomer | null }) => {
-  const [note, setNote] = useState("");
-  const [savedNotes, setSavedNotes] = useState<string[]>([]);
+  const [note, setNote] = useState("Customer is a VIP. Prefers email for non-urgent matters.");
+  const [isEditing, setIsEditing] = useState(false);
+  const [tempNote, setTempNote] = useState(note);
+  const [history] = useState([
+    { id: 1, title: "Support", time: "16 minutes ago", status: "Open", color: "bg-red-500" },
+    { id: 2, title: "Billing", time: "Wednesday 1:17 pm", status: "Closed", color: "bg-slate-400" },
+    { id: 3, title: "Sales", time: "Wednesday 8:21 am", status: "Closed", color: "bg-slate-400" },
+    { id: 4, title: "Returns", time: "April 12, 10:45 am", status: "Closed", color: "bg-slate-400" },
+    { id: 5, title: "Support", time: "March 28, 2:15 pm", status: "Closed", color: "bg-slate-400" },
+    { id: 6, title: "Exchanges", time: "March 15, 9:00 am", status: "Closed", color: "bg-slate-400" }
+  ]);
 
-  const handleSaveNote = () => {
-    if (note.trim()) {
-      setSavedNotes([...savedNotes, note.trim()]);
-      setNote("");
-    }
-  };
-
-  const handleCancel = () => {
-    setNote("");
-  };
 
   if (!ticket) return <div className="h-full w-1/4 bg-slate-50 p-4"></div>;
 
@@ -845,89 +953,124 @@ const CustomerDetails = ({ ticket }: { ticket: TicketWithCustomer | null }) => {
   const agentInitials = "AM";
 
   return (
-    <div className="h-full w-1/4 bg-[#F0F3FF] flex flex-col overflow-y-auto">
-      <div className="flex-1 overflow-auto">
-        <div className="flex flex-row items-center pt-5 px-5 pb-1 gap-3">
-          <div className="relative shrink-0" style={{ width: 40, height: 40 }}>
-            <div className="absolute inset-0 rounded-[5px] bg-[#0037b0] flex items-center justify-center shadow-md">
-              <span className="text-xl font-bold text-white">{agentInitials}</span>
+    <div className="h-full w-1/4 bg-white flex flex-col border-l border-slate-200">
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+        {/* Profile Header */}
+        <div className="p-5">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-9 rounded-full bg-slate-400 flex items-center justify-center">
+                <SquareUser className="h-5.5 w-5.5 text-white/90" />
+              </div>
+              <h3 className="text-[16px] font-bold text-slate-800 tracking-tight">{agentName}</h3>
             </div>
-          </div>
-          <div className="flex flex-col justify-center">
-            <span className="text-base font-bold text-[#202631]">{agentName}</span>
-          </div>
-        </div>
-
-        <div className="flex flex-row items-center px-4 pt-3 pb-1 gap-2">
-          <button
-            type="button"
-            className="flex-1 flex items-center justify-center py-3 px-4 bg-white text-xs font-medium text-[#222933] shadow-sm hover:bg-gray-50 transition-colors"
-            style={{ borderRadius: "5px" }}
-          >
-            Edit Profile
-          </button>
-        </div>
-        <div className="mt-4 bg-[#EFF2FE] h-[6px]" />
-
-        <div className="px-5 pt-4 pb-10">
-          <h4 className="font-bold text-lg mb-4 text-slate-800">About Agent</h4>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center py-2 border-b border-[#E8EAEF]">
-              <span className="text-xs font-medium text-gray-500 uppercase tracking-tight">EMAIL</span>
-              <p className="text-sm font-medium text-[#1357CA]">{agentEmail}</p>
-            </div>
-            <div className="flex justify-between items-center py-2">
-              <span className="text-xs font-medium text-gray-500 uppercase tracking-tight">CONTACT NUMBER</span>
-              <p className="text-sm font-medium text-[#252C37]">63974586421</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-[#EFF2FE] h-[6px]" />
-
-        <div className="px-5 pt-6 pb-2">
-          <h5 className="text-xs font-medium text-gray-500 mb-3 uppercase tracking-tight">NOTES</h5>
-
-          <div className="relative px-4 pt-4 pb-10 bg-white border border-[#F0F1F3]" style={{ borderRadius: "5px" }}>
-            <textarea
-              className="w-full bg-transparent resize-none outline-none text-sm text-[#202631] caret-[#1357CA]"
-              style={{ minHeight: 80 }}
-              placeholder="Type a note here..."
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-            />
-            <div className="absolute bottom-3 right-4 flex flex-row items-center gap-3">
-              <button
-                type="button"
-                onClick={handleCancel}
-                className="text-xs font-medium text-[#535663] bg-transparent border-none cursor-pointer p-0 hover:text-gray-800"
-              >
-                Cancel
+            <div className="flex items-center gap-1.5">
+              <button className="p-1 text-slate-400 hover:text-indigo-600 transition-colors">
+                <ExternalLink className="h-4 w-4" />
               </button>
-              <button
-                type="button"
-                onClick={handleSaveNote}
-                className="text-xs font-medium text-[#1559CA] bg-transparent border-none cursor-pointer p-0 hover:text-[#0037b0]"
-              >
-                Save Note
+              <button className="p-1 text-slate-400 hover:text-indigo-600 transition-colors">
+                <ChevronDown className="h-4 w-4" />
               </button>
             </div>
           </div>
+
+          {/* Profile Fields */}
+          <div className="space-y-3.5">
+            <div className="grid grid-cols-[90px_1fr] items-baseline">
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Email</span>
+              <span className="text-[13px] text-[#1559CA] font-medium break-all leading-tight">{agentEmail}</span>
+            </div>
+            <div className="grid grid-cols-[90px_1fr] items-center">
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Local time</span>
+              <span className="text-[13px] text-slate-700 font-medium">Fri, 7:58 AM PDT</span>
+            </div>
+            <div className="grid grid-cols-[90px_1fr] items-center">
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Language</span>
+              <span className="text-[13px] text-slate-700 font-medium">English (United States)</span>
+            </div>
+            <div className="flex flex-col gap-2 pt-1">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Notes</span>
+              </div>
+              <textarea
+                className={`w-full text-[13px] text-slate-700 p-2.5 bg-white border rounded-[3px] resize-none outline-none transition-all min-h-[70px] placeholder:text-slate-400 font-medium ${
+                  isEditing ? "border-blue-400 shadow-sm" : "border-slate-200"
+                }`}
+                placeholder="Add user notes"
+                value={isEditing ? tempNote : note}
+                onFocus={() => {
+                  setTempNote(note);
+                  setIsEditing(true);
+                }}
+                onChange={(e) => setTempNote(e.target.value)}
+              />
+              {isEditing && (
+                <div className="flex items-center justify-end gap-2 mt-1 animate-in fade-in slide-in-from-top-1 duration-200">
+                  <button 
+                    onClick={() => setIsEditing(false)}
+                    className="px-3 py-1 text-[11px] font-bold text-slate-500 hover:text-slate-700 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setNote(tempNote);
+                      setIsEditing(false);
+                    }}
+                    className="px-3 py-1 bg-blue-600 text-white text-[11px] font-bold rounded hover:bg-blue-700 transition-colors shadow-sm"
+                  >
+                    Save note
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
-        <div className="px-6 pb-6 pt-2">
-          <button
-            type="button"
-            onClick={() => {
-              const textarea = document.querySelector("textarea");
-              if (textarea) textarea.focus();
-            }}
-            className="w-full flex flex-row items-center justify-center gap-2 py-3 bg-[#E3EAFB] border border-[#A4BDEC] cursor-pointer hover:bg-[#d0ddf5] transition-colors"
-            style={{ borderRadius: "5px" }}
-          >
-            <Plus size={10} className="text-[#0D53C9]" />
-            <span className="text-xs font-semibold text-[#0D53C9]">Add Note</span>
-          </button>
+        <div className="bg-slate-100 h-px mx-5" />
+
+        {/* Interaction History */}
+        <div className="pt-6 flex flex-col min-h-0 h-[calc(100vh-320px)]">
+          <div className="flex items-center justify-between px-5 mb-5 shrink-0">
+            <h4 className="text-[14px] font-bold text-slate-800 uppercase tracking-wider">Interaction history</h4>
+            <div className="flex items-center gap-2">
+              <button className="p-1 text-slate-400 hover:text-blue-600 transition-colors">
+                <RotateCcw className="h-4 w-4" />
+              </button>
+              <button className="p-1 text-slate-400 hover:text-blue-600 transition-colors">
+                <ChevronUp className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto custom-scrollbar relative">
+            {history.map((item, idx) => (
+              <div
+                key={item.id}
+                className={`group relative pl-14 pr-5 py-5 transition-colors border-l-4 border-transparent ${
+                  idx === 0 ? "bg-[#eaf1fb] border-l-[#1357CA]" : "hover:bg-slate-50"
+                }`}
+              >
+                {/* Vertical Connector Line */}
+                {idx !== history.length - 1 && (
+                  <div className="absolute left-[24px] top-[30px] bottom-[-30px] w-[1px] bg-slate-200" />
+                )}
+
+                {/* Status Dot (Square) */}
+                <div className={`absolute left-[21px] top-6 w-[7px] h-[7px] rounded-sm ${item.color} z-10 shadow-sm`} />
+
+                <div className="flex flex-col">
+                  <h5 className="text-[13px] font-bold text-slate-800 mb-1 transition-colors">
+                    {item.title}
+                  </h5>
+                  <span className="text-[12px] text-slate-500 mb-1">{item.time}</span>
+                  <span className="text-[12px] text-slate-500 font-medium capitalize">
+                    Status {item.status.toLowerCase()}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
