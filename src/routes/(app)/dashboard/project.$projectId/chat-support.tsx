@@ -626,7 +626,7 @@ const UserChatMessages = ({ ticket }: { ticket: TicketWithCustomer }) => {
     },
     {
       id: "mock_voice_2",
-      customer: { name: "Alex Mercer" },
+      customer: { name: "Customer" },
       content: "What do you think of this jade-like water soundtrack?",
       createdAt: new Date(Date.now() - 1200000).toISOString(),
       attachments: [
