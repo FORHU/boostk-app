@@ -5,12 +5,12 @@ export const Route = createFileRoute("/(app)/dashboard/project/$projectId/agents
 });
 
 function OrganizationUsagePage() {
-  const { organizationId } = Route.useParams();
+  const { projectId } = Route.useParams();
   return (
     <div>
-      <h1>Usage - {organizationId}</h1>
+      <h1>Usage - {projectId}</h1>
       <div>
-        <div>Welcome to Organization Usage Page</div>
+        <div>Welcome to Project Agents Page</div>
       </div>
     </div>
   );
