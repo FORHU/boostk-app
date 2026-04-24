@@ -2,8 +2,6 @@ import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-q
 import { createFileRoute } from "@tanstack/react-router";
 import {
   AlertCircle,
-  Archive,
-  Check,
   CheckCheck,
   ChevronDown,
   ChevronUp,
@@ -37,15 +35,6 @@ import type { TicketWithCustomer } from "@/modules/ticket/ticket.types";
 import { createUserTicketMessageFn } from "@/modules/ticket-message/ticket-message.functions";
 import { ticketMessageQueries } from "@/modules/ticket-message/ticket-message.queries";
 
-/**
- * MODERNIZED CHAT SUPPORT FEATURES:
- * - Professional Blue Palette: Migrated all UI elements to the new custom blue design system.
- * - Dynamic History: Real-time logging of status changes in the Interaction History timeline.
- * - Simplified Statusing: One-click status updates with integrated loading indicators.
- * - Refined Tagging: Modernized tag UI with fully rounded corners and custom blue highlights.
- * - UI Consistency: Standardized 5px corner radius and updated all overlays (popups, drag-drop).
- * - Message Status Indicators: Sent/Delivered/Read/Failed status tracking below message bubbles.
- */
 export const Route = createFileRoute("/(app)/dashboard/project/$projectId/chat-support")({
   loader: async ({ context }) => {
     context.queryClient.ensureQueryData(ticketQueries.getProjectTickets(context.project.id));
@@ -342,7 +331,9 @@ const TicketDetails = ({
               <div ref={assigneePopupRef} className="absolute top-full left-0 mt-1.5 w-full bg-white border border-slate-200 rounded-[5px] shadow-xl z-20 p-1 animate-in fade-in zoom-in-95 duration-100">
                 {["Alex Mercer", "Support Josie"].map((assignee, idx, arr) => (
                   <div key={assignee}>
-                    <button type="button" className="w-full text-left px-3 py-1.5 text-sm hover:bg-slate-50 rounded-md transition-colors font-medium text-slate-700" onClick={() => { setSelectedAssignee(assignee); setAssigneeOpen(false); }}>{assignee}</button>
+                    <button type="button" className="w-full text-left px-3 py-1.5 text-sm hover:bg-slate-50 rounded-md transition-colors font-medium text-slate-700" onClick={() => { setSelectedAssignee(assignee); setAssigneeOpen(false); }}>{assignee}
+                      
+                    </button>
                     {idx !== arr.length - 1 && <div className="h-px bg-slate-100 my-1 mx-2" />}
                   </div>
                 ))}
@@ -363,7 +354,8 @@ const TicketDetails = ({
                   {["OPEN", "CLOSED", "ARCHIVED"].map((status, idx, arr) => (
                     <div key={status}>
                       <button type="button" className="w-full text-left px-3 py-1.5 text-sm hover:bg-slate-50 rounded-md transition-colors capitalize font-medium text-slate-700" onClick={() => { onUpdateStatus(ticket.id, status); setStatusOpen(false); }}>{status.toLowerCase()}</button>
-                      {idx !== arr.length - 1 && <div className="h-px bg-slate-100 my-1 mx-2" />}
+                      {idx !== arr.length - 1 && 
+                      <div className="h-px bg-slate-100 my-1 mx-2" />}
                     </div>
                   ))}
                 </div>
@@ -521,10 +513,14 @@ const ChatWindow = ({ ticket, archivedTickets, onClose }: { ticket: TicketWithCu
       )}
       <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-white sticky top-0 z-10">
         <div className="flex items-center gap-3">
-          <div className="relative shrink-0" style={{ width: 36, height: 36 }}><div className="absolute inset-0 rounded-[5px] bg-[#0038b0] flex items-center justify-center"><span className="text-sm font-bold text-white">{ticket.customer.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}</span></div></div>
+          <div className="relative shrink-0" style={{ width: 36, height: 36 }}><div className="absolute inset-0 rounded-[5px] bg-[#0038b0] flex items-center justify-center">
+            <span className="text-sm font-bold text-white">{ticket.customer.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}</span>
+            </div>
+            </div>
           <div className="flex flex-col"><span className="font-bold text-slate-900 text-sm leading-tight">{ticket.customer.name}</span><span className="text-[10px] text-slate-400 font-medium">#{ticket.referenceNumber}</span></div>
         </div>
-        <button type="button" onClick={onClose} className="p-1.5 text-slate-400 hover:text-black transition-all ml-auto" title="Close Chat"><X className="h-5 w-5" /></button>
+        <button type="button" onClick={onClose} className="p-1.5 text-slate-400 hover:text-black transition-all ml-auto" title="Close Chat"><X className="h-5 w-5" />
+        </button>
       </div>
       <div className="flex-1 overflow-hidden flex flex-col bg-slate-50/30">
         <Suspense fallback={<div className="flex-1 flex items-center justify-center p-4">Loading messages...</div>}><UserChatMessages ticket={ticket} /></Suspense>
@@ -553,14 +549,54 @@ const UserChatMessages = ({ ticket }: { ticket: TicketWithCustomer }) => {
     return () => { socket.emit("leave_room", ticket.id); socket.off("receive_message", handleNewMessage); };
   }, [ticket.id, queryClient]);
 
+  const [selectedMedia, setSelectedMedia] = useState<{ url: string; type: "image" | "video" } | null>(null);
+
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "auto" }); }, [messages]);
+  // TODO: Remove mock messages
+  const mockMessages = [
+    {
+      id: "mock_1",
+      userId: "agent_1",
+      content: "Here are the Earth texture assets you requested:",
+      createdAt: new Date(Date.now() - 3600000).toISOString(),
+      status: "READ",
+      attachments: [
+        { id: "img_1", name: "earthtexture.png", size: "2.4 MB", type: "image", url: "/images/earthtexture.png" },
+        { id: "img_2", name: "earth-specular.jpg", size: "1.1 MB", type: "image", url: "/images/earth-specular.jpg" },
+        { id: "img_3", name: "earth-map.jpg", size: "3.2 MB", type: "image", url: "/images/earth-map.jpg" },
+      ]
+    },
+    {
+      id: "mock_2",
+      userId: "agent_1",
+      content: "I've also attached the latest technical requirements document.",
+      createdAt: new Date(Date.now() - 1800000).toISOString(),
+      status: "READ",
+      attachments: [
+        { id: "doc_1", name: "BoostK Technical Requirements.pdf", size: "850 KB", type: "document", url: "/documents/BoostK Technical Requirments.pdf" }
+      ]
+    },
+    {
+      id: "mock_3",
+      userId: "agent_1",
+      content: "Check out these marketing clips for the upcoming launch:",
+      createdAt: new Date(Date.now() - 600000).toISOString(),
+      status: "DELIVERED",
+      attachments: [
+        { id: "vid_1", name: "marketing-1.mp4", size: "12.5 MB", type: "video", url: "/videos/marketing-1.mp4" },
+        { id: "vid_2", name: "marketing-2.mp4", size: "18.2 MB", type: "video", url: "/videos/marketing-2.mp4" }
+      ]
+    }
+  ];
+
+  const allMessages = [...mockMessages, ...messages];
 
   return (
     <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
-      {messages.length === 0 ? (<div className="m-auto text-gray-400 text-sm">No messages yet. Say hi!</div>) : (
-        messages.map((msg: any, idx: number) => {
+      {allMessages.length === 0 ? (<div className="m-auto text-gray-400 text-sm">No messages yet. Say hi!</div>) : (
+        allMessages.map((msg: any, idx: number) => {
           const isAgent = !!msg.userId;
-          const showDivider = idx === 0 || new Date(msg.createdAt).toLocaleDateString() !== new Date(messages[idx - 1].createdAt).toLocaleDateString();
+          const showDivider = idx === 0 || new Date(msg.createdAt).toLocaleDateString() !== new Date(allMessages[idx - 1].createdAt).toLocaleDateString();
           return (
             <Fragment key={msg.id}>
               {showDivider && (<div className="flex items-center gap-4 py-4 px-2"><div className="flex-1 h-px bg-slate-200" /><span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{new Intl.DateTimeFormat("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" }).format(new Date(msg.createdAt))}</span><div className="flex-1 h-px bg-slate-200" /></div>)}
@@ -574,12 +610,84 @@ const UserChatMessages = ({ ticket }: { ticket: TicketWithCustomer }) => {
                   {msg.content && (<div style={{ borderRadius: "5px" }} className={`px-4 py-2 text-sm ${isAgent ? "bg-[#eaf1fb] text-black" : "bg-gray-100 text-gray-800"}`}>
                     {msg.translatedContent ? (<div><div>{isAgent ? msg.content : msg.translatedContent}</div><div className={`text-[10px] mt-1 pt-1 border-t ${isAgent ? "border-[#0037b0]/20 text-[#0037b0]/60" : "border-gray-200 text-gray-500"}`}>{isAgent ? `Translated: ${msg.translatedContent}` : `Original: ${msg.content}`}</div></div>) : msg.content}
                   </div>)}
+                  {msg.content === "Sent 3 file(s)" && !msg.attachments?.length && (
+                    <div 
+                      onClick={() => setSelectedMedia({ url: "/images/cat-point-laughing.gif", type: "image" })}
+                      className="mt-2 rounded-[5px] overflow-hidden border border-slate-200 shadow-sm max-w-[300px] bg-[#eaf1fb] group cursor-pointer hover:border-[#0037b0] transition-all"
+                    >
+                      <div className="relative overflow-hidden">
+                        <img 
+                          src="/images/cat-point-laughing.gif" 
+                          alt="Mock Preview" 
+                          className="w-full h-auto object-cover max-h-[180px] group-hover:scale-105 transition-transform duration-500" 
+                        />
+                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <span className="bg-white/90 text-[#0037b0] px-3 py-1.5 rounded-full text-[10px] font-bold shadow-lg">View GIF</span>
+                        </div>
+                      </div>
+                      <div className="px-3 py-2 flex items-center justify-between">
+                        <div className="flex flex-col">
+                          <span className="text-[10px] font-bold text-slate-700">cat-point-laughing.gif</span>
+                          <span className="text-[8px] text-slate-400">1.2 MB • GIF</span>
+                        </div>
+                        <button className="p-1.5 text-slate-400 hover:text-[#0037b0] transition-colors"><ExternalLink size={14} /></button>
+                      </div>
+                    </div>
+                  )}
                   {msg.attachments?.map((att: any) => {
                     const isImage = att.type === "image" || att.name?.match(/\.(jpg|jpeg|png|gif|webp)$/i);
                     const isVoice = att.type === "voice";
-                    if (isImage) return (<div key={att.id} className="mt-2 rounded-lg overflow-hidden border border-slate-200 shadow-sm max-w-[300px]"><img src={att.url || "/images/ah-cat.gif"} alt="" className="w-full h-auto object-cover max-h-[200px]" /><div className="px-3 py-1.5 bg-white flex items-center justify-between"><span className="text-[10px] font-bold text-slate-500 truncate">{att.name}</span><button onClick={() => window.open(att.url, "_blank")} className="text-[#0037b0]"><ExternalLink size={12} /></button></div></div>);
-                    if (isVoice) return (<div key={att.id} className={`mt-2 p-3 rounded-xl flex items-center gap-3 min-w-[240px] shadow-sm ${isAgent ? "bg-[#0037b0] text-white" : "bg-white border border-slate-100"}`}><div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isAgent ? "bg-white/20" : "bg-[#eaf1fb]"}`}><RotateCcw size={18} className={isAgent ? "text-white" : "text-[#0037b0]"} /></div><div className="flex-1 flex flex-col gap-1"><div className="flex items-center gap-1">{[...Array(12)].map((_, i) => (<div key={i} className={`w-1 rounded-full ${isAgent ? "bg-white/40" : "bg-[#7f9bd7]/20"}`} style={{ height: 4 + Math.random() * 12 }} />))}</div><span className={`text-[9px] font-bold ${isAgent ? "text-white/60" : "text-slate-400"}`}>0:12 • Voice Message</span></div><button className={`p-2 rounded-full ${isAgent ? "hover:bg-white/10" : "hover:bg-slate-50"}`}><Download size={14} /></button></div>);
-                    return (<div key={att.id} className={`p-3 border flex items-center gap-3 min-w-[260px] shadow-sm ${isAgent ? "bg-[#0037b0]/90 border-[#0037b0]" : "bg-white border-gray-200"}`} style={{ borderRadius: "10px" }}><div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${isAgent ? "bg-[#0037b0]" : "bg-[#eaf1fb]"}`}><FileText size={20} className={isAgent ? "text-white/80" : "text-[#0037b0]"} /></div><div className="flex-1 min-w-0"><p className={`text-xs font-bold truncate ${isAgent ? "text-white" : "text-gray-900"}`}>{att.name}</p><p className={`text-[10px] ${isAgent ? "text-white/60" : "text-gray-500"}`}>{att.size}</p></div><button onClick={() => window.open(att.url, "_blank")} className={`p-2 rounded-full ${isAgent ? "text-white/60 hover:bg-white/10" : "text-[#0037b0] hover:bg-slate-50"}`}><Download size={16} /></button></div>);
+                    const isVideo = att.type === "video" || att.name?.match(/\.(mp4|mov|avi)$/i);
+
+                    if (isImage) return (
+                    <div key={att.id} onClick={() => setSelectedMedia({ url: att.url || "/images/cat-point-laughing.gif", type: "image" })} className="mt-2 rounded-[5px] overflow-hidden border border-slate-200 shadow-sm max-w-[300px] bg-[#eaf1fb] hover:border-[#0037b0] transition-colors cursor-pointer group">
+                      <div className="relative overflow-hidden">
+                        <img src={att.url || "/images/cat-point-laughing.gif"} alt="" className="w-full h-auto object-cover max-h-[200px] group-hover:scale-105 transition-transform duration-500" />
+                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <span className="bg-white/90 text-[#0037b0] px-3 py-1.5 rounded-full text-[10px] font-bold shadow-lg">View Image</span>
+                        </div>
+                      </div>
+                      <div className="px-3 py-1.5 flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-slate-500 truncate">{att.name}</span>
+                        <button onClick={(e) => { e.stopPropagation(); window.open(att.url, "_blank"); }} className="text-[#0037b0]"><ExternalLink size={12} /></button>
+                      </div>
+                    </div>);
+
+                    if (isVideo) return (
+                      <div 
+                        key={att.id} 
+                        onClick={() => setSelectedMedia({ url: att.url, type: "video" })}
+                        className="mt-2 rounded-[5px] overflow-hidden border border-slate-200 shadow-sm max-w-[300px] bg-slate-900 group cursor-pointer relative"
+                      >
+                        <div className="aspect-video bg-slate-800 flex items-center justify-center">
+                          <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white group-hover:scale-110 transition-transform">
+                            <History size={24} className="rotate-90" />
+                          </div>
+                        </div>
+                        <div className="absolute top-2 left-2 px-2 py-0.5 bg-black/60 rounded text-[8px] font-bold text-white uppercase tracking-wider">Video</div>
+                        <div className="px-3 py-2 bg-[#eaf1fb] flex items-center justify-between">
+                          <div className="flex flex-col">
+                            <span className="text-[10px] font-bold text-slate-700 truncate max-w-[180px]">{att.name}</span>
+                            <span className="text-[8px] text-slate-400">{att.size}</span>
+                          </div>
+                          <button onClick={(e) => { e.stopPropagation(); window.open(att.url, "_blank"); }} className="p-1.5 text-slate-400 hover:text-[#0037b0] transition-colors"><ExternalLink size={14} /></button>
+                        </div>
+                      </div>
+                    );
+
+                    if (isVoice) return (
+                    <div key={att.id} className={`mt-2 p-3 rounded-[5px] flex items-center gap-3 min-w-[240px] shadow-sm ${isAgent ? "bg-[#0037b0] text-white" : "bg-white border border-slate-100"}`}>
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isAgent ? "bg-white/20" : "bg-[#eaf1fb]"}`}><RotateCcw size={18} className={isAgent ? "text-white" : "text-[#0037b0]"} />
+                      </div>
+                      <div className="flex-1 flex flex-col gap-1">
+                        <div className="flex items-center gap-1">{[...Array(12)].map((_, i) => (<div key={i} className={`w-1 rounded-full ${isAgent ? "bg-white/40" : "bg-[#7f9bd7]/20"}`} style={{ height: 4 + Math.random() * 12 }} />))}</div>
+                        <span className={`text-[9px] font-bold ${isAgent ? "text-white/60" : "text-slate-400"}`}>0:12 • Voice Message</span>
+                      </div>
+                      <button className={`p-2 rounded-full ${isAgent ? "hover:bg-white/10" : "hover:bg-slate-50"}`}><Download size={14} />
+                      </button>
+                    </div>);
+
+                    return (<div key={att.id} className={`p-3 border flex items-center gap-3 min-w-[260px] shadow-sm ${isAgent ? "bg-[#0037b0]/90 border-[#0037b0]" : "bg-[#eaf1fb] border-gray-200"}`} style={{ borderRadius: "5px" }}><div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${isAgent ? "bg-[#0037b0]" : "bg-white"}`}><FileText size={20} className={isAgent ? "text-white/80" : "text-[#0037b0]"} /></div><div className="flex-1 min-w-0"><p className={`text-xs font-bold truncate ${isAgent ? "text-white" : "text-gray-900"}`}>{att.name}</p><p className={`text-[10px] ${isAgent ? "text-white/60" : "text-gray-500"}`}>{att.size}</p></div><button onClick={() => window.open(att.url, "_blank")} className={`p-2 rounded-full ${isAgent ? "text-white/60 hover:bg-white/10" : "text-[#0037b0] hover:bg-white"}`}><Download size={16} /></button></div>);
                   })}
                   {isAgent && <MessageStatus status={msg.status} />}
                 </div>
@@ -589,6 +697,39 @@ const UserChatMessages = ({ ticket }: { ticket: TicketWithCustomer }) => {
         })
       )}
       <div ref={messagesEndRef} />
+
+      {/* Lightbox Modal */}
+      {selectedMedia && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm animate-in fade-in duration-300">
+          <button 
+            onClick={() => setSelectedMedia(null)}
+            className="absolute top-6 right-6 w-12 h-12 bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center transition-all hover:rotate-90 z-[110]"
+          >
+            <X size={24} strokeWidth={3} />
+          </button>
+          
+          <div className="max-w-[90vw] max-h-[90vh] relative animate-in zoom-in-95 duration-300">
+            {selectedMedia.type === "video" ? (
+              <video 
+                src={selectedMedia.url} 
+                controls 
+                autoPlay 
+                className="w-full h-full rounded-lg shadow-2xl shadow-black/50 outline-none"
+              />
+            ) : (
+              <img 
+                src={selectedMedia.url} 
+                alt="Full view" 
+                className="w-full h-full object-contain rounded-lg shadow-2xl shadow-black/50"
+              />
+            )}
+            <div className="absolute bottom-[-40px] left-0 right-0 text-center">
+              <span className="text-white/60 text-xs font-medium">Click outside or use the exit button to close</span>
+            </div>
+          </div>
+          <div className="absolute inset-0 cursor-pointer" onClick={() => setSelectedMedia(null)} />
+        </div>
+      )}
     </div>
   );
 };
@@ -603,8 +744,6 @@ const UserChatInput = ({ ticket }: { ticket: TicketWithCustomer }) => {
   const [recordingDuration, setRecordingDuration] = useState(0);
   const timerRef = useRef<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const quickResponsesRef = useRef<HTMLDivElement>(null);
-  const attachMenuRef = useRef<HTMLDivElement>(null);
 
   const createMessageMutation = useMutation({
     mutationFn: createUserTicketMessageFn,
@@ -617,6 +756,12 @@ const UserChatInput = ({ ticket }: { ticket: TicketWithCustomer }) => {
     return () => window.removeEventListener("file-drop", handleFileDrop);
   }, []);
 
+  /**
+   * Processes uploaded files:
+   * - Images: JPG, PNG, WEBP, GIF (auto-generates previews)
+   * - Documents: PDF, DOC, DOCX, TXT
+   * - Constraints: Max 10MB per file
+   */
   const handleFiles = (files: File[]) => {
     files.forEach((file) => {
       if (file.size > 10 * 1024 * 1024) { toast.error(`${file.name} is too large (max 10MB)`); return; }
@@ -644,8 +789,16 @@ const UserChatInput = ({ ticket }: { ticket: TicketWithCustomer }) => {
           {uploads.map(u => (
             <div key={u.id} className="relative w-20 h-20 border border-slate-200 rounded-[8px] overflow-hidden shrink-0 bg-slate-50 flex items-center justify-center group">
               {u.type === "image" ? <img src={u.preview} className="w-full h-full object-cover" alt="" /> : u.type === "voice" ? <Mic size={24} className="text-[#0037b0]" /> : <FileText size={24} className="text-[#0037b0]" />}
-              {u.progress < 100 && <div className="absolute inset-0 bg-white/80 flex items-center justify-center p-2"><div className="w-full bg-slate-200 h-1 rounded-full overflow-hidden"><div className="bg-[#0037b0] h-full" style={{ width: `${u.progress}%` }} /></div></div>}
-              <button onClick={() => setUploads(p => p.filter(x => x.id !== u.id))} className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center"><Trash2 size={14} className="text-white" /></button>
+              {u.progress < 100 && 
+              <div className="absolute inset-0 bg-white/80 flex items-center justify-center p-2">
+                <div className="w-full bg-slate-200 h-1 rounded-full overflow-hidden">
+                  <div className="bg-[#0037b0] h-full" style={{ width: `${u.progress}%` }} />
+                </div>
+              </div>
+              }
+              <button onClick={() => setUploads(p => p.filter(x => x.id !== u.id))} className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center">
+                <Trash2 size={14} className="text-white" />
+              </button>
             </div>
           ))}
         </div>
@@ -653,12 +806,45 @@ const UserChatInput = ({ ticket }: { ticket: TicketWithCustomer }) => {
       {showQuickResponses && <QuickReplies onSelectReply={(t) => { setMessage(t); setShowQuickResponses(false); }} onClose={() => setShowQuickResponses(false)} />}
       <form onSubmit={handleSubmit} className="flex items-center gap-2">
         {isRecording ? (
-          <div className="flex-1 flex items-center gap-3"><button type="button" onClick={() => { clearInterval(timerRef.current); setIsRecording(false); }} className="p-2 text-slate-400 hover:text-red-500"><XCircle size={20} /></button><div className="flex-1 bg-[#0037b0] h-11 rounded-full px-4 flex items-center justify-between"><button type="button" onClick={handleStopRecording} className="w-7 h-7 bg-white rounded-full flex items-center justify-center text-[#0037b0]"><div className="w-2.5 h-2.5 bg-[#0037b0] rounded-sm" /></button><div className="flex-1 flex gap-1 mx-4">{[...Array(24)].map((_,i)=><div key={i} className="flex-1 bg-white/40 rounded-full h-4 animate-pulse" />)}</div><span className="text-white font-mono text-[11px]">{Math.floor(recordingDuration/60)}:{(recordingDuration%60).toString().padStart(2,"0")}</span></div><button type="submit" className="w-10 h-10 bg-[#0037b0] text-white rounded-full flex items-center justify-center shadow-md"><Send size={18} fill="currentColor" /></button></div>
+          <div className="flex-1 flex items-center gap-3">
+            <button type="button" onClick={() => { clearInterval(timerRef.current); setIsRecording(false); }} className="p-2 text-slate-400 hover:text-red-500"><XCircle size={20} />
+            </button>
+            <div className="flex-1 bg-[#0037b0] h-11 rounded-full px-4 flex items-center justify-between">
+              <button type="button" onClick={handleStopRecording} className="w-7 h-7 bg-white rounded-full flex items-center justify-center text-[#0037b0]">
+                <div className="w-2.5 h-2.5 bg-[#0037b0] rounded-sm" />
+              </button>
+              <div className="flex-1 flex gap-1 mx-4">{[...Array(24)].map((_,i)=>
+                <div key={i} className="flex-1 bg-white/40 rounded-full h-4 animate-pulse" />)}
+              </div>
+              <span className="text-white font-mono text-[11px]">{Math.floor(recordingDuration/60)}:{(recordingDuration%60).toString().padStart(2,"0")}
+              </span>
+            </div>
+            <button type="submit" className="w-10 h-10 bg-[#0037b0] text-white rounded-full flex items-center justify-center shadow-md"><Send size={18} fill="currentColor" />
+            </button>
+          </div>
         ) : (
           <>
-            <div className="flex items-center gap-1 px-2 border-r border-gray-200"><button type="button" onClick={handleStartRecording} className="p-2 text-[#0037b0] hover:bg-[#0037b0]/10 rounded-[5px]"><Mic size={20} /></button><button type="button" onClick={() => setShowQuickResponses(!showQuickResponses)} className="p-2 text-[#0037b0] hover:bg-[#0037b0]/10 rounded-[5px]"><Zap size={20} /></button><div className="relative"><button type="button" onClick={() => setAttachOpen(!attachOpen)} className="p-2 text-[#0037b0] hover:bg-[#0037b0]/10 rounded-[5px]"><Paperclip size={20} /></button>{attachOpen && (<div className="absolute bottom-full left-0 mb-2 w-48 bg-white shadow-2xl border border-slate-200 py-2 rounded-[10px] z-50"><button type="button" onClick={() => { fileInputRef.current!.accept = "image/*"; fileInputRef.current!.click(); setAttachOpen(false); }} className="w-full text-left px-3 py-2 text-xs hover:bg-[#0037b0]/10 flex items-center gap-3"><Image size={16} className="text-[#0037b0]" /> Image</button><button type="button" onClick={() => { fileInputRef.current!.accept = ".pdf,.doc,.docx,.txt"; fileInputRef.current!.click(); setAttachOpen(false); }} className="w-full text-left px-3 py-2 text-xs hover:bg-[#0037b0]/10 flex items-center gap-3"><FileText size={16} className="text-[#0037b0]" /> Document</button></div>)}</div></div>
+            <div className="flex items-center gap-1 px-2 border-r border-gray-200">
+              <button type="button" onClick={handleStartRecording} className="p-2 text-[#0037b0] hover:bg-[#0037b0]/10 rounded-[5px]"><Mic size={20} /></button>
+              <button type="button" onClick={() => setShowQuickResponses(!showQuickResponses)} className="p-2 text-[#0037b0] hover:bg-[#0037b0]/10 rounded-[5px]"><Zap size={20} />
+              </button>
+              <div className="relative">
+                <button type="button" onClick={() => setAttachOpen(!attachOpen)} className="p-2 text-[#0037b0] hover:bg-[#0037b0]/10 rounded-[5px]"><Paperclip size={20} />
+                </button>{attachOpen && (
+                  <div className="absolute bottom-full left-0 mb-2 w-48 bg-white shadow-2xl border border-slate-200 py-2 rounded-[10px] z-50">
+                    <button type="button" onClick={() => { fileInputRef.current!.accept = "image/*"; fileInputRef.current!.click(); setAttachOpen(false); }} className="w-full text-left px-3 py-2 text-xs hover:bg-[#0037b0]/10 flex items-center gap-3"><Image size={16} className="text-[#0037b0]" /> 
+                    Image</button>
+                    <button type="button" onClick={() => { fileInputRef.current!.accept = ".pdf,.doc,.docx,.txt"; fileInputRef.current!.click(); setAttachOpen(false); }} className="w-full text-left px-3 py-2 text-xs hover:bg-[#0037b0]/10 flex items-center gap-3"><FileText size={16} className="text-[#0037b0]" /> Document
+                    </button>
+                    </div>
+                  )}
+              </div>
+            </div>
             <textarea value={message} onChange={e => setMessage(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmit(e as any); } }} placeholder="Type a reply..." className="flex-1 bg-gray-50 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#0037b0] rounded-[8px] border border-transparent resize-none" rows={1} />
-            <div className="flex items-center gap-2"><button type="button" className="p-2 text-[#0037b0] hover:bg-[#0037b0]/10 rounded-[5px]"><Smile size={20} /></button><button type="submit" disabled={(!message.trim() && !uploads.length) || createMessageMutation.isPending} className="bg-[#0037b0] text-white p-2.5 rounded-[8px] shadow-md hover:brightness-110"><Send size={18} fill="currentColor" /></button></div>
+            <div className="flex items-center gap-2">
+              <button type="button" className="p-2 text-[#0037b0] hover:bg-[#0037b0]/10 rounded-[5px]"><Smile size={20} /></button>
+              <button type="submit" disabled={(!message.trim() && !uploads.length) || createMessageMutation.isPending} className="bg-[#0037b0] text-white p-2.5 rounded-[8px] shadow-md hover:brightness-110"><Send size={18} fill="currentColor" /></button>
+            </div>
           </>
         )}
       </form>
@@ -674,22 +860,48 @@ const CustomerDetails = ({ ticket, history }: { ticket: TicketWithCustomer | nul
   return (
     <div className="h-full w-1/4 bg-white flex flex-col border-l border-slate-200 overflow-y-auto">
       <div className="p-5 border-b border-slate-100">
-        <div className="flex items-center gap-3 mb-6"><div className="h-9 w-9 rounded-full bg-slate-400 flex items-center justify-center"><SquareUser className="h-5.5 w-5.5 text-white/90" /></div><h3 className="text-[16px] font-bold text-slate-800 tracking-tight">Alex Mercer</h3></div>
+        <div className="flex items-center gap-3 mb-6">
+          <div className="h-9 w-9 rounded-full bg-slate-400 flex items-center justify-center"><SquareUser className="h-5.5 w-5.5 text-white/90" /></div>
+          <h3 className="text-[16px] font-bold text-slate-800 tracking-tight">Alex Mercer</h3>
+          </div>
         <div className="space-y-3.5">
-          <div className="grid grid-cols-[90px_1fr] items-baseline"><span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Email</span><span className="text-[13px] text-[#0037b0] font-medium break-all leading-tight">alec.merker@gmail.com</span></div>
-          <div className="grid grid-cols-[90px_1fr] items-center"><span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Local time</span><span className="text-[13px] text-slate-700 font-medium">Fri, 7:58 AM PDT</span></div>
-          <div className="grid grid-cols-[90px_1fr] items-center"><span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Language</span><span className="text-[13px] text-slate-700 font-medium">English (US)</span></div>
-          <div className="flex flex-col gap-2 pt-1"><span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Notes</span><textarea className={`w-full text-[13px] text-slate-700 p-2.5 bg-white border rounded-[3px] resize-none outline-none min-h-[70px] ${isEditing ? "border-[#7f9bd7]" : "border-slate-200"}`} value={isEditing ? tempNote : note} onFocus={() => setIsEditing(true)} onChange={e => setTempNote(e.target.value)} />{isEditing && (<div className="flex items-center justify-end gap-2 mt-1"><button onClick={() => setIsEditing(false)} className="text-[11px] font-bold text-slate-500">Cancel</button><button onClick={() => { setNote(tempNote); setIsEditing(false); }} className="px-3 py-1 bg-[#0037b0] text-white text-[11px] font-bold rounded shadow-sm">Save</button></div>)}</div>
+          <div className="grid grid-cols-[90px_1fr] items-baseline">
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Email</span>
+            <span className="text-[13px] text-[#0037b0] font-medium break-all leading-tight">alec.merker@gmail.com</span>
+          </div>
+          <div className="grid grid-cols-[90px_1fr] items-center">
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Local time</span>
+            <span className="text-[13px] text-slate-700 font-medium">Fri, 7:58 AM PDT</span>
+          </div>
+          <div className="grid grid-cols-[90px_1fr] items-center">
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Language</span>
+            <span className="text-[13px] text-slate-700 font-medium">English (US)</span>
+          </div>
+          <div className="flex flex-col gap-2 pt-1">
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Notes</span>
+            <textarea className={`w-full text-[13px] text-slate-700 p-2.5 bg-white border rounded-[3px] resize-none outline-none min-h-[70px] ${isEditing ? "border-[#7f9bd7]" : "border-slate-200"}`} value={isEditing ? tempNote : note} onFocus={() => setIsEditing(true)} onChange={e => setTempNote(e.target.value)} />{isEditing && (
+              <div className="flex items-center justify-end gap-2 mt-1"><button onClick={() => setIsEditing(false)} className="text-[11px] font-bold text-slate-500">Cancel</button>
+              <button onClick={() => { setNote(tempNote); setIsEditing(false); }} className="px-3 py-1 bg-[#0037b0] text-white text-[11px] font-bold rounded shadow-sm">Save</button></div>)}
+          </div>
         </div>
       </div>
       <div className="p-5 flex-1 flex flex-col min-h-0">
-        <div className="flex items-center justify-between mb-5 shrink-0"><h4 className="text-[14px] font-bold text-slate-800 uppercase tracking-wider">Interaction history</h4><RotateCcw className="h-4 w-4 text-slate-400 cursor-pointer" /></div>
+        <div className="flex items-center justify-between mb-5 shrink-0">
+          <h4 className="text-[14px] font-bold text-slate-800 uppercase tracking-wider">Interaction history</h4>
+          <div className="flex items-center gap-1"><RotateCcw className="h-4 w-4 text-slate-400 cursor-pointer hover:text-[#0037b0] transition-colors" /><ChevronUp className="h-4 w-4 text-slate-400 cursor-pointer hover:text-[#0037b0] transition-colors" /><ChevronDown className="h-4 w-4 text-slate-400 cursor-pointer hover:text-[#0037b0] transition-colors" />
+          </div>
+        </div>
         <div className="flex-1 overflow-y-auto custom-scrollbar relative">
           {history.map((item, idx) => (
             <div key={item.id} className={`group relative pl-14 pr-5 py-5 transition-colors border-l-4 border-transparent ${idx === 0 ? "bg-[#eaf1fb] border-l-[#0037b0]" : "hover:bg-slate-50"}`}>
-              {idx !== history.length - 1 && <div className="absolute left-[24px] top-[30px] bottom-[-30px] w-[1px] bg-slate-200" />}
+              {idx !== history.length - 1 && 
+              <div className="absolute left-[24px] top-[30px] bottom-[-30px] w-[1px] bg-slate-200" />}
               <div className={`absolute left-[21px] top-6 w-[7px] h-[7px] rounded-sm ${item.color} z-10 shadow-sm`} />
-              <div className="flex flex-col"><h5 className="text-[13px] font-bold text-slate-800 mb-1">{item.title}</h5><span className="text-[12px] text-slate-500 mb-1">{item.time}</span><span className="text-[12px] text-slate-500 font-medium capitalize">Status {item.status.toLowerCase()}</span></div>
+              <div className="flex flex-col">
+                <h5 className="text-[13px] font-bold text-slate-800 mb-1">{item.title}</h5>
+                <span className="text-[12px] text-slate-500 mb-1">{item.time}</span>
+                <span className="text-[12px] text-slate-500 font-medium capitalize">Status {item.status.toLowerCase()}</span>
+              </div>
             </div>
           ))}
         </div>
