@@ -595,6 +595,16 @@ const UserChatMessages = ({ ticket }: { ticket: TicketWithCustomer }) => {
       ]
     },
     {
+      id: "mock_4",
+      userId: "agent_1",
+      content: "image testing: failed status",
+      createdAt: new Date(Date.now() - 3600000).toISOString(),
+      status: "FAILED",
+      attachments: [
+        { id: "img_1", name: "yza_2026.png", size: "3.9 MB", type: "image", url: "/images/yza_2026.png" },        
+      ]
+    },
+    {
       id: "mock_voice_1",
       userId: "agent_1",
       content: "Please review this 10-second countdown for the intro:",
