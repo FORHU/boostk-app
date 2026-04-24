@@ -550,12 +550,40 @@ const UserChatMessages = ({ ticket }: { ticket: TicketWithCustomer }) => {
   }, [ticket.id, queryClient]);
 
   const [selectedMedia, setSelectedMedia] = useState<{ url: string; type: "image" | "video" } | null>(null);
+  const [playingId, setPlayingId] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const togglePlay = (id: string, url: string) => {
+    if (playingId === id) {
+      audioRef.current?.pause();
+      setPlayingId(null);
+    } else {
+      if (audioRef.current) {
+        audioRef.current.src = url;
+        audioRef.current.play();
+        setPlayingId(id);
+      }
+    }
+  };
 
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "auto" }); }, [messages]);
+
   // TODO: Remove mock messages
   const mockMessages = [
     {
       id: "mock_1",
+      userId: "agent_1",
+      content: "Here are the Earth texture assets you requested:",
+      createdAt: new Date(Date.now() - 3600000).toISOString(),
+      status: "FAILED",
+      attachments: [
+        { id: "img_1", name: "earthtexture.png", size: "2.4 MB", type: "image", url: "/images/earthtexture.png" },
+        { id: "img_2", name: "earth-specular.jpg", size: "1.1 MB", type: "image", url: "/images/earth-specular.jpg" },
+        { id: "img_3", name: "earth-map.jpg", size: "3.2 MB", type: "image", url: "/images/earth-map.jpg" },
+      ]
+    },
+    {
+      id: "mock_2",
       userId: "agent_1",
       content: "Here are the Earth texture assets you requested:",
       createdAt: new Date(Date.now() - 3600000).toISOString(),
@@ -567,6 +595,16 @@ const UserChatMessages = ({ ticket }: { ticket: TicketWithCustomer }) => {
       ]
     },
     {
+      id: "mock_voice_1",
+      userId: "agent_1",
+      content: "Please review this 10-second countdown for the intro:",
+      createdAt: new Date(Date.now() - 3000000).toISOString(),
+      status: "READ",
+      attachments: [
+        { id: "voice_1", name: "10_sec_Countdown_Timer.mp3", size: "150 KB", type: "voice", url: "/audios/10_sec_Countdown_Timer.mp3" }
+      ]
+    },
+    {
       id: "mock_2",
       userId: "agent_1",
       content: "I've also attached the latest technical requirements document.",
@@ -574,6 +612,15 @@ const UserChatMessages = ({ ticket }: { ticket: TicketWithCustomer }) => {
       status: "READ",
       attachments: [
         { id: "doc_1", name: "BoostK Technical Requirements.pdf", size: "850 KB", type: "document", url: "/documents/BoostK Technical Requirments.pdf" }
+      ]
+    },
+    {
+      id: "mock_voice_2",
+      customer: { name: "Alex Mercer" },
+      content: "What do you think of this jade-like water soundtrack?",
+      createdAt: new Date(Date.now() - 1200000).toISOString(),
+      attachments: [
+        { id: "voice_2", name: "Flows _of _Jade-Like_Water_Soundtrack.mp3", size: "4.2 MB", type: "voice", url: "/audios/Flows _of _Jade-Like_Water_Soundtrack.mp3" }
       ]
     },
     {
@@ -677,13 +724,28 @@ const UserChatMessages = ({ ticket }: { ticket: TicketWithCustomer }) => {
 
                     if (isVoice) return (
                     <div key={att.id} className={`mt-2 p-3 rounded-[5px] flex items-center gap-3 min-w-[240px] shadow-sm ${isAgent ? "bg-[#0037b0] text-white" : "bg-white border border-slate-100"}`}>
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isAgent ? "bg-white/20" : "bg-[#eaf1fb]"}`}><RotateCcw size={18} className={isAgent ? "text-white" : "text-[#0037b0]"} />
-                      </div>
+                      <button 
+                        onClick={() => togglePlay(att.id, att.url)}
+                        className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-transform active:scale-95 ${isAgent ? "bg-white/20 hover:bg-white/30" : "bg-[#eaf1fb] hover:bg-[#7f9bd7]/20"}`}
+                      >
+                        {playingId === att.id ? <div className="flex gap-0.5 items-center"><div className="w-1 h-3 bg-current animate-bounce" /><div className="w-1 h-4 bg-current animate-bounce [animation-delay:0.2s]" /><div className="w-1 h-3 bg-current animate-bounce [animation-delay:0.4s]" /></div> : <History size={18} className={`${isAgent ? "text-white" : "text-[#0037b0]"} rotate-90`} />}
+                      </button>
                       <div className="flex-1 flex flex-col gap-1">
-                        <div className="flex items-center gap-1">{[...Array(12)].map((_, i) => (<div key={i} className={`w-1 rounded-full ${isAgent ? "bg-white/40" : "bg-[#7f9bd7]/20"}`} style={{ height: 4 + Math.random() * 12 }} />))}</div>
-                        <span className={`text-[9px] font-bold ${isAgent ? "text-white/60" : "text-slate-400"}`}>0:12 • Voice Message</span>
+                        <div className="flex items-center gap-1">
+                          {[...Array(18)].map((_, i) => (
+                            <div 
+                              key={i} 
+                              className={`w-1 rounded-full transition-all duration-300 ${playingId === att.id ? "animate-pulse" : ""} ${isAgent ? "bg-white/40" : "bg-[#7f9bd7]/30"}`} 
+                              style={{ height: 4 + Math.random() * 12, opacity: playingId === att.id ? 1 : 0.6 }} 
+                            />
+                          ))}
+                        </div>
+                        <span className={`text-[9px] font-bold ${isAgent ? "text-white/60" : "text-slate-400"}`}>
+                          {playingId === att.id ? "Playing..." : att.size + " • Voice Message"}
+                        </span>
                       </div>
-                      <button className={`p-2 rounded-full ${isAgent ? "hover:bg-white/10" : "hover:bg-slate-50"}`}><Download size={14} />
+                      <button onClick={() => window.open(att.url, "_blank")} className={`p-2 rounded-full ${isAgent ? "hover:bg-white/10 text-white/60" : "hover:bg-slate-50 text-slate-400"}`}>
+                        <Download size={14} />
                       </button>
                     </div>);
 
@@ -697,6 +759,13 @@ const UserChatMessages = ({ ticket }: { ticket: TicketWithCustomer }) => {
         })
       )}
       <div ref={messagesEndRef} />
+
+      <audio 
+        ref={audioRef} 
+        className="hidden" 
+        onEnded={() => setPlayingId(null)}
+        onError={() => { toast.error("Failed to load audio"); setPlayingId(null); }}
+      />
 
       {/* Lightbox Modal */}
       {selectedMedia && (
