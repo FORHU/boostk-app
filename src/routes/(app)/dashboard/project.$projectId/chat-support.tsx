@@ -263,10 +263,6 @@ const TicketDetails = ({
   const assigneePopupRef = useRef<HTMLDivElement>(null);
   const [selectedAssignee, setSelectedAssignee] = useState("Alex Mercer");
 
-  const [statusOpen, setStatusOpen] = useState(false);
-  const statusButtonRef = useRef<HTMLButtonElement>(null);
-  const statusPopupRef = useRef<HTMLDivElement>(null);
-
   const [priorityOpen, setPriorityOpen] = useState(false);
   const priorityButtonRef = useRef<HTMLButtonElement>(null);
   const priorityPopupRef = useRef<HTMLDivElement>(null);
@@ -285,13 +281,12 @@ const TicketDetails = ({
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
       if (assigneeOpen && assigneeButtonRef.current && !assigneeButtonRef.current.contains(target) && assigneePopupRef.current && !assigneePopupRef.current.contains(target)) setAssigneeOpen(false);
-      if (statusOpen && statusButtonRef.current && !statusButtonRef.current.contains(target) && statusPopupRef.current && !statusPopupRef.current.contains(target)) setStatusOpen(false);
       if (priorityOpen && priorityButtonRef.current && !priorityButtonRef.current.contains(target) && priorityPopupRef.current && !priorityPopupRef.current.contains(target)) setPriorityOpen(false);
       if (submitOpen && submitButtonRef.current && !submitButtonRef.current.contains(target) && submitPopupRef.current && !submitPopupRef.current.contains(target)) setSubmitOpen(false);
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [assigneeOpen, statusOpen, priorityOpen, submitOpen]);
+  }, [assigneeOpen, priorityOpen, submitOpen]);
 
   if (!ticket) return <div className="h-full w-1/4 border-r border-slate-100 bg-white p-4"></div>;
 
@@ -328,59 +323,49 @@ const TicketDetails = ({
               <ChevronDown className="h-4 w-4 text-slate-400" />
             </button>
             {assigneeOpen && (
-              <div ref={assigneePopupRef} className="absolute top-full left-0 mt-1.5 w-full bg-white border border-slate-200 rounded-[5px] shadow-xl z-20 p-1 animate-in fade-in zoom-in-95 duration-100">
-                {["Alex Mercer", "Support Josie"].map((assignee, idx, arr) => (
-                  <div key={assignee}>
-                    <button type="button" className="w-full text-left px-3 py-1.5 text-sm hover:bg-slate-50 rounded-md transition-colors font-medium text-slate-700" onClick={() => { setSelectedAssignee(assignee); setAssigneeOpen(false); }}>{assignee}
-                      
-                    </button>
-                    {idx !== arr.length - 1 && <div className="h-px bg-slate-100 my-1 mx-2" />}
-                  </div>
+              <div ref={assigneePopupRef} className="absolute top-full left-0 mt-1.5 w-full bg-white border border-slate-200 rounded-[5px] shadow-2xl z-20 p-1 animate-in fade-in zoom-in-95 duration-100 overflow-hidden">
+                <p className="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-50 mb-1">Select Assignee</p>
+                {["Alex Mercer", "Support Josie"].map((assignee) => (
+                  <button 
+                    key={assignee}
+                    type="button" 
+                    className={`w-full text-left px-3 py-2 text-[11px] rounded-[3px] font-bold transition-all ${selectedAssignee === assignee ? "bg-[#eaf1fb] text-[#0037b0]" : "text-slate-600 hover:bg-slate-50"}`} 
+                    onClick={() => { setSelectedAssignee(assignee); setAssigneeOpen(false); }}
+                  >
+                    {assignee}
+                  </button>
                 ))}
               </div>
             )}
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1.5">Current Status</span>
-            <div className="relative">
-              <button ref={statusButtonRef} type="button" onClick={() => setStatusOpen(!statusOpen)} className="w-full px-3 py-2 bg-white border border-slate-200 text-sm text-left flex items-center justify-between outline-none hover:border-[#7f9bd7] transition-colors" style={{ borderRadius: "5px" }}>
-                <span className="capitalize font-medium text-slate-700">{currentStatus.toLowerCase()}</span>
-                <ChevronDown className="h-4 w-4 text-slate-400" />
-              </button>
-              {statusOpen && (
-                <div ref={statusPopupRef} className="absolute top-full left-0 mt-1.5 w-full bg-white border border-slate-200 rounded-[5px] shadow-xl z-20 p-1 animate-in fade-in zoom-in-95 duration-100">
-                  {["OPEN", "CLOSED", "ARCHIVED"].map((status, idx, arr) => (
-                    <div key={status}>
-                      <button type="button" className="w-full text-left px-3 py-1.5 text-sm hover:bg-slate-50 rounded-md transition-colors capitalize font-medium text-slate-700" onClick={() => { onUpdateStatus(ticket.id, status); setStatusOpen(false); }}>{status.toLowerCase()}</button>
-                      {idx !== arr.length - 1 && 
-                      <div className="h-px bg-slate-100 my-1 mx-2" />}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+        <div>
+          <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1.5 ml-0.5">Current Status</span>
+          <div className="px-3 py-2.5 bg-slate-50 border border-slate-200 text-sm font-bold text-slate-600 rounded-[5px] capitalize">
+            {currentStatus.toLowerCase()}
           </div>
-          <div>
-            <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1.5">Priority</span>
-            <div className="relative">
-              <button ref={priorityButtonRef} type="button" onClick={() => setPriorityOpen(!priorityOpen)} className="w-full px-3 py-2 bg-white border border-slate-200 text-sm text-left flex items-center justify-between outline-none hover:border-[#7f9bd7] transition-colors" style={{ borderRadius: "5px" }}>
-                <span className="capitalize font-medium text-slate-700">{ticket.priority.toLowerCase()}</span>
-                <ChevronDown className="h-4 w-4 text-slate-400" />
-              </button>
-              {priorityOpen && (
-                <div ref={priorityPopupRef} className="absolute top-full left-0 mt-1.5 w-full bg-white border border-slate-200 rounded-[5px] shadow-xl z-20 p-1 animate-in fade-in zoom-in-95 duration-100">
-                  {["LOW", "NORMAL", "HIGH"].map((priority, idx, arr) => (
-                    <div key={priority}>
-                      <button type="button" className="w-full text-left px-3 py-1.5 text-sm hover:bg-slate-50 rounded-md transition-colors capitalize font-medium text-slate-700" onClick={() => setPriorityOpen(false)}>{priority.toLowerCase()}</button>
-                      {idx !== arr.length - 1 && <div className="h-px bg-slate-100 my-1 mx-2" />}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
+        </div>
+          <div className="relative">
+            <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1.5 ml-0.5">Priority</span>
+            <button ref={priorityButtonRef} type="button" onClick={() => setPriorityOpen(!priorityOpen)} className="w-full px-3 py-2 bg-white border border-slate-200 text-sm text-left flex items-center justify-between outline-none hover:border-[#7f9bd7] transition-colors" style={{ borderRadius: "5px" }}>
+              <span className="capitalize font-medium text-slate-700">{ticket.priority.toLowerCase()}</span>
+              <ChevronDown className="h-4 w-4 text-slate-400" />
+            </button>
+            {priorityOpen && (
+              <div ref={priorityPopupRef} className="absolute top-full left-0 mt-1.5 w-full bg-white border border-slate-200 rounded-[5px] shadow-2xl z-20 p-1 animate-in fade-in zoom-in-95 duration-100 overflow-hidden">
+                <p className="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-50 mb-1">Select Priority</p>
+                {["LOW", "NORMAL", "HIGH"].map((priority) => (
+                  <button 
+                    key={priority}
+                    type="button" 
+                    className={`w-full text-left px-3 py-2 text-[11px] rounded-[3px] font-bold transition-all capitalize ${ticket.priority === priority ? "bg-[#eaf1fb] text-[#0037b0]" : "text-slate-600 hover:bg-slate-50"}`} 
+                    onClick={() => setPriorityOpen(false)}
+                  >
+                    {priority.toLowerCase()}
+                  </button>
+                ))}
+              </div>
+            )}
         </div>
         <div>
           <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1.5">Ticket ID</span>
@@ -404,12 +389,17 @@ const TicketDetails = ({
               {isUpdatingStatus ? <Loader2 className="h-4 w-4 animate-spin" /> : (<><span className="font-bold">Submit Status as:</span><ChevronDown className={`h-4 w-4 transition-transform duration-200 ${submitOpen ? "rotate-180" : ""}`} /></>)}
             </button>
             {submitOpen && (
-              <div ref={submitPopupRef} className="absolute bottom-full right-0 mb-2 w-48 bg-white border border-slate-200 rounded-[5px] shadow-2xl z-20 p-1.5 animate-in fade-in slide-in-from-bottom-2 duration-200">
+              <div ref={submitPopupRef} className="absolute bottom-full right-0 mb-2 w-48 bg-white border border-slate-200 rounded-[5px] shadow-2xl z-20 p-1 animate-in fade-in slide-in-from-bottom-2 duration-200 overflow-hidden">
                 <p className="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-50 mb-1">Change Status To</p>
                 {["OPEN", "CLOSED", "ARCHIVED"].map((status) => (
-                  <button key={status} type="button" className="w-full text-left px-3 py-2.5 text-xs hover:bg-slate-50 rounded-lg transition-all font-bold text-slate-700 flex items-center justify-between group" onClick={() => { onUpdateStatus(ticket.id, status); setSubmitOpen(false); }}>
-                    <span className="capitalize group-hover:text-[#203b69]">{status.toLowerCase()}</span>
-                    <div className={`w-1.5 h-1.5 rounded-full ${status === "OPEN" ? "bg-green-500" : status === "CLOSED" ? "bg-red-500" : "bg-slate-300"}`} />
+                  <button 
+                    key={status} 
+                    type="button" 
+                    className={`w-full text-left px-3 py-2 text-[11px] rounded-[3px] font-bold transition-all flex items-center justify-between group ${currentStatus === status ? "bg-[#eaf1fb] text-[#0037b0]" : "text-slate-600 hover:bg-slate-50"}`} 
+                    onClick={() => { onUpdateStatus(ticket.id, status); setSubmitOpen(false); }}
+                  >
+                    <span className="capitalize">{status.toLowerCase()}</span>
+                    <div className={`w-1.5 h-1.5 rounded-full ${status === "OPEN" ? "bg-green-500" : status === "CLOSED" ? "bg-red-500" : "bg-slate-300"} ${currentStatus === status ? "ring-2 ring-[#0037b0]/20" : ""}`} />
                   </button>
                 ))}
               </div>
@@ -439,22 +429,29 @@ const TicketTags = ({ tags, onUpdateTags }: { tags: string[]; onUpdateTags: (tag
 
   return (
     <div ref={containerRef} className="relative">
-      <div className="flex flex-wrap gap-1.5 p-2 bg-white border border-slate-200 rounded-[5px] min-h-[40px]">
+      <div className="flex flex-wrap gap-1.5 p-2 bg-white border border-slate-200 rounded-[5px] min-h-[40px] transition-all hover:border-[#7f9bd7]">
+        {tags.length === 0 && <p className="text-[10px] text-slate-300 font-bold uppercase tracking-widest mt-2 ml-1">No tags assigned</p>}
         {tags.map((tag) => (
-          <span key={tag} className="flex items-center gap-1.5 px-3 py-1 bg-[#eaf1fb] text-[#0037b0] text-[11px] font-bold rounded-full group hover:bg-[#7f9bd7]/20 transition-all shadow-sm">
+          <span key={tag} className="flex items-center gap-1.5 px-2.5 py-1 bg-[#eaf1fb] text-[#0037b0] text-[10px] font-bold rounded-full group hover:bg-[#7f9bd7]/20 transition-all shadow-sm">
             {tag}
-            <button type="button" onClick={() => toggleTag(tag)} className="text-[#0037b0]/60 hover:text-[#0037b0]"><X size={12} strokeWidth={2.5} /></button>
+            <button type="button" onClick={() => toggleTag(tag)} className="text-[#0037b0]/60 hover:text-[#0037b0]"><X size={10} strokeWidth={3} /></button>
           </span>
         ))}
-        <button type="button" onClick={() => setIsOpen(!isOpen)} className="flex items-center gap-1 px-3 py-1 border border-dashed border-slate-300 text-slate-400 text-[11px] font-bold rounded-full hover:border-[#0037b0] hover:text-[#0037b0] hover:bg-[#eaf1fb] transition-all"><Plus size={12} /> Add Tag</button>
+        <button type="button" onClick={() => setIsOpen(!isOpen)} className="flex items-center gap-1 px-3 py-1 border border-dashed border-slate-300 text-slate-400 text-[10px] font-bold rounded-full hover:border-[#0037b0] hover:text-[#0037b0] hover:bg-[#eaf1fb] transition-all ml-auto"><Plus size={10} strokeWidth={3} /> Add</button>
       </div>
       {isOpen && (
-        <div className="absolute top-full left-0 mt-2 w-56 bg-white border border-slate-200 rounded-[5px] shadow-2xl z-50 p-3 animate-in fade-in zoom-in-95 duration-150">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Select Category</p>
-          <div className="grid grid-cols-1 gap-1">
+        <div className="absolute top-full left-0 mt-1.5 w-52 bg-white border border-slate-200 rounded-[5px] shadow-2xl z-50 p-1 animate-in fade-in zoom-in-95 duration-150 overflow-hidden">
+          <p className="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-50 mb-1">Select Category</p>
+          <div className="grid grid-cols-1">
             {predefinedTags.map((tag) => (
-              <button key={tag} type="button" onClick={() => toggleTag(tag)} className={`w-full text-left px-3 py-2 text-[11px] rounded-[5px] font-bold transition-all flex items-center justify-between ${tags.includes(tag) ? "bg-[#203b69] text-white shadow-sm" : "hover:bg-[#eaf1fb] text-slate-600 hover:text-[#0037b0]"}`}>
-                {tag}{tags.includes(tag) && <X size={12} strokeWidth={2.5} />}
+              <button 
+                key={tag} 
+                type="button" 
+                onClick={() => toggleTag(tag)} 
+                className={`w-full text-left px-3 py-2 text-[11px] rounded-[3px] font-bold transition-all flex items-center justify-between group ${tags.includes(tag) ? "bg-[#eaf1fb] text-[#0037b0]" : "text-slate-600 hover:bg-slate-50"}`}
+              >
+                {tag}
+                {tags.includes(tag) && <X size={12} className="opacity-40 group-hover:opacity-100" />}
               </button>
             ))}
           </div>
