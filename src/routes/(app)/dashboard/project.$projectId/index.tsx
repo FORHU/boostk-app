@@ -16,6 +16,7 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,6 +34,34 @@ export const Route = createFileRoute("/(app)/dashboard/project/$projectId/")({
   component: ProjectPage,
 });
 
+// Helper component for trend lines
+function Sparkline({ data, color = "#7f9bd7" }: { data: number[]; color?: string }) {
+  const max = Math.max(...data);
+  const min = Math.min(...data);
+  const range = max - min;
+  const width = 60;
+  const height = 20;
+  
+  const points = data.map((val, i) => {
+    const x = (i / (data.length - 1)) * width;
+    const y = height - ((val - min) / (range || 1)) * height;
+    return `${x},${y}`;
+  }).join(" ");
+
+  return (
+    <svg width={width} height={height} className="overflow-visible">
+      <polyline
+        fill="none"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        points={points}
+      />
+    </svg>
+  );
+}
+
 // Mock conversations data
 type Conversation = {
   id: string;
@@ -43,25 +72,25 @@ type Conversation = {
   lastMessage: string;
   timestamp: Date;
   unreadCount: number;
-  priority: "Urgent" | "High" | "Low";
-  status: "open" | "pending" | "resolved" | "closed";
+  priority: "High" | "Medium" | "Low";
+  status: "active" | "inactive";
   department: "support" | "sales" | "billing";
   online: boolean;
 };
 
 const mockConversations: Conversation[] = [
-  // Active (open/pending)
+  // Active
   {
     id: "1",
     name: "Sarah Jenkins",
     initials: "SJ",
     email: "sarah.j@example.com",
     idNumber: "CUS-9284",
-    lastMessage: "I'm still having issues logging into my account...",
+    lastMessage: "I am writing to report a recurring issue with my account synchronization that has been persistent for the past few days.",
     timestamp: new Date(),
     unreadCount: 2,
-    priority: "Urgent",
-    status: "open",
+    priority: "High",
+    status: "active",
     department: "support",
     online: true,
   },
@@ -72,10 +101,10 @@ const mockConversations: Conversation[] = [
     email: "marcus.w@example.com",
     idNumber: "CUS-4521",
     lastMessage: "Thank you for the update on the shipping times.",
-    timestamp: new Date(Date.now() - 1000 * 60 * 30),
+    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10),
     unreadCount: 0,
     priority: "Low",
-    status: "pending",
+    status: "active",
     department: "sales",
     online: false,
   },
@@ -88,8 +117,8 @@ const mockConversations: Conversation[] = [
     lastMessage: "Can we schedule a call to discuss the enterprise plan?",
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24),
     unreadCount: 1,
-    priority: "High",
-    status: "open",
+    priority: "Medium",
+    status: "active",
     department: "sales",
     online: true,
   },
@@ -102,8 +131,8 @@ const mockConversations: Conversation[] = [
     lastMessage: "My invoice shows an incorrect amount.",
     timestamp: new Date(Date.now() - 1000 * 60 * 15),
     unreadCount: 3,
-    priority: "High",
-    status: "open",
+    priority: "Medium",
+    status: "active",
     department: "billing",
     online: true,
   },
@@ -117,7 +146,7 @@ const mockConversations: Conversation[] = [
     timestamp: new Date(Date.now() - 1000 * 60 * 120),
     unreadCount: 0,
     priority: "Low",
-    status: "pending",
+    status: "active",
     department: "sales",
     online: false,
   },
@@ -130,95 +159,10 @@ const mockConversations: Conversation[] = [
     lastMessage: "I'm locked out of my account.",
     timestamp: new Date(Date.now() - 1000 * 60 * 5),
     unreadCount: 1,
-    priority: "Urgent",
-    status: "open",
+    priority: "High",
+    status: "active",
     department: "support",
     online: true,
-  },
-  // Inactive (resolved/closed)
-  {
-    id: "4",
-    name: "Tom Richards",
-    initials: "TR",
-    email: "tom.r@example.com",
-    idNumber: "CUS-3379",
-    lastMessage: "The recent update seems to have fixed the bug.",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48),
-    unreadCount: 0,
-    priority: "Low",
-    status: "resolved",
-    department: "support",
-    online: false,
-  },
-  {
-    id: "8",
-    name: "David Kim",
-    initials: "DK",
-    email: "david.k@example.com",
-    idNumber: "CUS-1123",
-    lastMessage: "Thanks for resolving my issue.",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 72),
-    unreadCount: 0,
-    priority: "Low",
-    status: "resolved",
-    department: "support",
-    online: false,
-  },
-  {
-    id: "9",
-    name: "Olivia Martinez",
-    initials: "OM",
-    email: "olivia.m@example.com",
-    idNumber: "CUS-4456",
-    lastMessage: "Please call me about billing.",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 96),
-    unreadCount: 0,
-    priority: "Low",
-    status: "closed",
-    department: "billing",
-    online: false,
-  },
-  {
-    id: "10",
-    name: "Ethan Wong",
-    initials: "EW",
-    email: "ethan.w@example.com",
-    idNumber: "CUS-7789",
-    lastMessage: "The new feature works perfectly.",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 120),
-    unreadCount: 0,
-    priority: "Low",
-    status: "resolved",
-    department: "support",
-    online: false,
-  },
-  {
-    id: "11",
-    name: "Sophia Lee",
-    initials: "SL",
-    email: "sophia.l@example.com",
-    idNumber: "CUS-9901",
-    lastMessage: "Please reopen my ticket.",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 144),
-    unreadCount: 0,
-    priority: "High",
-    status: "closed",
-    department: "sales",
-    online: false,
-  },
-  {
-    id: "12",
-    name: "Liam O'Connor",
-    initials: "LO",
-    email: "liam.o@example.com",
-    idNumber: "CUS-2234",
-    lastMessage: "Cancel my subscription.",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 168),
-    unreadCount: 0,
-    priority: "Low",
-    status: "closed",
-    department: "billing",
-    online: false,
   },
   {
     id: "13",
@@ -230,7 +174,7 @@ const mockConversations: Conversation[] = [
     timestamp: new Date(Date.now() - 1000 * 60 * 10),
     unreadCount: 1,
     priority: "Low",
-    status: "open",
+    status: "active",
     department: "support",
     online: true,
   },
@@ -244,7 +188,7 @@ const mockConversations: Conversation[] = [
     timestamp: new Date(Date.now() - 1000 * 60 * 45),
     unreadCount: 0,
     priority: "Low",
-    status: "pending",
+    status: "active",
     department: "sales",
     online: false,
   },
@@ -257,16 +201,109 @@ const mockConversations: Conversation[] = [
     lastMessage: "My business account setup is stuck.",
     timestamp: new Date(Date.now() - 1000 * 60 * 120),
     unreadCount: 4,
-    priority: "High",
-    status: "open",
+    priority: "Medium",
+    status: "active",
     department: "sales",
     online: true,
+  },
+  // Inactive
+  {
+    id: "4",
+    name: "Tom Richards",
+    initials: "TR",
+    email: "tom.r@example.com",
+    idNumber: "CUS-3379",
+    lastMessage: "The recent update seems to have fixed the bug.",
+    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 40),
+    unreadCount: 0,
+    priority: "Low",
+    status: "inactive",
+    department: "support",
+    online: false,
+  },
+  {
+    id: "8",
+    name: "David Kim",
+    initials: "DK",
+    email: "david.k@example.com",
+    idNumber: "CUS-1123",
+    lastMessage: "Thanks for resolving my issue.",
+    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 72),
+    unreadCount: 0,
+    priority: "Low",
+    status: "inactive",
+    department: "support",
+    online: false,
+  },
+  {
+    id: "9",
+    name: "Olivia Martinez",
+    initials: "OM",
+    email: "olivia.m@example.com",
+    idNumber: "CUS-4456",
+    lastMessage: "Please call me about billing.",
+    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 96),
+    unreadCount: 0,
+    priority: "Low",
+    status: "inactive",
+    department: "billing",
+    online: false,
+  },
+  {
+    id: "10",
+    name: "Ethan Wong",
+    initials: "EW",
+    email: "ethan.w@example.com",
+    idNumber: "CUS-7789",
+    lastMessage: "The new feature works perfectly.",
+    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 120),
+    unreadCount: 0,
+    priority: "Low",
+    status: "inactive",
+    department: "support",
+    online: false,
+  },
+  {
+    id: "11",
+    name: "Sophia Lee",
+    initials: "SL",
+    email: "sophia.l@example.com",
+    idNumber: "CUS-9901",
+    lastMessage: "Please reopen my ticket.",
+    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 144),
+    unreadCount: 0,
+    priority: "Medium",
+    status: "inactive",
+    department: "sales",
+    online: false,
+  },
+  {
+    id: "12",
+    name: "Liam O'Connor",
+    initials: "LO",
+    email: "liam.o@example.com",
+    idNumber: "CUS-2234",
+    lastMessage: "Cancel my subscription.",
+    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 168),
+    unreadCount: 0,
+    priority: "Low",
+    status: "inactive",
+    department: "billing",
+    online: false,
   },
 ];
 
 function ProjectPage() {
   const { project } = Route.useRouteContext();
+  const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
+
+  // Helper for copy to clipboard
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
   const [showInstallPopup, setShowInstallPopup] = useState(false);
   const [origin, setOrigin] = useState("");
   const installButtonRef = useRef<HTMLButtonElement>(null);
@@ -284,11 +321,17 @@ function ProjectPage() {
   const priorityButtonRef = useRef<HTMLButtonElement>(null);
   const priorityPopupRef = useRef<HTMLDivElement>(null);
 
-  // Category filter
-  const [categoryOpen, setCategoryOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState("all");
-  const categoryButtonRef = useRef<HTMLButtonElement>(null);
-  const categoryPopupRef = useRef<HTMLDivElement>(null);
+  // Tags filter
+  const [tagOpen, setTagOpen] = useState(false);
+  const [selectedTag, setSelectedTag] = useState("all");
+  const tagButtonRef = useRef<HTMLButtonElement>(null);
+  const tagPopupRef = useRef<HTMLDivElement>(null);
+
+  // Sorting
+  const [sortOpen, setSortOpen] = useState(false);
+  const [sortBy, setSortBy] = useState<"recent" | "unread" | "read">("recent");
+  const sortButtonRef = useRef<HTMLButtonElement>(null);
+  const sortPopupRef = useRef<HTMLDivElement>(null);
 
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -296,7 +339,7 @@ function ProjectPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // Filter conversations based on search, status, priority, category
+  // Filter conversations based on search, status, priority, tags
   const filteredConversations = mockConversations.filter((conv) => {
     const matchesSearch =
       searchTerm === "" ||
@@ -305,32 +348,45 @@ function ProjectPage() {
       conv.idNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
       conv.lastMessage.toLowerCase().includes(searchTerm.toLowerCase());
 
-    // Status filter: active = open or pending, inactive = resolved or closed
-    const isActive = conv.status === "open" || conv.status === "pending";
-    const matchesStatus = selectedStatus === "all" ? true : selectedStatus === "active" ? isActive : !isActive;
+    // Status filter: active or inactive directly
+    const matchesStatus = selectedStatus === "all" ? true : conv.status === selectedStatus;
 
     // Priority filter
     const matchesPriority =
       selectedPriority === "all" || conv.priority.toLowerCase() === selectedPriority.toLowerCase();
 
-    // Category filter
-    const matchesCategory = selectedCategory === "all" || conv.department === selectedCategory.toLowerCase();
+    // Tags filter
+    const matchesTag = selectedTag === "all" || conv.department === selectedTag.toLowerCase();
 
-    return matchesSearch && matchesStatus && matchesPriority && matchesCategory;
+    return matchesSearch && matchesStatus && matchesPriority && matchesTag;
+  });
+
+  // Apply Sorting
+  const sortedConversations = [...filteredConversations].sort((a, b) => {
+    if (sortBy === "unread") {
+      if (a.unreadCount > 0 && b.unreadCount === 0) return -1;
+      if (a.unreadCount === 0 && b.unreadCount > 0) return 1;
+    }
+    if (sortBy === "read") {
+      if (a.unreadCount === 0 && b.unreadCount > 0) return -1;
+      if (a.unreadCount > 0 && b.unreadCount === 0) return 1;
+    }
+    // Default: Sort by recent
+    return b.timestamp.getTime() - a.timestamp.getTime();
   });
 
   // Pagination calculations
-  const totalPages = Math.ceil(filteredConversations.length / itemsPerPage);
+  const totalPages = Math.ceil(sortedConversations.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const displayedConversations = filteredConversations.slice(startIndex, endIndex);
+  const displayedConversations = sortedConversations.slice(startIndex, endIndex);
   const hasPrevious = currentPage > 1;
   const hasNext = currentPage < totalPages;
 
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, selectedStatus, selectedPriority, selectedCategory, setCurrentPage]);
+  }, [searchTerm, selectedStatus, selectedPriority, selectedTag, setCurrentPage]);
 
   // Helper: format relative time
   const formatRelativeTime = (date: Date) => {
@@ -338,12 +394,13 @@ function ProjectPage() {
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
     if (diffMins < 1) return "Just now";
-    if (diffMins < 60) return `${diffMins} min ago`;
+    if (diffMins < 60) return `${diffMins} ${diffMins === 1 ? "min" : "mins"}`;
     const diffHours = Math.floor(diffMins / 60);
-    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
+    if (diffHours < 24) return `${diffHours} ${diffHours === 1 ? "hour" : "hours"}`;
     const diffDays = Math.floor(diffHours / 24);
-    if (diffDays === 1) return "Yesterday";
-    return `${diffDays} days ago`;
+    if (diffDays < 7) return `${diffDays} ${diffDays === 1 ? "day" : "days"}`;
+    const diffWeeks = Math.floor(diffDays / 7);
+    return `${diffWeeks} ${diffWeeks === 1 ? "week" : "weeks"}`;
   };
 
   // Close popups when clicking outside
@@ -367,14 +424,15 @@ function ProjectPage() {
       ) {
         setPriorityOpen(false);
       }
-      // Category dropdown
+      // Tags dropdown
       if (
-        categoryPopupRef.current &&
-        !categoryPopupRef.current.contains(event.target as Node) &&
-        categoryButtonRef.current &&
-        !categoryButtonRef.current.contains(event.target as Node)
+        tagOpen &&
+        tagPopupRef.current &&
+        !tagPopupRef.current.contains(event.target as Node) &&
+        tagButtonRef.current &&
+        !tagButtonRef.current.contains(event.target as Node)
       ) {
-        setCategoryOpen(false);
+        setTagOpen(false);
       }
       // Installation popup
       if (
@@ -384,6 +442,15 @@ function ProjectPage() {
         !installButtonRef.current.contains(event.target as Node)
       ) {
         setShowInstallPopup(false);
+      }
+      // Sort dropdown
+      if (
+        sortPopupRef.current &&
+        !sortPopupRef.current.contains(event.target as Node) &&
+        sortButtonRef.current &&
+        !sortButtonRef.current.contains(event.target as Node)
+      ) {
+        setSortOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -405,11 +472,6 @@ function ProjectPage() {
 
   const snippet = `<script src="${origin}/support/${project.id}/widget.js" async></script>`;
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(snippet);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   // Generate page numbers for shadcn pagination (simplified: show first, current, last)
   const getPageNumbers = () => {
@@ -492,7 +554,7 @@ function ProjectPage() {
                     <div>
                       <div className="relative">
                         <div className="absolute top-2 right-2 z-10">
-                          <Button variant="outline" size="sm" className="h-7 text-xs" onClick={copyToClipboard}>
+                          <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => copyToClipboard(snippet)}>
                             {copied ? (
                               <CheckCircle2 className="h-3 w-3 text-green-500" />
                             ) : (
@@ -549,62 +611,77 @@ function ProjectPage() {
           </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid gap-4 md:grid-cols-3">
-          {/* Active Chats Card – clickable */}
+        {/* Statistics Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          {/* Active Chats Card */}
           <Card
-            className="border-foreground/10 bg-card/50 shadow-xs rounded-[5px] cursor-pointer hover:bg-muted/30 transition-colors"
+            className="border-[#7f9bd7]/20 shadow-sm rounded-[5px] cursor-pointer "
             onClick={() => setSelectedStatus("active")}
           >
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-2">
-              <CardTitle className="text-xs font-medium">Active Chats</CardTitle>
-              <MessageSquare className="h-3.5 w-3.5 text-blue-500 opacity-70" />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-3">
+              <CardTitle className="text-[10px] font-bold text-[#91a2c9] uppercase tracking-widest opacity-100">Active Chats</CardTitle>
+              <MessageSquare className="h-4 w-4 text-[#0037b0]" />
             </CardHeader>
-            <CardContent className="pt-0 pb-2">
-              <div className="text-xl font-bold text-foreground">
-                {mockConversations.filter((conv) => conv.status === "open" || conv.status === "pending").length}
+            <CardContent className="pt-0 pb-3 flex items-end justify-between">
+              <div>
+                <div className="text-2xl font-bold text-[#0037b0]">
+                  {mockConversations.filter((conv) => conv.status === "active").length}
+                </div>
+                <p className="text-[10px] text-slate-500 font-medium flex items-center gap-1 mt-1">
+                  <TrendingUp className="h-3 w-3 text-green-500" />
+                  +12% from yesterday
+                </p>
               </div>
-              <p className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
-                <TrendingUp className="h-2.5 w-2.5 text-green-500" />
-                {filteredConversations.length} match current filters
-              </p>
+              <div className="pb-1">
+                <Sparkline data={[12, 15, 14, 18, 16, 22, 20]} color="#7f9bd7" />
+              </div>
             </CardContent>
           </Card>
 
-          {/* Average Response Time – mock */}
-          <Card className="border-foreground/10 bg-card/50 shadow-xs rounded-[5px]">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-2">
-              <CardTitle className="text-xs font-medium">Avg. Response Time</CardTitle>
-              <Clock className="h-3.5 w-3.5 text-orange-500 opacity-70" />
+          {/* Average Response Time Card */}
+          <Card className="border-[#7f9bd7]/20 bg-white shadow-sm rounded-[5px]">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-3">
+              <CardTitle className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Avg Response</CardTitle>
+              <Clock className="h-4 w-4 text-[#7f9bd7]" />
             </CardHeader>
-            <CardContent className="pt-0 pb-2">
-              <div className="text-xl font-bold text-foreground">4.2m</div>
-              <p className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
-                <TrendingUp className="h-2.5 w-2.5 text-green-500" />
-                -0.8m from last week
-              </p>
+            <CardContent className="pt-0 pb-3 flex items-end justify-between">
+              <div>
+                <div className="text-2xl font-bold text-slate-900">2.4<span className="text-sm font-medium ml-0.5">m</span></div>
+                <p className="text-[10px] text-slate-500 font-medium flex items-center gap-1 mt-1">
+                  <BarChart3 className="h-3 w-3 text-[#7f9bd7]" />
+                  Faster than avg.
+                </p>
+              </div>
+              <div className="pb-1">
+                <Sparkline data={[5, 4, 6, 3, 4, 2, 2.4]} color="#0037b0" />
+              </div>
             </CardContent>
           </Card>
 
-          {/* Daily Messages – mock */}
-          <Card className="border-foreground/10 bg-card/50 shadow-xs rounded-[5px]">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-2">
-              <CardTitle className="text-xs font-medium">Daily Messages</CardTitle>
-              <BarChart3 className="h-3.5 w-3.5 text-purple-500 opacity-70" />
+          {/* Daily Messages Card */}
+          <Card className="border-[#7f9bd7]/20 bg-white shadow-sm rounded-[5px]">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-3">
+              <CardTitle className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Daily Volume</CardTitle>
+              <CheckCircle2 className="h-4 w-4 text-green-500/70" />
             </CardHeader>
-            <CardContent className="pt-0 pb-2">
-              <div className="text-xl font-bold text-foreground">142</div>
-              <p className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
-                <TrendingUp className="h-2.5 w-2.5 text-green-500" />
-                +12% from yesterday
-              </p>
+            <CardContent className="pt-0 pb-3 flex items-end justify-between">
+              <div>
+                <div className="text-2xl font-bold text-slate-900">142</div>
+                <p className="text-[10px] text-slate-500 font-medium flex items-center gap-1 mt-1">
+                  <TrendingUp className="h-3 w-3 text-green-500" />
+                  +8.4% growth
+                </p>
+              </div>
+              <div className="pb-1">
+                <Sparkline data={[100, 110, 105, 120, 135, 130, 142]} color="#7f9bd7" />
+              </div>
             </CardContent>
           </Card>
         </div>
 
         {/* Search & Filter Bar */}
         <div className="px-0 py-2">
-          <div className="flex flex-row items-center gap-2 p-1.5 bg-surface-container-lowest rounded-[8px] shadow-sm border border-foreground/10">
+          <div className="flex flex-row items-center gap-2 p-1 bg-white rounded-[5px] shadow-sm border border-[#7f9bd7]/30">
             <div className="flex-1 relative flex items-center min-w-[200px]">
               <Search className="absolute left-3 h-4 w-4 text-muted-foreground" />
               <input
@@ -623,46 +700,32 @@ function ProjectPage() {
                   ref={statusButtonRef}
                   type="button"
                   onClick={() => setStatusOpen(!statusOpen)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-[5px] text-sm font-medium text-foreground hover:bg-muted/50 transition-colors whitespace-nowrap"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-[5px] text-xs font-bold text-slate-600 hover:bg-[#e8f0fa] transition-all whitespace-nowrap"
                 >
-                  Status: {selectedStatus === "all" ? "All" : selectedStatus === "active" ? "Active" : "Inactive"}
-                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  <span className="opacity-60 uppercase tracking-wider">Status:</span>
+                  <span className="text-slate-900 capitalize">{selectedStatus}</span>
+                  <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${statusOpen ? "rotate-180" : "opacity-40"}`} />
                 </button>
                 {statusOpen && (
                   <div
                     ref={statusPopupRef}
-                    className="absolute top-full left-0 mt-1 w-32 bg-background rounded-[5px] shadow-lg border border-foreground/10 z-50 py-1"
+                    className="absolute top-full left-0 mt-1.5 w-32 bg-white border border-slate-200 rounded-[5px] shadow-2xl z-50 p-1 animate-in fade-in zoom-in-95 overflow-hidden"
                   >
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedStatus("all");
-                        setStatusOpen(false);
-                      }}
-                      className="w-full text-left px-3 py-1.5 text-sm hover:bg-muted/50 flex items-center justify-between"
-                    >
-                      All {selectedStatus === "all" && <Check className="h-3.5 w-3.5 text-primary" />}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedStatus("active");
-                        setStatusOpen(false);
-                      }}
-                      className="w-full text-left px-3 py-1.5 text-sm hover:bg-muted/50 flex items-center justify-between"
-                    >
-                      Active {selectedStatus === "active" && <Check className="h-3.5 w-3.5 text-primary" />}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedStatus("inactive");
-                        setStatusOpen(false);
-                      }}
-                      className="w-full text-left px-3 py-1.5 text-sm hover:bg-muted/50 flex items-center justify-between"
-                    >
-                      Inactive {selectedStatus === "inactive" && <Check className="h-3.5 w-3.5 text-primary" />}
-                    </button>
+                    <p className="px-3 py-2 text-[10px] font-bold text-[#7f9bd7] uppercase tracking-widest border-b border-slate-50 mb-1">Select Option</p>
+                    {["all", "active", "inactive"].map((status) => (
+                      <button
+                        key={status}
+                        type="button"
+                        onClick={() => {
+                          setSelectedStatus(status);
+                          setStatusOpen(false);
+                        }}
+                        className={`w-full text-left px-3 py-2 text-[11px] rounded-[5px] font-bold transition-all flex items-center justify-between group ${selectedStatus === status ? "bg-[#e8f0fa] text-[#0037b0]" : "text-slate-600 hover:bg-slate-50"}`}
+                      >
+                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                        {selectedStatus === status && <Check className="h-3.5 w-3.5" />}
+                      </button>
+                    ))}
                   </div>
                 )}
               </div>
@@ -673,65 +736,107 @@ function ProjectPage() {
                   ref={priorityButtonRef}
                   type="button"
                   onClick={() => setPriorityOpen(!priorityOpen)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-[5px] text-sm font-medium text-foreground hover:bg-muted/50 transition-colors whitespace-nowrap"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-[5px] text-xs font-bold text-slate-600 hover:bg-[#e8f0fa] transition-all whitespace-nowrap"
                 >
-                  Priority:{" "}
-                  {selectedPriority === "all"
-                    ? "All"
-                    : selectedPriority.charAt(0).toUpperCase() + selectedPriority.slice(1)}
-                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  <span className="opacity-60 uppercase tracking-wider">Priority:</span>
+                  <span className="text-slate-900 capitalize">
+                    {selectedPriority === "all" ? "All" : selectedPriority.charAt(0).toUpperCase() + selectedPriority.slice(1)}
+                  </span>
+                  <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${priorityOpen ? "rotate-180" : "opacity-40"}`} />
                 </button>
+
                 {priorityOpen && (
                   <div
                     ref={priorityPopupRef}
-                    className="absolute top-full left-0 mt-1 w-32 bg-background rounded-[5px] shadow-lg border border-foreground/10 z-50 py-1"
+                    className="absolute top-full left-0 mt-1.5 w-32 bg-white border border-slate-200 rounded-[5px] shadow-2xl z-50 p-1 animate-in fade-in zoom-in-95 overflow-hidden"
                   >
-                    {["all", "urgent", "high", "low"].map((priority) => (
+                    <p className="px-3 py-2 text-[10px] font-bold text-[#7f9bd7] uppercase tracking-widest border-b border-slate-50 mb-1">Select Priority</p>
+                    {["all", "high", "medium", "low"].map((priority) => (
                       <button
-                        type="button"
                         key={priority}
+                        type="button"
+                        className={`w-full flex items-center justify-between px-3 py-2 text-[11px] rounded-[5px] font-bold transition-all capitalize ${selectedPriority === priority ? "bg-[#e8f0fa] text-[#0037b0]" : "text-slate-600 hover:bg-slate-50"}`}
                         onClick={() => {
                           setSelectedPriority(priority);
                           setPriorityOpen(false);
                         }}
-                        className="w-full text-left px-3 py-1.5 text-sm hover:bg-muted/50 flex items-center justify-between capitalize"
                       >
-                        {priority === "all" ? "All" : priority}
-                        {selectedPriority === priority && <Check className="h-3.5 w-3.5 text-primary" />}
+                        {priority}
+                        {selectedPriority === priority && <Check className="h-3.5 w-3.5" />}
                       </button>
                     ))}
                   </div>
                 )}
               </div>
 
-              {/* Category Dropdown */}
+              {/* Tags Dropdown */}
               <div className="relative">
                 <button
-                  ref={categoryButtonRef}
+                  ref={tagButtonRef}
                   type="button"
-                  onClick={() => setCategoryOpen(!categoryOpen)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-[5px] text-sm font-medium text-foreground hover:bg-muted/50 transition-colors whitespace-nowrap"
+                  onClick={() => setTagOpen(!tagOpen)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-[5px] text-xs font-bold text-slate-600 hover:bg-[#e8f0fa] transition-all whitespace-nowrap"
                 >
-                  Category: {selectedCategory === "all" ? "All" : selectedCategory}
-                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  <span className="opacity-60 uppercase tracking-wider">Tags:</span>
+                  <span className="text-slate-900 capitalize">{selectedTag === "all" ? "All" : selectedTag.charAt(0).toUpperCase() + selectedTag.slice(1)}</span>
+                  <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${tagOpen ? "rotate-180" : "opacity-40"}`} />
                 </button>
-                {categoryOpen && (
+
+                {tagOpen && (
                   <div
-                    ref={categoryPopupRef}
-                    className="absolute top-full left-0 mt-1 w-32 bg-background rounded-[5px] shadow-lg border border-foreground/10 z-50 py-1"
+                    ref={tagPopupRef}
+                    className="absolute top-full left-0 mt-1.5 w-36 bg-white border border-slate-200 rounded-[5px] shadow-2xl z-50 p-1 animate-in fade-in zoom-in-95 overflow-hidden"
                   >
-                    {["All", "Support", "Sales", "Billing"].map((cat) => (
+                    <p className="px-3 py-2 text-[10px] font-bold text-[#7f9bd7] uppercase tracking-widest border-b border-slate-50 mb-1">Select Tag</p>
+                    {["all", "support", "sales", "billing"].map((tag) => (
                       <button
+                        key={tag}
                         type="button"
-                        key={cat}
+                        className={`w-full flex items-center justify-between px-3 py-2 text-[11px] rounded-[5px] font-bold transition-all capitalize ${selectedTag === tag ? "bg-[#e8f0fa] text-[#0037b0]" : "text-slate-600 hover:bg-slate-50"}`}
                         onClick={() => {
-                          setSelectedCategory(cat);
-                          setCategoryOpen(false);
+                          setSelectedTag(tag);
+                          setTagOpen(false);
                         }}
-                        className="w-full text-left px-3 py-1.5 text-sm hover:bg-muted/50 flex items-center justify-between capitalize"
                       >
-                        {cat}
-                        {selectedCategory === cat && <Check className="h-3.5 w-3.5 text-primary" />}
+                        {tag}
+                        {selectedTag === tag && <Check className="h-3.5 w-3.5" />}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Sort Dropdown */}
+              <div className="relative">
+                <button
+                  ref={sortButtonRef}
+                  type="button"
+                  onClick={() => setSortOpen(!sortOpen)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-[5px] text-xs font-bold text-slate-600 hover:bg-[#e8f0fa] transition-all whitespace-nowrap"
+                >
+                  <span className="opacity-60 uppercase tracking-wider">Sort:</span>
+                  <span className="text-slate-900 capitalize">{sortBy}</span>
+                  <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${sortOpen ? "rotate-180" : "opacity-40"}`} />
+                </button>
+
+                {sortOpen && (
+                  <div
+                    ref={sortPopupRef}
+                    className="absolute top-full right-0 mt-1.5 w-32 bg-white border border-slate-200 rounded-[5px] shadow-2xl z-50 p-1 animate-in fade-in zoom-in-95 overflow-hidden"
+                  >
+                    <p className="px-3 py-2 text-[10px] font-bold text-[#7f9bd7] uppercase tracking-widest border-b border-slate-50 mb-1">Sort By</p>
+                    {["recent", "unread", "read"].map((option) => (
+                      <button
+                        key={option}
+                        type="button"
+                        className={`w-full flex items-center justify-between px-3 py-2 text-[11px] rounded-[5px] font-bold transition-all capitalize ${sortBy === option ? "bg-[#e8f0fa] text-[#0037b0]" : "text-slate-600 hover:bg-slate-50"}`}
+                        onClick={() => {
+                          setSortBy(option as any);
+                          setSortOpen(false);
+                        }}
+                      >
+                        {option}
+                        {sortBy === option && <Check className="h-3.5 w-3.5" />}
                       </button>
                     ))}
                   </div>
@@ -768,20 +873,21 @@ function ProjectPage() {
                   </div>
                 ) : (
                   displayedConversations.map((conv) => {
-                    const isActive = conv.status === "open" || conv.status === "pending";
+                    const isActive = conv.status === "active";
                     const statusColor = isActive ? "bg-green-500" : "bg-gray-400";
-                    const categoryMap: Record<string, string> = {
+                    const tagMap: Record<string, string> = {
                       support: "Support",
                       sales: "Sales",
                       billing: "Billing",
                     };
-                    const category = categoryMap[conv.department] || conv.department;
+                    const tag = tagMap[conv.department] || conv.department;
                     return (
                       <div
                         key={conv.id}
-                        className="px-4 py-3 hover:bg-muted/30 transition-colors cursor-pointer flex items-start gap-3 group"
+                        onClick={() => navigate({ to: `/dashboard/project/${project.id}/chat-support` })}
+                        className="px-4 py-4 hover:bg-muted/30 transition-colors cursor-pointer flex items-start gap-3 group border-b border-foreground/5 last:border-0"
                       >
-                        <div className="relative flex-shrink-0">
+                        <div className="relative flex-shrink-0 mt-0.5">
                           <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-sm">
                             {conv.initials}
                           </div>
@@ -791,38 +897,49 @@ function ProjectPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
-                            <span className="font-medium text-sm text-foreground truncate">{conv.name}</span>
+                            <span className="text-sm truncate text-slate-900 font-medium">{conv.name}</span>
                             {conv.priority && (
                               <span
-                                className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
-                                  conv.priority === "Urgent"
-                                    ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                                    : conv.priority === "High"
-                                      ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
-                                      : "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                                className={`text-[10px] font-bold px-1.5 py-0.5 rounded-[3px] uppercase tracking-wider ${
+                                  conv.priority === "High"
+                                    ? "bg-red-50 text-red-600 border border-red-100"
+                                    : conv.priority === "Medium"
+                                      ? "bg-amber-50 text-amber-600 border border-amber-100"
+                                      : "bg-[#e8f0fa] text-[#0037b0] border border-[#7f9bd7]/20"
                                 }`}
                               >
                                 {conv.priority}
                               </span>
                             )}
+                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-[3px] uppercase tracking-wider border ${
+                              conv.department === "support" 
+                                ? "bg-[#7f9bd7]/10 text-[#7f9bd7] border-[#7f9bd7]/20" 
+                                : "bg-[#0037b0]/10 text-[#0037b0] border-[#0037b0]/20"
+                            }`}>
+                              {conv.department}
+                            </span>
                           </div>
-                          <div className="mb-1">
-                            <span className="text-xs text-muted-foreground">{category}</span>
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-[10px] text-[#7f9bd7] font-bold uppercase tracking-widest">#{conv.idNumber}</span>
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); copyToClipboard(conv.idNumber); }}
+                              className="p-1 hover:bg-[#e8f0fa] rounded-[4px] transition-all group/copy"
+                            >
+                              <Copy className="h-3 w-3 text-slate-300 group-hover/copy:text-[#0037b0]" />
+                            </button>
                           </div>
-                          <p className="text-xs text-foreground/80 truncate">
-                            {conv.lastMessage.length > 70
-                              ? conv.lastMessage.substring(0, 70) + "..."
+                          <p className={`text-xs truncate mt-1 ${conv.unreadCount > 0 ? "text-slate-900 font-bold" : "text-slate-500"}`}>
+                            {conv.lastMessage.length > 100
+                              ? conv.lastMessage.substring(0, 100) + "..."
                               : conv.lastMessage}
                           </p>
                         </div>
                         <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                          <span className="text-[11px] text-muted-foreground whitespace-nowrap">
+                          <span className={`text-[10px] font-bold whitespace-nowrap uppercase tracking-widest ${conv.unreadCount > 0 ? "text-[#0037b0]" : "text-slate-400"}`}>
                             {formatRelativeTime(conv.timestamp)}
                           </span>
                           {conv.unreadCount > 0 && (
-                            <div className="min-w-[20px] h-5 px-1.5 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-[11px] font-bold shadow-sm">
-                              {conv.unreadCount}
-                            </div>
+                            <div className="w-2.5 h-2.5 bg-[#0037b0] rounded-full shadow-[0_0_10px_rgba(0,55,176,0.5)] mt-1 animate-pulse" />
                           )}
                         </div>
                       </div>
@@ -842,7 +959,7 @@ function ProjectPage() {
                           e.preventDefault();
                           if (hasPrevious) setCurrentPage(currentPage - 1);
                         }}
-                        className={!hasPrevious ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        className={`rounded-[5px] text-xs h-8 px-3 ${!hasPrevious ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-slate-50"}`}
                       />
                     </PaginationItem>
                     {getPageNumbers().map((page, idx) => (
@@ -857,7 +974,7 @@ function ProjectPage() {
                               e.preventDefault();
                               setCurrentPage(page as number);
                             }}
-                            className="h-7 w-7 text-xs cursor-pointer"
+                            className={`h-8 w-8 text-xs rounded-[5px] transition-all border-none ${currentPage === page ? "bg-[#e8f0fa] text-[#0037b0] font-bold cursor-default" : "hover:bg-slate-50 cursor-pointer text-slate-600"}`}
                           >
                             {page}
                           </PaginationLink>
@@ -871,7 +988,7 @@ function ProjectPage() {
                           e.preventDefault();
                           if (hasNext) setCurrentPage(currentPage + 1);
                         }}
-                        className={!hasNext ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        className={`rounded-[5px] text-xs h-8 px-3 ${!hasNext ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-slate-50"}`}
                       />
                     </PaginationItem>
                   </PaginationContent>
