@@ -611,7 +611,7 @@ const UserChatMessages = ({ ticket }: { ticket: TicketWithCustomer }) => {
       createdAt: new Date(Date.now() - 3000000).toISOString(),
       status: "READ",
       attachments: [
-        { id: "voice_1", name: "10_sec_Countdown_Timer.mp3", size: "150 KB", type: "voice", url: "/audios/10_sec_Countdown_Timer.mp3" }
+        { id: "voice_1", name: "10_sec_Countdown_Timer.mp3", size: "150 KB", duration: "0:13", type: "voice", url: "/audios/10_sec_Countdown_Timer.mp3" }
       ]
     },
     {
@@ -630,7 +630,7 @@ const UserChatMessages = ({ ticket }: { ticket: TicketWithCustomer }) => {
       content: "What do you think of this jade-like water soundtrack?",
       createdAt: new Date(Date.now() - 1200000).toISOString(),
       attachments: [
-        { id: "voice_2", name: "Flows _of _Jade-Like_Water_Soundtrack.mp3", size: "4.2 MB", type: "voice", url: "/audios/Flows _of _Jade-Like_Water_Soundtrack.mp3" }
+        { id: "voice_2", name: "Flows _of _Jade-Like_Water_Soundtrack.mp3", size: "4.2 MB", duration: "0:55", type: "voice", url: "/audios/Flows _of _Jade-Like_Water_Soundtrack.mp3" }
       ]
     },
     {
@@ -751,7 +751,7 @@ const UserChatMessages = ({ ticket }: { ticket: TicketWithCustomer }) => {
                           ))}
                         </div>
                         <span className={`text-[9px] font-bold ${isAgent ? "text-white/60" : "text-slate-400"}`}>
-                          {playingId === att.id ? "Playing..." : att.size + " • Voice Message"}
+                          {playingId === att.id ? "Playing..." : `${att.size}${att.duration ? ` • ${att.duration}` : ""}`}
                         </span>
                       </div>
                       <button onClick={() => window.open(att.url, "_blank")} className={`p-2 rounded-full ${isAgent ? "hover:bg-white/10 text-white/60" : "hover:bg-slate-50 text-slate-400"}`}>
