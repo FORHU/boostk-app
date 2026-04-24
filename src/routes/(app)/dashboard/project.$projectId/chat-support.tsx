@@ -72,11 +72,11 @@ function ProjectChatSupportPage() {
 
   const handleUpdateStatus = (ticketId: string, status: string) => {
     setIsUpdatingStatus(true);
-    
+
     // Simulate API delay
     setTimeout(() => {
       setTicketStatuses((prev) => ({ ...prev, [ticketId]: status }));
-      
+
       // Add to interaction history
       const newItem = {
         id: Date.now(),
@@ -85,7 +85,7 @@ function ProjectChatSupportPage() {
         status: status.charAt(0).toUpperCase() + status.slice(1).toLowerCase(),
         color: status === "OPEN" ? "bg-red-500" : "bg-slate-400",
       };
-      
+
       setTicketHistory((prev) => ({
         ...prev,
         [ticketId]: [newItem, ...(prev[ticketId] || [
@@ -142,8 +142,8 @@ function ProjectChatSupportPage() {
             .filter(([_, status]) => status === "ARCHIVED" || status === "CLOSED")
             .map(([id]) => id)}
         />
-        <CustomerDetails 
-          ticket={selectedTicket} 
+        <CustomerDetails
+          ticket={selectedTicket}
           history={selectedTicket ? ticketHistory[selectedTicket.id] || [
             { id: 1, title: "Support", time: "16 minutes ago", status: "Open", color: "bg-red-500" },
             { id: 2, title: "Billing", time: "Wednesday 1:17 pm", status: "Closed", color: "bg-slate-400" },
@@ -326,10 +326,10 @@ const TicketDetails = ({
               <div ref={assigneePopupRef} className="absolute top-full left-0 mt-1.5 w-full bg-white border border-slate-200 rounded-[5px] shadow-2xl z-20 p-1 animate-in fade-in zoom-in-95 duration-100 overflow-hidden">
                 <p className="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-50 mb-1">Select Assignee</p>
                 {["Alex Mercer", "Support Josie"].map((assignee) => (
-                  <button 
+                  <button
                     key={assignee}
-                    type="button" 
-                    className={`w-full text-left px-3 py-2 text-[11px] rounded-[3px] font-bold transition-all ${selectedAssignee === assignee ? "bg-[#eaf1fb] text-[#0037b0]" : "text-slate-600 hover:bg-slate-50"}`} 
+                    type="button"
+                    className={`w-full text-left px-3 py-2 text-[11px] rounded-[3px] font-bold transition-all ${selectedAssignee === assignee ? "bg-[#eaf1fb] text-[#0037b0]" : "text-slate-600 hover:bg-slate-50"}`}
                     onClick={() => { setSelectedAssignee(assignee); setAssigneeOpen(false); }}
                   >
                     {assignee}
@@ -345,27 +345,27 @@ const TicketDetails = ({
             {currentStatus.toLowerCase()}
           </div>
         </div>
-          <div className="relative">
-            <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1.5 ml-0.5">Priority</span>
-            <button ref={priorityButtonRef} type="button" onClick={() => setPriorityOpen(!priorityOpen)} className="w-full px-3 py-2 bg-white border border-slate-200 text-sm text-left flex items-center justify-between outline-none hover:border-[#7f9bd7] transition-colors" style={{ borderRadius: "5px" }}>
-              <span className="capitalize font-medium text-slate-700">{ticket.priority.toLowerCase()}</span>
-              <ChevronDown className="h-4 w-4 text-slate-400" />
-            </button>
-            {priorityOpen && (
-              <div ref={priorityPopupRef} className="absolute top-full left-0 mt-1.5 w-full bg-white border border-slate-200 rounded-[5px] shadow-2xl z-20 p-1 animate-in fade-in zoom-in-95 duration-100 overflow-hidden">
-                <p className="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-50 mb-1">Select Priority</p>
-                {["LOW", "NORMAL", "HIGH"].map((priority) => (
-                  <button 
-                    key={priority}
-                    type="button" 
-                    className={`w-full text-left px-3 py-2 text-[11px] rounded-[3px] font-bold transition-all capitalize ${ticket.priority === priority ? "bg-[#eaf1fb] text-[#0037b0]" : "text-slate-600 hover:bg-slate-50"}`} 
-                    onClick={() => setPriorityOpen(false)}
-                  >
-                    {priority.toLowerCase()}
-                  </button>
-                ))}
-              </div>
-            )}
+        <div className="relative">
+          <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1.5 ml-0.5">Priority</span>
+          <button ref={priorityButtonRef} type="button" onClick={() => setPriorityOpen(!priorityOpen)} className="w-full px-3 py-2 bg-white border border-slate-200 text-sm text-left flex items-center justify-between outline-none hover:border-[#7f9bd7] transition-colors" style={{ borderRadius: "5px" }}>
+            <span className="capitalize font-medium text-slate-700">{ticket.priority.toLowerCase()}</span>
+            <ChevronDown className="h-4 w-4 text-slate-400" />
+          </button>
+          {priorityOpen && (
+            <div ref={priorityPopupRef} className="absolute top-full left-0 mt-1.5 w-full bg-white border border-slate-200 rounded-[5px] shadow-2xl z-20 p-1 animate-in fade-in zoom-in-95 duration-100 overflow-hidden">
+              <p className="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-50 mb-1">Select Priority</p>
+              {["LOW", "NORMAL", "HIGH"].map((priority) => (
+                <button
+                  key={priority}
+                  type="button"
+                  className={`w-full text-left px-3 py-2 text-[11px] rounded-[3px] font-bold transition-all capitalize ${ticket.priority === priority ? "bg-[#eaf1fb] text-[#0037b0]" : "text-slate-600 hover:bg-slate-50"}`}
+                  onClick={() => setPriorityOpen(false)}
+                >
+                  {priority.toLowerCase()}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
         <div>
           <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1.5">Ticket ID</span>
@@ -392,10 +392,10 @@ const TicketDetails = ({
               <div ref={submitPopupRef} className="absolute bottom-full right-0 mb-2 w-48 bg-white border border-slate-200 rounded-[5px] shadow-2xl z-20 p-1 animate-in fade-in slide-in-from-bottom-2 duration-200 overflow-hidden">
                 <p className="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-50 mb-1">Change Status To</p>
                 {["OPEN", "CLOSED", "ARCHIVED"].map((status) => (
-                  <button 
-                    key={status} 
-                    type="button" 
-                    className={`w-full text-left px-3 py-2 text-[11px] rounded-[3px] font-bold transition-all flex items-center justify-between group ${currentStatus === status ? "bg-[#eaf1fb] text-[#0037b0]" : "text-slate-600 hover:bg-slate-50"}`} 
+                  <button
+                    key={status}
+                    type="button"
+                    className={`w-full text-left px-3 py-2 text-[11px] rounded-[3px] font-bold transition-all flex items-center justify-between group ${currentStatus === status ? "bg-[#eaf1fb] text-[#0037b0]" : "text-slate-600 hover:bg-slate-50"}`}
                     onClick={() => { onUpdateStatus(ticket.id, status); setSubmitOpen(false); }}
                   >
                     <span className="capitalize">{status.toLowerCase()}</span>
@@ -444,10 +444,10 @@ const TicketTags = ({ tags, onUpdateTags }: { tags: string[]; onUpdateTags: (tag
           <p className="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-50 mb-1">Select Category</p>
           <div className="grid grid-cols-1">
             {predefinedTags.map((tag) => (
-              <button 
-                key={tag} 
-                type="button" 
-                onClick={() => toggleTag(tag)} 
+              <button
+                key={tag}
+                type="button"
+                onClick={() => toggleTag(tag)}
                 className={`w-full text-left px-3 py-2 text-[11px] rounded-[3px] font-bold transition-all flex items-center justify-between group ${tags.includes(tag) ? "bg-[#eaf1fb] text-[#0037b0]" : "text-slate-600 hover:bg-slate-50"}`}
               >
                 {tag}
@@ -512,8 +512,8 @@ const ChatWindow = ({ ticket, archivedTickets, onClose }: { ticket: TicketWithCu
         <div className="flex items-center gap-3">
           <div className="relative shrink-0" style={{ width: 36, height: 36 }}><div className="absolute inset-0 rounded-[5px] bg-[#0038b0] flex items-center justify-center">
             <span className="text-sm font-bold text-white">{ticket.customer.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}</span>
-            </div>
-            </div>
+          </div>
+          </div>
           <div className="flex flex-col"><span className="font-bold text-slate-900 text-sm leading-tight">{ticket.customer.name}</span><span className="text-[10px] text-slate-400 font-medium">#{ticket.referenceNumber}</span></div>
         </div>
         <button type="button" onClick={onClose} className="p-1.5 text-slate-400 hover:text-black transition-all ml-auto" title="Close Chat"><X className="h-5 w-5" />
@@ -548,7 +548,14 @@ const UserChatMessages = ({ ticket }: { ticket: TicketWithCustomer }) => {
 
   const [selectedMedia, setSelectedMedia] = useState<{ url: string; type: "image" | "video" } | null>(null);
   const [playingId, setPlayingId] = useState<string | null>(null);
+  const [audioRemainingTime, setAudioRemainingTime] = useState<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return `${m}:${s.toString().padStart(2, "0")}`;
+  };
 
   const togglePlay = (id: string, url: string) => {
     if (playingId === id) {
@@ -580,7 +587,7 @@ const UserChatMessages = ({ ticket }: { ticket: TicketWithCustomer }) => {
       ]
     },
     {
-      id: "mock_2",
+      id: "mock_3",
       userId: "agent_1",
       content: "Here are the Earth texture assets you requested:",
       createdAt: new Date(Date.now() - 3600000).toISOString(),
@@ -592,13 +599,13 @@ const UserChatMessages = ({ ticket }: { ticket: TicketWithCustomer }) => {
       ]
     },
     {
-      id: "mock_4",
+      id: "mock_5",
       userId: "agent_1",
       content: "image testing: failed status",
       createdAt: new Date(Date.now() - 3600000).toISOString(),
       status: "FAILED",
       attachments: [
-        { id: "img_1", name: "yza_2026.png", size: "3.9 MB", type: "image", url: "/images/yza_2026.png" },        
+        { id: "img_1", name: "yza_2026.png", size: "3.9 MB", type: "image", url: "/images/yza_2026.png" },
       ]
     },
     {
@@ -631,7 +638,7 @@ const UserChatMessages = ({ ticket }: { ticket: TicketWithCustomer }) => {
       ]
     },
     {
-      id: "mock_3",
+      id: "mock_4",
       userId: "agent_1",
       content: "Check out these marketing clips for the upcoming launch:",
       createdAt: new Date(Date.now() - 600000).toISOString(),
@@ -665,15 +672,15 @@ const UserChatMessages = ({ ticket }: { ticket: TicketWithCustomer }) => {
                     {msg.translatedContent ? (<div><div>{isAgent ? msg.content : msg.translatedContent}</div><div className={`text-[10px] mt-1 pt-1 border-t ${isAgent ? "border-[#0037b0]/20 text-[#0037b0]/60" : "border-gray-200 text-gray-500"}`}>{isAgent ? `Translated: ${msg.translatedContent}` : `Original: ${msg.content}`}</div></div>) : msg.content}
                   </div>)}
                   {msg.content === "Sent 3 file(s)" && !msg.attachments?.length && (
-                    <div 
+                    <div
                       onClick={() => setSelectedMedia({ url: "/images/cat-point-laughing.gif", type: "image" })}
                       className="mt-2 rounded-[5px] overflow-hidden border border-slate-200 shadow-sm max-w-[300px] bg-[#eaf1fb] group cursor-pointer hover:border-[#0037b0] transition-all"
                     >
                       <div className="relative overflow-hidden">
-                        <img 
-                          src="/images/cat-point-laughing.gif" 
-                          alt="Mock Preview" 
-                          className="w-full h-auto object-cover max-h-[180px] group-hover:scale-105 transition-transform duration-500" 
+                        <img
+                          src="/images/cat-point-laughing.gif"
+                          alt="Mock Preview"
+                          className="w-full h-auto object-cover max-h-[180px] group-hover:scale-105 transition-transform duration-500"
                         />
                         <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                           <span className="bg-white/90 text-[#0037b0] px-3 py-1.5 rounded-full text-[10px] font-bold shadow-lg">View GIF</span>
@@ -694,22 +701,22 @@ const UserChatMessages = ({ ticket }: { ticket: TicketWithCustomer }) => {
                     const isVideo = att.type === "video" || att.name?.match(/\.(mp4|mov|avi)$/i);
 
                     if (isImage) return (
-                    <div key={att.id} onClick={() => setSelectedMedia({ url: att.url || "/images/cat-point-laughing.gif", type: "image" })} className="mt-2 rounded-[5px] overflow-hidden border border-slate-200 shadow-sm max-w-[300px] bg-[#eaf1fb] hover:border-[#0037b0] transition-colors cursor-pointer group">
-                      <div className="relative overflow-hidden">
-                        <img src={att.url || "/images/cat-point-laughing.gif"} alt="" className="w-full h-auto object-cover max-h-[200px] group-hover:scale-105 transition-transform duration-500" />
-                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <span className="bg-white/90 text-[#0037b0] px-3 py-1.5 rounded-full text-[10px] font-bold shadow-lg">View Image</span>
+                      <div key={att.id} onClick={() => setSelectedMedia({ url: att.url || "/images/cat-point-laughing.gif", type: "image" })} className="mt-2 rounded-[5px] overflow-hidden border border-slate-200 shadow-sm max-w-[300px] bg-[#eaf1fb] hover:border-[#0037b0] transition-colors cursor-pointer group">
+                        <div className="relative overflow-hidden">
+                          <img src={att.url || "/images/cat-point-laughing.gif"} alt="" className="w-full h-auto object-cover max-h-[200px] group-hover:scale-105 transition-transform duration-500" />
+                          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <span className="bg-white/90 text-[#0037b0] px-3 py-1.5 rounded-full text-[10px] font-bold shadow-lg">View Image</span>
+                          </div>
                         </div>
-                      </div>
-                      <div className="px-3 py-1.5 flex items-center justify-between">
-                        <span className="text-[10px] font-bold text-slate-500 truncate">{att.name}</span>
-                        <button onClick={(e) => { e.stopPropagation(); window.open(att.url, "_blank"); }} className="text-[#0037b0]"><ExternalLink size={12} /></button>
-                      </div>
-                    </div>);
+                        <div className="px-3 py-1.5 flex items-center justify-between">
+                          <span className="text-[10px] font-bold text-slate-500 truncate">{att.name}</span>
+                          <button onClick={(e) => { e.stopPropagation(); window.open(att.url, "_blank"); }} className="text-[#0037b0]"><ExternalLink size={12} /></button>
+                        </div>
+                      </div>);
 
                     if (isVideo) return (
-                      <div 
-                        key={att.id} 
+                      <div
+                        key={att.id}
                         onClick={() => setSelectedMedia({ url: att.url, type: "video" })}
                         className="mt-2 rounded-[5px] overflow-hidden border border-slate-200 shadow-sm max-w-[300px] bg-slate-900 group cursor-pointer relative"
                       >
@@ -730,31 +737,31 @@ const UserChatMessages = ({ ticket }: { ticket: TicketWithCustomer }) => {
                     );
 
                     if (isVoice) return (
-                    <div key={att.id} className={`mt-2 p-3 rounded-[5px] flex items-center gap-3 min-w-[240px] shadow-sm ${isAgent ? "bg-[#0037b0] text-white" : "bg-white border border-slate-100"}`}>
-                      <button 
-                        onClick={() => togglePlay(att.id, att.url)}
-                        className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-transform active:scale-95 ${isAgent ? "bg-white/20 hover:bg-white/30" : "bg-[#eaf1fb] hover:bg-[#7f9bd7]/20"}`}
-                      >
-                        {playingId === att.id ? <div className="flex gap-0.5 items-center"><div className="w-1 h-3 bg-current animate-bounce" /><div className="w-1 h-4 bg-current animate-bounce [animation-delay:0.2s]" /><div className="w-1 h-3 bg-current animate-bounce [animation-delay:0.4s]" /></div> : <History size={18} className={`${isAgent ? "text-white" : "text-[#0037b0]"} rotate-90`} />}
-                      </button>
-                      <div className="flex-1 flex flex-col gap-1">
-                        <div className="flex items-center gap-1">
-                          {[...Array(18)].map((_, i) => (
-                            <div 
-                              key={i} 
-                              className={`w-1 rounded-full transition-all duration-300 ${playingId === att.id ? "animate-pulse" : ""} ${isAgent ? "bg-white/40" : "bg-[#7f9bd7]/30"}`} 
-                              style={{ height: 4 + Math.random() * 12, opacity: playingId === att.id ? 1 : 0.6 }} 
-                            />
-                          ))}
+                      <div key={att.id} className={`mt-2 p-3 rounded-[5px] flex items-center gap-3 min-w-[240px] shadow-sm ${isAgent ? "bg-[#0037b0] text-white" : "bg-white border border-slate-100"}`}>
+                        <button
+                          onClick={() => togglePlay(att.id, att.url)}
+                          className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-transform active:scale-95 ${isAgent ? "bg-white/20 hover:bg-white/30" : "bg-[#eaf1fb] hover:bg-[#7f9bd7]/20"}`}
+                        >
+                          {playingId === att.id ? <div className="flex gap-0.5 items-center"><div className="w-1 h-3 bg-current animate-bounce" /><div className="w-1 h-4 bg-current animate-bounce [animation-delay:0.2s]" /><div className="w-1 h-3 bg-current animate-bounce [animation-delay:0.4s]" /></div> : <History size={18} className={`${isAgent ? "text-white" : "text-[#0037b0]"} rotate-90`} />}
+                        </button>
+                        <div className="flex-1 flex flex-col gap-1">
+                          <div className="flex items-center gap-1">
+                            {[...Array(18)].map((_, i) => (
+                              <div
+                                key={i}
+                                className={`w-1 rounded-full transition-all duration-300 ${playingId === att.id ? "animate-pulse" : ""} ${isAgent ? "bg-white/40" : "bg-[#7f9bd7]/30"}`}
+                                style={{ height: 4 + Math.random() * 12, opacity: playingId === att.id ? 1 : 0.6 }}
+                              />
+                            ))}
+                          </div>
+                          <span className={`text-[9px] font-bold ${isAgent ? "text-white/60" : "text-slate-400"}`}>
+                            {playingId === att.id ? (audioRemainingTime !== null ? formatTime(audioRemainingTime) : "Playing...") : `${att.size}${att.duration ? ` • ${att.duration}` : ""}`}
+                          </span>
                         </div>
-                        <span className={`text-[9px] font-bold ${isAgent ? "text-white/60" : "text-slate-400"}`}>
-                          {playingId === att.id ? "Playing..." : `${att.size}${att.duration ? ` • ${att.duration}` : ""}`}
-                        </span>
-                      </div>
-                      <button onClick={() => window.open(att.url, "_blank")} className={`p-2 rounded-full ${isAgent ? "hover:bg-white/10 text-white/60" : "hover:bg-slate-50 text-slate-400"}`}>
-                        <Download size={14} />
-                      </button>
-                    </div>);
+                        <button onClick={() => window.open(att.url, "_blank")} className={`p-2 rounded-full ${isAgent ? "hover:bg-white/10 text-white/60" : "hover:bg-slate-50 text-slate-400"}`}>
+                          <Download size={14} />
+                        </button>
+                      </div>);
 
                     return (<div key={att.id} className={`p-3 border flex items-center gap-3 min-w-[260px] shadow-sm ${isAgent ? "bg-[#0037b0]/90 border-[#0037b0]" : "bg-[#eaf1fb] border-gray-200"}`} style={{ borderRadius: "5px" }}><div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${isAgent ? "bg-[#0037b0]" : "bg-white"}`}><FileText size={20} className={isAgent ? "text-white/80" : "text-[#0037b0]"} /></div><div className="flex-1 min-w-0"><p className={`text-xs font-bold truncate ${isAgent ? "text-white" : "text-gray-900"}`}>{att.name}</p><p className={`text-[10px] ${isAgent ? "text-white/60" : "text-gray-500"}`}>{att.size}</p></div><button onClick={() => window.open(att.url, "_blank")} className={`p-2 rounded-full ${isAgent ? "text-white/60 hover:bg-white/10" : "text-[#0037b0] hover:bg-white"}`}><Download size={16} /></button></div>);
                   })}
@@ -767,35 +774,47 @@ const UserChatMessages = ({ ticket }: { ticket: TicketWithCustomer }) => {
       )}
       <div ref={messagesEndRef} />
 
-      <audio 
-        ref={audioRef} 
-        className="hidden" 
-        onEnded={() => setPlayingId(null)}
-        onError={() => { toast.error("Failed to load audio"); setPlayingId(null); }}
+      <audio
+        ref={audioRef}
+        className="hidden"
+        onEnded={() => { setPlayingId(null); setAudioRemainingTime(null); }}
+        onError={() => { toast.error("Failed to load audio"); setPlayingId(null); setAudioRemainingTime(null); }}
+        onTimeUpdate={() => {
+          if (audioRef.current) {
+            const remaining = audioRef.current.duration - audioRef.current.currentTime;
+            setAudioRemainingTime(isNaN(remaining) ? null : remaining);
+          }
+        }}
+        onLoadedMetadata={() => {
+          if (audioRef.current) {
+            const remaining = audioRef.current.duration;
+            setAudioRemainingTime(isNaN(remaining) ? null : remaining);
+          }
+        }}
       />
 
       {/* Lightbox Modal */}
       {selectedMedia && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm animate-in fade-in duration-300">
-          <button 
+          <button
             onClick={() => setSelectedMedia(null)}
             className="absolute top-6 right-6 w-12 h-12 bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center transition-all hover:rotate-90 z-[110]"
           >
             <X size={24} strokeWidth={3} />
           </button>
-          
+
           <div className="max-w-[90vw] max-h-[90vh] relative animate-in zoom-in-95 duration-300">
             {selectedMedia.type === "video" ? (
-              <video 
-                src={selectedMedia.url} 
-                controls 
-                autoPlay 
+              <video
+                src={selectedMedia.url}
+                controls
+                autoPlay
                 className="w-full h-full rounded-lg shadow-2xl shadow-black/50 outline-none"
               />
             ) : (
-              <img 
-                src={selectedMedia.url} 
-                alt="Full view" 
+              <img
+                src={selectedMedia.url}
+                alt="Full view"
                 className="w-full h-full object-contain rounded-lg shadow-2xl shadow-black/50"
               />
             )}
@@ -843,13 +862,13 @@ const UserChatInput = ({ ticket }: { ticket: TicketWithCustomer }) => {
       if (file.size > 10 * 1024 * 1024) { toast.error(`${file.name} is too large (max 10MB)`); return; }
       const id = Math.random().toString(36).substring(7);
       const isImage = file.type.startsWith("image/");
-      setUploads(prev => [...prev, { id, file, preview: isImage ? URL.createObjectURL(file) : "", progress: 0, name: file.name, size: file.size > 1024 * 1024 ? `${(file.size/1024/1024).toFixed(1)}MB` : `${(file.size/1024).toFixed(0)}KB`, type: isImage ? "image" : "document" }]);
+      setUploads(prev => [...prev, { id, file, preview: isImage ? URL.createObjectURL(file) : "", progress: 0, name: file.name, size: file.size > 1024 * 1024 ? `${(file.size / 1024 / 1024).toFixed(1)}MB` : `${(file.size / 1024).toFixed(0)}KB`, type: isImage ? "image" : "document" }]);
       let prog = 0; const int = setInterval(() => { prog += 15; setUploads(p => p.map(u => u.id === id ? { ...u, progress: Math.min(prog, 100) } : u)); if (prog >= 100) clearInterval(int); }, 200);
     });
   };
 
   const handleStartRecording = () => { setIsRecording(true); setRecordingDuration(0); timerRef.current = setInterval(() => setRecordingDuration(p => p + 1), 1000); };
-  const handleStopRecording = () => { clearInterval(timerRef.current); setIsRecording(false); const id = "v" + Math.random(); setUploads(p => [...p, { id, progress: 100, name: "Voice", size: `${Math.floor(recordingDuration/60)}:${(recordingDuration%60).toString().padStart(2,"0")}`, type: "voice" }]); };
+  const handleStopRecording = () => { clearInterval(timerRef.current); setIsRecording(false); const id = "v" + Math.random(); setUploads(p => [...p, { id, progress: 100, name: "Voice", size: `${Math.floor(recordingDuration / 60)}:${(recordingDuration % 60).toString().padStart(2, "0")}`, type: "voice" }]); };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault(); if ((!message.trim() && !uploads.length) || createMessageMutation.isPending || isRecording) return;
@@ -865,12 +884,12 @@ const UserChatInput = ({ ticket }: { ticket: TicketWithCustomer }) => {
           {uploads.map(u => (
             <div key={u.id} className="relative w-20 h-20 border border-slate-200 rounded-[8px] overflow-hidden shrink-0 bg-slate-50 flex items-center justify-center group">
               {u.type === "image" ? <img src={u.preview} className="w-full h-full object-cover" alt="" /> : u.type === "voice" ? <Mic size={24} className="text-[#0037b0]" /> : <FileText size={24} className="text-[#0037b0]" />}
-              {u.progress < 100 && 
-              <div className="absolute inset-0 bg-white/80 flex items-center justify-center p-2">
-                <div className="w-full bg-slate-200 h-1 rounded-full overflow-hidden">
-                  <div className="bg-[#0037b0] h-full" style={{ width: `${u.progress}%` }} />
+              {u.progress < 100 &&
+                <div className="absolute inset-0 bg-white/80 flex items-center justify-center p-2">
+                  <div className="w-full bg-slate-200 h-1 rounded-full overflow-hidden">
+                    <div className="bg-[#0037b0] h-full" style={{ width: `${u.progress}%` }} />
+                  </div>
                 </div>
-              </div>
               }
               <button onClick={() => setUploads(p => p.filter(x => x.id !== u.id))} className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center">
                 <Trash2 size={14} className="text-white" />
@@ -889,10 +908,10 @@ const UserChatInput = ({ ticket }: { ticket: TicketWithCustomer }) => {
               <button type="button" onClick={handleStopRecording} className="w-7 h-7 bg-white rounded-full flex items-center justify-center text-[#0037b0]">
                 <div className="w-2.5 h-2.5 bg-[#0037b0] rounded-sm" />
               </button>
-              <div className="flex-1 flex gap-1 mx-4">{[...Array(24)].map((_,i)=>
+              <div className="flex-1 flex gap-1 mx-4">{[...Array(24)].map((_, i) =>
                 <div key={i} className="flex-1 bg-white/40 rounded-full h-4 animate-pulse" />)}
               </div>
-              <span className="text-white font-mono text-[11px]">{Math.floor(recordingDuration/60)}:{(recordingDuration%60).toString().padStart(2,"0")}
+              <span className="text-white font-mono text-[11px]">{Math.floor(recordingDuration / 60)}:{(recordingDuration % 60).toString().padStart(2, "0")}
               </span>
             </div>
             <button type="submit" className="w-10 h-10 bg-[#0037b0] text-white rounded-full flex items-center justify-center shadow-md"><Send size={18} fill="currentColor" />
@@ -908,12 +927,12 @@ const UserChatInput = ({ ticket }: { ticket: TicketWithCustomer }) => {
                 <button type="button" onClick={() => setAttachOpen(!attachOpen)} className="p-2 text-[#0037b0] hover:bg-[#0037b0]/10 rounded-[5px]"><Paperclip size={20} />
                 </button>{attachOpen && (
                   <div className="absolute bottom-full left-0 mb-2 w-48 bg-white shadow-2xl border border-slate-200 py-2 rounded-[10px] z-50">
-                    <button type="button" onClick={() => { fileInputRef.current!.accept = "image/*"; fileInputRef.current!.click(); setAttachOpen(false); }} className="w-full text-left px-3 py-2 text-xs hover:bg-[#0037b0]/10 flex items-center gap-3"><Image size={16} className="text-[#0037b0]" /> 
-                    Image</button>
+                    <button type="button" onClick={() => { fileInputRef.current!.accept = "image/*"; fileInputRef.current!.click(); setAttachOpen(false); }} className="w-full text-left px-3 py-2 text-xs hover:bg-[#0037b0]/10 flex items-center gap-3"><Image size={16} className="text-[#0037b0]" />
+                      Image</button>
                     <button type="button" onClick={() => { fileInputRef.current!.accept = ".pdf,.doc,.docx,.txt"; fileInputRef.current!.click(); setAttachOpen(false); }} className="w-full text-left px-3 py-2 text-xs hover:bg-[#0037b0]/10 flex items-center gap-3"><FileText size={16} className="text-[#0037b0]" /> Document
                     </button>
-                    </div>
-                  )}
+                  </div>
+                )}
               </div>
             </div>
             <textarea value={message} onChange={e => setMessage(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmit(e as any); } }} placeholder="Type a reply..." className="flex-1 bg-gray-50 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#0037b0] rounded-[8px] border border-transparent resize-none" rows={1} />
@@ -939,7 +958,7 @@ const CustomerDetails = ({ ticket, history }: { ticket: TicketWithCustomer | nul
         <div className="flex items-center gap-3 mb-6">
           <div className="h-9 w-9 rounded-full bg-slate-400 flex items-center justify-center"><SquareUser className="h-5.5 w-5.5 text-white/90" /></div>
           <h3 className="text-[16px] font-bold text-slate-800 tracking-tight">Alex Mercer</h3>
-          </div>
+        </div>
         <div className="space-y-3.5">
           <div className="grid grid-cols-[90px_1fr] items-baseline">
             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Email</span>
@@ -957,7 +976,7 @@ const CustomerDetails = ({ ticket, history }: { ticket: TicketWithCustomer | nul
             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Notes</span>
             <textarea className={`w-full text-[13px] text-slate-700 p-2.5 bg-white border rounded-[3px] resize-none outline-none min-h-[70px] ${isEditing ? "border-[#7f9bd7]" : "border-slate-200"}`} value={isEditing ? tempNote : note} onFocus={() => setIsEditing(true)} onChange={e => setTempNote(e.target.value)} />{isEditing && (
               <div className="flex items-center justify-end gap-2 mt-1"><button onClick={() => setIsEditing(false)} className="text-[11px] font-bold text-slate-500">Cancel</button>
-              <button onClick={() => { setNote(tempNote); setIsEditing(false); }} className="px-3 py-1 bg-[#0037b0] text-white text-[11px] font-bold rounded shadow-sm">Save</button></div>)}
+                <button onClick={() => { setNote(tempNote); setIsEditing(false); }} className="px-3 py-1 bg-[#0037b0] text-white text-[11px] font-bold rounded shadow-sm">Save</button></div>)}
           </div>
         </div>
       </div>
@@ -970,8 +989,8 @@ const CustomerDetails = ({ ticket, history }: { ticket: TicketWithCustomer | nul
         <div className="flex-1 overflow-y-auto custom-scrollbar relative">
           {history.map((item, idx) => (
             <div key={item.id} className={`group relative pl-14 pr-5 py-5 transition-colors border-l-4 border-transparent ${idx === 0 ? "bg-[#eaf1fb] border-l-[#0037b0]" : "hover:bg-slate-50"}`}>
-              {idx !== history.length - 1 && 
-              <div className="absolute left-[24px] top-[30px] bottom-[-30px] w-[1px] bg-slate-200" />}
+              {idx !== history.length - 1 &&
+                <div className="absolute left-[24px] top-[30px] bottom-[-30px] w-[1px] bg-slate-200" />}
               <div className={`absolute left-[21px] top-6 w-[7px] h-[7px] rounded-sm ${item.color} z-10 shadow-sm`} />
               <div className="flex flex-col">
                 <h5 className="text-[13px] font-bold text-slate-800 mb-1">{item.title}</h5>
