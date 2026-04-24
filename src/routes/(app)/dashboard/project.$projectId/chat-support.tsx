@@ -29,6 +29,7 @@ import type { Project } from "prisma/generated/client";
 import { Fragment, Suspense, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { QuickReplies } from "@/components/chat-support/QuickReplies";
+import { TemplateManagerModal, type QuickReplyTemplate } from "@/components/chat-support/TemplateManagerModal";
 import { socket } from "@/lib/socket";
 import { ticketQueries } from "@/modules/ticket/query.queries";
 import type { TicketWithCustomer } from "@/modules/ticket/ticket.types";
@@ -829,6 +830,21 @@ const UserChatMessages = ({ ticket }: { ticket: TicketWithCustomer }) => {
   );
 };
 
+const defaultTemplates: QuickReplyTemplate[] = [
+  { id: "t1", category: "Greetings", title: "Standard Intro", text: "Hello! How can I help you today with your project?" },
+  { id: "t2", category: "Greetings", title: "Friendly Opening", text: "Hi there! Thanks for reaching out. I'm happy to assist you." },
+  { id: "t3", category: "Support", title: "Issue Logged", text: "We've received your report and our tech team is looking into it. We'll update you shortly." },
+  { id: "t4", category: "Support", title: "Meeting Request", text: "Would you like to schedule a quick 15-min sync to discuss this further?" },
+  { id: "t5", category: "Support", title: "Hold Request", text: "Great question! I will find the answer for you. Is it okay if I place you on a brief hold?" },
+  { id: "t6", category: "Support", title: "Paraphrase Issue", text: "From what I understand, the issue you're experiencing is [paraphrase the issue]. Is that correct?" },
+  { id: "t7", category: "Support", title: "Acknowledgment", text: "Thank you for bringing that to our attention. We understand it's important to you." },
+  { id: "t8", category: "Support", title: "Alternative Offer", text: "While we are unable to do that, here's what we can do instead." },
+  { id: "t9", category: "Sales", title: "Pricing Sheet", text: "I've attached our updated premium pricing tier for your review. Let me know if you have questions." },
+  { id: "t10", category: "Sales", title: "Proposal Ready", text: "The draft for the editorial partnership is ready for your review. When would be a good time to discuss?" },
+  { id: "t11", category: "Closing", title: "Sign Off", text: "Let me know if there is anything else you need from our team. Have a great day!" },
+  { id: "t12", category: "Closing", title: "Follow-up", text: "I'll follow up with you in a few days to ensure everything is resolved. Feel free to reply anytime." },
+];
+
 const UserChatInput = ({ ticket }: { ticket: TicketWithCustomer }) => {
   const queryClient = useQueryClient();
   const [message, setMessage] = useState("");
@@ -838,6 +854,8 @@ const UserChatInput = ({ ticket }: { ticket: TicketWithCustomer }) => {
   const [uploads, setUploads] = useState<any[]>([]);
   const [recordingDuration, setRecordingDuration] = useState(0);
   const timerRef = useRef<any>(null);
+  const [templates, setTemplates] = useState<QuickReplyTemplate[]>(defaultTemplates);
+  const [isManagingTemplates, setIsManagingTemplates] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const createMessageMutation = useMutation({
@@ -898,7 +916,25 @@ const UserChatInput = ({ ticket }: { ticket: TicketWithCustomer }) => {
           ))}
         </div>
       )}
-      {showQuickResponses && <QuickReplies onSelectReply={(t) => { setMessage(t); setShowQuickResponses(false); }} onClose={() => setShowQuickResponses(false)} />}
+      {isManagingTemplates && (
+        <TemplateManagerModal
+          templates={templates}
+          onClose={() => setIsManagingTemplates(false)}
+          onAdd={(t) => setTemplates((prev) => [...prev, t])}
+          onUpdate={(t) => setTemplates((prev) => prev.map((x) => (x.id === t.id ? t : x)))}
+          onDelete={(id) => setTemplates((prev) => prev.filter((x) => x.id !== id))}
+        />
+      )}
+      {showQuickResponses && (
+        <div className="absolute bottom-full left-4 mb-2 z-50">
+          <QuickReplies
+            templates={templates}
+            onSelectReply={(t) => { setMessage(t); setShowQuickResponses(false); }}
+            onClose={() => setShowQuickResponses(false)}
+            onManage={() => { setShowQuickResponses(false); setIsManagingTemplates(true); }}
+          />
+        </div>
+      )}
       <form onSubmit={handleSubmit} className="flex items-center gap-2">
         {isRecording ? (
           <div className="flex-1 flex items-center gap-3">
