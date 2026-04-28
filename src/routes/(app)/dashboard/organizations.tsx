@@ -1,30 +1,10 @@
 import { useForm } from "@tanstack/react-form";
-import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-  ArrowRight,
-  Building2,
-  Copy,
-  Globe,
-  LayoutGrid,
-  Loader2,
-  MoreVertical,
-  Plus,
-  Search,
-  Settings,
-  Users2,
-} from "lucide-react";
-import { Suspense, useState } from "react";
-import { toast } from "sonner";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
+import { Building2, LayoutGrid, Plus, Users2 } from "lucide-react";
+import OrganizationList from "@/components/organization/organization-list";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -32,10 +12,10 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 import { getFieldInvalid } from "@/lib/form-utils";
 import { createOrganizationFn } from "@/modules/organization/organization.functions";
 import { organizationQueries } from "@/modules/organization/organization.queries";
-import { type CreateOrganizationIxnput, createOrganizationSchema } from "@/modules/organization/organization.schema";
+import { type CreateOrganizationInput, createOrganizationSchema } from "@/modules/organization/organization.schema";
 
 export const Route = createFileRoute("/(app)/dashboard/organizations")({
-  beforeLoad: ({ context }) => {
+  beforeLoad: () => {
     // check if super admin
   },
   loader: ({ context }) => {
@@ -118,115 +98,8 @@ function OrganizationsPage() {
   );
 }
 
-function OrganizationsListItems({ filteredOrgs }: { filteredOrgs: OrganizationOmit[] }) {
-  if (filteredOrgs.length === 0) {
-    return (
-      <div className="col-span-full h-64 flex flex-col items-center justify-center border-2 border-dashed rounded-2xl border-muted text-muted-foreground bg-muted/10">
-        <Building2 className="h-12 w-12 mb-3 opacity-20" />
-        <p className="text-sm font-medium">No organizations found matching your search.</p>
-        <p className="text-xs opacity-60 mt-1">Try a different name or create a new one.</p>
-      </div>
-    );
-  }
-
-  return (
-    <>
-      {filteredOrgs.map((org) => (
-        <OrganizationCard key={org.id} org={org} />
-      ))}
-    </>
-  );
-}
-
-function OrganizationCard({ org }: { org: OrganizationOmit }) {
-  return (
-    <Link to="/dashboard/org/$organizationId" params={{ organizationId: org.id }}>
-      <Card className="group transition-all hover:shadow-md hover:border-primary/50 cursor-pointer overflow-hidden border-foreground/10 bg-card/30 backdrop-blur-xs">
-        <CardHeader className="pb-4">
-          <div className="flex items-center justify-between">
-            <Avatar className="h-11 w-11 rounded-xl shadow-xs">
-              <AvatarImage src={org.logo || "/avatars/laugh-orange-cat.gif"} />
-              <AvatarFallback className="rounded-xl bg-primary/10 text-primary font-bold">
-                {org.name.substring(0, 2).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                render={
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                    }}
-                  />
-                }
-              >
-                <MoreVertical className="h-4 w-4" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem
-                  className="text-[11px] py-2"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigator.clipboard.writeText(org.id);
-                    toast.success("Project ID copied to clipboard");
-                  }}
-                >
-                  <Copy className="mr-2 h-3.5 w-3.5" /> Copy project ID
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="text-[11px] py-2"
-                  render={
-                    <Link
-                      to="/dashboard/org/$organizationId/settings"
-                      params={{ organizationId: org.id }}
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  }
-                >
-                  <Settings className="mr-2 h-3.5 w-3.5" /> Settings
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-          <div className="mt-4">
-            <CardTitle className="text-lg group-hover:text-primary transition-colors text-foreground">
-              {org.name}
-            </CardTitle>
-            <CardDescription className="flex items-center gap-1.5 mt-1">
-              <Globe className="h-3 w-3" />/{org.slug}
-            </CardDescription>
-          </div>
-        </CardHeader>
-        <CardContent className="pt-0 pb-2">
-          <div className="flex -space-x-2 *:ring-2 *:ring-background overflow-hidden font-sans">
-            {[1, 2, 3].map((i) => (
-              <Avatar key={i} className="h-6 w-6">
-                <AvatarFallback className="text-[8px] bg-muted">U{i}</AvatarFallback>
-              </Avatar>
-            ))}
-            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-muted text-[8px] font-medium ring-2 ring-background">
-              +2
-            </div>
-          </div>
-        </CardContent>
-        <CardFooter className="pt-2 flex justify-between items-center text-xs text-muted-foreground border-t border-foreground/5 bg-muted/20">
-          <span className="flex items-center gap-1.5 font-medium text-foreground/60">
-            <LayoutGrid className="h-3 w-3" />4 Projects
-          </span>
-          <span className="flex items-center gap-1 text-primary opacity-0 group-hover:opacity-100 transition-opacity font-medium">
-            Open workspace <ArrowRight className="h-3 w-3" />
-          </span>
-        </CardFooter>
-      </Card>
-    </Link>
-  );
-}
 // TODO: move the logic of close modal to not affect the rendering of other page content
-const OrganizationFormBase = ({ onSuccess }: { onSuccess: () => void }) => {
+const OrganizationFormBase = () => {
   const queryClient = useQueryClient();
 
   const createOrganizationMutation = useMutation({

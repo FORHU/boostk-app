@@ -4,7 +4,6 @@ import { createRootRouteWithContext, HeadContent, Scripts } from "@tanstack/reac
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { Toaster } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Toaster } from "sonner";
 import { authQueries } from "@/modules/auth/auth.queries";
 import appCss from "../styles.css?url";
 
