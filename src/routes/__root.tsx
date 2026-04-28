@@ -39,6 +39,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body className="font-sans antialiased wrap-anywhere selection:bg-red-500" suppressHydrationWarning>
         <TooltipProvider>{children}</TooltipProvider>
+        <Toaster position="top-right" />
 
         <TanStackDevtools
           config={{
