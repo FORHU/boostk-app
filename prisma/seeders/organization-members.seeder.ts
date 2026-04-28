@@ -45,12 +45,14 @@ export async function boostkMemberSeeder() {
         },
       },
       update: {
-        roleId: orgRole.id,
+        role: config.role,
+        customRoleId: orgRole.id,
       },
       create: {
         userId: user.id,
         organizationId: boostkOrg.id,
-        roleId: orgRole.id,
+        role: config.role,
+        customRoleId: orgRole.id,
       },
     });
 
@@ -106,12 +108,14 @@ export async function forhuMemberSeeder() {
         },
       },
       update: {
-        roleId: orgRole.id,
+        role: config.role,
+        customRoleId: orgRole.id,
       },
       create: {
         userId: user.id,
         organizationId: forhuOrg.id,
-        roleId: orgRole.id,
+        role: config.role,
+        customRoleId: orgRole.id,
       },
     });
 
@@ -160,12 +164,14 @@ export async function testOrgMemberSeeder() {
         },
       },
       update: {
-        roleId: orgRole.id,
+        role: config.role,
+        customRoleId: orgRole.id,
       },
       create: {
         userId: user.id,
         organizationId: testOrg.id,
-        roleId: orgRole.id,
+        role: config.role,
+        customRoleId: orgRole.id,
       },
     });
 
