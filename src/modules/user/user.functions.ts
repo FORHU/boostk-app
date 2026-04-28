@@ -4,7 +4,7 @@ import { requireAuthMiddleware } from "@/modules/auth/auth.middleware";
 
 export const getUsersFn = createServerFn({ method: "GET" })
   .middleware([requireAuthMiddleware])
-  .handler(async () => {
+  .handler(async ({ context }) => {
     const users = await prisma.user.findMany();
 
     return users;

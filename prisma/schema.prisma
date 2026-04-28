@@ -10,18 +10,27 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
+  id            String     @id @default(cuid())
+  email         String     @unique
   name          String
-  emailVerified Boolean   @default(false)
+  gender        GenderType
+  emailVerified Boolean    @default(false)
   image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  sessions      Session[]
-  accounts      Account[]
 
-  members        Member[]
+  // Better Auth admin plugin
+  role       String?
+  banned     Boolean?  @default(false)
+  banReason  String?
+  banExpires DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accounts       Account[]
+  sessions       Session[]
   invitations    Invitation[]
+  members        Member[]
+  teamMembers    TeamMember[]
   ticketMessages TicketMessage[]
 
   @@map("users")
@@ -29,28 +38,33 @@ model User {
 
 model Session {
   id        String   @id
+  token     String   @unique
+  userId    String
   expiresAt DateTime
-  token     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+
   ipAddress String?
   userAgent String?
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  activeOrganizationId String? // try to not use this, use context instead
+  activeOrganizationId String?
+  activeTeamId         String?
 
-  @@unique([token])
+  impersonatedBy String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId])
   @@map("sessions")
 }
 
 model Account {
-  id                    String    @id
-  accountId             String
-  providerId            String
-  userId                String
-  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id         String @id
+  userId     String
+  accountId  String
+  providerId String
+
   accessToken           String?
   refreshToken          String?
   idToken               String?
@@ -58,8 +72,11 @@ model Account {
   refreshTokenExpiresAt DateTime?
   scope                 String?
   password              String?
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@map("accounts")
@@ -70,95 +87,178 @@ model Verification {
   identifier String
   value      String
   expiresAt  DateTime
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([identifier])
   @@map("verifications")
 }
 
 model Organization {
-  id          String       @id @default(cuid())
-  name        String
-  slug        String
-  logo        String?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  metadata    String?
-  members     Member[]
-  invitations Invitation[]
-  projects    Project[]
+  id     String             @id @default(cuid())
+  name   String
+  slug   String             @unique
+  logo   String?
+  status OrganizationStatus @default(ACTIVE)
 
-  @@unique([slug])
+  metadata String?
+
+  planId String?
+  plan   SubscriptionPlan? @relation(fields: [planId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members           Member[]
+  invitations       Invitation[]
+  projects          Project[]
+  teams             Team[]
+  organizationRoles OrganizationRole[]
+
   @@map("organizations")
 }
 
 model Member {
-  id             String       @id @default(cuid())
-  organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  id             String @id @default(cuid())
   userId         String
-  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role           String       @default("member")
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  organizationId String
+  roleId         String
 
-  @@index([organizationId])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  role         OrganizationRole @relation(fields: [roleId], references: [id])
+
+  @@unique([userId, organizationId])
   @@index([userId])
+  @@index([organizationId])
   @@map("members")
 }
 
 model Invitation {
-  id             String       @id @default(cuid())
+  id             String @id @default(cuid())
   organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  email          String
-  role           String?
-  status         String       @default("pending")
-  expiresAt      DateTime
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
   inviterId      String
-  user           User         @relation(fields: [inviterId], references: [id], onDelete: Cascade)
+
+  email     String
+  role      String?
+  teamId    String?
+  status    String   @default("pending")
+  expiresAt DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [inviterId], references: [id], onDelete: Cascade)
 
   @@index([organizationId])
   @@index([email])
   @@map("invitations")
 }
 
-model Project {
-  id          String  @id @default(cuid())
-  name        String
-  description String?
-  logo        String?
-  slug        String  @unique
-
+model OrganizationRole {
+  id             String @id @default(cuid())
   organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  role          String
+  permission    String
+  isDefaultRole Boolean @default(false)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  members      Member[]
+
+  @@index([organizationId])
+  @@index([role])
+  @@map("organizationRole")
+}
+
+model Team {
+  id             String @id
+  name           String
+  organizationId String
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  teamMembers  TeamMember[]
+
+  @@index([organizationId])
+  @@map("team")
+}
+
+model TeamMember {
+  id     String @id
+  teamId String
+  userId String
+
+  createdAt DateTime?
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, userId])
+  @@index([teamId])
+  @@index([userId])
+  @@map("teamMember")
+}
+
+model SubscriptionPlan {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  description String?
+
+  scopes String[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  customers Customer[]
-  tickets   Ticket[]
+  organizations Organization[]
+
+  @@map("subscription_plans")
+}
+
+model Project {
+  id             String @id @default(cuid())
+  organizationId String
+
+  name        String
+  slug        String        @unique
+  description String?
+  logo        String?
+  status      ProjectStatus @default(ACTIVE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customers    Customer[]
+  tickets      Ticket[]
 
   @@map("projects")
 }
 
 model Customer {
-  id       String  @id @default(cuid())
+  id        String @id @default(cuid())
+  projectId String
+
   name     String
   email    String
   phone    String?
   metadata String?
   language String  @default("en")
 
-  projectId String
-  project   Project @relation(fields: [projectId], references: [id])
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  project        Project         @relation(fields: [projectId], references: [id])
   tickets        Ticket[]
   ticketMessages TicketMessage[]
 
@@ -166,44 +266,76 @@ model Customer {
 }
 
 model Ticket {
-  id              String         @id @default(cuid())
-  referenceNumber String         @unique
-  status          TicketStatus   @default(OPEN)
-  priority        TicketPriority @default(LOW)
+  id              String @id @default(cuid())
+  projectId       String
+  customerId      String
+  referenceNumber String @unique
 
-  projectId  String
-  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  customerId String
-  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  status   TicketStatus   @default(OPEN)
+  priority TicketPriority @default(LOW)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  project        Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  customer       Customer        @relation(fields: [customerId], references: [id], onDelete: Cascade)
   ticketMessages TicketMessage[]
 
   @@map("tickets")
 }
 
 model TicketMessage {
-  id               String                   @id @default(cuid())
-  content          String
-  contentType      TicketMessageContentType @default(TEXT)
+  id         String  @id @default(cuid())
+  ticketId   String
+  userId     String?
+  customerId String?
+
+  content           String
+  contentType       TicketMessageContentType @default(TEXT)
   translatedContent String?
   originalLanguage  String?
-
-  ticketId String
-  ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-
-  userId String?
-  user   User?   @relation(fields: [userId], references: [id])
-
-  customerId String?
-  customer   Customer? @relation(fields: [customerId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  ticket   Ticket    @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  user     User?     @relation(fields: [userId], references: [id])
+  customer Customer? @relation(fields: [customerId], references: [id])
+
   @@map("ticket_messages")
+}
+
+model OrganizationRoleTemplate {
+  id           String  @id @default(cuid())
+  name         String  @unique
+  description  String?
+  permission   String
+  isSystemRole Boolean @default(true)
+  sortOrder    Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([name])
+  @@index([isSystemRole])
+  @@map("organization_role_templates")
+}
+
+enum GenderType {
+  MALE
+  FEMALE
+}
+
+enum OrganizationStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum ProjectStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
 }
 
 enum TicketStatus {
