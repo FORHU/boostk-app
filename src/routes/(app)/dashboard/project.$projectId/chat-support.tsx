@@ -94,18 +94,6 @@ const RECORDING_IDS = Array.from({ length: 24 }, (_, i) => `rec-${i}`);
 // TODO: Remove mock messages once backend is integrated
 const MOCK_MESSAGES: MockMessage[] = [
   {
-    id: "mock_1",
-    userId: "agent_1",
-    content: "Here are the Earth texture assets you requested:",
-    createdAt: new Date(Date.now() - 3600000).toISOString(),
-    status: "FAILED",
-    attachments: [
-      { id: "img_1", name: "earthtexture.png", size: "2.4 MB", type: "image", url: "/images/earthtexture.png" },
-      { id: "img_2", name: "earth-specular.jpg", size: "1.1 MB", type: "image", url: "/images/earth-specular.jpg" },
-      { id: "img_3", name: "earth-map.jpg", size: "3.2 MB", type: "image", url: "/images/earth-map.jpg" },
-    ],
-  },
-  {
     id: "mock_3",
     userId: "agent_1",
     content: "Here are the Earth texture assets you requested:",
@@ -123,7 +111,7 @@ const MOCK_MESSAGES: MockMessage[] = [
     content: "image testing: failed status",
     createdAt: new Date(Date.now() - 3600000).toISOString(),
     status: "FAILED",
-    attachments: [{ id: "img_1", name: "yza_2026.png", size: "3.9 MB", type: "image", url: "/images/yza_2026.png" }],
+    attachments: [{ id: "img_1", name: "scarameow.png", size: "3.9 MB", type: "image", url: "/images/scarameow.png" }],
   },
   {
     id: "mock_voice_1",
