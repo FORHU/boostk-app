@@ -268,13 +268,7 @@ function ProjectChatSupportPage() {
           onUpdateTags={(tags) => selectedTicket && handleUpdateTags(selectedTicket.id, tags)}
           currentStatus={selectedTicket ? ticketStatuses[selectedTicket.id] || selectedTicket.status : "OPEN"}
         />
-        <ChatWindow
-          ticket={selectedTicket}
-          onClose={() => setSelectedTicket(null)}
-          archivedTickets={Object.entries(ticketStatuses)
-            .filter(([_, status]) => status === "ARCHIVED" || status === "CLOSED")
-            .map(([id]) => id)}
-        />
+        <ChatWindow ticket={selectedTicket} onClose={() => setSelectedTicket(null)} />
         <CustomerDetails
           ticket={selectedTicket}
           history={selectedTicket ? ticketHistory[selectedTicket.id] || DEFAULT_HISTORY : []}
@@ -324,7 +318,7 @@ const TicketList = ({
   };
 
   return (
-    <div className="h-20 flex flex-row border-b bg-slate-50 items-center shrink-0">
+    <div className="h-20 flex flex-row items-center shrink-0">
       <div
         ref={scrollRef}
         onWheel={handleWheel}
@@ -395,9 +389,7 @@ const TicketDetails = ({
   const priorityButtonRef = useRef<HTMLButtonElement>(null);
   const priorityPopupRef = useRef<HTMLDivElement>(null);
 
-  const [submitOpen, setSubmitOpen] = useState(false);
-  const submitButtonRef = useRef<HTMLButtonElement>(null);
-  const submitPopupRef = useRef<HTMLDivElement>(null);
+  const [isConfirmingArchive, setIsConfirmingArchive] = useState(false);
 
   const handleCopyId = () => {
     if (!ticket) return;
@@ -424,18 +416,10 @@ const TicketDetails = ({
         !priorityPopupRef.current.contains(target)
       )
         setPriorityOpen(false);
-      if (
-        submitOpen &&
-        submitButtonRef.current &&
-        !submitButtonRef.current.contains(target) &&
-        submitPopupRef.current &&
-        !submitPopupRef.current.contains(target)
-      )
-        setSubmitOpen(false);
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [assigneeOpen, priorityOpen, submitOpen]);
+  }, [assigneeOpen, priorityOpen]);
 
   if (!ticket) return <div className="h-full w-1/4 border-r border-slate-100 bg-white p-4"></div>;
 
@@ -482,7 +466,7 @@ const TicketDetails = ({
               ref={assigneeButtonRef}
               type="button"
               onClick={() => setAssigneeOpen(!assigneeOpen)}
-              className="w-full px-3 py-2 bg-white border border-slate-200 text-sm text-left flex items-center justify-between outline-none hover:border-[#7f9bd7] transition-colors"
+              className="w-full px-3 py-2 bg-white border border-slate-200 text-sm text-left flex items-center justify-between outline-none hover:border-[#7f9bd7] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               style={{ borderRadius: "5px" }}
             >
               <span className="font-medium text-slate-700">{selectedAssignee}</span>
@@ -529,7 +513,7 @@ const TicketDetails = ({
             ref={priorityButtonRef}
             type="button"
             onClick={() => setPriorityOpen(!priorityOpen)}
-            className="w-full px-3 py-2 bg-white border border-slate-200 text-sm text-left flex items-center justify-between outline-none hover:border-[#7f9bd7] transition-colors"
+            className="w-full px-3 py-2 bg-white border border-slate-200 text-sm text-left flex items-center justify-between outline-none hover:border-[#7f9bd7] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             style={{ borderRadius: "5px" }}
           >
             <span className="capitalize font-medium text-slate-700">{ticket.priority.toLowerCase()}</span>
@@ -573,54 +557,51 @@ const TicketDetails = ({
           </div>
         </div>
         <div className="pt-4 flex justify-end">
-          <div className="relative">
-            <button
-              ref={submitButtonRef}
-              type="button"
-              disabled={isUpdatingStatus}
-              onClick={() => setSubmitOpen(!submitOpen)}
-              className="text-white text-sm py-2 px-4 transition-all flex items-center gap-2.5 hover:brightness-110 active:scale-[0.98] disabled:opacity-80 disabled:cursor-not-allowed shadow-sm"
-              style={{ backgroundColor: "#203b69", borderRadius: "5px" }}
-            >
-              {isUpdatingStatus ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <>
-                  <span className="font-bold">Submit Status as:</span>
-                  <ChevronDown
-                    className={`h-4 w-4 transition-transform duration-200 ${submitOpen ? "rotate-180" : ""}`}
-                  />
-                </>
-              )}
-            </button>
-            {submitOpen && (
-              <div
-                ref={submitPopupRef}
-                className="absolute bottom-full right-0 mb-2 w-48 bg-white border border-slate-200 rounded-[5px] shadow-2xl z-20 p-1 animate-in fade-in slide-in-from-bottom-2 duration-200 overflow-hidden"
-              >
-                <p className="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-50 mb-1">
-                  Change Status To
-                </p>
-                {["OPEN", "CLOSED", "ARCHIVED"].map((status) => (
-                  <button
-                    key={status}
-                    type="button"
-                    className={`w-full text-left px-3 py-2 text-[11px] rounded-[3px] font-bold transition-all flex items-center justify-between group ${currentStatus === status ? "bg-[#eaf1fb] text-[#0037b0]" : "text-slate-600 hover:bg-slate-50"}`}
-                    onClick={() => {
-                      onUpdateStatus(ticket.id, status);
-                      setSubmitOpen(false);
-                    }}
-                  >
-                    <span className="capitalize">{status.toLowerCase()}</span>
-                    <div
-                      className={`w-1.5 h-1.5 rounded-full ${status === "OPEN" ? "bg-green-500" : status === "CLOSED" ? "bg-red-500" : "bg-slate-300"} ${currentStatus === status ? "ring-2 ring-[#0037b0]/20" : ""}`}
-                    />
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          <button
+            type="button"
+            disabled={isUpdatingStatus}
+            onClick={() => setIsConfirmingArchive(true)}
+            className="w-full text-white text-sm font-bold py-2.5 px-4 transition-all flex items-center justify-center gap-2.5 hover:brightness-110 active:scale-[0.98] disabled:opacity-80 disabled:cursor-not-allowed shadow-md"
+            style={{ backgroundColor: "#203b69", borderRadius: "5px" }}
+          >
+            {isUpdatingStatus ? <Loader2 className="h-4 w-4 animate-spin" /> : <> Archive Chat</>}
+          </button>
         </div>
+
+        {isConfirmingArchive && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="w-full max-w-[320px] bg-white rounded-[5px] shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-200">
+              <div className="p-6 text-center">
+                <div className="w-12 h-12 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <AlertCircle className="text-amber-500" size={24} />
+                </div>
+                <h4 className="text-base font-bold text-slate-900 mb-2">Archive Conversation?</h4>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  This will move the chat to the Archived records.
+                </p>
+              </div>
+              <div className="flex border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsConfirmingArchive(false)}
+                  className="flex-1 px-4 py-3 text-xs font-bold text-slate-500 hover:bg-slate-50 transition-colors border-r border-slate-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onUpdateStatus(ticket.id, "ARCHIVED");
+                    setIsConfirmingArchive(false);
+                  }}
+                  className="flex-1 px-4 py-3 text-xs font-bold text-red-600 hover:bg-red-50 transition-colors"
+                >
+                  Archive
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -693,15 +674,7 @@ const TicketTags = ({ tags, onUpdateTags }: { tags: string[]; onUpdateTags: (tag
   );
 };
 
-const ChatWindow = ({
-  ticket,
-  archivedTickets,
-  onClose,
-}: {
-  ticket: TicketWithCustomer | null;
-  archivedTickets: string[];
-  onClose: () => void;
-}) => {
+const ChatWindow = ({ ticket, onClose }: { ticket: TicketWithCustomer | null; onClose: () => void }) => {
   const [isDragging, setIsDragging] = useState(false);
   if (!ticket) {
     return (
@@ -715,41 +688,6 @@ const ChatWindow = ({
             Select an active ticket from the list above to start chatting with a customer.
           </p>
         </div>
-        {archivedTickets.length > 0 && (
-          <div className="w-full px-8 pb-12">
-            <div className="flex items-center gap-2 mb-6">
-              <div className="h-px flex-1 bg-slate-100" />
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                Recently Archived ({archivedTickets.length})
-              </span>
-              <div className="h-px flex-1 bg-slate-100" />
-            </div>
-            <div className="grid grid-cols-1 gap-3">
-              {archivedTickets.slice(0, 5).map((id) => (
-                <div
-                  key={id}
-                  className="p-4 bg-slate-50/50 border border-slate-100 rounded-xl flex items-center justify-between group hover:border-[#7f9bd7] hover:bg-white transition-all cursor-default"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-slate-200 flex items-center justify-center text-slate-400 font-bold text-xs">
-                      {id.slice(0, 2).toUpperCase()}
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-xs font-bold text-slate-700">Ticket #{id.slice(0, 8)}</span>
-                      <span className="text-[10px] text-slate-400">Archived on {new Date().toLocaleDateString()}</span>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    className="px-3 py-1.5 bg-white border border-slate-200 rounded-md text-[10px] font-bold text-slate-600 opacity-0 group-hover:opacity-100 transition-all hover:text-[#0037b0] hover:border-[#7f9bd7]"
-                  >
-                    View History
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     );
   }
@@ -800,14 +738,16 @@ const ChatWindow = ({
             <span className="text-[10px] text-slate-400 font-medium">#{ticket.referenceNumber}</span>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          className="p-1.5 text-slate-400 hover:text-black transition-all ml-auto"
-          title="Close Chat"
-        >
-          <X className="h-5 w-5" />
-        </button>
+        <div className="flex items-center gap-2 ml-auto">
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1.5 text-slate-400 hover:text-black transition-all"
+            title="Close Chat"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
       </div>
       <div className="flex-1 overflow-hidden flex flex-col bg-slate-50/30">
         <Suspense fallback={<div className="flex-1 flex items-center justify-center p-4">Loading messages...</div>}>
