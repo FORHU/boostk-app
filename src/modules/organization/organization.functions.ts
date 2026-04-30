@@ -124,3 +124,21 @@ export const deactivateOrganizationFn = createServerFn({ method: "POST" })
 
     return organization;
   });
+
+export const getAdminOrganizationsFn = createServerFn({ method: "GET" })
+  .middleware([requireAuthMiddleware])
+  .handler(async () => {
+    const organizations = await prisma.organization.findMany({
+      include: {
+        _count: {
+          select: { members: true, projects: true },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    return organizations;
+  });
+
