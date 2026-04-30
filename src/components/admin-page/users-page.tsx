@@ -1,5 +1,4 @@
 import { useForm } from "@tanstack/react-form";
-import { useQueryClient } from "@tanstack/react-query";
 import { ChevronDown, Copy, EllipsisVertical, Headset, Plus, Search, Settings, Shield, User } from "lucide-react";
 import { useState } from "react";
 import { Toaster, toast } from "sonner";
@@ -73,7 +72,6 @@ const MOCK_USERS: UserData[] = [
 export function UsersPage() {
   const [activeTab, setActiveTab] = useState<TabType>("all");
   const [search, setSearch] = useState("");
-  const queryClient = useQueryClient();
 
   const createUserForm = useForm({
     defaultValues: { name: "", email: "", role: "MEMBER" as RoleType },
