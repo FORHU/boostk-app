@@ -760,7 +760,6 @@ const ChatWindow = ({ ticket, onClose }: { ticket: TicketWithCustomer | null; on
 };
 
 const UserChatMessages = ({ ticket }: { ticket: TicketWithCustomer }) => {
-const UserChatMessages = ({ ticket }: { ticket: TicketWithCustomer }) => {
   const { data: messages } = useSuspenseQuery(ticketMessageQueries.getTicketMessages(ticket.id));
   const queryClient = useQueryClient();
   const messagesEndRef = useRef<HTMLDivElement>(null);

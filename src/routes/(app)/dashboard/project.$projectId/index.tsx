@@ -18,7 +18,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Pagination,
   PaginationContent,
@@ -493,412 +493,379 @@ function ProjectPage() {
     }
     return pages;
   };
-
+  // border-2 border-red-500
   return (
-    <div className="h-full flex flex-col overflow-hidden bg-background">
-      <div className="px-4 sm:px-6 md:px-8 flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <Avatar className="h-12 w-12 rounded-[10px]">
-              <AvatarImage src={project.logo || "/avatars/laugh-orange-cat.gif"} />
-              <AvatarFallback className="rounded-[10px] bg-primary/10 text-primary font-bold text-lg">
-                {project.name.substring(0, 2).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <div className="space-y-1">
-              <h1 className="text-3xl font-bold tracking-tight text-foreground">{project.name}</h1>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span className="font-mono bg-muted px-1.5 py-0.5 rounded text-xs uppercase">{project.id}</span>
-                <span>•</span>
-                <span className="flex items-center gap-1">
-                  <div className="h-2 w-2 rounded-full bg-green-500" />
-                  Live & Accepting Chats
-                </span>
-              </div>
+    <div className="h-full p-6 flex flex-col space-y-6">
+      <div className="flex flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Avatar className="h-12 w-12 rounded-[10px]">
+            <AvatarImage src={project.logo || "/avatars/laugh-orange-cat.gif"} />
+            <AvatarFallback className="rounded-[10px] bg-primary/10 text-primary font-bold text-lg">
+              {project.name.substring(0, 2).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          <div className="space-y-1">
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">{project.name}</h1>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span className="font-mono bg-muted px-1.5 py-0.5 rounded text-xs uppercase">{project.id}</span>
+              <span>•</span>
+              <span className="flex items-center gap-1">
+                <div className="h-2 w-2 rounded-full bg-green-500" />
+                Live & Accepting Chats
+              </span>
             </div>
           </div>
+        </div>
 
-          {/* Right side buttons */}
-          <div className="flex items-center gap-3">
-            {/* Quick Installation Button with Popup */}
-            <div className="relative">
-              <Button
-                ref={installButtonRef}
-                variant="outline"
-                size="sm"
-                className="h-9 rounded-[5px]"
-                onClick={() => setShowInstallPopup(!showInstallPopup)}
+        <div className="flex items-center gap-3">
+          {/* Quick Installation Button with Popup */}
+          <div className="relative">
+            <Button
+              ref={installButtonRef}
+              variant="outline"
+              size="sm"
+              className="h-9 rounded-[5px]"
+              onClick={() => setShowInstallPopup(!showInstallPopup)}
+            >
+              <LaptopMinimalCheck className="mr-2 h-4 w-4" />
+              Quick Installation
+            </Button>
+            {showInstallPopup && (
+              <div
+                ref={popupRef}
+                className="absolute top-full left-0 mt-2 w-[380px] max-w-[calc(100vw-2rem)] bg-background rounded-[10px] shadow-2xl border border-foreground/10 z-50"
               >
-                <LaptopMinimalCheck className="mr-2 h-4 w-4" />
-                Quick Installation
-              </Button>
-              {showInstallPopup && (
-                <div
-                  ref={popupRef}
-                  className="absolute top-full left-0 mt-2 w-[380px] max-w-[calc(100vw-2rem)] bg-background rounded-[10px] shadow-2xl border border-foreground/10 z-50"
-                >
-                  <div className="flex items-center justify-between p-3 border-b border-foreground/10">
-                    <div>
-                      <h3 className="font-semibold text-foreground text-sm">Quick Installation</h3>
-                      <p className="text-xs text-muted-foreground">Add this snippet to your website's header</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setShowInstallPopup(false)}
-                      className="p-1 rounded-full hover:bg-muted transition-colors"
-                    >
-                      <X className="h-4 w-4 text-muted-foreground" />
-                    </button>
+                <div className="flex items-center justify-between p-3 border-b border-foreground/10">
+                  <div>
+                    <h3 className="font-semibold text-foreground text-sm">Quick Installation</h3>
+                    <p className="text-xs text-muted-foreground">Add this snippet to your website's header</p>
                   </div>
-                  <div className="p-3 space-y-3">
-                    <div>
-                      <div className="relative">
-                        <div className="absolute top-2 right-2 z-10">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-7 text-xs"
-                            onClick={() => copyToClipboard(snippet)}
-                          >
-                            {copied ? (
-                              <CheckCircle2 className="h-3 w-3 text-green-500" />
-                            ) : (
-                              <Copy className="h-3 w-3" />
-                            )}
-                            <span className="ml-1">{copied ? "Copied!" : "Copy"}</span>
-                          </Button>
-                        </div>
-                        <pre className="p-3 pr-16 rounded-lg bg-muted/80 border border-foreground/5 overflow-x-auto text-[11px] font-mono text-foreground/80 whitespace-pre-wrap break-all">
-                          {snippet}
-                        </pre>
-                      </div>
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-semibold text-foreground mb-2">Manual Direct Link</h4>
-                      <div className="flex items-center justify-between p-2 rounded-lg border border-foreground/5 bg-muted/30">
-                        <code className="text-[11px] truncate max-w-[200px] md:max-w-[220px] opacity-70">
-                          {`${origin}/support/${project.id}/chat-widget`}
-                        </code>
-                        <a
-                          href={`/support/${project.id}/chat-widget`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-primary hover:underline text-xs flex items-center gap-1 shrink-0 ml-2"
+                  <button
+                    type="button"
+                    onClick={() => setShowInstallPopup(false)}
+                    className="p-1 rounded-full hover:bg-muted transition-colors"
+                  >
+                    <X className="h-4 w-4 text-muted-foreground" />
+                  </button>
+                </div>
+                <div className="p-3 space-y-3">
+                  <div>
+                    <div className="relative">
+                      <div className="absolute top-2 right-2 z-10">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-xs"
+                          onClick={() => copyToClipboard(snippet)}
                         >
-                          Open <ExternalLink className="h-3 w-3" />
-                        </a>
+                          {copied ? <CheckCircle2 className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+                          <span className="ml-1">{copied ? "Copied!" : "Copy"}</span>
+                        </Button>
                       </div>
+                      <pre className="p-3 pr-16 rounded-lg bg-muted/80 border border-foreground/5 overflow-x-auto text-[11px] font-mono text-foreground/80 whitespace-pre-wrap break-all">
+                        {snippet}
+                      </pre>
                     </div>
                   </div>
-                  <div className="p-3 pt-0 border-t border-foreground/10 mt-1">
-                    <p className="text-xs text-muted-foreground italic">
-                      Need help? <span className="text-primary cursor-pointer hover:underline">Integration docs</span>
-                    </p>
+                  <div>
+                    <h4 className="text-xs font-semibold text-foreground mb-2">Manual Direct Link</h4>
+                    <div className="flex items-center justify-between p-2 rounded-lg border border-foreground/5 bg-muted/30">
+                      <code className="text-[11px] truncate max-w-[200px] md:max-w-[220px] opacity-70">
+                        {`${origin}/support/${project.id}/chat-widget`}
+                      </code>
+                      <a
+                        href={`/support/${project.id}/chat-widget`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline text-xs flex items-center gap-1 shrink-0 ml-2"
+                      >
+                        Open <ExternalLink className="h-3 w-3" />
+                      </a>
+                    </div>
                   </div>
+                </div>
+                <div className="p-3 pt-0 border-t border-foreground/10 mt-1">
+                  <p className="text-xs text-muted-foreground italic">
+                    Need help? <span className="text-primary cursor-pointer hover:underline">Integration docs</span>
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <Button variant="outline" size="sm" className="h-9 rounded-[5px]">
+            <Settings className="mr-2 h-4 w-4" />
+            Project Settings
+          </Button>
+          <a href={`/support/${project.id}/chat-widget`} target="_blank" rel="noopener noreferrer">
+            <Button
+              size="sm"
+              className="h-9 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm rounded-[5px]"
+            >
+              <MessageCircle className="mr-2 h-4 w-4" />
+              Test Chat Widget
+              <ExternalLink className="ml-2 h-3 w-3 opacity-50" />
+            </Button>
+          </a>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card
+          className="border-[#7f9bd7]/20 shadow-sm rounded-[5px] cursor-pointer "
+          onClick={() => setSelectedStatus("active")}
+        >
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-3">
+            <CardTitle className="text-[10px] font-bold text-[#91a2c9] uppercase tracking-widest opacity-100">
+              Active Chats
+            </CardTitle>
+            <MessageSquare className="h-4 w-4 text-[#0037b0]" />
+          </CardHeader>
+          <CardContent className="pt-0 pb-3 flex items-end justify-between">
+            <div>
+              <div className="text-2xl font-bold text-[#0037b0]">
+                {mockConversations.filter((conv) => conv.status === "active").length}
+              </div>
+              <p className="text-[10px] text-slate-500 font-medium flex items-center gap-1 mt-1">
+                <TrendingUp className="h-3 w-3 text-green-500" />
+                +12% from yesterday
+              </p>
+            </div>
+            <div className="pb-1">
+              <Sparkline data={[12, 15, 14, 18, 16, 22, 20]} color="#7f9bd7" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-[#7f9bd7]/20 bg-white shadow-sm rounded-[5px]">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-3">
+            <CardTitle className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+              Avg Response
+            </CardTitle>
+            <Clock className="h-4 w-4 text-[#7f9bd7]" />
+          </CardHeader>
+          <CardContent className="pt-0 pb-3 flex items-end justify-between">
+            <div>
+              <div className="text-2xl font-bold text-slate-900">
+                2.4<span className="text-sm font-medium ml-0.5">m</span>
+              </div>
+              <p className="text-[10px] text-slate-500 font-medium flex items-center gap-1 mt-1">
+                <BarChart3 className="h-3 w-3 text-[#7f9bd7]" />
+                Faster than avg.
+              </p>
+            </div>
+            <div className="pb-1">
+              <Sparkline data={[5, 4, 6, 3, 4, 2, 2.4]} color="#0037b0" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-[#7f9bd7]/20 bg-white shadow-sm rounded-[5px]">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-3">
+            <CardTitle className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+              Daily Volume
+            </CardTitle>
+            <CheckCircle2 className="h-4 w-4 text-green-500/70" />
+          </CardHeader>
+          <CardContent className="pt-0 pb-3 flex items-end justify-between">
+            <div>
+              <div className="text-2xl font-bold text-slate-900">142</div>
+              <p className="text-[10px] text-slate-500 font-medium flex items-center gap-1 mt-1">
+                <TrendingUp className="h-3 w-3 text-green-500" />
+                +8.4% growth
+              </p>
+            </div>
+            <div className="pb-1">
+              <Sparkline data={[100, 110, 105, 120, 135, 130, 142]} color="#7f9bd7" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="flex flex-col h-[calc(100vh-5.5rem)] w-full overflow-hidden border">
+        <div className="flex flex-row items-center h-12 border-b shrink-0 justify-between">
+          <div className="flex-1 relative flex items-center max-w-sm">
+            <Search className="absolute left-3 h-4 w-4 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Search for Agents, Customers, Departments or keywords..."
+              className="w-full pl-10 pr-4 py-2 bg-transparent border-none text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+
+          <div className="hidden sm:flex flex-row items-center gap-2 pr-2">
+            <div className="relative">
+              <button
+                ref={statusButtonRef}
+                type="button"
+                onClick={() => setStatusOpen(!statusOpen)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-[5px] text-xs font-bold text-slate-600 hover:bg-[#e8f0fa] transition-all whitespace-nowrap"
+              >
+                <span className="opacity-60 uppercase tracking-wider">Status:</span>
+                <span className="text-slate-900 capitalize">{selectedStatus}</span>
+                <ChevronDown
+                  className={`h-4 w-4 transition-transform duration-200 ${statusOpen ? "rotate-180" : "opacity-40"}`}
+                />
+              </button>
+              {statusOpen && (
+                <div
+                  ref={statusPopupRef}
+                  className="absolute top-full left-0 mt-1.5 w-32 bg-white border border-slate-200 rounded-[5px] shadow-2xl z-50 p-1 animate-in fade-in zoom-in-95 overflow-hidden"
+                >
+                  <p className="px-3 py-2 text-[10px] font-bold text-[#7f9bd7] uppercase tracking-widest border-b border-slate-50 mb-1">
+                    Select Option
+                  </p>
+                  {["all", "active", "inactive"].map((status) => (
+                    <button
+                      key={status}
+                      type="button"
+                      onClick={() => {
+                        setSelectedStatus(status);
+                        setStatusOpen(false);
+                      }}
+                      className={`w-full text-left px-3 py-2 text-[11px] rounded-[5px] font-bold transition-all flex items-center justify-between group ${selectedStatus === status ? "bg-[#e8f0fa] text-[#0037b0]" : "text-slate-600 hover:bg-slate-50"}`}
+                    >
+                      {status.charAt(0).toUpperCase() + status.slice(1)}
+                      {selectedStatus === status && <Check className="h-3.5 w-3.5" />}
+                    </button>
+                  ))}
                 </div>
               )}
             </div>
 
-            <Button variant="outline" size="sm" className="h-9 rounded-[5px]">
-              <Settings className="mr-2 h-4 w-4" />
-              Project Settings
-            </Button>
-            <a href={`/support/${project.id}/chat-widget`} target="_blank" rel="noopener noreferrer">
-              <Button
-                size="sm"
-                className="h-9 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm rounded-[5px]"
+            <div className="relative">
+              <button
+                ref={priorityButtonRef}
+                type="button"
+                onClick={() => setPriorityOpen(!priorityOpen)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-[5px] text-xs font-bold text-slate-600 hover:bg-[#e8f0fa] transition-all whitespace-nowrap"
               >
-                <MessageCircle className="mr-2 h-4 w-4" />
-                Test Chat Widget
-                <ExternalLink className="ml-2 h-3 w-3 opacity-50" />
-              </Button>
-            </a>
-          </div>
-        </div>
+                <span className="opacity-60 uppercase tracking-wider">Priority:</span>
+                <span className="text-slate-900 capitalize">
+                  {selectedPriority === "all"
+                    ? "All"
+                    : selectedPriority.charAt(0).toUpperCase() + selectedPriority.slice(1)}
+                </span>
+                <ChevronDown
+                  className={`h-4 w-4 transition-transform duration-200 ${priorityOpen ? "rotate-180" : "opacity-40"}`}
+                />
+              </button>
 
-        {/* Statistics Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          {/* Active Chats Card */}
-          <Card
-            className="border-[#7f9bd7]/20 shadow-sm rounded-[5px] cursor-pointer "
-            onClick={() => setSelectedStatus("active")}
-          >
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-3">
-              <CardTitle className="text-[10px] font-bold text-[#91a2c9] uppercase tracking-widest opacity-100">
-                Active Chats
-              </CardTitle>
-              <MessageSquare className="h-4 w-4 text-[#0037b0]" />
-            </CardHeader>
-            <CardContent className="pt-0 pb-3 flex items-end justify-between">
-              <div>
-                <div className="text-2xl font-bold text-[#0037b0]">
-                  {mockConversations.filter((conv) => conv.status === "active").length}
+              {priorityOpen && (
+                <div
+                  ref={priorityPopupRef}
+                  className="absolute top-full left-0 mt-1.5 w-32 bg-white border border-slate-200 rounded-[5px] shadow-2xl z-50 p-1 animate-in fade-in zoom-in-95 overflow-hidden"
+                >
+                  <p className="px-3 py-2 text-[10px] font-bold text-[#7f9bd7] uppercase tracking-widest border-b border-slate-50 mb-1">
+                    Select Priority
+                  </p>
+                  {["all", "high", "medium", "low"].map((priority) => (
+                    <button
+                      key={priority}
+                      type="button"
+                      className={`w-full flex items-center justify-between px-3 py-2 text-[11px] rounded-[5px] font-bold transition-all capitalize ${selectedPriority === priority ? "bg-[#e8f0fa] text-[#0037b0]" : "text-slate-600 hover:bg-slate-50"}`}
+                      onClick={() => {
+                        setSelectedPriority(priority);
+                        setPriorityOpen(false);
+                      }}
+                    >
+                      {priority}
+                      {selectedPriority === priority && <Check className="h-3.5 w-3.5" />}
+                    </button>
+                  ))}
                 </div>
-                <p className="text-[10px] text-slate-500 font-medium flex items-center gap-1 mt-1">
-                  <TrendingUp className="h-3 w-3 text-green-500" />
-                  +12% from yesterday
-                </p>
-              </div>
-              <div className="pb-1">
-                <Sparkline data={[12, 15, 14, 18, 16, 22, 20]} color="#7f9bd7" />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Average Response Time Card */}
-          <Card className="border-[#7f9bd7]/20 bg-white shadow-sm rounded-[5px]">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-3">
-              <CardTitle className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                Avg Response
-              </CardTitle>
-              <Clock className="h-4 w-4 text-[#7f9bd7]" />
-            </CardHeader>
-            <CardContent className="pt-0 pb-3 flex items-end justify-between">
-              <div>
-                <div className="text-2xl font-bold text-slate-900">
-                  2.4<span className="text-sm font-medium ml-0.5">m</span>
-                </div>
-                <p className="text-[10px] text-slate-500 font-medium flex items-center gap-1 mt-1">
-                  <BarChart3 className="h-3 w-3 text-[#7f9bd7]" />
-                  Faster than avg.
-                </p>
-              </div>
-              <div className="pb-1">
-                <Sparkline data={[5, 4, 6, 3, 4, 2, 2.4]} color="#0037b0" />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Daily Messages Card */}
-          <Card className="border-[#7f9bd7]/20 bg-white shadow-sm rounded-[5px]">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-3">
-              <CardTitle className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                Daily Volume
-              </CardTitle>
-              <CheckCircle2 className="h-4 w-4 text-green-500/70" />
-            </CardHeader>
-            <CardContent className="pt-0 pb-3 flex items-end justify-between">
-              <div>
-                <div className="text-2xl font-bold text-slate-900">142</div>
-                <p className="text-[10px] text-slate-500 font-medium flex items-center gap-1 mt-1">
-                  <TrendingUp className="h-3 w-3 text-green-500" />
-                  +8.4% growth
-                </p>
-              </div>
-              <div className="pb-1">
-                <Sparkline data={[100, 110, 105, 120, 135, 130, 142]} color="#7f9bd7" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Search & Filter Bar */}
-        <div className="px-0 py-2">
-          <div className="flex flex-row items-center gap-2 p-1 bg-white rounded-[5px] shadow-sm border border-[#7f9bd7]/30">
-            <div className="flex-1 relative flex items-center min-w-[200px]">
-              <Search className="absolute left-3 h-4 w-4 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Search for Agents, Customers, Departments or keywords..."
-                className="w-full pl-10 pr-4 py-2 bg-transparent border-none text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-0"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+              )}
             </div>
-            <div className="w-px h-6 bg-foreground/10 mx-1 hidden sm:block" />
-            <div className="hidden sm:flex flex-row items-center gap-2 pr-2">
-              {/* Status Dropdown */}
-              <div className="relative">
-                <button
-                  ref={statusButtonRef}
-                  type="button"
-                  onClick={() => setStatusOpen(!statusOpen)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-[5px] text-xs font-bold text-slate-600 hover:bg-[#e8f0fa] transition-all whitespace-nowrap"
+
+            <div className="relative">
+              <button
+                ref={tagButtonRef}
+                type="button"
+                onClick={() => setTagOpen(!tagOpen)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-[5px] text-xs font-bold text-slate-600 hover:bg-[#e8f0fa] transition-all whitespace-nowrap"
+              >
+                <span className="opacity-60 uppercase tracking-wider">Tags:</span>
+                <span className="text-slate-900 capitalize">
+                  {selectedTag === "all" ? "All" : selectedTag.charAt(0).toUpperCase() + selectedTag.slice(1)}
+                </span>
+                <ChevronDown
+                  className={`h-4 w-4 transition-transform duration-200 ${tagOpen ? "rotate-180" : "opacity-40"}`}
+                />
+              </button>
+
+              {tagOpen && (
+                <div
+                  ref={tagPopupRef}
+                  className="absolute top-full left-0 mt-1.5 w-36 bg-white border border-slate-200 rounded-[5px] shadow-2xl z-50 p-1 animate-in fade-in zoom-in-95 overflow-hidden"
                 >
-                  <span className="opacity-60 uppercase tracking-wider">Status:</span>
-                  <span className="text-slate-900 capitalize">{selectedStatus}</span>
-                  <ChevronDown
-                    className={`h-4 w-4 transition-transform duration-200 ${statusOpen ? "rotate-180" : "opacity-40"}`}
-                  />
-                </button>
-                {statusOpen && (
-                  <div
-                    ref={statusPopupRef}
-                    className="absolute top-full left-0 mt-1.5 w-32 bg-white border border-slate-200 rounded-[5px] shadow-2xl z-50 p-1 animate-in fade-in zoom-in-95 overflow-hidden"
-                  >
-                    <p className="px-3 py-2 text-[10px] font-bold text-[#7f9bd7] uppercase tracking-widest border-b border-slate-50 mb-1">
-                      Select Option
-                    </p>
-                    {["all", "active", "inactive"].map((status) => (
-                      <button
-                        key={status}
-                        type="button"
-                        onClick={() => {
-                          setSelectedStatus(status);
-                          setStatusOpen(false);
-                        }}
-                        className={`w-full text-left px-3 py-2 text-[11px] rounded-[5px] font-bold transition-all flex items-center justify-between group ${selectedStatus === status ? "bg-[#e8f0fa] text-[#0037b0]" : "text-slate-600 hover:bg-slate-50"}`}
-                      >
-                        {status.charAt(0).toUpperCase() + status.slice(1)}
-                        {selectedStatus === status && <Check className="h-3.5 w-3.5" />}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+                  <p className="px-3 py-2 text-[10px] font-bold text-[#7f9bd7] uppercase tracking-widest border-b border-slate-50 mb-1">
+                    Select Tag
+                  </p>
+                  {["all", "support", "sales", "billing"].map((tag) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      className={`w-full flex items-center justify-between px-3 py-2 text-[11px] rounded-[5px] font-bold transition-all capitalize ${selectedTag === tag ? "bg-[#e8f0fa] text-[#0037b0]" : "text-slate-600 hover:bg-slate-50"}`}
+                      onClick={() => {
+                        setSelectedTag(tag);
+                        setTagOpen(false);
+                      }}
+                    >
+                      {tag}
+                      {selectedTag === tag && <Check className="h-3.5 w-3.5" />}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
 
-              {/* Priority Dropdown */}
-              <div className="relative">
-                <button
-                  ref={priorityButtonRef}
-                  type="button"
-                  onClick={() => setPriorityOpen(!priorityOpen)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-[5px] text-xs font-bold text-slate-600 hover:bg-[#e8f0fa] transition-all whitespace-nowrap"
+            <div className="relative">
+              <button
+                ref={sortButtonRef}
+                type="button"
+                onClick={() => setSortOpen(!sortOpen)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-[5px] text-xs font-bold text-slate-600 hover:bg-[#e8f0fa] transition-all whitespace-nowrap"
+              >
+                <span className="opacity-60 uppercase tracking-wider">Sort:</span>
+                <span className="text-slate-900 capitalize">{sortBy}</span>
+                <ChevronDown
+                  className={`h-4 w-4 transition-transform duration-200 ${sortOpen ? "rotate-180" : "opacity-40"}`}
+                />
+              </button>
+
+              {sortOpen && (
+                <div
+                  ref={sortPopupRef}
+                  className="absolute top-full right-0 mt-1.5 w-32 bg-white border border-slate-200 rounded-[5px] shadow-2xl z-50 p-1 animate-in fade-in zoom-in-95 overflow-hidden"
                 >
-                  <span className="opacity-60 uppercase tracking-wider">Priority:</span>
-                  <span className="text-slate-900 capitalize">
-                    {selectedPriority === "all"
-                      ? "All"
-                      : selectedPriority.charAt(0).toUpperCase() + selectedPriority.slice(1)}
-                  </span>
-                  <ChevronDown
-                    className={`h-4 w-4 transition-transform duration-200 ${priorityOpen ? "rotate-180" : "opacity-40"}`}
-                  />
-                </button>
-
-                {priorityOpen && (
-                  <div
-                    ref={priorityPopupRef}
-                    className="absolute top-full left-0 mt-1.5 w-32 bg-white border border-slate-200 rounded-[5px] shadow-2xl z-50 p-1 animate-in fade-in zoom-in-95 overflow-hidden"
-                  >
-                    <p className="px-3 py-2 text-[10px] font-bold text-[#7f9bd7] uppercase tracking-widest border-b border-slate-50 mb-1">
-                      Select Priority
-                    </p>
-                    {["all", "high", "medium", "low"].map((priority) => (
-                      <button
-                        key={priority}
-                        type="button"
-                        className={`w-full flex items-center justify-between px-3 py-2 text-[11px] rounded-[5px] font-bold transition-all capitalize ${selectedPriority === priority ? "bg-[#e8f0fa] text-[#0037b0]" : "text-slate-600 hover:bg-slate-50"}`}
-                        onClick={() => {
-                          setSelectedPriority(priority);
-                          setPriorityOpen(false);
-                        }}
-                      >
-                        {priority}
-                        {selectedPriority === priority && <Check className="h-3.5 w-3.5" />}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Tags Dropdown */}
-              <div className="relative">
-                <button
-                  ref={tagButtonRef}
-                  type="button"
-                  onClick={() => setTagOpen(!tagOpen)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-[5px] text-xs font-bold text-slate-600 hover:bg-[#e8f0fa] transition-all whitespace-nowrap"
-                >
-                  <span className="opacity-60 uppercase tracking-wider">Tags:</span>
-                  <span className="text-slate-900 capitalize">
-                    {selectedTag === "all" ? "All" : selectedTag.charAt(0).toUpperCase() + selectedTag.slice(1)}
-                  </span>
-                  <ChevronDown
-                    className={`h-4 w-4 transition-transform duration-200 ${tagOpen ? "rotate-180" : "opacity-40"}`}
-                  />
-                </button>
-
-                {tagOpen && (
-                  <div
-                    ref={tagPopupRef}
-                    className="absolute top-full left-0 mt-1.5 w-36 bg-white border border-slate-200 rounded-[5px] shadow-2xl z-50 p-1 animate-in fade-in zoom-in-95 overflow-hidden"
-                  >
-                    <p className="px-3 py-2 text-[10px] font-bold text-[#7f9bd7] uppercase tracking-widest border-b border-slate-50 mb-1">
-                      Select Tag
-                    </p>
-                    {["all", "support", "sales", "billing"].map((tag) => (
-                      <button
-                        key={tag}
-                        type="button"
-                        className={`w-full flex items-center justify-between px-3 py-2 text-[11px] rounded-[5px] font-bold transition-all capitalize ${selectedTag === tag ? "bg-[#e8f0fa] text-[#0037b0]" : "text-slate-600 hover:bg-slate-50"}`}
-                        onClick={() => {
-                          setSelectedTag(tag);
-                          setTagOpen(false);
-                        }}
-                      >
-                        {tag}
-                        {selectedTag === tag && <Check className="h-3.5 w-3.5" />}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Sort Dropdown */}
-              <div className="relative">
-                <button
-                  ref={sortButtonRef}
-                  type="button"
-                  onClick={() => setSortOpen(!sortOpen)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-[5px] text-xs font-bold text-slate-600 hover:bg-[#e8f0fa] transition-all whitespace-nowrap"
-                >
-                  <span className="opacity-60 uppercase tracking-wider">Sort:</span>
-                  <span className="text-slate-900 capitalize">{sortBy}</span>
-                  <ChevronDown
-                    className={`h-4 w-4 transition-transform duration-200 ${sortOpen ? "rotate-180" : "opacity-40"}`}
-                  />
-                </button>
-
-                {sortOpen && (
-                  <div
-                    ref={sortPopupRef}
-                    className="absolute top-full right-0 mt-1.5 w-32 bg-white border border-slate-200 rounded-[5px] shadow-2xl z-50 p-1 animate-in fade-in zoom-in-95 overflow-hidden"
-                  >
-                    <p className="px-3 py-2 text-[10px] font-bold text-[#7f9bd7] uppercase tracking-widest border-b border-slate-50 mb-1">
-                      Sort By
-                    </p>
-                    {(["recent", "unread", "read"] as const).map((option) => (
-                      <button
-                        key={option}
-                        type="button"
-                        className={`w-full flex items-center justify-between px-3 py-2 text-[11px] rounded-[5px] font-bold transition-all capitalize ${sortBy === option ? "bg-[#e8f0fa] text-[#0037b0]" : "text-slate-600 hover:bg-slate-50"}`}
-                        onClick={() => {
-                          setSortBy(option);
-                          setSortOpen(false);
-                        }}
-                      >
-                        {option}
-                        {sortBy === option && <Check className="h-3.5 w-3.5" />}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+                  <p className="px-3 py-2 text-[10px] font-bold text-[#7f9bd7] uppercase tracking-widest border-b border-slate-50 mb-1">
+                    Sort By
+                  </p>
+                  {(["recent", "unread", "read"] as const).map((option) => (
+                    <button
+                      key={option}
+                      type="button"
+                      className={`w-full flex items-center justify-between px-3 py-2 text-[11px] rounded-[5px] font-bold transition-all capitalize ${sortBy === option ? "bg-[#e8f0fa] text-[#0037b0]" : "text-slate-600 hover:bg-slate-50"}`}
+                      onClick={() => {
+                        setSortBy(option);
+                        setSortOpen(false);
+                      }}
+                    >
+                      {option}
+                      {sortBy === option && <Check className="h-3.5 w-3.5" />}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Conversation List - Scrollable */}
-        <div className="flex-1 min-h-0">
-          <Card className="h-full flex flex-col border-foreground/10 bg-card/50 shadow-xs rounded-[5px] overflow-hidden">
-            <CardHeader className="py-3 px-4 shrink-0 flex flex-row items-center justify-between">
-              <div>
-                <CardTitle className="text-base font-semibold">
-                  {selectedStatus === "all"
-                    ? "All Chats"
-                    : selectedStatus === "active"
-                      ? "Active Chats"
-                      : "Inactive Chats"}
-                </CardTitle>
-                <CardDescription className="text-xs">Monitor and manage ongoing support conversations</CardDescription>
-              </div>
-              <div className="text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded-full border border-foreground/5">
-                Displaying {startIndex + 1}–{Math.min(endIndex, filteredConversations.length)} of{" "}
-                {filteredConversations.length}
-              </div>
-            </CardHeader>
+        {/* Center Div - Stays the same. Now that the parent has a fixed height, flex-1 will force this to stretch! */}
+        <div className="flex-1 min-h-0 overflow-y-auto border-b">
+          <Card className="h-full flex flex-col p-0">
             <CardContent className="flex-1 overflow-y-auto p-0">
               <div className="divide-y divide-foreground/5">
                 {displayedConversations.length === 0 ? (
@@ -1005,54 +972,55 @@ function ProjectPage() {
                 )}
               </div>
             </CardContent>
-            <CardFooter className="justify-center py-2 shrink-0 border-t border-foreground/5">
-              {filteredConversations.length > 0 && (
-                <Pagination>
-                  <PaginationContent>
-                    <PaginationItem>
-                      <PaginationPrevious
-                        href="#"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          if (hasPrevious) setCurrentPage(currentPage - 1);
-                        }}
-                        className={`rounded-[5px] text-xs h-8 px-3 ${!hasPrevious ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-slate-50"}`}
-                      />
-                    </PaginationItem>
-                    {getPageNumbers().map((page, idx) => (
-                      <PaginationItem key={page === "ellipsis" ? `ellipsis-${idx}` : page}>
-                        {page === "ellipsis" ? (
-                          <PaginationEllipsis />
-                        ) : (
-                          <PaginationLink
-                            href="#"
-                            isActive={currentPage === page}
-                            onClick={(e) => {
-                              e.preventDefault();
-                              setCurrentPage(page as number);
-                            }}
-                            className={`h-8 w-8 text-xs rounded-[5px] transition-all border-none ${currentPage === page ? "bg-[#e8f0fa] text-[#0037b0] font-bold cursor-default" : "hover:bg-slate-50 cursor-pointer text-slate-600"}`}
-                          >
-                            {page}
-                          </PaginationLink>
-                        )}
-                      </PaginationItem>
-                    ))}
-                    <PaginationItem>
-                      <PaginationNext
-                        href="#"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          if (hasNext) setCurrentPage(currentPage + 1);
-                        }}
-                        className={`rounded-[5px] text-xs h-8 px-3 ${!hasNext ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-slate-50"}`}
-                      />
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
-              )}
-            </CardFooter>
           </Card>
+        </div>
+
+        <div className="h-12 flex justify-center">
+          {filteredConversations.length > 0 && (
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (hasPrevious) setCurrentPage(currentPage - 1);
+                    }}
+                    className={`rounded-[5px] text-xs h-8 px-3 ${!hasPrevious ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-slate-50"}`}
+                  />
+                </PaginationItem>
+                {getPageNumbers().map((page, idx) => (
+                  <PaginationItem key={page === "ellipsis" ? `ellipsis-${idx}` : page}>
+                    {page === "ellipsis" ? (
+                      <PaginationEllipsis />
+                    ) : (
+                      <PaginationLink
+                        href="#"
+                        isActive={currentPage === page}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setCurrentPage(page as number);
+                        }}
+                        className={`h-8 w-8 text-xs rounded-[5px] transition-all border-none ${currentPage === page ? "bg-[#e8f0fa] text-[#0037b0] font-bold cursor-default" : "hover:bg-slate-50 cursor-pointer text-slate-600"}`}
+                      >
+                        {page}
+                      </PaginationLink>
+                    )}
+                  </PaginationItem>
+                ))}
+                <PaginationItem>
+                  <PaginationNext
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (hasNext) setCurrentPage(currentPage + 1);
+                    }}
+                    className={`rounded-[5px] text-xs h-8 px-3 ${!hasNext ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-slate-50"}`}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          )}
         </div>
       </div>
     </div>
