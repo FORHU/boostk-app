@@ -8,7 +8,15 @@ export const authMiddleware = createMiddleware().server(async ({ next, request }
   return next({ context: { authSession, request } });
 });
 
-export const requireAuthMiddleware = createMiddleware().server(async ({ next, request }) => {
+export const requireAuthMiddleware = createMiddleware()
+  .middleware([authMiddleware])
+  .server(async ({ next, request, context }) => {
+    if (!context.authSession) throw redirect({ to: "/signin", search: { reason: REDIRECT_REASON.AUTH_REQUIRED } });
+
+    return next({ context: { authSession: context.authSession, request } });
+  });
+
+export const requireAdminMiddleware = createMiddleware().server(async ({ next, request }) => {
   const authSession = await auth.api.getSession({ headers: request.headers });
   if (!authSession) throw redirect({ to: "/signin", search: { reason: REDIRECT_REASON.AUTH_REQUIRED } });
 

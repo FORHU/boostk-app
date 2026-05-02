@@ -13,7 +13,7 @@ import { Input } from "../ui/input";
 import { Skeleton } from "../ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
-const OrganizationList = () => {
+export const OrganizationList = () => {
   const [searchQuery, setSearchQuery] = useState("");
   return (
     <div className="space-y-4">

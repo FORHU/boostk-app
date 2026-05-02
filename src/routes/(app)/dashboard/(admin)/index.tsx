@@ -5,5 +5,9 @@ export const Route = createFileRoute("/(app)/dashboard/(admin)/")({
 });
 
 function RouteComponent() {
-  return <div>Hello "/(app)/dashboard/"!</div>;
+  return (
+    <div className="flex flex-col h-full items-center justify-center">
+      <p>YOU ARE ADMIN</p>
+    </div>
+  );
 }
