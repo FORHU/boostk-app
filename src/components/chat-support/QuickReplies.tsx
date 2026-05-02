@@ -92,7 +92,7 @@ export const QuickReplies = forwardRef<HTMLDivElement, QuickRepliesProps>(
         </div>
       </div>
     );
-  }
+  },
 );
 
 QuickReplies.displayName = "QuickReplies";

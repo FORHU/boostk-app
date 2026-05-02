@@ -760,6 +760,7 @@ const ChatWindow = ({ ticket, onClose }: { ticket: TicketWithCustomer | null; on
 };
 
 const UserChatMessages = ({ ticket }: { ticket: TicketWithCustomer }) => {
+const UserChatMessages = ({ ticket }: { ticket: TicketWithCustomer }) => {
   const { data: messages } = useSuspenseQuery(ticketMessageQueries.getTicketMessages(ticket.id));
   const queryClient = useQueryClient();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -1346,6 +1347,8 @@ const UserChatInput = ({ ticket }: { ticket: TicketWithCustomer }) => {
     setUploads([]);
     setMessage("");
   };
+
+  const uploading = uploads.some((u) => u.progress < 100);
 
   return (
     <div className="p-3 bg-white border-t border-gray-100 shrink-0 relative">
