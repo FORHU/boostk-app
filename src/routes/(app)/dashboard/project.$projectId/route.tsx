@@ -20,24 +20,20 @@ function OrganizationLayout() {
   const { project } = Route.useRouteContext();
 
   return (
-    <div className="flex-1 flex min-h-0 relative">
-      {/* sets the custom properties for the sidebar */}
+    <div className="flex-1 flex relative ">
       <SidebarProvider
         style={
           {
-            "--sidebar-width": "13rem",
+            "--sidebar-width": "15rem",
             "--sidebar-width-icon": "3rem",
-            "--sidebar-offset": "2.75rem",
+            "--sidebar-offset": "3rem",
           } as React.CSSProperties
         }
-        className="h-full flex-1"
       >
         <ProjectSidebar projectId={project.id} />
-        <SidebarInset className="">
-          <div className="flex-1 flex flex-col min-h-0">
-            <Outlet />
-          </div>
-        </SidebarInset>
+        {/* <SidebarInset className="h-full flex-1">
+          <Outlet />
+        </SidebarInset> */}
       </SidebarProvider>
     </div>
   );

@@ -3,14 +3,16 @@ import { Archive, HatGlasses, Home, MessageCircle, Settings, Ticket } from "luci
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarTrigger,
 } from "@/components/ui/sidebar";
 
-interface ProjectSidebarProps extends React.ComponentProps<typeof Sidebar> {
+interface ProjectSidebarProps {
   projectId: string;
 }
 
@@ -47,10 +49,10 @@ const routes = [
   },
 ];
 
-export default function ProjectSidebar({ projectId, ...props }: ProjectSidebarProps) {
+export default function ProjectSidebar({ projectId }: ProjectSidebarProps) {
   return (
-    <Sidebar {...props}>
-      <SidebarContent>
+    <Sidebar collapsible="icon">
+      <SidebarContent className="bg-background">
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu className="flex flex-col gap-1">
@@ -78,6 +80,10 @@ export default function ProjectSidebar({ projectId, ...props }: ProjectSidebarPr
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
+      <SidebarFooter>
+        <SidebarTrigger />
+      </SidebarFooter>
     </Sidebar>
   );
 }

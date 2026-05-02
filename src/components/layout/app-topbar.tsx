@@ -1,8 +1,9 @@
 "use client";
 
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
-import { BadgeCheckIcon, BellIcon, CreditCardIcon, LogOutIcon, SparklesIcon, ZapIcon } from "lucide-react";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { BadgeCheckIcon, BellIcon, LogOutIcon, ZapIcon } from "lucide-react";
+import { TopbarBreadcrumb } from "@/components/layout/top-bar/topbar-breadcrumb";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -15,22 +16,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { authClient } from "@/lib/auth/auth-client";
 import { authQueries } from "@/modules/auth/auth.queries";
-import { RouterBreadcrumb } from "./RouterBreadcrumb";
+// import { authQueries } from "@/features/auth/auth.queries";
+// import { authClient } from "@/lib/better-auth-client";
 
 export default function AppTopbar() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  // TODO: investigate why useSuspenseQuery is not working (return data can be nullable)
-  const { data: authSession } = useSuspenseQuery(authQueries.authUser());
-
-  if (!authSession) {
-    console.error("No auth session. Redirecting to login.");
-    navigate({ to: "/signin" });
-    return null;
-  }
-
-  const { user } = authSession;
+  const { data } = useSuspenseQuery(authQueries.getAuthenticatedUser());
+  const { user } = data;
 
   const handleLogout = async () => {
     queryClient.clear();
@@ -43,69 +37,62 @@ export default function AppTopbar() {
       },
     });
   };
+
   return (
     <div className="w-full flex flex-row sticky top-0 z-50">
-      <nav className="z-10 w-full h-11 border-b bg-background border-border flex flex-row items-center justify-between p-2">
-        <div className="flex items-center gap-2">
-          <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-            <ZapIcon className="size-4" />
-          </div>
-          <RouterBreadcrumb />
+      <nav className="z-10 w-full h-12 border-b bg-background border-border flex flex-row items-center justify-between p-3">
+        <div className="flex items-center gap-3">
+          <Link to="/" className="-ml-1">
+            <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+              <ZapIcon className="size-4" />
+            </div>
+          </Link>
+
+          <AppTopbarDivider />
+
+          <TopbarBreadcrumb />
         </div>
 
         <div className="flex items-center gap-4">
           <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <button
-                  type="button"
-                  className="aria-expanded:bg-muted cursor-pointer border-none bg-transparent p-0 outline-none"
-                />
-              }
-            >
+            <DropdownMenuTrigger>
               <Avatar>
-                <AvatarImage className="size-8" src={"/avatars/laugh-orange-cat.gif"} alt={user.name} />
-                <AvatarFallback>CN</AvatarFallback>
+                <AvatarImage className="size-8" src={user.image || undefined} alt={user.name} />
+                <AvatarFallback>{user.name.slice(0, 2).toUpperCase()}</AvatarFallback>
               </Avatar>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="min-w-56 rounded-lg" side="top" align="end" sideOffset={4}>
+
+            <DropdownMenuContent className="min-w-56 rounded-lg bg-white" side="top" align="end" sideOffset={4}>
               <DropdownMenuGroup>
                 <DropdownMenuLabel className="p-0 font-normal">
-                  <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+                  <div className="flex items-center gap-2 p-1 text-sm">
                     <Avatar>
-                      <AvatarImage src={"/avatars/laugh-orange-cat.gif"} alt={user.name} />
+                      <AvatarImage className="size-8" src={user.image || undefined} alt={user.name} />
                       <AvatarFallback>{user.name.slice(0, 2).toUpperCase()}</AvatarFallback>
                     </Avatar>
-                    <div className="grid flex-1 text-left text-sm leading-tight">
+                    <div className="grid">
                       <span className="truncate font-medium">{user.name}</span>
                       <span className="truncate text-xs">{user.email}</span>
                     </div>
                   </div>
                 </DropdownMenuLabel>
               </DropdownMenuGroup>
+
               <DropdownMenuSeparator />
-              <DropdownMenuGroup>
-                <DropdownMenuItem>
-                  <SparklesIcon />
-                  Upgrade to Pro
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-              <DropdownMenuSeparator />
-              <DropdownMenuGroup>
+
+              <DropdownMenuGroup className="space-y-1">
                 <DropdownMenuItem>
                   <BadgeCheckIcon />
                   Account
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <CreditCardIcon />
-                  Billing
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                   <BellIcon />
                   Notifications
                 </DropdownMenuItem>
               </DropdownMenuGroup>
+
               <DropdownMenuSeparator />
+
               <DropdownMenuItem onClick={handleLogout}>
                 <LogOutIcon />
                 Log out
@@ -117,3 +104,24 @@ export default function AppTopbar() {
     </div>
   );
 }
+
+const AppTopbarDivider = () => {
+  return (
+    <span className="text-border-stronger hidden md:block">
+      <svg
+        viewBox="0 0 24 24"
+        width="20"
+        height="20"
+        stroke="#94a3b8"
+        strokeWidth="1"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+        shapeRendering="geometricPrecision"
+        aria-hidden="true"
+      >
+        <path d="M16 3.549L7.12 20.600"></path>
+      </svg>
+    </span>
+  );
+};
