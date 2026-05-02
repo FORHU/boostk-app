@@ -44,7 +44,7 @@ export default function AppTopbar() {
     });
   };
   return (
-    <div className="w-full flex flex-row">
+    <div className="w-full flex flex-row sticky top-0 z-50">
       <nav className="z-10 w-full h-11 border-b bg-background border-border flex flex-row items-center justify-between p-2">
         <div className="flex items-center gap-2">
           <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
