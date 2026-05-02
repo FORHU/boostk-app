@@ -20,21 +20,19 @@ function OrganizationLayout() {
   const { project } = Route.useRouteContext();
 
   return (
-    <div className="flex-1 flex relative ">
-      <SidebarProvider
-        style={
-          {
-            "--sidebar-width": "15rem",
-            "--sidebar-width-icon": "3rem",
-            "--sidebar-offset": "3rem",
-          } as React.CSSProperties
-        }
-      >
-        <ProjectSidebar projectId={project.id} />
-        {/* <SidebarInset className="h-full flex-1">
-          <Outlet />
-        </SidebarInset> */}
-      </SidebarProvider>
-    </div>
+    <SidebarProvider
+      style={
+        {
+          "--sidebar-width": "15rem",
+          "--sidebar-width-icon": "3rem",
+          "--sidebar-offset": "3rem",
+        } as React.CSSProperties
+      }
+    >
+      <ProjectSidebar projectId={project.id} />
+      <SidebarInset>
+        <Outlet />
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

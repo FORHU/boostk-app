@@ -14,7 +14,9 @@ function AppLayout() {
   return (
     <div className="flex flex-col min-h-screen">
       <AppTopbar />
-      <Outlet />
+      <div className="h-[calc(100vh-3rem)]">
+        <Outlet />
+      </div>
     </div>
   );
 }
