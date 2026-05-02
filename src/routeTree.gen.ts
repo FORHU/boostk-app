@@ -29,6 +29,7 @@ import { Route as appDashboardOrgOrganizationIdIndexRouteImport } from './routes
 import { Route as appDashboardProjectProjectIdTicketsRouteImport } from './routes/(app)/dashboard/project.$projectId/tickets'
 import { Route as appDashboardProjectProjectIdSettingsRouteImport } from './routes/(app)/dashboard/project.$projectId/settings'
 import { Route as appDashboardProjectProjectIdChatSupportRouteImport } from './routes/(app)/dashboard/project.$projectId/chat-support'
+import { Route as appDashboardProjectProjectIdArchivedChatsRouteImport } from './routes/(app)/dashboard/project.$projectId/archived-chats'
 import { Route as appDashboardProjectProjectIdAgentsRouteImport } from './routes/(app)/dashboard/project.$projectId/agents'
 import { Route as appDashboardOrgOrganizationIdUsageRouteImport } from './routes/(app)/dashboard/org.$organizationId/usage'
 import { Route as appDashboardOrgOrganizationIdTeamsRouteImport } from './routes/(app)/dashboard/org.$organizationId/teams'
@@ -144,6 +145,12 @@ const appDashboardProjectProjectIdChatSupportRoute =
     path: '/chat-support',
     getParentRoute: () => appDashboardProjectProjectIdRouteRoute,
   } as any)
+const appDashboardProjectProjectIdArchivedChatsRoute =
+  appDashboardProjectProjectIdArchivedChatsRouteImport.update({
+    id: '/archived-chats',
+    path: '/archived-chats',
+    getParentRoute: () => appDashboardProjectProjectIdRouteRoute,
+  } as any)
 const appDashboardProjectProjectIdAgentsRoute =
   appDashboardProjectProjectIdAgentsRouteImport.update({
     id: '/agents',
@@ -201,6 +208,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/org/$organizationId/teams': typeof appDashboardOrgOrganizationIdTeamsRoute
   '/dashboard/org/$organizationId/usage': typeof appDashboardOrgOrganizationIdUsageRoute
   '/dashboard/project/$projectId/agents': typeof appDashboardProjectProjectIdAgentsRoute
+  '/dashboard/project/$projectId/archived-chats': typeof appDashboardProjectProjectIdArchivedChatsRoute
   '/dashboard/project/$projectId/chat-support': typeof appDashboardProjectProjectIdChatSupportRoute
   '/dashboard/project/$projectId/settings': typeof appDashboardProjectProjectIdSettingsRoute
   '/dashboard/project/$projectId/tickets': typeof appDashboardProjectProjectIdTicketsRoute
@@ -224,6 +232,7 @@ export interface FileRoutesByTo {
   '/dashboard/org/$organizationId/teams': typeof appDashboardOrgOrganizationIdTeamsRoute
   '/dashboard/org/$organizationId/usage': typeof appDashboardOrgOrganizationIdUsageRoute
   '/dashboard/project/$projectId/agents': typeof appDashboardProjectProjectIdAgentsRoute
+  '/dashboard/project/$projectId/archived-chats': typeof appDashboardProjectProjectIdArchivedChatsRoute
   '/dashboard/project/$projectId/chat-support': typeof appDashboardProjectProjectIdChatSupportRoute
   '/dashboard/project/$projectId/settings': typeof appDashboardProjectProjectIdSettingsRoute
   '/dashboard/project/$projectId/tickets': typeof appDashboardProjectProjectIdTicketsRoute
@@ -253,6 +262,7 @@ export interface FileRoutesById {
   '/(app)/dashboard/org/$organizationId/teams': typeof appDashboardOrgOrganizationIdTeamsRoute
   '/(app)/dashboard/org/$organizationId/usage': typeof appDashboardOrgOrganizationIdUsageRoute
   '/(app)/dashboard/project/$projectId/agents': typeof appDashboardProjectProjectIdAgentsRoute
+  '/(app)/dashboard/project/$projectId/archived-chats': typeof appDashboardProjectProjectIdArchivedChatsRoute
   '/(app)/dashboard/project/$projectId/chat-support': typeof appDashboardProjectProjectIdChatSupportRoute
   '/(app)/dashboard/project/$projectId/settings': typeof appDashboardProjectProjectIdSettingsRoute
   '/(app)/dashboard/project/$projectId/tickets': typeof appDashboardProjectProjectIdTicketsRoute
@@ -281,6 +291,7 @@ export interface FileRouteTypes {
     | '/dashboard/org/$organizationId/teams'
     | '/dashboard/org/$organizationId/usage'
     | '/dashboard/project/$projectId/agents'
+    | '/dashboard/project/$projectId/archived-chats'
     | '/dashboard/project/$projectId/chat-support'
     | '/dashboard/project/$projectId/settings'
     | '/dashboard/project/$projectId/tickets'
@@ -304,6 +315,7 @@ export interface FileRouteTypes {
     | '/dashboard/org/$organizationId/teams'
     | '/dashboard/org/$organizationId/usage'
     | '/dashboard/project/$projectId/agents'
+    | '/dashboard/project/$projectId/archived-chats'
     | '/dashboard/project/$projectId/chat-support'
     | '/dashboard/project/$projectId/settings'
     | '/dashboard/project/$projectId/tickets'
@@ -332,6 +344,7 @@ export interface FileRouteTypes {
     | '/(app)/dashboard/org/$organizationId/teams'
     | '/(app)/dashboard/org/$organizationId/usage'
     | '/(app)/dashboard/project/$projectId/agents'
+    | '/(app)/dashboard/project/$projectId/archived-chats'
     | '/(app)/dashboard/project/$projectId/chat-support'
     | '/(app)/dashboard/project/$projectId/settings'
     | '/(app)/dashboard/project/$projectId/tickets'
@@ -491,6 +504,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof appDashboardProjectProjectIdChatSupportRouteImport
       parentRoute: typeof appDashboardProjectProjectIdRouteRoute
     }
+    '/(app)/dashboard/project/$projectId/archived-chats': {
+      id: '/(app)/dashboard/project/$projectId/archived-chats'
+      path: '/archived-chats'
+      fullPath: '/dashboard/project/$projectId/archived-chats'
+      preLoaderRoute: typeof appDashboardProjectProjectIdArchivedChatsRouteImport
+      parentRoute: typeof appDashboardProjectProjectIdRouteRoute
+    }
     '/(app)/dashboard/project/$projectId/agents': {
       id: '/(app)/dashboard/project/$projectId/agents'
       path: '/agents'
@@ -584,6 +604,7 @@ const appDashboardOrgOrganizationIdRouteRouteWithChildren =
 
 interface appDashboardProjectProjectIdRouteRouteChildren {
   appDashboardProjectProjectIdAgentsRoute: typeof appDashboardProjectProjectIdAgentsRoute
+  appDashboardProjectProjectIdArchivedChatsRoute: typeof appDashboardProjectProjectIdArchivedChatsRoute
   appDashboardProjectProjectIdChatSupportRoute: typeof appDashboardProjectProjectIdChatSupportRoute
   appDashboardProjectProjectIdSettingsRoute: typeof appDashboardProjectProjectIdSettingsRoute
   appDashboardProjectProjectIdTicketsRoute: typeof appDashboardProjectProjectIdTicketsRoute
@@ -594,6 +615,8 @@ const appDashboardProjectProjectIdRouteRouteChildren: appDashboardProjectProject
   {
     appDashboardProjectProjectIdAgentsRoute:
       appDashboardProjectProjectIdAgentsRoute,
+    appDashboardProjectProjectIdArchivedChatsRoute:
+      appDashboardProjectProjectIdArchivedChatsRoute,
     appDashboardProjectProjectIdChatSupportRoute:
       appDashboardProjectProjectIdChatSupportRoute,
     appDashboardProjectProjectIdSettingsRoute:

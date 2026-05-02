@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { HatGlasses, Home, MessageCircle, Settings, Ticket } from "lucide-react";
+import { Archive, HatGlasses, Home, MessageCircle, Settings, Ticket } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -24,6 +24,11 @@ const routes = [
     label: "Chat Support",
     icon: MessageCircle,
     href: "/dashboard/project/$projectId/chat-support",
+  },
+  {
+    label: "Archived Chats",
+    icon: Archive,
+    href: "/dashboard/project/$projectId/archived-chats",
   },
   {
     label: "Tickets",
