@@ -1,7 +1,19 @@
 import { useForm } from "@tanstack/react-form";
-import { ChevronDown, Copy, EllipsisVertical, Headset, Plus, Search, Settings, Shield, User } from "lucide-react";
+import {
+  BookOpen,
+  Check,
+  ChevronDown,
+  Copy,
+  EllipsisVertical,
+  Headset,
+  Plus,
+  Search,
+  Settings,
+  Shield,
+} from "lucide-react";
+import type React from "react";
 import { useState } from "react";
-import { Toaster, toast } from "sonner";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -69,9 +81,57 @@ const MOCK_USERS: UserData[] = [
   },
 ];
 
+const MOCK_DEPARTMENTS = ["Customer Support", "Technical", "Billing", "Sales", "Onboarding"];
+
+const ROLE_OPTIONS: { id: RoleType; title: string; desc: string; icon: React.ReactNode }[] = [
+  {
+    id: "ADMIN",
+    title: "Admin",
+    desc: "Full access to all settings, user management, and data.",
+    icon: <Shield className="h-6 w-6" />,
+  },
+  {
+    id: "AGENT",
+    title: "Agent",
+    desc: "Can manage tickets and view customer data. Cannot change settings.",
+    icon: <Headset className="h-6 w-6" />,
+  },
+  {
+    id: "MEMBER",
+    title: "Viewer",
+    desc: "Can view tickets and customer data. Cannot edit or change settings.",
+    icon: <BookOpen className="h-6 w-6" />,
+  },
+];
+
+const ROLE_BUTTON_LABELS: Record<RoleType, string> = {
+  ADMIN: "Change Role to Admin",
+  AGENT: "Change Role to Agent",
+  MEMBER: "Change Role to Viewer",
+};
+
 export function UsersPage() {
   const [activeTab, setActiveTab] = useState<TabType>("all");
   const [search, setSearch] = useState("");
+
+  // Edit Role wizard state
+  const [editRoleOpen, setEditRoleOpen] = useState(false);
+  const [editRoleUser, setEditRoleUser] = useState<UserData | null>(null);
+  const [editRoleStep, setEditRoleStep] = useState<1 | 2>(1);
+  const [selectedRole, setSelectedRole] = useState<RoleType>("MEMBER");
+  const [agentPermissions, setAgentPermissions] = useState<string[]>(["View Tickets"]);
+  const [agentDepartment, setAgentDepartment] = useState("");
+  const [adminPassword, setAdminPassword] = useState("");
+
+  const handleOpenEditRole = (user: UserData) => {
+    setEditRoleUser(user);
+    setEditRoleOpen(true);
+    setEditRoleStep(1);
+    setSelectedRole(user.role);
+    setAgentPermissions(["View Tickets"]);
+    setAgentDepartment("");
+    setAdminPassword("");
+  };
 
   const createUserForm = useForm({
     defaultValues: { name: "", email: "", role: "MEMBER" as RoleType },
@@ -105,7 +165,7 @@ export function UsersPage() {
       case "AGENT":
         return <Headset size={14} />;
       case "MEMBER":
-        return <User size={14} />;
+        return <BookOpen size={14} />;
     }
   };
 
@@ -122,10 +182,7 @@ export function UsersPage() {
 
   return (
     <div className="w-full">
-      <Toaster position="top-center" expand={true} richColors />
-
       <div className="flex-1 space-y-8 p-8 pt-6 max-w-7xl mx-auto">
-        {/* Page Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h2 className="text-3xl font-bold tracking-tight text-foreground">Users Management</h2>
@@ -242,6 +299,8 @@ export function UsersPage() {
               <input
                 type="text"
                 placeholder="Search users..."
+                autoComplete="off"
+                name="user-search-input"
                 className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-[5px] text-sm focus:outline-none focus:ring-2 focus:ring-[#1549e6]/20 transition-all"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -325,9 +384,9 @@ export function UsersPage() {
                             <Copy size={14} className="mr-2" />
                             Copy ID
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="rounded-[5px]">
+                          <DropdownMenuItem className="rounded-[5px]" onClick={() => handleOpenEditRole(user)}>
                             <Settings size={14} className="mr-2" />
-                            Settings
+                            Edit Role
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -349,6 +408,248 @@ export function UsersPage() {
           </div>
         </div>
       </div>
+      {/* Edit Role Wizard Sheet */}
+      <Sheet open={editRoleOpen} onOpenChange={setEditRoleOpen}>
+        <SheetContent side="right" className="sm:max-w-md p-0 overflow-y-auto">
+          <div className="flex flex-col h-full bg-white">
+            <SheetHeader className="p-6 border-b border-gray-100">
+              <SheetTitle className="text-xl font-bold">Edit User Role: Step {editRoleStep}</SheetTitle>
+              <SheetDescription>Update role and permissions for {editRoleUser?.name}</SheetDescription>
+            </SheetHeader>
+
+            <div className="flex-1 p-6 space-y-8">
+              <div className="flex items-center justify-center gap-16 relative mb-12">
+                <div className="absolute top-4 left-[30%] right-[30%] h-0.5 bg-gray-100 -z-10" />
+
+                {/* Step 1: Role */}
+                <div className="flex flex-col items-center gap-2">
+                  <div
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all ${
+                      editRoleStep === 1
+                        ? "bg-white border-[#1549e6] text-[#1549e6]"
+                        : "bg-[#1549e6] border-[#1549e6] text-white"
+                    }`}
+                  >
+                    {editRoleStep === 1 ? 1 : <Check size={14} />}
+                  </div>
+                  <span
+                    className={`text-[10px] font-bold uppercase tracking-widest ${
+                      editRoleStep === 1 ? "text-gray-900" : "text-gray-400"
+                    }`}
+                  >
+                    Role
+                  </span>
+                </div>
+
+                {/* Step 2: Review */}
+                <div className="flex flex-col items-center gap-2">
+                  <div
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all ${
+                      editRoleStep === 2
+                        ? "bg-white border-[#1549e6] text-[#1549e6]"
+                        : "bg-white border-gray-200 text-gray-400"
+                    }`}
+                  >
+                    2
+                  </div>
+                  <span
+                    className={`text-[10px] font-bold uppercase tracking-widest ${
+                      editRoleStep === 2 ? "text-gray-900" : "text-gray-400"
+                    }`}
+                  >
+                    Review
+                  </span>
+                </div>
+              </div>
+
+              {/* Step 1: Role Selection */}
+              {editRoleStep === 1 && (
+                <div className="space-y-6">
+                  <div className="text-center mb-6">
+                    <h3 className="text-lg font-bold text-gray-900">Select Role</h3>
+                    <p className="text-xs text-gray-500">Choose the level of access for this user.</p>
+                  </div>
+
+                  <div className="space-y-4">
+                    {ROLE_OPTIONS.map((role) => (
+                      <button
+                        key={role.id}
+                        type="button"
+                        onClick={() => setSelectedRole(role.id)}
+                        className={`w-full text-left p-4 rounded-[5px] border-2 transition-all flex items-start gap-4 ${
+                          selectedRole === role.id
+                            ? "border-[#1549e6] bg-[#1549e6]/5 shadow-md shadow-[#1549e6]/10"
+                            : "border-gray-100 hover:border-gray-200"
+                        }`}
+                      >
+                        <div
+                          className={`p-2 rounded-[5px] ${
+                            selectedRole === role.id ? "bg-[#1549e6] text-white" : "bg-gray-50 text-gray-400"
+                          }`}
+                        >
+                          {role.icon}
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-gray-900">{role.title}</p>
+                          <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{role.desc}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Step 2: Agent permissions */}
+              {editRoleStep === 2 && selectedRole === "AGENT" && (
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900">Role & Permissions</h3>
+                    <p className="text-xs text-gray-500">Customize what this agent can do.</p>
+                  </div>
+
+                  <div className="space-y-3">
+                    {["View Tickets", "Manage Tickets", "Chat Support"].map((perm) => {
+                      const permId = `perm-${perm.replace(/\s+/g, "-").toLowerCase()}`;
+                      return (
+                        <label
+                          key={perm}
+                          htmlFor={permId}
+                          className="flex items-center gap-3 p-3 rounded-[5px] border border-gray-100 hover:bg-gray-50 cursor-pointer transition-all"
+                        >
+                          <input
+                            id={permId}
+                            type="checkbox"
+                            checked={agentPermissions.includes(perm)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setAgentPermissions([...agentPermissions, perm]);
+                              } else {
+                                setAgentPermissions(agentPermissions.filter((p) => p !== perm));
+                              }
+                            }}
+                            className="w-4 h-4 rounded-[3px] border-gray-300 text-[#1549e6] focus:ring-[#1549e6]"
+                          />
+                          <span className="text-sm font-medium text-gray-700">{perm}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+
+                  <div className="space-y-2">
+                    <label
+                      htmlFor="dept-selection"
+                      className="text-xs font-bold text-gray-400 uppercase tracking-widest"
+                    >
+                      Department Assignment
+                    </label>
+                    <select
+                      id="dept-selection"
+                      className="w-full p-2.5 bg-white border border-gray-200 rounded-[5px] text-sm focus:outline-none focus:ring-2 focus:ring-[#1549e6]/20 transition-all"
+                      value={agentDepartment}
+                      onChange={(e) => setAgentDepartment(e.target.value)}
+                    >
+                      <option value="">Select a department</option>
+                      {MOCK_DEPARTMENTS.map((dept) => (
+                        <option key={dept} value={dept}>
+                          {dept}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-[10px] text-gray-400 italic">
+                      Assign the agent to their primary department for ticket routing.
+                    </p>
+                    {agentDepartment === "" && (
+                      <p className="text-[10px] text-red-500 font-bold">Please assign a department</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Step 2: Admin security */}
+              {editRoleStep === 2 && selectedRole === "ADMIN" && (
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900">Security & Review</h3>
+                    <p className="text-xs text-gray-500">Confirm administrative privileges.</p>
+                  </div>
+
+                  <div className="p-5 rounded-[5px] border-2 border-amber-100 bg-amber-50/30 space-y-4">
+                    <div className="flex flex-col gap-2">
+                      <label
+                        htmlFor="admin-password-confirm"
+                        className="text-[10px] font-bold text-gray-400 uppercase tracking-widest"
+                      >
+                        Account Password
+                      </label>
+                      <Input
+                        id="admin-password-confirm"
+                        type="password"
+                        placeholder="Enter your account password to confirm"
+                        autoComplete="new-password"
+                        className="rounded-[5px] h-10 border-amber-200 focus:ring-amber-500/20"
+                        value={adminPassword}
+                        onChange={(e) => setAdminPassword(e.target.value)}
+                      />
+                      <p className="text-[10px] text-amber-600 font-medium">
+                        This action requires your administrative password for security purposes.
+                      </p>
+                      {adminPassword === "" && (
+                        <p className="text-[10px] text-red-500 font-bold">Password is required to confirm</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 2: Viewer confirmation */}
+              {editRoleStep === 2 && selectedRole === "MEMBER" && (
+                <div className="py-12 flex flex-col items-center justify-center text-center space-y-4">
+                  <div className="w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                    <BookOpen size={32} />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900">Review Changes</h3>
+                    <p className="text-xs text-gray-500">Updating {editRoleUser?.name} to Viewer role.</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="p-6 border-t border-gray-100 flex items-center gap-3 bg-gray-50/50">
+              <Button
+                variant="outline"
+                className="flex-1 rounded-[5px] font-bold"
+                onClick={() => {
+                  if (editRoleStep === 2) {
+                    setEditRoleStep(1);
+                  } else {
+                    setEditRoleOpen(false);
+                  }
+                }}
+              >
+                {editRoleStep === 2 ? "Back" : "Cancel"}
+              </Button>
+              <Button
+                className="flex-1 bg-[#1549e6] text-white rounded-[5px] font-bold hover:bg-[#2563eb]"
+                disabled={
+                  editRoleStep === 2 &&
+                  ((selectedRole === "AGENT" && !agentDepartment) || (selectedRole === "ADMIN" && !adminPassword))
+                }
+                onClick={() => {
+                  if (editRoleStep === 1) {
+                    setEditRoleStep(2);
+                  } else {
+                    toast.success("User role updated successfully");
+                    setEditRoleOpen(false);
+                  }
+                }}
+              >
+                {editRoleStep === 1 ? "Next" : ROLE_BUTTON_LABELS[selectedRole]}
+              </Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
