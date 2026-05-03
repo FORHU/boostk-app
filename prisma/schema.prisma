@@ -32,6 +32,7 @@ model User {
   members        Member[]
   teamMembers    TeamMember[]
   ticketMessages TicketMessage[]
+  tickets        Ticket[]
 
   @@map("users")
 }
@@ -271,18 +272,24 @@ model Customer {
 
 model Ticket {
   id              String @id @default(cuid())
-  projectId       String
-  customerId      String
   referenceNumber String @unique
 
   status   TicketStatus   @default(OPEN)
   priority TicketPriority @default(LOW)
+  tags     String[]       @default([])
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  assigneeId String?
+  assignee   User?   @relation("Assignee", fields: [assigneeId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  project        Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  customer       Customer        @relation(fields: [customerId], references: [id], onDelete: Cascade)
   ticketMessages TicketMessage[]
 
   @@map("tickets")

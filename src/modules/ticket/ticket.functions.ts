@@ -212,3 +212,14 @@ export const getAuthUserTicketsFn = createServerFn({ method: "GET" })
     });
     return tickets;
   });
+
+export const updateTicketFn = createServerFn({ method: "POST" })
+  .middleware([requireProjectMiddleware])
+  .inputValidator(z.object({ id: z.string(), data: z.any() }))
+  .handler(async ({ data }) => {
+    const ticket = await prisma.ticket.update({
+      where: { id: data.id },
+      data: data.data,
+    });
+    return ticket;
+  });
