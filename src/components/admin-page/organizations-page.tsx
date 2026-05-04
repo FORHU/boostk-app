@@ -1,7 +1,23 @@
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLoaderData, useRouter } from "@tanstack/react-router";
-import { ChevronDown, Copy, EllipsisVertical, LayoutGrid, List, Plus, Search, Settings } from "lucide-react";
+import {
+  Box,
+  ChevronDown,
+  Copy,
+  EllipsisVertical,
+  LayoutGrid,
+  List,
+  Plus,
+  RotateCcw,
+  Search,
+  Settings,
+  ShieldAlert,
+  Ticket,
+  UserCog,
+  Users,
+  X,
+} from "lucide-react";
 import { useState } from "react";
 import { Toaster, toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -20,6 +36,20 @@ import { createOrganizationFn } from "@/modules/organization/organization.functi
 
 type TabType = "all" | "admin" | "member" | "agent";
 
+// Mock data generator for organization details
+const getMockDetails = (_orgId: string) => ({
+  members: [
+    { id: "1", name: "Alice Admin", email: "alice@org.com", role: "Admin" },
+    { id: "2", name: "Bob Builder", email: "bob@org.com", role: "Member" },
+    { id: "3", name: "Charlie Support", email: "charlie@org.com", role: "Agent" },
+  ],
+  projects: [
+    { id: "p1", name: "Alpha", tickets: 24 },
+    { id: "p2", name: "Beta", tickets: 12 },
+    { id: "p3", name: "Gamma", tickets: 8 },
+  ],
+});
+
 export function OrganizationsPage() {
   const organizations = useLoaderData({ from: "/(app)/dashboard/admin/organizations" });
   const router = useRouter();
@@ -27,6 +57,7 @@ export function OrganizationsPage() {
   const [activeTab, setActiveTab] = useState<TabType>("all");
   const [search, setSearch] = useState("");
   const [view, setView] = useState<"grid" | "list">("grid");
+  const [expandedOrgIds, setExpandedOrgIds] = useState<string[]>([]);
 
   const createOrganizationMutation = useMutation({
     mutationFn: createOrganizationFn,
@@ -55,6 +86,10 @@ export function OrganizationsPage() {
   const handleCopyId = (id: string) => {
     navigator.clipboard.writeText(id);
     toast.success("Organization ID copied to clipboard");
+  };
+
+  const toggleExpand = (id: string) => {
+    setExpandedOrgIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
   };
 
   const formatDate = (date: Date | string) => {
@@ -144,8 +179,6 @@ export function OrganizationsPage() {
           </div>
         </div>
 
-        {/* Metrics Bar */}
-
         <div className="space-y-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             {/* Section Tabs */}
@@ -205,66 +238,171 @@ export function OrganizationsPage() {
           </div>
 
           {view === "grid" ? (
-            filteredOrgs.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredOrgs.map((org) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
+              {filteredOrgs.map((org) => {
+                const isExpanded = expandedOrgIds.includes(org.id);
+                const details = getMockDetails(org.id);
+
+                return (
                   <Card
                     key={org.id}
-                    className="relative border-foreground/10 shadow-none group/card overflow-hidden transition-all hover:bg-muted/5 rounded-[5px]"
+                    className={`relative border-foreground/10 shadow-none group/card overflow-hidden transition-all hover:bg-muted/5 rounded-[5px] ${
+                      isExpanded ? "md:col-span-2 lg:col-span-3 bg-white" : ""
+                    }`}
                   >
-                    <div className="absolute top-4 right-4 z-20">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger
-                          render={
-                            <button
-                              type="button"
-                              className="text-gray-300 hover:text-gray-600 p-1.5 rounded-[5px] hover:bg-gray-100 transition-colors opacity-0 group-hover/card:opacity-100"
-                            >
-                              <EllipsisVertical size={20} />
-                            </button>
-                          }
-                        />
-                        <DropdownMenuContent align="end" className="w-40 rounded-[5px]">
-                          <DropdownMenuItem className="rounded-[5px]" onClick={() => handleCopyId(org.id)}>
-                            <Copy size={14} className="mr-2" />
-                            Copy ID
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="rounded-[5px]">
-                            <Settings size={14} className="mr-2" />
-                            Settings
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
+                    <div className={`relative z-10 flex flex-col h-full ${isExpanded ? "flex-row flex-wrap" : ""}`}>
+                      <div className={isExpanded ? "w-full lg:w-1/3" : "w-full"}>
+                        <CardHeader className="pb-4">
+                          <div className="flex items-start justify-between gap-4 mt-2">
+                            <div className="min-w-0 flex-1">
+                              <button
+                                type="button"
+                                onClick={() => toggleExpand(org.id)}
+                                className="text-[13px] font-bold uppercase tracking-widest leading-tight truncate cursor-pointer hover:text-[#1549e6] transition-colors text-left w-full"
+                              >
+                                {org.name}
+                              </button>
+                              <CardDescription className="text-xs text-muted-foreground mt-1 truncate">
+                                ID: {org.id}
+                              </CardDescription>
+                            </div>
 
-                    <div className="relative z-10 flex flex-col h-full">
-                      <CardHeader className="pb-4">
-                        <div className="mt-2">
-                          <h3 className="text-[13px] font-bold uppercase tracking-widest leading-tight truncate group-hover/card:text-[#1549e6] transition-colors">
-                            {org.name}
-                          </h3>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger
+                                  render={
+                                    <button
+                                      type="button"
+                                      className="text-gray-300 hover:text-gray-600 p-1.5 rounded-[5px] hover:bg-gray-100 transition-colors opacity-0 group-hover/card:opacity-100"
+                                    >
+                                      <EllipsisVertical size={18} />
+                                    </button>
+                                  }
+                                />
+                                <DropdownMenuContent align="end" className="w-40 rounded-[5px]">
+                                  <DropdownMenuItem className="rounded-[5px]" onClick={() => handleCopyId(org.id)}>
+                                    <Copy size={14} className="mr-2" />
+                                    Copy ID
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem className="rounded-[5px]">
+                                    <Settings size={14} className="mr-2" />
+                                    Settings
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          </div>
+                          {isExpanded && (
+                            <div className="mt-4 space-y-2 text-xs">
+                              <p className="text-gray-500">
+                                <span className="font-bold text-gray-700 uppercase tracking-tighter mr-2">
+                                  Created:
+                                </span>
+                                {formatDate(org.createdAt)}
+                              </p>
+                              <p className="text-gray-500">
+                                <span className="font-bold text-gray-700 uppercase tracking-tighter mr-2">Status:</span>
+                                <span className="bg-green-50 text-green-700 px-2 py-0.5 rounded-full font-bold">
+                                  {org.status}
+                                </span>
+                              </p>
+                            </div>
+                          )}
+                        </CardHeader>
+                        <CardFooter className="py-2 mt-auto flex justify-between bg-muted/20 border-t border-foreground/5 gap-4">
+                          <span className="flex items-center gap-1.5 font-medium text-foreground/60 text-[10px] uppercase tracking-wider">
+                            <Users className="h-3 w-3" />
+                            {details.members.length} Members
+                          </span>
+                          <span className="flex items-center gap-1.5 font-medium text-foreground/60 text-[10px] uppercase tracking-wider">
+                            <LayoutGrid className="h-3 w-3" />
+                            {details.projects.length} Projects
+                          </span>
+                        </CardFooter>
+                      </div>
 
-                          <CardDescription className="text-xs text-muted-foreground mt-1">{org.id}</CardDescription>
+                      {isExpanded && (
+                        <div className="relative w-full lg:w-2/3 p-6 border-l border-gray-100 bg-gray-50/30 animate-in fade-in slide-in-from-right-2 duration-300">
+                          <button
+                            type="button"
+                            onClick={() => toggleExpand(org.id)}
+                            className="absolute top-4 right-4 p-1.5 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-all z-30"
+                          >
+                            <X size={16} />
+                          </button>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            {/* Members Section */}
+                            <div className="space-y-4">
+                              <h4 className="text-[11px] font-bold uppercase tracking-widest text-gray-400 flex items-center gap-2">
+                                <Users size={14} /> Organization Members
+                              </h4>
+                              <div className="space-y-2">
+                                {details.members.map((member) => (
+                                  <div
+                                    key={member.id}
+                                    className="flex items-center justify-between p-2.5 bg-white border border-gray-100 rounded-[5px] text-xs shadow-sm"
+                                  >
+                                    <div>
+                                      <p className="font-bold text-gray-900">{member.name}</p>
+                                      <p className="text-gray-500 scale-90 origin-left">{member.email}</p>
+                                    </div>
+                                    <span className="px-2 py-0.5 bg-blue-50 text-blue-700 font-bold rounded-full scale-90">
+                                      {member.role}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Projects Section */}
+                            <div className="space-y-4">
+                              <h4 className="text-[11px] font-bold uppercase tracking-widest text-gray-400 flex items-center gap-2">
+                                <Box size={14} /> Active Projects
+                              </h4>
+                              <div className="grid grid-cols-1 gap-2">
+                                {details.projects.map((project) => (
+                                  <div
+                                    key={project.id}
+                                    className="flex items-center justify-between p-2.5 bg-white border border-gray-100 rounded-[5px] text-xs shadow-sm"
+                                  >
+                                    <span className="font-bold text-gray-700">{project.name}</span>
+                                    <span className="flex items-center gap-1 text-[#1549e6] font-bold">
+                                      <Ticket size={12} /> {project.tickets} tickets
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Admin Actions */}
+                          <div className="mt-8 pt-6 border-t border-gray-100">
+                            <h4 className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-4">
+                              Administrative Actions
+                            </h4>
+                            <div className="flex flex-wrap gap-3">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-xs font-bold border-red-100 text-red-600 hover:bg-red-50 hover:text-red-700 h-8 rounded-[5px]"
+                              >
+                                <ShieldAlert size={14} className="mr-2" /> Suspend
+                              </Button>
+                              <Button variant="outline" size="sm" className="text-xs font-bold h-8 rounded-[5px]">
+                                <RotateCcw size={14} className="mr-2" /> Reset Data
+                              </Button>
+                              <Button variant="outline" size="sm" className="text-xs font-bold h-8 rounded-[5px]">
+                                <UserCog size={14} className="mr-2" /> Transfer Ownership
+                              </Button>
+                            </div>
+                          </div>
                         </div>
-                      </CardHeader>
-                      <CardFooter className="py-2 mt-auto flex justify-between bg-muted/20 border-t border-foreground/5">
-                        <span className="flex items-center gap-1.5 font-medium text-foreground/60 text-xs">
-                          <LayoutGrid className="h-3 w-3" /># Projects
-                        </span>
-                      </CardFooter>
+                      )}
                     </div>
                   </Card>
-                ))}
-              </div>
-            ) : (
-              <div className="bg-white border border-gray-200 rounded-[5px] shadow-sm py-12 flex flex-col items-center justify-center text-center">
-                <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center text-gray-300 mb-4">
-                  <Search size={24} />
-                </div>
-                <p className="text-sm font-medium text-gray-500">No organizations found for this view.</p>
-                <p className="text-[10px] text-gray-400 mt-1 uppercase tracking-widest">Details will be added soon.</p>
-              </div>
-            )
+                );
+              })}
+            </div>
           ) : (
             <div className="bg-white border border-gray-200 rounded-[5px] shadow-sm overflow-hidden">
               {/* Header Row */}
@@ -272,84 +410,196 @@ export function OrganizationsPage() {
                 <div className="col-span-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
                   Organization <ChevronDown size={10} className="text-gray-300" />
                 </div>
+                <div className="col-span-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">
+                  Members
+                </div>
+                <div className="col-span-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">
+                  Projects
+                </div>
                 <div className="col-span-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">
                   Status
-                </div>
-                <div className="col-span-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">
-                  Slug
                 </div>
                 <div className="col-span-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center flex items-center justify-center gap-1">
                   Created <ChevronDown size={10} className="rotate-180 text-gray-300" />
                 </div>
-                <div className="col-span-1"></div>
+                <div className="col-span-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">
+                  Actions
+                </div>
               </div>
 
               <div className="divide-y divide-gray-100">
-                {filteredOrgs.length > 0 ? (
-                  filteredOrgs.map((org) => (
-                    <div
-                      key={org.id}
-                      className="grid grid-cols-12 items-center px-6 py-5 hover:bg-gray-50/50 transition-all cursor-pointer group"
-                    >
-                      <div className="col-span-4 flex flex-col">
-                        <h3 className="text-[13px] font-bold uppercase tracking-widest text-foreground group-hover:text-[#1549e6] transition-colors">
-                          {org.name}
-                        </h3>
+                {filteredOrgs.map((org) => {
+                  const isExpanded = expandedOrgIds.includes(org.id);
+                  const details = getMockDetails(org.id);
 
-                        <span className="text-[10px] text-gray-400 font-medium mt-0.5 truncate">{org.id}</span>
+                  return (
+                    <div key={org.id} className="group/row transition-all">
+                      <div className="grid grid-cols-12 items-center px-6 py-5 hover:bg-gray-50/50 transition-all group">
+                        <div className="col-span-4 flex items-center gap-4">
+                          <div className="flex flex-col">
+                            <button
+                              type="button"
+                              onClick={() => toggleExpand(org.id)}
+                              className="text-[13px] font-bold uppercase tracking-widest text-foreground cursor-pointer hover:text-[#1549e6] transition-colors text-left"
+                            >
+                              {org.name}
+                            </button>
+                            <span className="text-[10px] text-gray-400 font-medium mt-0.5 truncate">{org.id}</span>
+                          </div>
+                        </div>
+
+                        <div className="col-span-1 text-center text-[11px] font-bold text-gray-500">
+                          {details.members.length}
+                        </div>
+
+                        <div className="col-span-1 text-center text-[11px] font-bold text-gray-500">
+                          {details.projects.length}
+                        </div>
+
+                        <div className="col-span-2 flex justify-center">
+                          <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest bg-gray-50 border border-gray-100 text-gray-500 shadow-sm">
+                            {org.status}
+                          </span>
+                        </div>
+
+                        <div className="col-span-2 text-center text-[11px] text-gray-500 font-medium">
+                          {formatDate(org.createdAt)}
+                        </div>
+
+                        <div className="col-span-2 flex justify-end relative">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger
+                              render={
+                                <button
+                                  type="button"
+                                  className="p-1.5 text-gray-400 hover:text-gray-600 rounded-[5px] hover:bg-white border border-transparent hover:border-gray-200 transition-all"
+                                >
+                                  <EllipsisVertical size={18} />
+                                </button>
+                              }
+                            />
+                            <DropdownMenuContent align="end" className="w-40 rounded-[5px]">
+                              <DropdownMenuItem className="rounded-[5px]" onClick={() => handleCopyId(org.id)}>
+                                <Copy size={14} className="mr-2" />
+                                Copy ID
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="rounded-[5px]">
+                                <Settings size={14} className="mr-2" />
+                                Settings
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       </div>
 
-                      <div className="col-span-2 flex justify-center">
-                        <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest bg-gray-50 border border-gray-100 text-gray-500 shadow-sm">
-                          {org.status}
-                        </span>
-                      </div>
+                      {isExpanded && (
+                        <div className="relative bg-gray-50/50 border-t border-gray-100 p-8 animate-in fade-in slide-in-from-top-2 duration-300 overflow-hidden">
+                          <button
+                            type="button"
+                            onClick={() => toggleExpand(org.id)}
+                            className="absolute top-4 right-4 p-1.5 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-all z-30"
+                          >
+                            <X size={18} />
+                          </button>
+                          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 max-w-6xl">
+                            {/* Summary Detail */}
+                            <div className="space-y-4">
+                              <h4 className="text-[11px] font-bold uppercase tracking-widest text-gray-400">
+                                Org Summary
+                              </h4>
+                              <div className="space-y-4 text-xs">
+                                <div>
+                                  <p className="text-gray-400 font-bold uppercase tracking-tighter scale-90 origin-left">
+                                    Full Name
+                                  </p>
+                                  <p className="text-sm font-bold text-gray-900">{org.name}</p>
+                                </div>
+                                <div>
+                                  <p className="text-gray-400 font-bold uppercase tracking-tighter scale-90 origin-left">
+                                    Identifier
+                                  </p>
+                                  <p className="font-mono text-gray-600">{org.slug}</p>
+                                </div>
+                                <div>
+                                  <p className="text-gray-400 font-bold uppercase tracking-tighter scale-90 origin-left">
+                                    Creation Date
+                                  </p>
+                                  <p className="text-gray-700">{formatDate(org.createdAt)}</p>
+                                </div>
+                              </div>
+                            </div>
 
-                      <div className="col-span-3 text-center text-xs text-gray-500 font-medium truncate px-4">
-                        {org.slug}
-                      </div>
+                            {/* Members Detail */}
+                            <div className="lg:col-span-1 space-y-4 border-l border-gray-200/50 pl-10">
+                              <h4 className="text-[11px] font-bold uppercase tracking-widest text-gray-400 flex items-center gap-2">
+                                <Users size={14} /> Organization Members
+                              </h4>
+                              <div className="space-y-3">
+                                {details.members.map((member) => (
+                                  <div
+                                    key={member.id}
+                                    className="flex items-center justify-between p-2.5 bg-white border border-gray-100 rounded-[5px] text-xs shadow-sm"
+                                  >
+                                    <div>
+                                      <p className="font-bold text-gray-900">{member.name}</p>
+                                      <p className="text-gray-500 scale-90 origin-left">{member.email}</p>
+                                    </div>
+                                    <span className="px-2 py-0.5 bg-blue-50 text-blue-700 font-bold rounded-full scale-90">
+                                      {member.role}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
 
-                      <div className="col-span-2 text-center text-[11px] text-gray-500 font-medium">
-                        {formatDate(org.createdAt)}
-                      </div>
+                            {/* Projects & Actions Detail */}
+                            <div className="lg:col-span-1 space-y-8 border-l border-gray-200/50 pl-10">
+                              <div className="space-y-4">
+                                <h4 className="text-[11px] font-bold uppercase tracking-widest text-gray-400 flex items-center gap-2">
+                                  <Box size={14} /> Active Projects
+                                </h4>
+                                <div className="space-y-3">
+                                  {details.projects.map((project) => (
+                                    <div
+                                      key={project.id}
+                                      className="flex items-center justify-between p-2.5 bg-white border border-gray-100 rounded-[5px] text-xs shadow-sm"
+                                    >
+                                      <span className="font-bold text-gray-700">{project.name}</span>
+                                      <span className="flex items-center gap-1 text-[#1549e6] font-bold">
+                                        <Ticket size={12} /> {project.tickets} tickets
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
 
-                      <div className="col-span-1 flex justify-end relative">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger
-                            render={
-                              <button
-                                type="button"
-                                className="p-1.5 text-gray-400 hover:text-gray-600 rounded-[5px] hover:bg-white border border-transparent hover:border-gray-200 transition-all"
-                              >
-                                <EllipsisVertical size={18} />
-                              </button>
-                            }
-                          />
-                          <DropdownMenuContent align="end" className="w-40 rounded-[5px]">
-                            <DropdownMenuItem className="rounded-[5px]" onClick={() => handleCopyId(org.id)}>
-                              <Copy size={14} className="mr-2" />
-                              Copy ID
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="rounded-[5px]">
-                              <Settings size={14} className="mr-2" />
-                              Settings
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
+                              <div className="mt-8 pt-6 border-t border-gray-100">
+                                <h4 className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-4">
+                                  Administrative Actions
+                                </h4>
+                                <div className="flex flex-wrap gap-3">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-xs font-bold border-red-100 text-red-600 hover:bg-red-50 hover:text-red-700 h-8 rounded-[5px]"
+                                  >
+                                    <ShieldAlert size={14} className="mr-2" /> Suspend
+                                  </Button>
+                                  <Button variant="outline" size="sm" className="text-xs font-bold h-8 rounded-[5px]">
+                                    <RotateCcw size={14} className="mr-2" /> Reset Data
+                                  </Button>
+                                  <Button variant="outline" size="sm" className="text-xs font-bold h-8 rounded-[5px]">
+                                    <UserCog size={14} className="mr-2" /> Transfer Ownership
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  ))
-                ) : (
-                  <div className="py-12 flex flex-col items-center justify-center text-center">
-                    <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center text-gray-300 mb-4">
-                      <Search size={24} />
-                    </div>
-                    <p className="text-sm font-medium text-gray-500">No organizations found for this view.</p>
-                    <p className="text-[10px] text-gray-400 mt-1 uppercase tracking-widest">
-                      Details will be added soon.
-                    </p>
-                  </div>
-                )}
+                  );
+                })}
               </div>
             </div>
           )}
