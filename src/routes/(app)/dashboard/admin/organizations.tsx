@@ -6,4 +6,3 @@ export const Route = createFileRoute("/(app)/dashboard/admin/organizations")({
   loader: () => getAdminOrganizationsFn(),
   component: OrganizationsPage,
 });
-

@@ -5,7 +5,7 @@ import { ChevronDown, Copy, EllipsisVertical, LayoutGrid, List, Plus, Search, Se
 import { useState } from "react";
 import { Toaster, toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardDescription, CardFooter, CardHeader } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -205,56 +205,66 @@ export function OrganizationsPage() {
           </div>
 
           {view === "grid" ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredOrgs.map((org) => (
-                <Card
-                  key={org.id}
-                  className="relative border-foreground/10 shadow-none group/card overflow-hidden transition-all hover:bg-muted/5 rounded-[5px]"
-                >
-                  <div className="absolute top-4 right-4 z-20">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger
-                        render={
-                          <button
-                            type="button"
-                            className="text-gray-300 hover:text-gray-600 p-1.5 rounded-[5px] hover:bg-gray-100 transition-colors opacity-0 group-hover/card:opacity-100"
-                          >
-                            <EllipsisVertical size={20} />
-                          </button>
-                        }
-                      />
-                      <DropdownMenuContent align="end" className="w-40 rounded-[5px]">
-                        <DropdownMenuItem className="rounded-[5px]" onClick={() => handleCopyId(org.id)}>
-                          <Copy size={14} className="mr-2" />
-                          Copy ID
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="rounded-[5px]">
-                          <Settings size={14} className="mr-2" />
-                          Settings
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
+            filteredOrgs.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredOrgs.map((org) => (
+                  <Card
+                    key={org.id}
+                    className="relative border-foreground/10 shadow-none group/card overflow-hidden transition-all hover:bg-muted/5 rounded-[5px]"
+                  >
+                    <div className="absolute top-4 right-4 z-20">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger
+                          render={
+                            <button
+                              type="button"
+                              className="text-gray-300 hover:text-gray-600 p-1.5 rounded-[5px] hover:bg-gray-100 transition-colors opacity-0 group-hover/card:opacity-100"
+                            >
+                              <EllipsisVertical size={20} />
+                            </button>
+                          }
+                        />
+                        <DropdownMenuContent align="end" className="w-40 rounded-[5px]">
+                          <DropdownMenuItem className="rounded-[5px]" onClick={() => handleCopyId(org.id)}>
+                            <Copy size={14} className="mr-2" />
+                            Copy ID
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="rounded-[5px]">
+                            <Settings size={14} className="mr-2" />
+                            Settings
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
 
-                  <div className="relative z-10 flex flex-col h-full">
-                    <CardHeader className="pb-4">
-                      <div className="mt-2">
-                        <h3 className="text-[13px] font-bold uppercase tracking-widest leading-tight truncate group-hover/card:text-[#1549e6] transition-colors">
-                          {org.name}
-                        </h3>
+                    <div className="relative z-10 flex flex-col h-full">
+                      <CardHeader className="pb-4">
+                        <div className="mt-2">
+                          <h3 className="text-[13px] font-bold uppercase tracking-widest leading-tight truncate group-hover/card:text-[#1549e6] transition-colors">
+                            {org.name}
+                          </h3>
 
-                        <CardDescription className="text-xs text-muted-foreground mt-1">{org.id}</CardDescription>
-                      </div>
-                    </CardHeader>
-                    <CardFooter className="py-2 mt-auto flex justify-between bg-muted/20 border-t border-foreground/5">
-                      <span className="flex items-center gap-1.5 font-medium text-foreground/60 text-xs">
-                        <LayoutGrid className="h-3 w-3" /># Projects
-                      </span>
-                    </CardFooter>
-                  </div>
-                </Card>
-              ))}
-            </div>
+                          <CardDescription className="text-xs text-muted-foreground mt-1">{org.id}</CardDescription>
+                        </div>
+                      </CardHeader>
+                      <CardFooter className="py-2 mt-auto flex justify-between bg-muted/20 border-t border-foreground/5">
+                        <span className="flex items-center gap-1.5 font-medium text-foreground/60 text-xs">
+                          <LayoutGrid className="h-3 w-3" /># Projects
+                        </span>
+                      </CardFooter>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="bg-white border border-gray-200 rounded-[5px] shadow-sm py-12 flex flex-col items-center justify-center text-center">
+                <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center text-gray-300 mb-4">
+                  <Search size={24} />
+                </div>
+                <p className="text-sm font-medium text-gray-500">No organizations found for this view.</p>
+                <p className="text-[10px] text-gray-400 mt-1 uppercase tracking-widest">Details will be added soon.</p>
+              </div>
+            )
           ) : (
             <div className="bg-white border border-gray-200 rounded-[5px] shadow-sm overflow-hidden">
               {/* Header Row */}
@@ -275,59 +285,71 @@ export function OrganizationsPage() {
               </div>
 
               <div className="divide-y divide-gray-100">
-                {filteredOrgs.map((org) => (
-                  <div
-                    key={org.id}
-                    className="grid grid-cols-12 items-center px-6 py-5 hover:bg-gray-50/50 transition-all cursor-pointer group"
-                  >
-                    <div className="col-span-4 flex flex-col">
-                      <h3 className="text-[13px] font-bold uppercase tracking-widest text-foreground group-hover:text-[#1549e6] transition-colors">
-                        {org.name}
-                      </h3>
+                {filteredOrgs.length > 0 ? (
+                  filteredOrgs.map((org) => (
+                    <div
+                      key={org.id}
+                      className="grid grid-cols-12 items-center px-6 py-5 hover:bg-gray-50/50 transition-all cursor-pointer group"
+                    >
+                      <div className="col-span-4 flex flex-col">
+                        <h3 className="text-[13px] font-bold uppercase tracking-widest text-foreground group-hover:text-[#1549e6] transition-colors">
+                          {org.name}
+                        </h3>
 
-                      <span className="text-[10px] text-gray-400 font-medium mt-0.5 truncate">{org.id}</span>
-                    </div>
+                        <span className="text-[10px] text-gray-400 font-medium mt-0.5 truncate">{org.id}</span>
+                      </div>
 
-                    <div className="col-span-2 flex justify-center">
-                      <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest bg-gray-50 border border-gray-100 text-gray-500 shadow-sm">
-                        {org.status}
-                      </span>
-                    </div>
+                      <div className="col-span-2 flex justify-center">
+                        <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest bg-gray-50 border border-gray-100 text-gray-500 shadow-sm">
+                          {org.status}
+                        </span>
+                      </div>
 
-                    <div className="col-span-3 text-center text-xs text-gray-500 font-medium truncate px-4">
-                      {org.slug}
-                    </div>
+                      <div className="col-span-3 text-center text-xs text-gray-500 font-medium truncate px-4">
+                        {org.slug}
+                      </div>
 
-                    <div className="col-span-2 text-center text-[11px] text-gray-500 font-medium">
-                      {formatDate(org.createdAt)}
-                    </div>
+                      <div className="col-span-2 text-center text-[11px] text-gray-500 font-medium">
+                        {formatDate(org.createdAt)}
+                      </div>
 
-                    <div className="col-span-1 flex justify-end relative">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger
-                          render={
-                            <button
-                              type="button"
-                              className="p-1.5 text-gray-400 hover:text-gray-600 rounded-[5px] hover:bg-white border border-transparent hover:border-gray-200 transition-all"
-                            >
-                              <EllipsisVertical size={18} />
-                            </button>
-                          }
-                        />
-                        <DropdownMenuContent align="end" className="w-40 rounded-[5px]">
-                          <DropdownMenuItem className="rounded-[5px]" onClick={() => handleCopyId(org.id)}>
-                            <Copy size={14} className="mr-2" />
-                            Copy ID
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="rounded-[5px]">
-                            <Settings size={14} className="mr-2" />
-                            Settings
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <div className="col-span-1 flex justify-end relative">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger
+                            render={
+                              <button
+                                type="button"
+                                className="p-1.5 text-gray-400 hover:text-gray-600 rounded-[5px] hover:bg-white border border-transparent hover:border-gray-200 transition-all"
+                              >
+                                <EllipsisVertical size={18} />
+                              </button>
+                            }
+                          />
+                          <DropdownMenuContent align="end" className="w-40 rounded-[5px]">
+                            <DropdownMenuItem className="rounded-[5px]" onClick={() => handleCopyId(org.id)}>
+                              <Copy size={14} className="mr-2" />
+                              Copy ID
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="rounded-[5px]">
+                              <Settings size={14} className="mr-2" />
+                              Settings
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </div>
+                  ))
+                ) : (
+                  <div className="py-12 flex flex-col items-center justify-center text-center">
+                    <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center text-gray-300 mb-4">
+                      <Search size={24} />
+                    </div>
+                    <p className="text-sm font-medium text-gray-500">No organizations found for this view.</p>
+                    <p className="text-[10px] text-gray-400 mt-1 uppercase tracking-widest">
+                      Details will be added soon.
+                    </p>
                   </div>
-                ))}
+                )}
               </div>
             </div>
           )}

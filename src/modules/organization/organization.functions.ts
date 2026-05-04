@@ -141,4 +141,3 @@ export const getAdminOrganizationsFn = createServerFn({ method: "GET" })
 
     return organizations;
   });
-
