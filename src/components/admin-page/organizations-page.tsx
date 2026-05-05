@@ -14,6 +14,7 @@ import {
   Plus,
   Search,
   Settings,
+  ShieldAlert,
   Ticket,
   Users,
   X,
@@ -34,7 +35,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 import { getFieldInvalid } from "@/lib/form-utils";
 import { createOrganizationFn } from "@/modules/organization/organization.functions";
 
-type TabType = "all" | "admin" | "member" | "agent";
+type TabType = "all" | "admin" | "member" | "agent" | "history";
 
 // Mock data generator for organization details
 const getMockDetails = (_orgId: string) => ({
@@ -115,7 +116,6 @@ export function OrganizationsPage() {
 
   return (
     <div className="w-full h-[calc(100vh-64px)] overflow-hidden flex flex-col">
-
       <div className="flex-1 space-y-8 p-8 pt-6 max-w-7xl mx-auto w-full flex flex-col min-h-0">
         {/* Page Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
@@ -200,6 +200,7 @@ export function OrganizationsPage() {
                 { id: "admin", label: "Admin" },
                 { id: "member", label: "Member" },
                 { id: "agent", label: "Agent" },
+                { id: "history", label: "History" },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -250,7 +251,102 @@ export function OrganizationsPage() {
           </div>
 
           <div className="flex-1 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-200">
-            {view === "grid" ? (
+            {activeTab === "history" ? (
+              <div className="space-y-4 pb-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <Card className="rounded-[5px] border-border overflow-hidden shadow-none">
+                  <div className="divide-y divide-gray-100">
+                    {[
+                      {
+                        id: 1,
+                        org: "Acme Corporation",
+                        action: "suspended",
+                        timestamp: "2026-05-05T10:15:00Z",
+                        user: "System Admin1",
+                        type: "status",
+                      },
+                      {
+                        id: 2,
+                        org: "System Agent 1's Organization",
+                        action: "deactivated",
+                        timestamp: "2026-05-04T16:30:00Z",
+                        user: "System Admin1",
+                        type: "security",
+                      },
+                      {
+                        id: 3,
+                        org: "System Member 2's Organization",
+                        action: "invited",
+                        memberName: "John Doe",
+                        timestamp: "2026-05-03T09:45:00Z",
+                        user: "System Admin1",
+                        type: "member",
+                      },
+                      {
+                        id: 4,
+                        org: "Acme Corporation",
+                        action: "added",
+                        projectName: "Alpha Project",
+                        timestamp: "2026-05-01T14:00:00Z",
+                        user: "System Admin1",
+                        type: "project",
+                      },
+                    ].map((log) => (
+                      <div key={log.id} className="p-4 flex items-center gap-4 hover:bg-gray-50/50 transition-colors">
+                        <div className="h-8 w-8 shrink-0 rounded-[5px] bg-gray-100 flex items-center justify-center text-gray-500">
+                          {log.type === "status" && <Settings size={14} />}
+                          {log.type === "project" && <Box size={14} />}
+                          {log.type === "member" && <Users size={14} />}
+                          {log.type === "security" && <ShieldAlert size={14} className="text-red-500" />}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm">
+                              {log.type === "status" && (
+                                <>
+                                  <span className="font-bold text-blue-600 mr-1.5">{log.org}</span>
+                                  <span className="text-gray-600 mr-1.5">suspended by</span>
+                                  <span className="font-bold text-gray-900">{log.user}</span>
+                                </>
+                              )}
+                              {log.type === "security" && (
+                                <>
+                                  <span className="font-bold text-blue-600 mr-1.5">{log.org}</span>
+                                  <span className="text-gray-600 mr-1.5">deactivated by</span>
+                                  <span className="font-bold text-gray-900">{log.user}</span>
+                                </>
+                              )}
+                              {log.type === "member" && (
+                                <>
+                                  <span className="text-gray-600 mr-1.5">New member</span>
+                                  <span className="font-bold text-gray-900 mr-1.5">{log.memberName}</span>
+                                  <span className="text-gray-600 mr-1.5">invited in</span>
+                                  <span className="font-bold text-blue-600 mr-1.5">{log.org}</span>
+                                  <span className="text-gray-600 mr-1.5">by</span>
+                                  <span className="font-bold text-gray-900">{log.user}</span>
+                                </>
+                              )}
+                              {log.type === "project" && (
+                                <>
+                                  <span className="text-gray-600 mr-1.5">New Project</span>
+                                  <span className="font-bold text-gray-900 mr-1.5">{log.projectName}</span>
+                                  <span className="text-gray-600 mr-1.5">added in</span>
+                                  <span className="font-bold text-blue-600 mr-1.5">{log.org}</span>
+                                  <span className="text-gray-600 mr-1.5">by</span>
+                                  <span className="font-bold text-gray-900">{log.user}</span>
+                                </>
+                              )}
+                            </p>
+                            <span className="text-[10px] font-medium text-gray-400 uppercase tracking-widest">
+                              {formatDate(log.timestamp)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              </div>
+            ) : view === "grid" ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start pb-4">
                 {paginatedOrgs.map((org) => {
                   const isExpanded = expandedOrgIds.includes(org.id);
@@ -398,9 +494,7 @@ export function OrganizationsPage() {
                             <div className="mt-8 pt-6 border-t border-gray-100">
                               <Button
                                 className="w-full bg-[#1549e6] text-white hover:bg-[#2563eb] text-xs font-bold h-8 rounded-[5px]"
-                                onClick={() =>
-                                  router.navigate({ to: `/dashboard/admin/organizations/${org.id}` })
-                                }
+                                onClick={() => router.navigate({ to: `/dashboard/admin/organizations/${org.id}` })}
                               >
                                 View More Details
                               </Button>
@@ -594,9 +688,7 @@ export function OrganizationsPage() {
                                 <div className="mt-8 pt-6 border-t border-gray-100">
                                   <Button
                                     className="w-full bg-[#1549e6] text-white hover:bg-[#2563eb] text-xs font-bold h-8 rounded-[5px]"
-                                    onClick={() =>
-                                      router.navigate({ to: `/dashboard/admin/organizations/${org.id}` })
-                                    }
+                                    onClick={() => router.navigate({ to: `/dashboard/admin/organizations/${org.id}` })}
                                   >
                                     View More Details
                                   </Button>

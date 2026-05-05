@@ -3,25 +3,24 @@ import {
   ArrowLeft,
   Box,
   Copy,
-  Download,
   ExternalLink,
   LayoutGrid,
   Loader2,
   Mail,
   MoreVertical,
   Plus,
-  RotateCcw,
   Settings,
   ShieldAlert,
   Ticket,
-  UserCog,
   Users,
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 // Reusing the mock data
 const getMockDetails = (_orgId: string) => ({
@@ -46,6 +45,8 @@ export function OrganizationDetailsPage({ organizationId }: { organizationId: st
   const [activeTab, setActiveTab] = useState<TabType>("general");
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isInviteMemberOpen, setIsInviteMemberOpen] = useState(false);
+  const [isNewProjectOpen, setIsNewProjectOpen] = useState(false);
 
   // In a real scenario, this would come from a query or loader
   const [orgName, setOrgName] = useState("Acme Corporation");
@@ -261,7 +262,11 @@ export function OrganizationDetailsPage({ organizationId }: { organizationId: st
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-normal">Team & Members</h2>
-                <Button size="sm" className="bg-[#1549e6] text-white hover:bg-[#2563eb] rounded-[5px] text-xs h-8">
+                <Button
+                  size="sm"
+                  onClick={() => setIsInviteMemberOpen(true)}
+                  className="bg-[#1549e6] text-white hover:bg-[#2563eb] rounded-[5px] text-xs h-8"
+                >
                   <Plus size={14} className="mr-1.5" /> Invite Member
                 </Button>
               </div>
@@ -300,7 +305,11 @@ export function OrganizationDetailsPage({ organizationId }: { organizationId: st
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-normal">Active Projects</h2>
-                <Button size="sm" className="bg-[#1549e6] text-white hover:bg-[#2563eb] rounded-[5px] text-xs h-8">
+                <Button
+                  size="sm"
+                  onClick={() => setIsNewProjectOpen(true)}
+                  className="bg-[#1549e6] text-white hover:bg-[#2563eb] rounded-[5px] text-xs h-8"
+                >
                   <Plus size={14} className="mr-1.5" /> New Project
                 </Button>
               </div>
@@ -392,6 +401,113 @@ export function OrganizationDetailsPage({ organizationId }: { organizationId: st
           )}
         </div>
       </div>
+
+      {/* Invite Member Sidebar */}
+      <Sheet open={isInviteMemberOpen} onOpenChange={setIsInviteMemberOpen}>
+        <SheetContent side="right" className="sm:max-w-md">
+          <SheetHeader className="space-y-3 pb-8 border-b border-gray-100">
+            <SheetTitle className="text-2xl font-bold">Invite Member</SheetTitle>
+            <SheetDescription className="text-sm text-gray-500">Invite a new user to join {orgName}.</SheetDescription>
+          </SheetHeader>
+          <div className="p-4 space-y-8 mt-4">
+            <Field>
+              <FieldLabel className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">
+                Email Address
+              </FieldLabel>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="e.g. member@company.com"
+                  className="h-11 pl-10 rounded-[5px] border-gray-200 focus:ring-[#1549e6]/20 transition-all"
+                />
+              </div>
+            </Field>
+
+            <Field>
+              <FieldLabel className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">
+                Member Role
+              </FieldLabel>
+              <div className="grid grid-cols-3 gap-2">
+                {["Admin", "Agent", "Member"].map((role) => (
+                  <button
+                    key={role}
+                    type="button"
+                    className="py-2.5 text-xs font-bold border border-gray-200 rounded-[5px] hover:border-[#1549e6] hover:text-[#1549e6] transition-all"
+                  >
+                    {role}
+                  </button>
+                ))}
+              </div>
+            </Field>
+
+            <div className="pt-4">
+              <Button
+                onClick={() => {
+                  toast.success("Invitation sent successfully!");
+                  setIsInviteMemberOpen(false);
+                }}
+                className="w-full h-11 bg-[#1549e6] text-white hover:bg-[#2563eb] font-bold rounded-[5px] shadow-none"
+              >
+                Send Invitation
+              </Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* New Project Sidebar */}
+      <Sheet open={isNewProjectOpen} onOpenChange={setIsNewProjectOpen}>
+        <SheetContent side="right" className="sm:max-w-md">
+          <SheetHeader className="space-y-3 pb-8 border-b border-gray-100">
+            <SheetTitle className="text-2xl font-bold">New Project</SheetTitle>
+            <SheetDescription className="text-sm text-gray-500">
+              Set up a new project workspace within {orgName}.
+            </SheetDescription>
+          </SheetHeader>
+          <div className="p-4 space-y-8 mt-4">
+            <Field>
+              <FieldLabel className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">
+                Project Name
+              </FieldLabel>
+              <div className="relative">
+                <Box className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="e.g. Q3 Sales Dashboard"
+                  className="h-11 pl-10 rounded-[5px] border-gray-200 focus:ring-[#1549e6]/20 transition-all"
+                />
+              </div>
+            </Field>
+
+            <Field>
+              <FieldLabel className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">
+                Initial Status
+              </FieldLabel>
+              <div className="flex items-center gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" name="status" defaultChecked className="text-[#1549e6] focus:ring-[#1549e6]/20" />
+                  <span className="text-xs font-medium">Active</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" name="status" className="text-[#1549e6] focus:ring-[#1549e6]/20" />
+                  <span className="text-xs font-medium">Draft</span>
+                </label>
+              </div>
+            </Field>
+
+            <div className="pt-4">
+              <Button
+                onClick={() => {
+                  toast.success("Project created successfully!");
+                  setIsNewProjectOpen(false);
+                }}
+                className="w-full h-11 bg-[#1549e6] text-white hover:bg-[#2563eb] font-bold rounded-[5px] shadow-none"
+              >
+                Create Project
+              </Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
