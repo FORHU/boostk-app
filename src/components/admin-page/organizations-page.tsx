@@ -12,17 +12,14 @@ import {
   List,
   MoreHorizontal,
   Plus,
-  RotateCcw,
   Search,
   Settings,
-  ShieldAlert,
   Ticket,
-  UserCog,
   Users,
   X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Toaster, toast } from "sonner";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardFooter, CardHeader } from "@/components/ui/card";
 import {
@@ -45,16 +42,18 @@ const getMockDetails = (_orgId: string) => ({
     { id: "1", name: "Alice Admin", email: "alice@org.com", role: "Admin" },
     { id: "2", name: "Bob Builder", email: "bob@org.com", role: "Member" },
     { id: "3", name: "Charlie Support", email: "charlie@org.com", role: "Agent" },
+    { id: "4", name: "David Developer", email: "david@org.com", role: "Member" },
   ],
   projects: [
     { id: "p1", name: "Alpha", tickets: 24 },
     { id: "p2", name: "Beta", tickets: 12 },
-    { id: "p3", name: "Gamma", tickets: 8 },
+    { id: "p3", name: "Charlie", tickets: 8 },
+    { id: "p4", name: "Delta", tickets: 5 },
   ],
 });
 
 export function OrganizationsPage() {
-  const organizations = useLoaderData({ from: "/(app)/dashboard/admin/organizations" });
+  const organizations = useLoaderData({ from: "/(app)/dashboard/admin/organizations/" });
   const router = useRouter();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<TabType>("all");
@@ -99,7 +98,7 @@ export function OrganizationsPage() {
 
   const handleCopyId = (id: string) => {
     navigator.clipboard.writeText(id);
-    toast.success("Organization ID copied to clipboard");
+    toast("Organization ID copied to clipboard");
   };
 
   const toggleExpand = (id: string) => {
@@ -116,7 +115,6 @@ export function OrganizationsPage() {
 
   return (
     <div className="w-full h-[calc(100vh-64px)] overflow-hidden flex flex-col">
-      <Toaster position="top-center" expand={true} richColors />
 
       <div className="flex-1 space-y-8 p-8 pt-6 max-w-7xl mx-auto w-full flex flex-col min-h-0">
         {/* Page Header */}
@@ -290,7 +288,7 @@ export function OrganizationsPage() {
                                     render={
                                       <button
                                         type="button"
-                                        className="text-gray-300 hover:text-gray-600 p-1.5 rounded-[5px] hover:bg-gray-100 transition-colors opacity-0 group-hover:opacity-100"
+                                        className="text-gray-400 hover:text-gray-600 p-1.5 rounded-[5px] hover:bg-gray-100 transition-colors"
                                       >
                                         <EllipsisVertical size={18} />
                                       </button>
@@ -356,7 +354,8 @@ export function OrganizationsPage() {
                                   <Users size={14} /> Organization Members
                                 </h4>
                                 <div className="space-y-3">
-                                  {details.members.map((member) => (
+                                  {/* (add this comment that displays 3 details) */}
+                                  {details.members.slice(0, 3).map((member) => (
                                     <div
                                       key={member.id}
                                       className="flex items-center justify-between p-3 bg-white border border-gray-300/80 rounded-[5px] text-xs shadow-sm"
@@ -379,7 +378,8 @@ export function OrganizationsPage() {
                                   <Box size={14} /> Active Projects
                                 </h4>
                                 <div className="space-y-3">
-                                  {details.projects.map((project) => (
+                                  {/* (add this comment that displays 3 details) */}
+                                  {details.projects.slice(0, 3).map((project) => (
                                     <div
                                       key={project.id}
                                       className="flex items-center justify-between p-2.5 bg-white border border-gray-300/80 rounded-[5px] text-xs shadow-sm"
@@ -394,26 +394,16 @@ export function OrganizationsPage() {
                               </div>
                             </div>
 
-                            {/* Admin Actions */}
+                            {/* Actions */}
                             <div className="mt-8 pt-6 border-t border-gray-100">
-                              <h4 className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-4">
-                                Administrative Actions
-                              </h4>
-                              <div className="flex flex-wrap gap-3">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="text-xs font-bold border-red-100 text-red-600 hover:bg-red-50 hover:text-red-700 h-8 rounded-[5px]"
-                                >
-                                  <ShieldAlert size={14} className="mr-2" /> Suspend
-                                </Button>
-                                <Button variant="outline" size="sm" className="text-xs font-bold h-8 rounded-[5px]">
-                                  <RotateCcw size={14} className="mr-2" /> Reset Data
-                                </Button>
-                                <Button variant="outline" size="sm" className="text-xs font-bold h-8 rounded-[5px]">
-                                  <UserCog size={14} className="mr-2" /> Transfer Ownership
-                                </Button>
-                              </div>
+                              <Button
+                                className="w-full bg-[#1549e6] text-white hover:bg-[#2563eb] text-xs font-bold h-8 rounded-[5px]"
+                                onClick={() =>
+                                  router.navigate({ to: `/dashboard/admin/organizations/${org.id}` })
+                                }
+                              >
+                                View More Details
+                              </Button>
                             </div>
                           </div>
                         )}
@@ -427,7 +417,7 @@ export function OrganizationsPage() {
                 {/* Header Row */}
                 <div className="grid grid-cols-12 items-center px-6 py-3 bg-gray-50/50 border-b border-gray-100 sticky top-0 z-20">
                   <div className="col-span-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
-                    Organization <ChevronDown size={10} className="text-gray-300" />
+                    Organization
                   </div>
                   <div className="col-span-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">
                     Members
@@ -561,7 +551,8 @@ export function OrganizationsPage() {
                                   <Users size={14} /> Organization Members
                                 </h4>
                                 <div className="space-y-3">
-                                  {details.members.map((member) => (
+                                  {/* (add this comment that displays 3 details) */}
+                                  {details.members.slice(0, 3).map((member) => (
                                     <div
                                       key={member.id}
                                       className="flex items-center justify-between p-3 bg-white border border-gray-300/80 rounded-[5px] text-xs shadow-sm"
@@ -585,7 +576,8 @@ export function OrganizationsPage() {
                                     <Box size={14} /> Active Projects
                                   </h4>
                                   <div className="space-y-3">
-                                    {details.projects.map((project) => (
+                                    {/* (add this comment that displays 3 details) */}
+                                    {details.projects.slice(0, 3).map((project) => (
                                       <div
                                         key={project.id}
                                         className="flex items-center justify-between p-2.5 bg-white border border-gray-300/80 rounded-[5px] text-xs shadow-sm"
@@ -600,24 +592,14 @@ export function OrganizationsPage() {
                                 </div>
 
                                 <div className="mt-8 pt-6 border-t border-gray-100">
-                                  <h4 className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-4">
-                                    Administrative Actions
-                                  </h4>
-                                  <div className="flex flex-wrap gap-3">
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="text-xs font-bold border-red-100 text-red-600 hover:bg-red-50 hover:text-red-700 h-8 rounded-[5px]"
-                                    >
-                                      <ShieldAlert size={14} className="mr-2" /> Suspend
-                                    </Button>
-                                    <Button variant="outline" size="sm" className="text-xs font-bold h-8 rounded-[5px]">
-                                      <RotateCcw size={14} className="mr-2" /> Reset Data
-                                    </Button>
-                                    <Button variant="outline" size="sm" className="text-xs font-bold h-8 rounded-[5px]">
-                                      <UserCog size={14} className="mr-2" /> Transfer Ownership
-                                    </Button>
-                                  </div>
+                                  <Button
+                                    className="w-full bg-[#1549e6] text-white hover:bg-[#2563eb] text-xs font-bold h-8 rounded-[5px]"
+                                    onClick={() =>
+                                      router.navigate({ to: `/dashboard/admin/organizations/${org.id}` })
+                                    }
+                                  >
+                                    View More Details
+                                  </Button>
                                 </div>
                               </div>
                             </div>
