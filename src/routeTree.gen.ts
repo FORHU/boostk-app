@@ -17,15 +17,20 @@ import { Route as authSigninRouteImport } from './routes/(auth)/signin'
 import { Route as ApiNotificationSseRouteImport } from './routes/api/notification/sse'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as appDashboardOrganizationsRouteImport } from './routes/(app)/dashboard/organizations'
+import { Route as appDashboardAdminRouteRouteImport } from './routes/(app)/dashboard/admin/route'
 import { Route as appDashboardadminRouteRouteImport } from './routes/(app)/dashboard/(admin)/route'
+import { Route as appDashboardAdminIndexRouteImport } from './routes/(app)/dashboard/admin/index'
 import { Route as appDashboardadminIndexRouteImport } from './routes/(app)/dashboard/(admin)/index'
 import { Route as ApiNotificationCustomerSseRouteImport } from './routes/api/notification/customer.sse'
 import { Route as publicSupportProjectIdChatWidgetRouteImport } from './routes/(public)/support.$projectId/chat-widget'
-import { Route as appDashboardadminUsersRouteImport } from './routes/(app)/dashboard/(admin)/users'
+import { Route as appDashboardAdminUsersRouteImport } from './routes/(app)/dashboard/admin/users'
+import { Route as appDashboardAdminSettingsRouteImport } from './routes/(app)/dashboard/admin/settings'
+import { Route as appDashboardAdminOrganizationsRouteImport } from './routes/(app)/dashboard/admin/organizations'
 import { Route as appDashboardProjectProjectIdRouteRouteImport } from './routes/(app)/dashboard/project.$projectId/route'
 import { Route as appDashboardOrgOrganizationIdRouteRouteImport } from './routes/(app)/dashboard/org.$organizationId/route'
 import { Route as appDashboardProjectProjectIdIndexRouteImport } from './routes/(app)/dashboard/project.$projectId/index'
 import { Route as appDashboardOrgOrganizationIdIndexRouteImport } from './routes/(app)/dashboard/org.$organizationId/index'
+import { Route as appDashboardAdminOrganizationsIndexRouteImport } from './routes/(app)/dashboard/admin/organizations/index'
 import { Route as appDashboardProjectProjectIdTicketsRouteImport } from './routes/(app)/dashboard/project.$projectId/tickets'
 import { Route as appDashboardProjectProjectIdSettingsRouteImport } from './routes/(app)/dashboard/project.$projectId/settings'
 import { Route as appDashboardProjectProjectIdChatSupportRouteImport } from './routes/(app)/dashboard/project.$projectId/chat-support'
@@ -36,6 +41,7 @@ import { Route as appDashboardOrgOrganizationIdTeamsRouteImport } from './routes
 import { Route as appDashboardOrgOrganizationIdSettingsRouteImport } from './routes/(app)/dashboard/org.$organizationId/settings'
 import { Route as appDashboardOrgOrganizationIdIntegrationsRouteImport } from './routes/(app)/dashboard/org.$organizationId/integrations'
 import { Route as appDashboardOrgOrganizationIdBillingRouteImport } from './routes/(app)/dashboard/org.$organizationId/billing'
+import { Route as appDashboardAdminOrganizationsOrganizationIdRouteImport } from './routes/(app)/dashboard/admin/organizations/$organizationId'
 
 const authRouteRoute = authRouteRouteImport.update({
   id: '/(auth)',
@@ -76,10 +82,20 @@ const appDashboardOrganizationsRoute =
     path: '/dashboard/organizations',
     getParentRoute: () => appRouteRoute,
   } as any)
+const appDashboardAdminRouteRoute = appDashboardAdminRouteRouteImport.update({
+  id: '/dashboard/admin',
+  path: '/dashboard/admin',
+  getParentRoute: () => appRouteRoute,
+} as any)
 const appDashboardadminRouteRoute = appDashboardadminRouteRouteImport.update({
   id: '/dashboard/(admin)',
   path: '/dashboard',
   getParentRoute: () => appRouteRoute,
+} as any)
+const appDashboardAdminIndexRoute = appDashboardAdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => appDashboardAdminRouteRoute,
 } as any)
 const appDashboardadminIndexRoute = appDashboardadminIndexRouteImport.update({
   id: '/',
@@ -98,11 +114,23 @@ const publicSupportProjectIdChatWidgetRoute =
     path: '/support/$projectId/chat-widget',
     getParentRoute: () => rootRouteImport,
   } as any)
-const appDashboardadminUsersRoute = appDashboardadminUsersRouteImport.update({
+const appDashboardAdminUsersRoute = appDashboardAdminUsersRouteImport.update({
   id: '/users',
   path: '/users',
-  getParentRoute: () => appDashboardadminRouteRoute,
+  getParentRoute: () => appDashboardAdminRouteRoute,
 } as any)
+const appDashboardAdminSettingsRoute =
+  appDashboardAdminSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => appDashboardAdminRouteRoute,
+  } as any)
+const appDashboardAdminOrganizationsRoute =
+  appDashboardAdminOrganizationsRouteImport.update({
+    id: '/organizations',
+    path: '/organizations',
+    getParentRoute: () => appDashboardAdminRouteRoute,
+  } as any)
 const appDashboardProjectProjectIdRouteRoute =
   appDashboardProjectProjectIdRouteRouteImport.update({
     id: '/dashboard/project/$projectId',
@@ -126,6 +154,12 @@ const appDashboardOrgOrganizationIdIndexRoute =
     id: '/',
     path: '/',
     getParentRoute: () => appDashboardOrgOrganizationIdRouteRoute,
+  } as any)
+const appDashboardAdminOrganizationsIndexRoute =
+  appDashboardAdminOrganizationsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => appDashboardAdminOrganizationsRoute,
   } as any)
 const appDashboardProjectProjectIdTicketsRoute =
   appDashboardProjectProjectIdTicketsRouteImport.update({
@@ -187,21 +221,32 @@ const appDashboardOrgOrganizationIdBillingRoute =
     path: '/billing',
     getParentRoute: () => appDashboardOrgOrganizationIdRouteRoute,
   } as any)
+const appDashboardAdminOrganizationsOrganizationIdRoute =
+  appDashboardAdminOrganizationsOrganizationIdRouteImport.update({
+    id: '/$organizationId',
+    path: '/$organizationId',
+    getParentRoute: () => appDashboardAdminOrganizationsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/signin': typeof authSigninRoute
   '/signup': typeof authSignupRoute
   '/dashboard': typeof appDashboardadminRouteRouteWithChildren
+  '/dashboard/admin': typeof appDashboardAdminRouteRouteWithChildren
   '/dashboard/organizations': typeof appDashboardOrganizationsRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/notification/sse': typeof ApiNotificationSseRoute
   '/dashboard/org/$organizationId': typeof appDashboardOrgOrganizationIdRouteRouteWithChildren
   '/dashboard/project/$projectId': typeof appDashboardProjectProjectIdRouteRouteWithChildren
-  '/dashboard/users': typeof appDashboardadminUsersRoute
+  '/dashboard/admin/organizations': typeof appDashboardAdminOrganizationsRouteWithChildren
+  '/dashboard/admin/settings': typeof appDashboardAdminSettingsRoute
+  '/dashboard/admin/users': typeof appDashboardAdminUsersRoute
   '/support/$projectId/chat-widget': typeof publicSupportProjectIdChatWidgetRoute
   '/api/notification/customer/sse': typeof ApiNotificationCustomerSseRoute
   '/dashboard/': typeof appDashboardadminIndexRoute
+  '/dashboard/admin/': typeof appDashboardAdminIndexRoute
+  '/dashboard/admin/organizations/$organizationId': typeof appDashboardAdminOrganizationsOrganizationIdRoute
   '/dashboard/org/$organizationId/billing': typeof appDashboardOrgOrganizationIdBillingRoute
   '/dashboard/org/$organizationId/integrations': typeof appDashboardOrgOrganizationIdIntegrationsRoute
   '/dashboard/org/$organizationId/settings': typeof appDashboardOrgOrganizationIdSettingsRoute
@@ -212,6 +257,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/project/$projectId/chat-support': typeof appDashboardProjectProjectIdChatSupportRoute
   '/dashboard/project/$projectId/settings': typeof appDashboardProjectProjectIdSettingsRoute
   '/dashboard/project/$projectId/tickets': typeof appDashboardProjectProjectIdTicketsRoute
+  '/dashboard/admin/organizations/': typeof appDashboardAdminOrganizationsIndexRoute
   '/dashboard/org/$organizationId/': typeof appDashboardOrgOrganizationIdIndexRoute
   '/dashboard/project/$projectId/': typeof appDashboardProjectProjectIdIndexRoute
 }
@@ -222,10 +268,13 @@ export interface FileRoutesByTo {
   '/dashboard/organizations': typeof appDashboardOrganizationsRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/notification/sse': typeof ApiNotificationSseRoute
-  '/dashboard/users': typeof appDashboardadminUsersRoute
+  '/dashboard/admin/settings': typeof appDashboardAdminSettingsRoute
+  '/dashboard/admin/users': typeof appDashboardAdminUsersRoute
   '/support/$projectId/chat-widget': typeof publicSupportProjectIdChatWidgetRoute
   '/api/notification/customer/sse': typeof ApiNotificationCustomerSseRoute
   '/dashboard': typeof appDashboardadminIndexRoute
+  '/dashboard/admin': typeof appDashboardAdminIndexRoute
+  '/dashboard/admin/organizations/$organizationId': typeof appDashboardAdminOrganizationsOrganizationIdRoute
   '/dashboard/org/$organizationId/billing': typeof appDashboardOrgOrganizationIdBillingRoute
   '/dashboard/org/$organizationId/integrations': typeof appDashboardOrgOrganizationIdIntegrationsRoute
   '/dashboard/org/$organizationId/settings': typeof appDashboardOrgOrganizationIdSettingsRoute
@@ -236,6 +285,7 @@ export interface FileRoutesByTo {
   '/dashboard/project/$projectId/chat-support': typeof appDashboardProjectProjectIdChatSupportRoute
   '/dashboard/project/$projectId/settings': typeof appDashboardProjectProjectIdSettingsRoute
   '/dashboard/project/$projectId/tickets': typeof appDashboardProjectProjectIdTicketsRoute
+  '/dashboard/admin/organizations': typeof appDashboardAdminOrganizationsIndexRoute
   '/dashboard/org/$organizationId': typeof appDashboardOrgOrganizationIdIndexRoute
   '/dashboard/project/$projectId': typeof appDashboardProjectProjectIdIndexRoute
 }
@@ -247,15 +297,20 @@ export interface FileRoutesById {
   '/(auth)/signin': typeof authSigninRoute
   '/(auth)/signup': typeof authSignupRoute
   '/(app)/dashboard/(admin)': typeof appDashboardadminRouteRouteWithChildren
+  '/(app)/dashboard/admin': typeof appDashboardAdminRouteRouteWithChildren
   '/(app)/dashboard/organizations': typeof appDashboardOrganizationsRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/notification/sse': typeof ApiNotificationSseRoute
   '/(app)/dashboard/org/$organizationId': typeof appDashboardOrgOrganizationIdRouteRouteWithChildren
   '/(app)/dashboard/project/$projectId': typeof appDashboardProjectProjectIdRouteRouteWithChildren
-  '/(app)/dashboard/(admin)/users': typeof appDashboardadminUsersRoute
+  '/(app)/dashboard/admin/organizations': typeof appDashboardAdminOrganizationsRouteWithChildren
+  '/(app)/dashboard/admin/settings': typeof appDashboardAdminSettingsRoute
+  '/(app)/dashboard/admin/users': typeof appDashboardAdminUsersRoute
   '/(public)/support/$projectId/chat-widget': typeof publicSupportProjectIdChatWidgetRoute
   '/api/notification/customer/sse': typeof ApiNotificationCustomerSseRoute
   '/(app)/dashboard/(admin)/': typeof appDashboardadminIndexRoute
+  '/(app)/dashboard/admin/': typeof appDashboardAdminIndexRoute
+  '/(app)/dashboard/admin/organizations/$organizationId': typeof appDashboardAdminOrganizationsOrganizationIdRoute
   '/(app)/dashboard/org/$organizationId/billing': typeof appDashboardOrgOrganizationIdBillingRoute
   '/(app)/dashboard/org/$organizationId/integrations': typeof appDashboardOrgOrganizationIdIntegrationsRoute
   '/(app)/dashboard/org/$organizationId/settings': typeof appDashboardOrgOrganizationIdSettingsRoute
@@ -266,6 +321,7 @@ export interface FileRoutesById {
   '/(app)/dashboard/project/$projectId/chat-support': typeof appDashboardProjectProjectIdChatSupportRoute
   '/(app)/dashboard/project/$projectId/settings': typeof appDashboardProjectProjectIdSettingsRoute
   '/(app)/dashboard/project/$projectId/tickets': typeof appDashboardProjectProjectIdTicketsRoute
+  '/(app)/dashboard/admin/organizations/': typeof appDashboardAdminOrganizationsIndexRoute
   '/(app)/dashboard/org/$organizationId/': typeof appDashboardOrgOrganizationIdIndexRoute
   '/(app)/dashboard/project/$projectId/': typeof appDashboardProjectProjectIdIndexRoute
 }
@@ -276,15 +332,20 @@ export interface FileRouteTypes {
     | '/signin'
     | '/signup'
     | '/dashboard'
+    | '/dashboard/admin'
     | '/dashboard/organizations'
     | '/api/auth/$'
     | '/api/notification/sse'
     | '/dashboard/org/$organizationId'
     | '/dashboard/project/$projectId'
-    | '/dashboard/users'
+    | '/dashboard/admin/organizations'
+    | '/dashboard/admin/settings'
+    | '/dashboard/admin/users'
     | '/support/$projectId/chat-widget'
     | '/api/notification/customer/sse'
     | '/dashboard/'
+    | '/dashboard/admin/'
+    | '/dashboard/admin/organizations/$organizationId'
     | '/dashboard/org/$organizationId/billing'
     | '/dashboard/org/$organizationId/integrations'
     | '/dashboard/org/$organizationId/settings'
@@ -295,6 +356,7 @@ export interface FileRouteTypes {
     | '/dashboard/project/$projectId/chat-support'
     | '/dashboard/project/$projectId/settings'
     | '/dashboard/project/$projectId/tickets'
+    | '/dashboard/admin/organizations/'
     | '/dashboard/org/$organizationId/'
     | '/dashboard/project/$projectId/'
   fileRoutesByTo: FileRoutesByTo
@@ -305,10 +367,13 @@ export interface FileRouteTypes {
     | '/dashboard/organizations'
     | '/api/auth/$'
     | '/api/notification/sse'
-    | '/dashboard/users'
+    | '/dashboard/admin/settings'
+    | '/dashboard/admin/users'
     | '/support/$projectId/chat-widget'
     | '/api/notification/customer/sse'
     | '/dashboard'
+    | '/dashboard/admin'
+    | '/dashboard/admin/organizations/$organizationId'
     | '/dashboard/org/$organizationId/billing'
     | '/dashboard/org/$organizationId/integrations'
     | '/dashboard/org/$organizationId/settings'
@@ -319,6 +384,7 @@ export interface FileRouteTypes {
     | '/dashboard/project/$projectId/chat-support'
     | '/dashboard/project/$projectId/settings'
     | '/dashboard/project/$projectId/tickets'
+    | '/dashboard/admin/organizations'
     | '/dashboard/org/$organizationId'
     | '/dashboard/project/$projectId'
   id:
@@ -329,15 +395,20 @@ export interface FileRouteTypes {
     | '/(auth)/signin'
     | '/(auth)/signup'
     | '/(app)/dashboard/(admin)'
+    | '/(app)/dashboard/admin'
     | '/(app)/dashboard/organizations'
     | '/api/auth/$'
     | '/api/notification/sse'
     | '/(app)/dashboard/org/$organizationId'
     | '/(app)/dashboard/project/$projectId'
-    | '/(app)/dashboard/(admin)/users'
+    | '/(app)/dashboard/admin/organizations'
+    | '/(app)/dashboard/admin/settings'
+    | '/(app)/dashboard/admin/users'
     | '/(public)/support/$projectId/chat-widget'
     | '/api/notification/customer/sse'
     | '/(app)/dashboard/(admin)/'
+    | '/(app)/dashboard/admin/'
+    | '/(app)/dashboard/admin/organizations/$organizationId'
     | '/(app)/dashboard/org/$organizationId/billing'
     | '/(app)/dashboard/org/$organizationId/integrations'
     | '/(app)/dashboard/org/$organizationId/settings'
@@ -348,6 +419,7 @@ export interface FileRouteTypes {
     | '/(app)/dashboard/project/$projectId/chat-support'
     | '/(app)/dashboard/project/$projectId/settings'
     | '/(app)/dashboard/project/$projectId/tickets'
+    | '/(app)/dashboard/admin/organizations/'
     | '/(app)/dashboard/org/$organizationId/'
     | '/(app)/dashboard/project/$projectId/'
   fileRoutesById: FileRoutesById
@@ -420,12 +492,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof appDashboardOrganizationsRouteImport
       parentRoute: typeof appRouteRoute
     }
+    '/(app)/dashboard/admin': {
+      id: '/(app)/dashboard/admin'
+      path: '/dashboard/admin'
+      fullPath: '/dashboard/admin'
+      preLoaderRoute: typeof appDashboardAdminRouteRouteImport
+      parentRoute: typeof appRouteRoute
+    }
     '/(app)/dashboard/(admin)': {
       id: '/(app)/dashboard/(admin)'
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof appDashboardadminRouteRouteImport
       parentRoute: typeof appRouteRoute
+    }
+    '/(app)/dashboard/admin/': {
+      id: '/(app)/dashboard/admin/'
+      path: '/'
+      fullPath: '/dashboard/admin/'
+      preLoaderRoute: typeof appDashboardAdminIndexRouteImport
+      parentRoute: typeof appDashboardAdminRouteRoute
     }
     '/(app)/dashboard/(admin)/': {
       id: '/(app)/dashboard/(admin)/'
@@ -448,12 +534,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof publicSupportProjectIdChatWidgetRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/(app)/dashboard/(admin)/users': {
-      id: '/(app)/dashboard/(admin)/users'
+    '/(app)/dashboard/admin/users': {
+      id: '/(app)/dashboard/admin/users'
       path: '/users'
-      fullPath: '/dashboard/users'
-      preLoaderRoute: typeof appDashboardadminUsersRouteImport
-      parentRoute: typeof appDashboardadminRouteRoute
+      fullPath: '/dashboard/admin/users'
+      preLoaderRoute: typeof appDashboardAdminUsersRouteImport
+      parentRoute: typeof appDashboardAdminRouteRoute
+    }
+    '/(app)/dashboard/admin/settings': {
+      id: '/(app)/dashboard/admin/settings'
+      path: '/settings'
+      fullPath: '/dashboard/admin/settings'
+      preLoaderRoute: typeof appDashboardAdminSettingsRouteImport
+      parentRoute: typeof appDashboardAdminRouteRoute
+    }
+    '/(app)/dashboard/admin/organizations': {
+      id: '/(app)/dashboard/admin/organizations'
+      path: '/organizations'
+      fullPath: '/dashboard/admin/organizations'
+      preLoaderRoute: typeof appDashboardAdminOrganizationsRouteImport
+      parentRoute: typeof appDashboardAdminRouteRoute
     }
     '/(app)/dashboard/project/$projectId': {
       id: '/(app)/dashboard/project/$projectId'
@@ -482,6 +582,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/org/$organizationId/'
       preLoaderRoute: typeof appDashboardOrgOrganizationIdIndexRouteImport
       parentRoute: typeof appDashboardOrgOrganizationIdRouteRoute
+    }
+    '/(app)/dashboard/admin/organizations/': {
+      id: '/(app)/dashboard/admin/organizations/'
+      path: '/'
+      fullPath: '/dashboard/admin/organizations/'
+      preLoaderRoute: typeof appDashboardAdminOrganizationsIndexRouteImport
+      parentRoute: typeof appDashboardAdminOrganizationsRoute
     }
     '/(app)/dashboard/project/$projectId/tickets': {
       id: '/(app)/dashboard/project/$projectId/tickets'
@@ -553,6 +660,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof appDashboardOrgOrganizationIdBillingRouteImport
       parentRoute: typeof appDashboardOrgOrganizationIdRouteRoute
     }
+    '/(app)/dashboard/admin/organizations/$organizationId': {
+      id: '/(app)/dashboard/admin/organizations/$organizationId'
+      path: '/$organizationId'
+      fullPath: '/dashboard/admin/organizations/$organizationId'
+      preLoaderRoute: typeof appDashboardAdminOrganizationsOrganizationIdRouteImport
+      parentRoute: typeof appDashboardAdminOrganizationsRoute
+    }
   }
 }
 
@@ -570,6 +684,45 @@ const appDashboardadminRouteRouteChildren: appDashboardadminRouteRouteChildren =
 const appDashboardadminRouteRouteWithChildren =
   appDashboardadminRouteRoute._addFileChildren(
     appDashboardadminRouteRouteChildren,
+  )
+
+interface appDashboardAdminOrganizationsRouteChildren {
+  appDashboardAdminOrganizationsOrganizationIdRoute: typeof appDashboardAdminOrganizationsOrganizationIdRoute
+  appDashboardAdminOrganizationsIndexRoute: typeof appDashboardAdminOrganizationsIndexRoute
+}
+
+const appDashboardAdminOrganizationsRouteChildren: appDashboardAdminOrganizationsRouteChildren =
+  {
+    appDashboardAdminOrganizationsOrganizationIdRoute:
+      appDashboardAdminOrganizationsOrganizationIdRoute,
+    appDashboardAdminOrganizationsIndexRoute:
+      appDashboardAdminOrganizationsIndexRoute,
+  }
+
+const appDashboardAdminOrganizationsRouteWithChildren =
+  appDashboardAdminOrganizationsRoute._addFileChildren(
+    appDashboardAdminOrganizationsRouteChildren,
+  )
+
+interface appDashboardAdminRouteRouteChildren {
+  appDashboardAdminOrganizationsRoute: typeof appDashboardAdminOrganizationsRouteWithChildren
+  appDashboardAdminSettingsRoute: typeof appDashboardAdminSettingsRoute
+  appDashboardAdminUsersRoute: typeof appDashboardAdminUsersRoute
+  appDashboardAdminIndexRoute: typeof appDashboardAdminIndexRoute
+}
+
+const appDashboardAdminRouteRouteChildren: appDashboardAdminRouteRouteChildren =
+  {
+    appDashboardAdminOrganizationsRoute:
+      appDashboardAdminOrganizationsRouteWithChildren,
+    appDashboardAdminSettingsRoute: appDashboardAdminSettingsRoute,
+    appDashboardAdminUsersRoute: appDashboardAdminUsersRoute,
+    appDashboardAdminIndexRoute: appDashboardAdminIndexRoute,
+  }
+
+const appDashboardAdminRouteRouteWithChildren =
+  appDashboardAdminRouteRoute._addFileChildren(
+    appDashboardAdminRouteRouteChildren,
   )
 
 interface appDashboardOrgOrganizationIdRouteRouteChildren {
@@ -634,6 +787,7 @@ const appDashboardProjectProjectIdRouteRouteWithChildren =
 
 interface appRouteRouteChildren {
   appDashboardadminRouteRoute: typeof appDashboardadminRouteRouteWithChildren
+  appDashboardAdminRouteRoute: typeof appDashboardAdminRouteRouteWithChildren
   appDashboardOrganizationsRoute: typeof appDashboardOrganizationsRoute
   appDashboardOrgOrganizationIdRouteRoute: typeof appDashboardOrgOrganizationIdRouteRouteWithChildren
   appDashboardProjectProjectIdRouteRoute: typeof appDashboardProjectProjectIdRouteRouteWithChildren
@@ -641,6 +795,7 @@ interface appRouteRouteChildren {
 
 const appRouteRouteChildren: appRouteRouteChildren = {
   appDashboardadminRouteRoute: appDashboardadminRouteRouteWithChildren,
+  appDashboardAdminRouteRoute: appDashboardAdminRouteRouteWithChildren,
   appDashboardOrganizationsRoute: appDashboardOrganizationsRoute,
   appDashboardOrgOrganizationIdRouteRoute:
     appDashboardOrgOrganizationIdRouteRouteWithChildren,
