@@ -1,7 +1,7 @@
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { betterAuth } from "better-auth/minimal";
-import { admin, organization } from "better-auth/plugins";
-import { accessControl } from "@/lib/auth/permissions";
+import { admin as adminPlugin, organization } from "better-auth/plugins";
+import { accessControl, admin, user } from "@/lib/auth/permissions";
 import { prisma } from "@/lib/prisma";
 
 export const auth = betterAuth({
@@ -24,7 +24,13 @@ export const auth = betterAuth({
     },
   },
   plugins: [
-    admin(),
+    adminPlugin({
+      accessControl,
+      roles: {
+        admin,
+        user,
+      },
+    }),
     organization({
       accessControl,
       dynamicAccessControl: {

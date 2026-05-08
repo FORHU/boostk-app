@@ -2,10 +2,10 @@ import { useForm } from "@tanstack/react-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Building2, LayoutGrid, Plus, Users2 } from "lucide-react";
+import { toast } from "sonner";
 import OrganizationList from "@/components/organization/organization-list";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -16,6 +16,9 @@ import { organizationQueries } from "@/modules/organization/organization.queries
 import { type CreateOrganizationInput, createOrganizationSchema } from "@/modules/organization/organization.schema";
 
 export const Route = createFileRoute("/(app)/dashboard/organizations")({
+  beforeLoad: () => {
+    // check if super admin
+  },
   loader: ({ context }) => {
     context.queryClient.ensureQueryData(organizationQueries.getAuthOrganization());
   },
@@ -96,6 +99,7 @@ function OrganizationsPage() {
   );
 }
 
+// TODO: move the logic of close modal to not affect the rendering of other page content
 const OrganizationFormBase = () => {
   const queryClient = useQueryClient();
 
@@ -104,10 +108,12 @@ const OrganizationFormBase = () => {
     mutationFn: createOrganizationFn,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: organizationQueries.all });
+      toast.success("Organization created successfully!");
       createOrganizationForm.reset();
     },
     onError: (error) => {
       console.error(error);
+      toast.error(error instanceof Error ? error.message : "Failed to create organization");
     },
   });
 

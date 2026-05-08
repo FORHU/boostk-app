@@ -12,7 +12,7 @@ export const Route = createFileRoute("/(app)")({
 
 function AppLayout() {
   return (
-    <div className="flex flex-col h-screen overflow-hidden">
+    <div className="flex flex-col">
       <AppTopbar />
       <Outlet />
     </div>

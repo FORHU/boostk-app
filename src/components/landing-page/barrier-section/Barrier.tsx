@@ -28,7 +28,7 @@ export default function Barrier() {
               solutionTitle="The Solution"
               solutionText="Professional English communication — handled for you."
               icon={MessageSquare}
-              videos={["/videos/hello.mp4", "/videos/frustrated.mp4"]}
+              videos={["/videos/global-communication-1.mp4", "/videos/global-communication-2.mp4"]}
             />
             <BarrierCard
               title="Social & Content Strategy"
