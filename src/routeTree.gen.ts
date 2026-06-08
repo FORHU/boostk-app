@@ -26,6 +26,7 @@ import { Route as publicSupportProjectIdChatWidgetRouteImport } from './routes/(
 import { Route as appDashboardAdminUsersRouteImport } from './routes/(app)/dashboard/admin/users'
 import { Route as appDashboardAdminSettingsRouteImport } from './routes/(app)/dashboard/admin/settings'
 import { Route as appDashboardAdminOrganizationsRouteImport } from './routes/(app)/dashboard/admin/organizations'
+import { Route as appDashboardadminUsersRouteImport } from './routes/(app)/dashboard/(admin)/users'
 import { Route as appDashboardProjectProjectIdRouteRouteImport } from './routes/(app)/dashboard/project.$projectId/route'
 import { Route as appDashboardOrgOrganizationIdRouteRouteImport } from './routes/(app)/dashboard/org.$organizationId/route'
 import { Route as appDashboardProjectProjectIdIndexRouteImport } from './routes/(app)/dashboard/project.$projectId/index'
@@ -131,6 +132,11 @@ const appDashboardAdminOrganizationsRoute =
     path: '/organizations',
     getParentRoute: () => appDashboardAdminRouteRoute,
   } as any)
+const appDashboardadminUsersRoute = appDashboardadminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => appDashboardadminRouteRoute,
+} as any)
 const appDashboardProjectProjectIdRouteRoute =
   appDashboardProjectProjectIdRouteRouteImport.update({
     id: '/dashboard/project/$projectId',
@@ -239,6 +245,7 @@ export interface FileRoutesByFullPath {
   '/api/notification/sse': typeof ApiNotificationSseRoute
   '/dashboard/org/$organizationId': typeof appDashboardOrgOrganizationIdRouteRouteWithChildren
   '/dashboard/project/$projectId': typeof appDashboardProjectProjectIdRouteRouteWithChildren
+  '/dashboard/users': typeof appDashboardadminUsersRoute
   '/dashboard/admin/organizations': typeof appDashboardAdminOrganizationsRouteWithChildren
   '/dashboard/admin/settings': typeof appDashboardAdminSettingsRoute
   '/dashboard/admin/users': typeof appDashboardAdminUsersRoute
@@ -268,6 +275,7 @@ export interface FileRoutesByTo {
   '/dashboard/organizations': typeof appDashboardOrganizationsRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/notification/sse': typeof ApiNotificationSseRoute
+  '/dashboard/users': typeof appDashboardadminUsersRoute
   '/dashboard/admin/settings': typeof appDashboardAdminSettingsRoute
   '/dashboard/admin/users': typeof appDashboardAdminUsersRoute
   '/support/$projectId/chat-widget': typeof publicSupportProjectIdChatWidgetRoute
@@ -303,6 +311,7 @@ export interface FileRoutesById {
   '/api/notification/sse': typeof ApiNotificationSseRoute
   '/(app)/dashboard/org/$organizationId': typeof appDashboardOrgOrganizationIdRouteRouteWithChildren
   '/(app)/dashboard/project/$projectId': typeof appDashboardProjectProjectIdRouteRouteWithChildren
+  '/(app)/dashboard/(admin)/users': typeof appDashboardadminUsersRoute
   '/(app)/dashboard/admin/organizations': typeof appDashboardAdminOrganizationsRouteWithChildren
   '/(app)/dashboard/admin/settings': typeof appDashboardAdminSettingsRoute
   '/(app)/dashboard/admin/users': typeof appDashboardAdminUsersRoute
@@ -338,6 +347,7 @@ export interface FileRouteTypes {
     | '/api/notification/sse'
     | '/dashboard/org/$organizationId'
     | '/dashboard/project/$projectId'
+    | '/dashboard/users'
     | '/dashboard/admin/organizations'
     | '/dashboard/admin/settings'
     | '/dashboard/admin/users'
@@ -367,6 +377,7 @@ export interface FileRouteTypes {
     | '/dashboard/organizations'
     | '/api/auth/$'
     | '/api/notification/sse'
+    | '/dashboard/users'
     | '/dashboard/admin/settings'
     | '/dashboard/admin/users'
     | '/support/$projectId/chat-widget'
@@ -401,6 +412,7 @@ export interface FileRouteTypes {
     | '/api/notification/sse'
     | '/(app)/dashboard/org/$organizationId'
     | '/(app)/dashboard/project/$projectId'
+    | '/(app)/dashboard/(admin)/users'
     | '/(app)/dashboard/admin/organizations'
     | '/(app)/dashboard/admin/settings'
     | '/(app)/dashboard/admin/users'
@@ -554,6 +566,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/admin/organizations'
       preLoaderRoute: typeof appDashboardAdminOrganizationsRouteImport
       parentRoute: typeof appDashboardAdminRouteRoute
+    }
+    '/(app)/dashboard/(admin)/users': {
+      id: '/(app)/dashboard/(admin)/users'
+      path: '/users'
+      fullPath: '/dashboard/users'
+      preLoaderRoute: typeof appDashboardadminUsersRouteImport
+      parentRoute: typeof appDashboardadminRouteRoute
     }
     '/(app)/dashboard/project/$projectId': {
       id: '/(app)/dashboard/project/$projectId'
