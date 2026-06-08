@@ -1,12 +1,37 @@
 services:
-  # Backend (Hono / Socket.io)
+  postgres:
+    image: postgres:16-alpine
+    container_name: boostk-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: boostk
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: boostk-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@boostk.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5052:80"
+    depends_on:
+      - postgres
+
   backend:
     build: ./hono
     ports:
       - "3001:3001"
     env_file: .env
+    depends_on:
+      - postgres
 
-  # Frontend (TanStack Start)
   frontend:
     build:
       context: .
@@ -21,3 +46,7 @@ services:
     env_file: .env
     depends_on:
       - backend
+      - postgres
+
+volumes:
+  postgres_data:
