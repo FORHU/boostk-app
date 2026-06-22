@@ -38,10 +38,11 @@ export const Route = createFileRoute("/(app)/dashboard/org/$organizationId/teams
 function OrganizationTeamsPage() {
   const { organizationId } = Route.useParams();
   return (
-    <div>
-      <h1>Teams - {organizationId}</h1>
+    <div className="ml-5 mt-5">
+      <h1 className="uppercase text-2xl font-bold">Teams</h1>
+      <p className="mb-8">id: {organizationId}</p>
+
       <div>
-        <p className="">Welcome to Organization Teams Page</p>
         <Suspense fallback={<p> loading members</p>}> 
           <TeamTable organizationId={organizationId} />
         </Suspense>
@@ -55,27 +56,52 @@ function TeamTable({ organizationId }: { organizationId: string }) {
   const members = query.data ?? [];
 
   return (
-    <div>
-      <table>
-        <div className="to-card-foreground">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Role</th>
-              </tr>
-            </thead>
-            <tbody>
-              {members.map((m: any) => (
-                <tr key={m.id}>
-                  <td className="p-5">{m.user?.name ?? "-"}</td>
-                  <td className="p-5">{m.user?.email ?? "-"}</td>
-                  <td className="p-5">{m.role ?? "member"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </div>
-        </table>
+<div className="bg-slate-100 me-10 rounded-lg">
+  {/* Header Section */}
+  <div className="text-center mb-8">
+    <h2 className="font-semibold text-lg">Members</h2>
+    <p className="text-slate-600">
+      List of members in your organization including their name, email and role.
+    </p>
+  </div>
+
+  {/* The "Table" Wrapper */}
+  <div className="w-full flex flex-col">
+    
+    {/* Table Header Row */}
+    {/* grid-cols-3 splits this row into 3 equal columns */}
+    <div className="grid grid-cols-3 border-b-2 border-slate-300 pb-3 font-semibold text-slate-700">
+      <div className="text-left pl-2">Name</div>
+      <div className="text-center">Email</div>
+      <div className="text-center">Role</div>
     </div>
+
+    {/* Table Body */}
+    <div className="flex flex-col">
+      {members.map((m: any) => (
+        <div 
+          key={m.id} 
+          className="grid grid-cols-3 items-center border-b border-slate-200 py-4 hover:bg-slate-200 transition-colors"
+        >
+          {/* Column 1: Name */}
+          <div className="text-left pl-2 font-medium">
+            {m.user?.name ?? "-"}
+          </div>
+          
+          {/* Column 2: Email */}
+          <div className="text-center text-slate-600">
+            {m.user?.email ?? "-"}
+          </div>
+          
+          {/* Column 3: Role */}
+          <div className="text-center">
+            {m.role ?? "member"}
+          </div>
+        </div>
+      ))}
+    </div>
+    
+  </div>
+</div>
   );
 }
