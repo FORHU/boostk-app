@@ -14,6 +14,7 @@ import { Route as appRouteRouteImport } from './routes/(app)/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as authSignupRouteImport } from './routes/(auth)/signup'
 import { Route as authSigninRouteImport } from './routes/(auth)/signin'
+import { Route as ApiNotificationSseRouteImport } from './routes/api/notification/sse'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as appDashboardOrganizationsRouteImport } from './routes/(app)/dashboard/organizations'
 import { Route as publicSupportProjectIdChatWidgetRouteImport } from './routes/(public)/support.$projectId/chat-widget'
@@ -53,6 +54,11 @@ const authSigninRoute = authSigninRouteImport.update({
   id: '/signin',
   path: '/signin',
   getParentRoute: () => authRouteRoute,
+} as any)
+const ApiNotificationSseRoute = ApiNotificationSseRouteImport.update({
+  id: '/api/notification/sse',
+  path: '/api/notification/sse',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
@@ -156,6 +162,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof authSignupRoute
   '/dashboard/organizations': typeof appDashboardOrganizationsRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/notification/sse': typeof ApiNotificationSseRoute
   '/dashboard/org/$organizationId': typeof appDashboardOrgOrganizationIdRouteRouteWithChildren
   '/dashboard/project/$projectId': typeof appDashboardProjectProjectIdRouteRouteWithChildren
   '/support/$projectId/chat-widget': typeof publicSupportProjectIdChatWidgetRoute
@@ -177,6 +184,7 @@ export interface FileRoutesByTo {
   '/signup': typeof authSignupRoute
   '/dashboard/organizations': typeof appDashboardOrganizationsRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/notification/sse': typeof ApiNotificationSseRoute
   '/support/$projectId/chat-widget': typeof publicSupportProjectIdChatWidgetRoute
   '/dashboard/org/$organizationId/billing': typeof appDashboardOrgOrganizationIdBillingRoute
   '/dashboard/org/$organizationId/integrations': typeof appDashboardOrgOrganizationIdIntegrationsRoute
@@ -199,6 +207,7 @@ export interface FileRoutesById {
   '/(auth)/signup': typeof authSignupRoute
   '/(app)/dashboard/organizations': typeof appDashboardOrganizationsRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/notification/sse': typeof ApiNotificationSseRoute
   '/(app)/dashboard/org/$organizationId': typeof appDashboardOrgOrganizationIdRouteRouteWithChildren
   '/(app)/dashboard/project/$projectId': typeof appDashboardProjectProjectIdRouteRouteWithChildren
   '/(public)/support/$projectId/chat-widget': typeof publicSupportProjectIdChatWidgetRoute
@@ -222,6 +231,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/dashboard/organizations'
     | '/api/auth/$'
+    | '/api/notification/sse'
     | '/dashboard/org/$organizationId'
     | '/dashboard/project/$projectId'
     | '/support/$projectId/chat-widget'
@@ -243,6 +253,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/dashboard/organizations'
     | '/api/auth/$'
+    | '/api/notification/sse'
     | '/support/$projectId/chat-widget'
     | '/dashboard/org/$organizationId/billing'
     | '/dashboard/org/$organizationId/integrations'
@@ -264,6 +275,7 @@ export interface FileRouteTypes {
     | '/(auth)/signup'
     | '/(app)/dashboard/organizations'
     | '/api/auth/$'
+    | '/api/notification/sse'
     | '/(app)/dashboard/org/$organizationId'
     | '/(app)/dashboard/project/$projectId'
     | '/(public)/support/$projectId/chat-widget'
@@ -285,6 +297,7 @@ export interface RootRouteChildren {
   appRouteRoute: typeof appRouteRouteWithChildren
   authRouteRoute: typeof authRouteRouteWithChildren
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiNotificationSseRoute: typeof ApiNotificationSseRoute
   publicSupportProjectIdChatWidgetRoute: typeof publicSupportProjectIdChatWidgetRoute
 }
 
@@ -324,6 +337,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/signin'
       preLoaderRoute: typeof authSigninRouteImport
       parentRoute: typeof authRouteRoute
+    }
+    '/api/notification/sse': {
+      id: '/api/notification/sse'
+      path: '/api/notification/sse'
+      fullPath: '/api/notification/sse'
+      preLoaderRoute: typeof ApiNotificationSseRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/auth/$': {
       id: '/api/auth/$'
@@ -534,6 +554,7 @@ const rootRouteChildren: RootRouteChildren = {
   appRouteRoute: appRouteRouteWithChildren,
   authRouteRoute: authRouteRouteWithChildren,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiNotificationSseRoute: ApiNotificationSseRoute,
   publicSupportProjectIdChatWidgetRoute: publicSupportProjectIdChatWidgetRoute,
 }
 export const routeTree = rootRouteImport
