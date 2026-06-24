@@ -38,7 +38,7 @@ export const Route = createFileRoute("/(app)/dashboard/org/$organizationId/teams
 function OrganizationTeamsPage() {
   const { organizationId } = Route.useParams();
   return (
-    <div className="ml-5 mt-5">
+    <div className="ml-12 mt-6">
       <h1 className="uppercase text-2xl font-bold">Teams</h1>
       <p className="mb-8">id: {organizationId}</p>
 
@@ -71,9 +71,9 @@ function TeamTable({ organizationId }: { organizationId: string }) {
     {/* Table Header Row */}
     {/* grid-cols-3 splits this row into 3 equal columns */}
     <div className="grid grid-cols-3 border-b-2 border-slate-300 pb-3 font-semibold text-slate-700">
-      <div className="text-left pl-2">Name</div>
-      <div className="text-center">Email</div>
-      <div className="text-center">Role</div>
+      <h2 className="text-left pl-2">Name</h2>
+      <h2 className="text-center">Email</h2>
+      <h2 className="text-center">Role</h2>
     </div>
 
     {/* Table Body */}
