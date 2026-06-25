@@ -19,25 +19,121 @@ Before setting up the project, make sure you have the following installed on you
 
 3. **Git:** For version control and cloning the repository.
 
-
-
 ### Getting Started
 
 # Frontend & Core
 Navigate to the root directory and install the required dependencies:
 bun install
 
-# Creating Local database
+### Creating Local database
+Create a file name: Dockerfile
+
+1. # Use the official Bun image instead of Node
+FROM oven/bun:alpine
+
+2. # Goes to the app directory
+WORKDIR /app
+
+3. # Copy the package.json (and lock file if you have one)
+COPY package.json bun.lockb* ./
+
+4. # Install dependencies 
+RUN bun install
+
+5. # Copy everything else in the file (respecting .dockerignore)
+COPY . .
+
+6. # Set port env variable (Removed spaces around the '=' to fix the warning)
+ENV PORT=3030
+
+7. # Start the app (Use CMD instead of RUN) Replace "start" with whatever your actual script is in package.json (e.g., "dev" or "index.ts")
+CMD ["bun", "run", "start"]
+
+### Create a dockerignore
+Create a file name: .dockerignore
+
+1. # put inside the .dockerignore file
+node_modules
+.DS_Store
+dist
+dist-ssr
+*.local
+.env
+.nitro
+.tanstack
+.wrangler
+.output
+.vinxi
+__unconfig*
+todos.json
+prisma/generated
+
+### Create compose file
+Create a file name: compose.yaml / docker-compose.yaml
+
+# content inside of a compose file
+1. # Define the list of services to be managed
+services:
+
+2. # Name of the database service
+local-db: 
+
+3. # Use the official PostgreSQL image from Docker Hub
+image: postgres:latest
+
+4. # Map the container's ports to your host machine and Map host port 5432 to container port 5432
+ports:
+   - "5432:5432"
+
+5. # Set variables for database initialization
+environment:
+
+6. # Set the default username
+POSTGRES_USER: user
+
+7. # Set the password for the database user
+POSTGRES_PASSWORD: password123
+
+8. # Set the initial database name
+POSTGRES_DB: my_data
+
+9.  # Define where to store database data persistently
+volumes:
+   - boostk_local:/var/lib/postgresql/data
+
+10. # Define named volumes for shared data storage
+volumes:
+ boostk_local:
+
+### compose snippet code
+services:
+  local-db:
+    image: postgres:latest
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: my_data
+    volumes:
+      - boostk_local:/var/lib/postgresql/data
+volumes:
+ boostk_local:
+
 
 
 # Database Configuration
-Create a .env file in the root directory (boostk-app/) and populate it with the following configuration (replace the DATABASE_URL with your own from Supabase, and update the API keys):
+Create a .env file in the root directory (boostk-app/) and populate it with the following configuration (replace the DATABASE_URL with your own from Postgresql, and update the API keys):
 
 VITE_SOCKET_URL=http://localhost:3001
-DATABASE_URL=postgresql://postgres.[YOUR_PROJECT_REF]:[YOUR_PASSWORD]@aws-1-[REGION][.pooler.supabase.com:5432/postgres](https://.pooler.supabase.com:5432/postgres)
+
+DATABASE_URL=postgresql://postgres.[YOUR_USERNAME] [YOUR_PASSWORD]@localhost:5432/[YOUR_DATABASE_NAME]
+
 BETTER_AUTH_SECRET=your_better_auth_secret_here
 BETTER_AUTH_URL=http://localhost:3000/
+
 RABBITMQ_URL=amqp://[user]:[password]@[ip]:5672
+
 OPENAI_API_KEY= openai-api-key-here
 
 # Initialize Database
@@ -64,3 +160,16 @@ Run the development server from your terminal in the boostk-app root directory:
 bun run dev
 
 
+# Seed Account
+| Role   | Email                            |
+|        |                                  |
+| Admin  | forhu-admin@example.com          |
+| Admin  | organization1-admin@example.com  |
+| Agent  | forhu-agent@example.com          |
+| Agent  | organization1-agent@example.com  |
+| Agent  | organization1-user1@example.com  |
+| Member | organization1-user2@example.com  |
+| Member | organization1-user3@example.com  |
+| Member | forhu-user1@example.com          |
+| Member | forhu-user2@example.com          |
+| Member | forhu-user3@example.com          |
