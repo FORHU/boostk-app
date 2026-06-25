@@ -141,7 +141,7 @@ function OrganizationSettingsPage() {
             <div className="ml-auto mr-20">
               <button
                 onClick={() => setIsEditing(true)}
-                className="px-4 py-2 text-sm border rounded- hover:bg-primary">
+                className="px-4 py-2 text-sm border rounded- hover:bg-muted-foreground">
                 Edit Settings
               </button>
             </div>
