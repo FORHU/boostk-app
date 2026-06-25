@@ -1,16 +1,19 @@
 import { prisma } from "@/lib/prisma"
-import { createFileRoute } from "@tanstack/react-router"; 
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { z } from "zod";
 import { createServerFn } from "@tanstack/react-start";
-import { requireOrganizationMiddleware } from "@/modules/organization/organization.middleware";
+import { REDIRECT_REASON } from "@/enums/enums";
+import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
+import { requireOrgRole } from "@/modules/organization/organization.middleware";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { Suspense } from "react";
+import type { Member, User } from "prisma/generated/client";
 
 
 
 export const getOrgMembersFn = createServerFn({ method: "GET" })
   .inputValidator(z.object({ organizationId: z.string() }))
-  .middleware([requireOrganizationMiddleware])
+  .middleware([requireOrgRole(ORG_ROLE.ADMIN)])
   .handler(async ({ context }) => {
     return prisma.member.findMany({
       where: { organizationId: context.organization.id },
@@ -23,12 +26,17 @@ export const memberQueries = {
   members: ["members"],
   allByOrgId: (organizationId: string) =>
     queryOptions({
-      queryKey: [...memberQueries.members, "members", organizationId],
+      queryKey: [...memberQueries.members, organizationId],
       queryFn: () => getOrgMembersFn({ data: { organizationId } }),
     }),
 }
 
 export const Route = createFileRoute("/(app)/dashboard/org/$organizationId/teams")({
+  beforeLoad: ({ context }) => {
+    if (!hasOrgRole(context.role, ORG_ROLE.ADMIN)) {
+      throw redirect({ to: "/dashboard/organizations", search: { reason: REDIRECT_REASON.PERMISSION_DENIED } });
+    }
+  },
   loader: ({ context, params }) => {
     context.queryClient.ensureQueryData(memberQueries.allByOrgId(params.organizationId));
   },
@@ -39,8 +47,7 @@ function OrganizationTeamsPage() {
   const { organizationId } = Route.useParams();
   return (
     <div className="ml-12 mt-6">
-      <h1 className="uppercase text-2xl font-bold">Teams</h1>
-      <p className="mb-8">id: {organizationId}</p>
+      <h1 className="uppercase text-2xl font-bold mb-8">Teams</h1>
 
       <div>
         <Suspense fallback={<p> loading members</p>}> 
@@ -53,7 +60,9 @@ function OrganizationTeamsPage() {
 
 function TeamTable({ organizationId }: { organizationId: string }) {
   const query = useSuspenseQuery(memberQueries.allByOrgId(organizationId));
-  const members = query.data ?? [];
+  // The server fn includes the `user` relation at runtime, but the server-fn
+  // boundary widens the type back to the base row — restore it here.
+  const members = (query.data ?? []) as Array<Member & { user: User }>;
 
   return (
 <div className="bg-slate-100 me-10 rounded-lg">
@@ -78,7 +87,7 @@ function TeamTable({ organizationId }: { organizationId: string }) {
 
     {/* Table Body */}
     <div className="flex flex-col">
-      {members.map((m: any) => (
+      {members.map((m) => (
         <div 
           key={m.id} 
           className="grid grid-cols-3 items-center border-b border-slate-200 py-4 hover:bg-slate-200 transition-colors"

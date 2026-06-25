@@ -1,6 +1,13 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { REDIRECT_REASON } from "@/enums/enums";
+import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
 
 export const Route = createFileRoute("/(app)/dashboard/org/$organizationId/billing")({
+  beforeLoad: ({ context }) => {
+    if (!hasOrgRole(context.role, ORG_ROLE.ADMIN)) {
+      throw redirect({ to: "/dashboard/organizations", search: { reason: REDIRECT_REASON.PERMISSION_DENIED } });
+    }
+  },
   component: OrganizationBillingPage,
 });
 

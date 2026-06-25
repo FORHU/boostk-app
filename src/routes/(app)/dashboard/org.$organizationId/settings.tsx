@@ -1,23 +1,23 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { z } from "zod";
 import { createServerFn } from "@tanstack/react-start";
-import { requireOrganizationMiddleware } from "@/modules/organization/organization.middleware";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { prisma } from "@/lib/prisma";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"; 
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { REDIRECT_REASON } from "@/enums/enums";
+import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
+import { requireOrgRole } from "@/modules/organization/organization.middleware";
 
-// 1. Fetching Function (Updated to use prisma directly just in case context doesn't have everything)
+// Read the current org's settings. Admin-only (server-side enforcement).
 export const getSettingsFn = createServerFn({ method: "GET" })
   .inputValidator(z.object({ organizationId: z.string() }))
-  .middleware([requireOrganizationMiddleware])
-  .handler(async ({ data }) => {
-    return prisma.organization.findUnique({
-      where: { id: data.organizationId },
-    });
+  .middleware([requireOrgRole(ORG_ROLE.ADMIN)])
+  .handler(async ({ context }) => {
+    return context.organization;
   });
 
-// 2. NEW: Update Function to save changes
+// Persist org settings changes. Admin-only (server-side enforcement).
 export const updateOrganizationFn = createServerFn({ method: "POST" })
   .inputValidator(z.object({
     organizationId: z.string(),
@@ -25,10 +25,10 @@ export const updateOrganizationFn = createServerFn({ method: "POST" })
     slug: z.string().min(1, "Slug is required"),
     logo: z.string().optional().nullable(),
   }))
-  .middleware([requireOrganizationMiddleware])
-  .handler(async ({ data }) => {
+  .middleware([requireOrgRole(ORG_ROLE.ADMIN)])
+  .handler(async ({ context, data }) => {
     return prisma.organization.update({
-      where: { id: data.organizationId },
+      where: { id: context.organization.id },
       data: {
         name: data.name,
         slug: data.slug,
@@ -41,12 +41,17 @@ export const settingQueries = {
   setting: ["setting"],
   allByOrgId: (organizationId: string) =>
     queryOptions({
-      queryKey: [...settingQueries.setting, "setting", organizationId],
+      queryKey: [...settingQueries.setting, organizationId],
       queryFn: () => getSettingsFn({ data: { organizationId } }),
     }),
 }
 
 export const Route = createFileRoute("/(app)/dashboard/org/$organizationId/settings")({
+  beforeLoad: ({ context }) => {
+    if (!hasOrgRole(context.role, ORG_ROLE.ADMIN)) {
+      throw redirect({ to: "/dashboard/organizations", search: { reason: REDIRECT_REASON.PERMISSION_DENIED } });
+    }
+  },
   component: OrganizationSettingsPage,
 });
 
