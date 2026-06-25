@@ -1,0 +1,16 @@
+services:
+
+  local-db:
+    image: postgres:latest
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: localuser
+      POSTGRES_PASSWORD: passWord123!
+      POSTGRES_DB: localdata
+    volumes:
+      - boostk_local:/var/lib/postgresql
+volumes:
+ boostk_local:
+
+  

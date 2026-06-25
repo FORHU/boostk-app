@@ -1,193 +1,66 @@
-Welcome to your new TanStack Start app! 
+# Welcome to BOOSTK
 
-# Getting Started
+Boostk is a dual-purpose platform combining a real-time agent-customer chat support system with a global business services hub. It is designed to connect Korean and Japanese SMEs with English-speaking professionals in the Philippines to bridge global market entry barriers.
 
-To run this application:
+This application is built with a modern, high-performance stack:
+* **Frontend/SSR:** TanStack Start (Full-stack React)
+* **Runtime & Package Manager:** Bun
+* **Database:** PostgreSQL with Prisma ORM
+* **Real-Time Websockets:** Standalone Hono server running Socket.io
 
-```bash
+## 🛠 Prerequisites
+Before setting up the project, make sure you have the following installed on your machine:
+
+1. **Bun (v1.1+):** Our mandatory runtime and package manager. (Do not use npm, yarn, or pnpm). 
+   * *Windows Installation (PowerShell as Admin):* `powershell -c "irm bun.sh/install.ps1 | iex"`
+   * Note: Restart your terminal after installation to ensure the bun command is recognized. You can verify the installation by running: bun -v
+
+2. **Docker Desktop:** Required to run our local PostgreSQL database container easily.
+
+3. **Git:** For version control and cloning the repository.
+
+
+
+### Getting Started
+
+# Frontend & Core
+Navigate to the root directory and install the required dependencies:
 bun install
-bun --bun run dev
-```
 
-# Building For Production
-
-To build this application for production:
-
-```bash
-bun --bun run build
-```
-
-## Testing
-
-This project uses [Vitest](https://vitest.dev/) for testing. You can run the tests with:
-
-```bash
-bun --bun run test
-```
-
-## Styling
-
-This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
-
-### Removing Tailwind CSS
-
-If you prefer not to use Tailwind CSS:
-
-1. Remove the demo pages in `src/routes/demo/`
-2. Replace the Tailwind import in `src/styles.css` with your own styles
-3. Remove `tailwindcss()` from the plugins array in `vite.config.ts`
-4. Uninstall the packages: `bun install @tailwindcss/vite tailwindcss -D`
+# Creating Local database
 
 
+# Database Configuration
+Create a .env file in the root directory (boostk-app/) and populate it with the following configuration (replace the DATABASE_URL with your own from Supabase, and update the API keys):
 
-## Routing
+VITE_SOCKET_URL=http://localhost:3001
+DATABASE_URL=postgresql://postgres.[YOUR_PROJECT_REF]:[YOUR_PASSWORD]@aws-1-[REGION][.pooler.supabase.com:5432/postgres](https://.pooler.supabase.com:5432/postgres)
+BETTER_AUTH_SECRET=your_better_auth_secret_here
+BETTER_AUTH_URL=http://localhost:3000/
+RABBITMQ_URL=amqp://[user]:[password]@[ip]:5672
+OPENAI_API_KEY= openai-api-key-here
 
-This project uses [TanStack Router](https://tanstack.com/router) with file-based routing. Routes are managed as files in `src/routes`.
+# Initialize Database
+For first-time implementation, initialize the Prisma client, run migrations, and seed the database using the consolidated script:
+bun run setup-local-db
 
-### Adding A Route
+# ⚠️ CAUTION
+Running this command includes prisma migrate reset which will completely reset your database and erase all existing data. Only use this for initial setup or when you explicitly need a clean state.
 
-To add a new route to your application just add a new file in the `./src/routes` directory.
+# Alternative Manual Database Setup (Optional)
+If you prefer to run the steps individually or need more control:
 
-TanStack will automatically generate the content of the route file for you.
+1. Generate Prisma Client:
+bun prisma generate
 
-Now that you have two routes you can use a `Link` component to navigate between them.
+2. Reset/Apply Migrations: (Note: This will erase existing data):
+bun prisma migrate reset
 
-### Adding Links
+3. Seed the Database:
+bun prisma db seed
 
-To use SPA (Single Page Application) navigation you will need to import the `Link` component from `@tanstack/react-router`.
+# Running the Project
+Run the development server from your terminal in the boostk-app root directory:
+bun run dev
 
-```tsx
-import { Link } from "@tanstack/react-router";
-```
 
-Then anywhere in your JSX you can use it like so:
-
-```tsx
-<Link to="/about">About</Link>
-```
-
-This will create a link that will navigate to the `/about` route.
-
-More information on the `Link` component can be found in the [Link documentation](https://tanstack.com/router/v1/docs/framework/react/api/router/linkComponent).
-
-### Using A Layout
-
-In the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you render `{children}` in the `shellComponent`.
-
-Here is an example layout that includes a header:
-
-```tsx
-import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
-
-export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      { charSet: 'utf-8' },
-      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'My App' },
-    ],
-  }),
-  shellComponent: ({ children }) => (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        <header>
-          <nav>
-            <Link to="/">Home</Link>
-            <Link to="/about">About</Link>
-          </nav>
-        </header>
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  ),
-})
-```
-
-More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
-
-## Server Functions
-
-TanStack Start provides server functions that allow you to write server-side code that seamlessly integrates with your client components.
-
-```tsx
-import { createServerFn } from '@tanstack/react-start'
-
-const getServerTime = createServerFn({
-  method: 'GET',
-}).handler(async () => {
-  return new Date().toISOString()
-})
-
-// Use in a component
-function MyComponent() {
-  const [time, setTime] = useState('')
-  
-  useEffect(() => {
-    getServerTime().then(setTime)
-  }, [])
-  
-  return <div>Server time: {time}</div>
-}
-```
-
-## API Routes
-
-You can create API routes by using the `server` property in your route definitions:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-import { json } from '@tanstack/react-start'
-
-export const Route = createFileRoute('/api/hello')({
-  server: {
-    handlers: {
-      GET: () => json({ message: 'Hello, World!' }),
-    },
-  },
-})
-```
-
-## Data Fetching
-
-There are multiple ways to fetch data in your application. You can use TanStack Query to fetch data from a server. But you can also use the `loader` functionality built into TanStack Router to load the data for a route before it's rendered.
-
-For example:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-
-export const Route = createFileRoute('/people')({
-  loader: async () => {
-    const response = await fetch('https://swapi.dev/api/people')
-    return response.json()
-  },
-  component: PeopleComponent,
-})
-
-function PeopleComponent() {
-  const data = Route.useLoaderData()
-  return (
-    <ul>
-      {data.results.map((person) => (
-        <li key={person.name}>{person.name}</li>
-      ))}
-    </ul>
-  )
-}
-```
-
-Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
-
-# Demo files
-
-Files prefixed with `demo` can be safely deleted. They are there to provide a starting point for you to play around with the features you've installed.
-
-# Learn More
-
-You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
-
-For TanStack Start specific documentation, visit [TanStack Start](https://tanstack.com/start).
