@@ -1,9 +1,9 @@
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { Bot, Send, Sparkles } from "lucide-react";
+import { Bot, Send, Sparkles, Loader2 } from "lucide-react";
 import type { Project, TicketMessage } from "prisma/generated/client";
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 import TicketChatMessageBubble from "@/components/chat-support/TicketChatMessageBubble";
 import { getProjectPublicFn } from "@/modules/project/project.functions";
 import { getTicketCookieFn } from "@/modules/ticket/ticket.functions";
@@ -28,15 +28,35 @@ export const Route = createFileRoute("/(public)/support/$projectId/chat-widget")
 
 function RouteComponent() {
   const { project, ticket } = Route.useRouteContext();
+  const [showSpinner, setShowSpinner] = useState(true);
+
+  // This effect forces the spinner to stay for at least 500ms
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSpinner(false);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const LoadingFallback = () => (
+    <div className="flex items-center justify-center h-full">
+      <Loader2 className="animate-spin text-indigo-600" size={32} />
+    </div>
+  );
 
   return (
     <div className="flex flex-col h-screen max-h-screen bg-white overflow-hidden">
       <ChatHeader project={project} />
 
-      <div className="flex-1 overflow-y-auto p-2 bg-slate-50 scroll-smooth pb-4">
-        <Suspense fallback={<div className="flex items-center justify-center h-full">Loading messages...</div>}>
-          <TicketMessageList />
-        </Suspense>
+<div className="flex-1 overflow-y-auto p-2 bg-slate-50 scroll-smooth pb-4">
+        {/* If the timer is still running, show the spinner, otherwise let Suspense handle it */}
+        {showSpinner ? (
+          <LoadingFallback />
+        ) : (
+          <Suspense fallback={<LoadingFallback />}>
+            <TicketMessageList />
+          </Suspense>
+        )}
       </div>
 
       {!ticket ? (
@@ -93,14 +113,18 @@ const TicketMessageList = () => {
     <>  
       {ticketMessages.length === 0 ? (
         <motion.div
-          key="empty-state"
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 8 }}
-          transition={{ duration: 0.15, ease: "easeOut" }}
-          className="flex items-center justify-center h-full"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="flex flex-col items-center justify-center h-full text-center p-6"
         >
-          <p className="text-center text-gray-500 text-sm">No messages yet</p>
+          {/* Decorative Icon for empty state */}
+          <div className="bg-indigo-50 p-4 rounded-full mb-3">
+            <Sparkles className="text-indigo-500" size={32} />
+          </div>
+          <h3 className="font-semibold text-gray-900">Waiting for an agent</h3>
+          <p className="text-gray-500 text-sm mt-1 max-w-[200px]">
+            Our support team will be with you shortly.
+          </p>
         </motion.div>
       ) : (
         ticketMessages.map((msg, index) => {
