@@ -8,9 +8,6 @@ import { requireOrgRole } from "@/modules/organization/organization.middleware";
 import { queryOptions } from "@tanstack/react-query";
 import type { Member, User } from "prisma/generated/client";
 
-
-
-
 export const getAgentsFn = createServerFn({ method: "GET" })
   .inputValidator(z.object({ organizationId: z.string() }))
   .middleware([requireOrgRole(ORG_ROLE.AGENT)])
@@ -44,52 +41,50 @@ function ProjectAgentsPage() {
   const members: Array<Member & { user: User }> = [];
 
   return (
-    <div className="bg-slate-100 me-10 rounded-lg">
+    <div className="p-6">
       {/* Header Section */}
-      <div className="mb-8 pt-6">
-        <h2 className="text-lg font-medium mt-5 ">Agents</h2>
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold mb-10">Agents</h1>
       </div>
 
-      {/* The "Table" Wrapper */}
-      <div className="w-full flex flex-col">
-        
-        {/* Table Header Row */}
-        <div className="grid grid-cols-3 border-b-2 b pb-3 font-semibold text-slate-700">
-          <h2 className="text-left pl-2">Name</h2>
-          <h2 className="text-center">Email</h2>
-          <h2 className="text-center">Role</h2>
-        </div>
+      
+      <div className="overflow-x-auto rounded-lg border border-gray-200">
+        <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" >Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" >Email</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" >Role</th>
+              </tr>
+            </thead>
 
-        {/* Table Body */}
-        <div className="flex flex-col">
+        <tbody>
           {members.map((m) => (
-            <div 
-              key={m.id} 
-              className="grid grid-cols-3 items-center border-b border-slate-200 py-4 hover:bg-slate-200 transition-colors"
-            >
-              {/* Column 1: Name */}
-              <div className="text-left pl-2 font-medium">
+            <tr key={m.id} >
+              <td className=" px-6 py-4 text-left font-medium text-gray-800 text-sm">
                 {m.user?.name ?? "-"}
-              </div>
+              </td>
               
-              {/* Column 2: Email */}
-              <div className="text-center text-slate-600">
+              <td className="text-left text-gray-500 text-sm">
                 {m.user?.email ?? "-"}
-              </div>
+              </td>
               
-              {/* Column 3: Role */}
-              <div className="text-center">
-                {m.role ?? "AGENT"}
-              </div>
-            </div>
+              <td className="text-left">
+                  {m.role ?? "AGENT"}
+              </td>
+            </tr>
           ))}
+
           {members.length === 0 && (
-            <div className="py-8 text-center text-slate-500">
+          <tr>
+            <td colSpan={3} className="py-8 text-center text-sm text-gray-500">
               No agents assigned to this organization.
-            </div>
+            </td>
+          </tr>
           )}
+        </tbody>
+        </table>
         </div>
-        
-      </div>
     </div>
-  );}
+  );
+}
