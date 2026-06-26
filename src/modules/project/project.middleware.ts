@@ -4,6 +4,7 @@ import { z } from "zod";
 import { REDIRECT_REASON } from "@/enums/enums";
 import { prisma } from "@/lib/prisma";
 import { requireAuthMiddleware } from "../auth/auth.middleware";
+import { getMemberRole, hasOrgRole, type OrgRole } from "../auth/roles";
 
 export const requireProjectMiddleware = createMiddleware({ type: "function" })
   .middleware([requireAuthMiddleware])
@@ -14,16 +15,37 @@ export const requireProjectMiddleware = createMiddleware({ type: "function" })
       throw redirect({ to: "/dashboard/organizations", search: { reason: REDIRECT_REASON.SERVER_ERROR } });
     }
 
-    const project = await prisma.project.findFirst({
+    const found = await prisma.project.findFirst({
       where: {
         id: result.data.projectId,
         organization: { members: { some: { userId: context.authSession.user.id } } },
       },
+      // Pull the owning org's members so we can resolve the caller's role.
+      include: { organization: { select: { members: true } } },
     });
 
-    if (!project) {
+    if (!found) {
       throw redirect({ to: "/dashboard/organizations", search: { reason: REDIRECT_REASON.PERMISSION_DENIED } });
     }
 
-    return next({ context: { project } });
+    // Strip the joined organization back off so `project` stays a plain row.
+    const { organization, ...project } = found;
+    const role = getMemberRole(organization.members, context.authSession.user.id);
+
+    return next({ context: { project, role } });
   });
+
+/**
+ * Wraps `requireProjectMiddleware` and additionally requires the caller's role
+ * in the owning org to meet or exceed `minRole`.
+ */
+export const requireProjectRole = (minRole: OrgRole) =>
+  createMiddleware({ type: "function" })
+    .middleware([requireProjectMiddleware])
+    .server(async ({ next, context }) => {
+      if (!hasOrgRole(context.role, minRole)) {
+        throw redirect({ to: "/dashboard/organizations", search: { reason: REDIRECT_REASON.PERMISSION_DENIED } });
+      }
+
+      return next();
+    });

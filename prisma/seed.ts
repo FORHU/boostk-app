@@ -8,9 +8,9 @@ const sampleDataForhu = {
   users: [
     { email: "forhu-admin@example.com", name: "Forhu Admin", role: "admin" },
     { email: "forhu-agent@example.com", name: "Forhu Agent", role: "agent" },
-    { email: "forhu-user1@example.com", name: "Forhu User1", role: "user" },
-    { email: "forhu-user2@example.com", name: "Forhu User2", role: "user" },
-    { email: "forhu-user3@example.com", name: "Forhu User3", role: "user" },
+    { email: "forhu-user1@example.com", name: "Forhu User1", role: "member" },
+    { email: "forhu-user2@example.com", name: "Forhu User2", role: "member" },
+    { email: "forhu-user3@example.com", name: "Forhu User3", role: "member" },
   ],
   projects: [
     { name: "Boostk", slug: "boostk", description: "Human and AI collaboration platform" },
@@ -24,9 +24,9 @@ const sampleData = {
   users: [
     { email: "organization1-admin@example.com", name: "Organization 1 Admin", role: "admin" },
     { email: "organization1-agent@example.com", name: "Organization 1 Agent", role: "agent" },
-    { email: "organization1-user1@example.com", name: "Organization 1 User1", role: "user" },
-    { email: "organization1-user2@example.com", name: "Organization 1 User2", role: "user" },
-    { email: "organization1-user3@example.com", name: "Organization 1 User3", role: "user" },
+    { email: "organization1-user1@example.com", name: "Organization 1 User1", role: "member" },
+    { email: "organization1-user2@example.com", name: "Organization 1 User2", role: "member" },
+    { email: "organization1-user3@example.com", name: "Organization 1 User3", role: "member" },
   ],
   projects: [
     { name: "Project 1", slug: "project-1", description: "Project 1" },

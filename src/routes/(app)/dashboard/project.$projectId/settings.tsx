@@ -1,24 +1,22 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { z } from "zod";
 import { createServerFn } from "@tanstack/react-start";
-// Adjust the middleware import to match your project auth structure
-import { requireProjectMiddleware } from "@/modules/project/project.middleware"; 
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { prisma } from "@/lib/prisma";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"; 
+import { REDIRECT_REASON } from "@/enums/enums";
+import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
+import { requireProjectRole } from "@/modules/project/project.middleware";
 
-// 1. Fetching Function
+// 1. Fetching Function. Admin-only (server-side enforcement).
 export const getProjectSettingsFn = createServerFn({ method: "GET" })
   .inputValidator(z.object({ projectId: z.string() }))
-  .middleware([requireProjectMiddleware])
-  .handler(async ({ data }) => {
-    return prisma.project.findUnique({
-      where: { id: data.projectId },
-    });
+  .middleware([requireProjectRole(ORG_ROLE.ADMIN)])
+  .handler(async ({ context }) => {
+    return context.project;
   });
 
-// 2. Update Function to save changes
+// 2. Update Function to save changes. Admin-only (server-side enforcement).
 export const updateProjectFn = createServerFn({ method: "POST" })
   .inputValidator(z.object({
     projectId: z.string(),
@@ -27,10 +25,10 @@ export const updateProjectFn = createServerFn({ method: "POST" })
     description: z.string().optional().nullable(),
     logo: z.string().optional().nullable(),
   }))
-  .middleware([requireProjectMiddleware])
-  .handler(async ({ data }) => {
+  .middleware([requireProjectRole(ORG_ROLE.ADMIN)])
+  .handler(async ({ context, data }) => {
     return prisma.project.update({
-      where: { id: data.projectId },
+      where: { id: context.project.id },
       data: {
         name: data.name,
         slug: data.slug,
@@ -50,8 +48,12 @@ export const projectSettingQueries = {
     }),
 }
 
-// Adjust the route path based on your actual file tree
 export const Route = createFileRoute("/(app)/dashboard/project/$projectId/settings")({
+  beforeLoad: ({ context }) => {
+    if (!hasOrgRole(context.role, ORG_ROLE.ADMIN)) {
+      throw redirect({ to: "/dashboard/organizations", search: { reason: REDIRECT_REASON.PERMISSION_DENIED } });
+    }
+  },
   component: ProjectSettingsPage,
 });
 
@@ -62,9 +64,6 @@ function ProjectSettingsPage() {
   const { data: project, refetch } = useSuspenseQuery(
     projectSettingQueries.allByProjectId(projectId)
   );
-
-  // Fallback initials
-  const fallbackInitials = project?.name?.substring(0, 2).toUpperCase() || "PR";
 
   // Handle Form Submission
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {

@@ -6,12 +6,12 @@ import { getProjectFn } from "@/modules/project/project.functions";
 
 export const Route = createFileRoute("/(app)/dashboard/project/$projectId")({
   beforeLoad: async ({ params }) => {
-    const project = await getProjectFn({ data: { projectId: params.projectId } });
+    const { project, role } = await getProjectFn({ data: { projectId: params.projectId } });
     if (!project) {
       throw redirect({ to: "/dashboard/organizations", search: { reason: REDIRECT_REASON.PERMISSION_DENIED } });
     }
 
-    return { project };
+    return { project, role };
   },
   component: OrganizationLayout,
 });

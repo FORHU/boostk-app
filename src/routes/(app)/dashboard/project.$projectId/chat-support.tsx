@@ -1,10 +1,17 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import type { Project, Ticket } from "prisma/generated/client";
 import { Suspense } from "react";
+import { REDIRECT_REASON } from "@/enums/enums";
+import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
 import { ticketQueries } from "@/modules/ticket/query.queries";
 
 export const Route = createFileRoute("/(app)/dashboard/project/$projectId/chat-support")({
+  beforeLoad: ({ context }) => {
+    if (!hasOrgRole(context.role, ORG_ROLE.AGENT)) {
+      throw redirect({ to: "/dashboard/organizations", search: { reason: REDIRECT_REASON.PERMISSION_DENIED } });
+    }
+  },
   loader: async ({ context }) => {
     context.queryClient.ensureQueryData(ticketQueries.getProjectTickets(context.project.id));
     return {};

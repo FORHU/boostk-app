@@ -16,10 +16,10 @@ export const createProjectFn = createServerFn({ method: "POST" })
 export const getProjectFn = createServerFn({ method: "GET" })
   .middleware([requireProjectMiddleware])
   .inputValidator(getProjectSchema)
-  .handler(async ({ data }) => {
-    const project = await getProjectById(data.projectId);
-
-    return project;
+  .handler(async ({ context }) => {
+    // `requireProjectMiddleware` already validated access and resolved the
+    // caller's role; surface both so routes can role-gate in `beforeLoad`.
+    return { project: context.project, role: context.role };
   });
 
 // TODO: make this more secure
