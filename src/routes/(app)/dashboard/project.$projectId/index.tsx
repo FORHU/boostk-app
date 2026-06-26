@@ -1,11 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { MessageCircle, X } from "lucide-react";
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
-
 
 export const Route = createFileRoute("/(app)/dashboard/project/$projectId/")({
-
   component: ProjectPage,
 
 });

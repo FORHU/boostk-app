@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: passWord123!
       POSTGRES_DB: localdata
     volumes:
-      - boostk_local:/var/lib/postgresql
+      - boostk_local:/var/lib/postgresql/data
 volumes:
  boostk_local:
 
