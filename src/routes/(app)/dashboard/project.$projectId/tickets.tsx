@@ -65,8 +65,7 @@ function ProjectTicketsPage() {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold">Tickets</h1>
-      <p className="mb-10"> Id: {projectId}</p>
+      <h1 className="text-2xl font-bold mb-10">Tickets</h1>
       
       {tickets.length === 0 ? (
         <div className="text-center p-12  rounded-lg">
@@ -77,18 +76,17 @@ function ProjectTicketsPage() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject / Title</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created Date</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Reference Number</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Customer Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Created Date</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {tickets.map((ticket: any) => (
+            <tbody className=" divide-gray-200">
+              {tickets.map((ticket) => (
                 <tr key={ticket.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    {/* Adjust .subject or .title based on your actual Prisma schema */}
-                    {ticket.subject || ticket.title}
+                    {ticket.referenceNumber || "Unknown Reference"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-400">
@@ -96,7 +94,7 @@ function ProjectTicketsPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {ticket.customer?.name || "Unknown Customer"}
+                    { "Unknown Customer"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {new Date(ticket.createdAt).toLocaleDateString()}

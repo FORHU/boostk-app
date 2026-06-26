@@ -32,6 +32,7 @@ export const updateProjectFn = createServerFn({ method: "POST" })
       data: {
         name: data.name,
         slug: data.slug,
+        
         description: data.description,
         logo: data.logo,
       },
