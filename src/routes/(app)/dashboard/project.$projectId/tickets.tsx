@@ -84,7 +84,7 @@ function ProjectTicketsPage() {
                 <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Created Date</th>
               </tr>
             </thead>
-            <tbody className=" divide-gray-200">
+            <tbody>
               {tickets.map((ticket) => (
                 <tr key={ticket.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
