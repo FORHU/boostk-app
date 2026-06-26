@@ -2,23 +2,23 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { z } from "zod";
 import { createServerFn } from "@tanstack/react-start";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
-import { prisma, type Prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { REDIRECT_REASON } from "@/enums/enums";
 import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
 import { requireProjectRole } from "@/modules/project/project.middleware";
 import { Loader2 } from "lucide-react";
 
-type TicketWithCustomer = Prisma.TicketGetPayload<{ include: { customer: true } }>;
-
 // 1. Fetching Function. Agent-only.
 export const getProjectTicketsFn = createServerFn({ method: "GET" })
   .inputValidator(z.object({ projectId: z.string() }))
   .middleware([requireProjectRole(ORG_ROLE.AGENT)])
-  .handler(async ({ data }): Promise<TicketWithCustomer[]> => {
+  .handler(async ({ data }) => {
     return prisma.ticket.findMany({
       where: { projectId: data.projectId },
       include: { customer: true },
-      orderBy: { createdAt: "desc" },
+      // `as const` pins the literal so Prisma's orderBy doesn't widen to `string`,
+      // which otherwise collapses the `include` payload type and drops `customer`.
+      orderBy: { createdAt: "desc" as const },
     });
   });
 
