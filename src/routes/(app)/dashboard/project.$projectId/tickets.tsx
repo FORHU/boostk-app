@@ -2,17 +2,19 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { z } from "zod";
 import { createServerFn } from "@tanstack/react-start";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
-import { prisma } from "@/lib/prisma";
+import { prisma, type Prisma } from "@/lib/prisma";
 import { REDIRECT_REASON } from "@/enums/enums";
 import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
 import { requireProjectRole } from "@/modules/project/project.middleware";
 import { Loader2 } from "lucide-react";
 
+type TicketWithCustomer = Prisma.TicketGetPayload<{ include: { customer: true } }>;
+
 // 1. Fetching Function. Agent-only.
 export const getProjectTicketsFn = createServerFn({ method: "GET" })
   .inputValidator(z.object({ projectId: z.string() }))
   .middleware([requireProjectRole(ORG_ROLE.AGENT)])
-  .handler(async ({ data }) => {
+  .handler(async ({ data }): Promise<TicketWithCustomer[]> => {
     return prisma.ticket.findMany({
       where: { projectId: data.projectId },
       include: { customer: true },
@@ -94,7 +96,7 @@ function ProjectTicketsPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    { "Unknown Customer"}
+                    { ticket.customer.name ||"Unknown Customer"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {new Date(ticket.createdAt).toLocaleDateString()}
