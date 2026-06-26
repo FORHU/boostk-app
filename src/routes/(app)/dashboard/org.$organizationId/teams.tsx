@@ -46,15 +46,11 @@ export const Route = createFileRoute("/(app)/dashboard/org/$organizationId/teams
 function OrganizationTeamsPage() {
   const { organizationId } = Route.useParams();
   return (
-    <div className="ml-12 mt-6">
-      <h1 className="uppercase text-2xl font-bold mb-8">Teams</h1>
-
       <div>
         <Suspense fallback={<p> loading members</p>}> 
           <TeamTable organizationId={organizationId} />
         </Suspense>
       </div>
-    </div>
   );
 }
 
@@ -65,51 +61,41 @@ function TeamTable({ organizationId }: { organizationId: string }) {
   const members = (query.data ?? []) as Array<Member & { user: User }>;
 
   return (
-<div className="bg-slate-100 me-10 rounded-lg">
-  {/* Header Section */}
-  <div className="text-center mb-8">
-    <h2 className="font-semibold text-lg">Members</h2>
-    <p className="text-slate-600">
-      List of members in your organization including their name, email and role.
-    </p>
-  </div>
+<div className="p-6">
+  <h1 className="uppercase text-2xl font-bold mb-8">Teams</h1>
 
-  {/* The "Table" Wrapper */}
-  <div className="w-full flex flex-col">
-    
-    {/* Table Header Row */}
-    {/* grid-cols-3 splits this row into 3 equal columns */}
-    <div className="grid grid-cols-3 border-b-2 border-slate-300 pb-3 font-semibold text-slate-700">
-      <h2 className="text-left pl-2">Name</h2>
-      <h2 className="text-center">Email</h2>
-      <h2 className="text-center">Role</h2>
-    </div>
+  <div className="overflow-x-auto rounded-lg border border-gray-200">
+    <table className="min-w-full divide-y divide-gray-200">
+       <thead className="bg-gray-50">
+        <tr>
+          <th colSpan={3} className="px-6 py-4 text-left text-xs font-semibold uppercase">Members</th>
+        </tr>
+        <tr>
+          <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Name</th>
+          <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Email</th>
+          <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Role</th>
+        </tr>
+      </thead>
 
-    {/* Table Body */}
-    <div className="flex flex-col">
-      {members.map((m) => (
-        <div 
-          key={m.id} 
-          className="grid grid-cols-3 items-center border-b border-slate-200 py-4 hover:bg-slate-200 transition-colors"
-        >
-          {/* Column 1: Name */}
-          <div className="text-left pl-2 font-medium">
-            {m.user?.name ?? "-"}
-          </div>
-          
-          {/* Column 2: Email */}
-          <div className="text-center text-slate-600">
-            {m.user?.email ?? "-"}
-          </div>
-          
-          {/* Column 3: Role */}
-          <div className="text-center">
-            {m.role ?? "member"}
-          </div>
-        </div>
-      ))}
-    </div>
-    
+      {/* Table Body */}
+      <tbody>
+        {members.map((m) => (
+          <tr key={m.id} className="hover:bg-gray-50">
+            <td className="px-6 py-4 whitespace-nowrap text-sm ">
+              {m.user?.name ?? "-"}
+            </td>
+            
+            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              {m.user?.email ?? "-"}
+            </td>
+            
+            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              {m.role ?? "member"}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   </div>
 </div>
   );
