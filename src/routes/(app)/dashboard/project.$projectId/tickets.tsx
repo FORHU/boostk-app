@@ -74,7 +74,7 @@ function ProjectTicketsPage() {
           <h3 className="text-lg font-medium mt-5 ">No tickets yet</h3>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-gray-200">
+        <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>

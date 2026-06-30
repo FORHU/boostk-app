@@ -61,10 +61,10 @@ function TeamTable({ organizationId }: { organizationId: string }) {
   const members = (query.data ?? []) as Array<Member & { user: User }>;
 
   return (
-<div className="p-6">
-  <h1 className="uppercase text-2xl font-bold mb-8">Teams</h1>
+<div className="p-6 ">
+  <h1 className="text-2xl font-bold mb-8">Teams</h1>
 
-  <div className="overflow-x-auto rounded-lg border border-gray-200">
+  <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
     <table className="min-w-full divide-y divide-gray-200">
        <thead className="bg-gray-50">
         <tr>
@@ -89,7 +89,7 @@ function TeamTable({ organizationId }: { organizationId: string }) {
               {m.user?.email ?? "-"}
             </td>
             
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+            <td className="first-letter:uppercase px-6 py-4 whitespace-nowrap text-sm text-gray-500">
               {m.role ?? "member"}
             </td>
           </tr>
