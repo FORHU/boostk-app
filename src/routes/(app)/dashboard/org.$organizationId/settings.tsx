@@ -1,15 +1,30 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { z } from "zod";
 import { createServerFn } from "@tanstack/react-start";
-import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import { queryOptions, useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useForm } from "@tanstack/react-form";
 import { useState } from "react";
 import { prisma } from "@/lib/prisma";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { getFieldInvalid } from "@/lib/form-utils";
 import { REDIRECT_REASON } from "@/enums/enums";
 import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
 import { requireOrgRole } from "@/modules/organization/organization.middleware";
 
-// Read the current org's settings. Admin-only (server-side enforcement).
+// Zod schema for client and server validation
+export const updateOrganizationSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  slug: z
+    .string()
+    .min(1, "Slug is required")
+    .regex(/^[a-z0-9-]+$/, "Slug must contain only lowercase letters, numbers, and hyphens"),
+  logo: z.string().optional().nullable(),
+});
+
+export type UpdateOrganizationInput = z.infer<typeof updateOrganizationSchema>;
+
 export const getSettingsFn = createServerFn({ method: "GET" })
   .inputValidator(z.object({ organizationId: z.string() }))
   .middleware([requireOrgRole(ORG_ROLE.ADMIN)])
@@ -17,24 +32,28 @@ export const getSettingsFn = createServerFn({ method: "GET" })
     return context.organization;
   });
 
-// Persist org settings changes. Admin-only (server-side enforcement).
 export const updateOrganizationFn = createServerFn({ method: "POST" })
-  .inputValidator(z.object({
-    organizationId: z.string(),
-    name: z.string().min(1, "Name is required"),
-    slug: z.string().min(1, "Slug is required"),
-    logo: z.string().optional().nullable(),
-  }))
+  .inputValidator(
+    z.object({ organizationId: z.string() }).and(updateOrganizationSchema)
+  )
   .middleware([requireOrgRole(ORG_ROLE.ADMIN)])
   .handler(async ({ context, data }) => {
-    return prisma.organization.update({
-      where: { id: context.organization.id },
-      data: {
-        name: data.name,
-        slug: data.slug,
-        logo: data.logo,
-      },
-    });
+    try {
+      return await prisma.organization.update({
+        where: { id: context.organization.id },
+        data: {
+          name: data.name,
+          slug: data.slug,
+          logo: data.logo,
+        },
+      });
+    } catch (error: any) {
+      // Catch Prisma's duplicate unique constraint (e.g. on slug)
+      if (error.code === "P2002") {
+        throw new Error("This slug is already in use. Please choose another one.");
+      }
+      throw new Error("Failed to save organization settings. Please try again.");
+    }
   });
 
 export const settingQueries = {
@@ -44,7 +63,7 @@ export const settingQueries = {
       queryKey: [...settingQueries.setting, organizationId],
       queryFn: () => getSettingsFn({ data: { organizationId } }),
     }),
-}
+};
 
 export const Route = createFileRoute("/(app)/dashboard/org/$organizationId/settings")({
   beforeLoad: ({ context }) => {
@@ -58,81 +77,149 @@ export const Route = createFileRoute("/(app)/dashboard/org/$organizationId/setti
 function OrganizationSettingsPage() {
   const { organizationId } = Route.useParams();
   const [isEditing, setIsEditing] = useState(false);
-  
-  const { data: organization, refetch } = useSuspenseQuery(
+  const queryClient = useQueryClient();
+
+  const { data: organization } = useSuspenseQuery(
     settingQueries.allByOrgId(organizationId)
   );
 
-  // Fallback initials
-  const fallbackInitials = organization?.name?.substring(0, 2).toUpperCase() || "OR";
+ const fallbackInitials = organization?.name?.substring(0, 2).toUpperCase() || "OR";
 
- // Handle Form Submission
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    
-    await updateOrganizationFn({
-      data: {
-        organizationId,
-        name: formData.get("name") as string,
-        slug: formData.get("slug") as string,
-        logo: formData.get("logo") as string, // Currently treating logo as a text URL input
-      }
-    });
+  //Mutation for Form Submission
+  const updateOrgMutation = useMutation({
+    mutationKey: ["update", "organization", organizationId],
+    mutationFn: updateOrganizationFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: settingQueries.setting });
+      setIsEditing(false);
+    },
+  });
 
-    setIsEditing(false);
-    refetch(); // Refresh the data to show updates
-  };
+  const updateForm = useForm({
+    defaultValues: {
+      name: organization?.name || "",
+      slug: organization?.slug || "",
+      logo: organization?.logo || "",
+    } as UpdateOrganizationInput,
+    validators: {
+      onChange: updateOrganizationSchema,
+      onSubmit: updateOrganizationSchema,
+    },
+    onSubmit: async ({ value }) => {
+      await updateOrgMutation.mutateAsync({
+        data: {
+          organizationId,
+          ...value,
+        },
+      });
+    },
+  });
 
   return (
     <div className="mt-6 ml-6">
       {isEditing ? (
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4 mr-10">
-              <div>
-                <label className="block text-sm font-medium mb-1">Organization Name</label>
-                <input 
-                  name="name" 
-                  defaultValue={organization?.name} 
-                  className="w-full border rounded-md p-2"
-                  required
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-1">Slug</label>
-                <input 
-                  name="slug" 
-                  defaultValue={organization?.slug} 
-                  className="w-full border rounded-md p-2 font-mono"
-                  required
-                />
-              </div>
+        <form
+          className="flex flex-col gap-4 mr-10"
+          onSubmit={async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            await updateForm.handleSubmit();
+          }}
+        >
+          {/* Surface Server Errors (Duplicate Slug, etc.) */}
+          {updateOrgMutation.error && (
+            <div className="p-3 text-sm font-medium text-destructive-foreground bg-destructive/10 border border-destructive/20 rounded-md">
+              {updateOrgMutation.error.message}
+            </div>
+          )}
 
-              <div>
-                <label className="block text-sm font-medium mb-1">Logo URL</label>
-                <input 
-                  name="logo" 
-                  defaultValue={organization?.logo || ""} 
-                  placeholder="https://example.com/logo.png"
-                  className="w-full border rounded-md p-2"
-                />
-              </div>
+          <FieldGroup className="flex flex-col gap-4">
+            <updateForm.Field name="name">
+              {(field) => {
+                const isInvalid = getFieldInvalid(field, updateForm);
+                return (
+                  <Field data-invalid={isInvalid}>
+                    <FieldLabel htmlFor={field.name} className="block text-sm font-medium mb-1">Organization Name</FieldLabel>
+                    <Input
+                      id={field.name}
+                      name={field.name}
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      aria-invalid={isInvalid}
+                      className="w-full"
+                      required
+                    />
+                    {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                  </Field>
+                );
+              }}
+            </updateForm.Field>
 
-              <div className="flex gap-2 justify-end mt-4">
-                <button 
-                  type="button" 
-                  onClick={() => setIsEditing(false)}
-                  className="px-4 py-2 text-sm bg-secondary rounded-md"
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="submit"
-                  className="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-md"
-                >
-                  Save Changes
-                </button>
-              </div>
+            <updateForm.Field name="slug">
+              {(field) => {
+                const isInvalid = getFieldInvalid(field, updateForm);
+                return (
+                  <Field data-invalid={isInvalid}>
+                    <FieldLabel htmlFor={field.name} className="block text-sm font-medium mb-1">Slug</FieldLabel>
+                    <Input
+                      id={field.name}
+                      name={field.name}
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      aria-invalid={isInvalid}
+                      className="w-full font-mono"
+                      required
+                    />
+                    {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                  </Field>
+                );
+              }}
+            </updateForm.Field>
+
+            <updateForm.Field name="logo">
+              {(field) => {
+                const isInvalid = getFieldInvalid(field, updateForm);
+                return (
+                  <Field data-invalid={isInvalid}>
+                    <FieldLabel htmlFor={field.name} className="block text-sm font-medium mb-1">Logo URL</FieldLabel>
+                    <Input
+                      id={field.name}
+                      name={field.name}
+                      value={field.state.value || ""}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      aria-invalid={isInvalid}
+                      placeholder="https://example.com/logo.png"
+                      className="w-full"
+                    />
+                    {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                  </Field>
+                );
+              }}
+            </updateForm.Field>
+          </FieldGroup>
+
+          <div className="flex gap-2 justify-end mt-4">
+            <button
+              type="button"
+              className="px-4 py-2 border hover:bg-muted transition-colors"
+              onClick={() => {
+                updateForm.reset();
+                updateOrgMutation.reset();
+                setIsEditing(false);
+              }}
+              disabled={updateOrgMutation.isPending}>
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={updateOrgMutation.isPending || !updateForm.state.canSubmit}
+              className="px-4 py-2 border bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors">
+              {updateOrgMutation.isPending ? "Saving..." : "Save Changes"}
+            </button>
+          </div>
         </form>
       ) : (
         <>
@@ -147,31 +234,29 @@ function OrganizationSettingsPage() {
             <div className="ml-auto mr-20">
               <button
                 onClick={() => setIsEditing(true)}
-                className="px-4 py-2 text-sm border rounded- hover:bg-muted transition-colors">
+                className="px-4 py-2 text-sm border rounded hover:bg-muted transition-colors">
                 Edit Settings
               </button>
             </div>
           </div>
 
           <div className="border border-gray-200 rounded-2xl overflow-hidden shadow-sm bg-white isolate mr-10">
-          <div className="divide-y divide-gray-200">
-            <div className="grid grid-cols-2">
-              <div className="px-6 py-4 text-sm font-semibold">Name</div>
-              <div className="px-6 py-4 text-sm text-muted-foreground">
-                {organization?.name}
+            <div className="divide-y divide-gray-200">
+              <div className="grid grid-cols-2">
+                <div className="px-6 py-4 text-sm font-semibold">Name</div>
+                <div className="px-6 py-4 text-sm text-muted-foreground">
+                  {organization?.name}
+                </div>
+              </div>
+              <div className="grid grid-cols-2">
+                <div className="px-6 py-4 text-sm font-semibold">Slug</div>
+                <div className="px-6 py-4 text-sm text-muted-foreground">
+                  {organization?.slug}
+                </div>
               </div>
             </div>
-            <div className="grid grid-cols-2">
-              <div className="px-6 py-4 text-sm font-semibold">Slug</div>
-              <div className="px-6 py-4 text-sm text-muted-foreground">
-                {organization?.slug}
-              </div>
-            </div>
-
           </div>
-        </div>
         </>
       )}
     </div>
-  );
-}
+);}
