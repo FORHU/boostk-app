@@ -1,14 +1,29 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { z } from "zod";
 import { createServerFn } from "@tanstack/react-start";
-import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import { queryOptions, useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useForm } from "@tanstack/react-form";
 import { useState } from "react";
 import { prisma } from "@/lib/prisma";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { getFieldInvalid } from "@/lib/form-utils";
 import { REDIRECT_REASON } from "@/enums/enums";
 import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
 import { requireProjectRole } from "@/modules/project/project.middleware";
 
-// 1. Fetching Function. Admin-only (server-side enforcement).
+// Zod schema for validation
+export const updateProjectSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  slug:  z
+    .string()
+    .min(1, "Slug is required")
+    .regex(/^[a-z0-9-]+$/, "Slug must contain only lowercase letters, numbers, and hyphens"),
+  description: z.string().optional().nullable(),
+});
+
+export type UpdateProjectInput = z.infer<typeof updateProjectSchema>;
+
 export const getProjectSettingsFn = createServerFn({ method: "GET" })
   .inputValidator(z.object({ projectId: z.string() }))
   .middleware([requireProjectRole(ORG_ROLE.ADMIN)])
@@ -16,38 +31,34 @@ export const getProjectSettingsFn = createServerFn({ method: "GET" })
     return context.project;
   });
 
-// 2. Update Function to save changes. Admin-only (server-side enforcement).
 export const updateProjectFn = createServerFn({ method: "POST" })
-  .inputValidator(z.object({
-    projectId: z.string(),
-    name: z.string().min(1, "Name is required"),
-    slug: z.string().min(1, "Slug is required"),
-    description: z.string().optional().nullable(),
-    logo: z.string().optional().nullable(),
-  }))
+  .inputValidator(z.object({ projectId: z.string() }).and(updateProjectSchema))
   .middleware([requireProjectRole(ORG_ROLE.ADMIN)])
   .handler(async ({ context, data }) => {
-    return prisma.project.update({
-      where: { id: context.project.id },
-      data: {
-        name: data.name,
-        slug: data.slug,
-        
-        description: data.description,
-        logo: data.logo,
-      },
-    });
+    try {
+      return await prisma.project.update({
+        where: { id: context.project.id },
+        data: {
+          name: data.name,
+          slug: data.slug,
+          description: data.description,
+        },
+      });
+    } catch (error: any) {
+      if (error.code === "P2002") {
+        throw new Error("This slug is already in use. Please choose another one.");
+      }
+      throw new Error("Failed to save project settings.");
+    }
   });
-
-// 3. Query Options
 export const projectSettingQueries = {
   setting: ["project-setting"],
   allByProjectId: (projectId: string) =>
     queryOptions({
-      queryKey: [...projectSettingQueries.setting, "setting", projectId],
+      queryKey: [...projectSettingQueries.setting, projectId],
       queryFn: () => getProjectSettingsFn({ data: { projectId } }),
     }),
-}
+};
 
 export const Route = createFileRoute("/(app)/dashboard/project/$projectId/settings")({
   beforeLoad: ({ context }) => {
@@ -61,78 +72,140 @@ export const Route = createFileRoute("/(app)/dashboard/project/$projectId/settin
 function ProjectSettingsPage() {
   const { projectId } = Route.useParams();
   const [isEditing, setIsEditing] = useState(false);
-  
-  const { data: project, refetch } = useSuspenseQuery(
+  const queryClient = useQueryClient();
+
+  const { data: project } = useSuspenseQuery(
     projectSettingQueries.allByProjectId(projectId)
   );
 
-  // Handle Form Submission
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    
-    await updateProjectFn({
-      data: {
-        projectId,
-        name: formData.get("name") as string,
-        slug: formData.get("slug") as string,
-        description: formData.get("description") as string,
-      }
-    });
+  const updateProjectMutation = useMutation({
+    mutationKey: ["update-project", projectId],
+    mutationFn: updateProjectFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: projectSettingQueries.setting });
+      setIsEditing(false);
+    },
+  });
 
-    setIsEditing(false);
-    refetch(); // Refresh the data to show updates
-  };
+  const updateForm = useForm({
+    defaultValues: {
+      name: project?.name || "",
+      slug: project?.slug || "",
+      description: project?.description || "",
+      logo: project?.logo || "",
+    } as UpdateProjectInput,
+    validators: {
+      onChange: updateProjectSchema,
+      onSubmit: updateProjectSchema,
+    },
+    onSubmit: async ({ value }) => {
+      await updateProjectMutation.mutateAsync({
+        data:{
+          projectId,
+        ...value,
+        }
+      });
+    },
+  });
 
   return (
     <div className="p-6">
       {isEditing ? (
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4 mr-10">
-              <div>
-                <label className="block text-sm font-medium mb-1">Project Name</label>
-                <input 
-                  name="name" 
-                  defaultValue={project?.name} 
-                  className="w-full border rounded-md p-2"
-                  required
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-1">Slug</label>
-                <input 
-                  name="slug" 
-                  defaultValue={project?.slug} 
-                  className="w-full border rounded-md p-2 font-mono"
-                  required
-                />
-              </div>
+        <form
+          className="flex flex-col gap-4 mr-10"
+          onSubmit={async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            await updateForm.handleSubmit();
+          }}>
+          {/* Surface Server Errors */}
+          {updateProjectMutation.error && (
+            <div className="p-3 text-sm font-medium text-destructive-foreground bg-destructive/10 border border-destructive/20 rounded-md">
+              {updateProjectMutation.error.message}
+            </div>
+          )}
 
-              <div>
-                <label className="block text-sm font-medium mb-1">Description</label>
-                <textarea 
-                  name="description" 
-                  defaultValue={project?.description || ""} 
-                  className="w-full border rounded-md p-2"
-                  rows={3}
-                />
-              </div>
+          <FieldGroup className="flex flex-col gap-4">
+            <updateForm.Field name="name">
+              {(field) => {
+                const isInvalid = getFieldInvalid(field, updateForm);
+                return (
+                  <Field data-invalid={isInvalid}>
+                    <FieldLabel htmlFor={field.name}>Project Name</FieldLabel>
+                    <Input
+                      id={field.name}
+                      name={field.name}
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      className="w-full"
+                    />
+                    {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                  </Field>
+                );
+              }}
+            </updateForm.Field>
 
-              <div className="flex gap-2 justify-end mt-4">
-                <button 
-                  type="button" 
-                  onClick={() => setIsEditing(false)}
-                  className="px-4 py-2 text-sm bg-secondary rounded-md"
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="submit"
-                  className="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-md"
-                >
-                  Save Changes
-                </button>
-              </div>
+            <updateForm.Field name="slug">
+              {(field) => {
+                const isInvalid = getFieldInvalid(field, updateForm);
+                return (
+                  <Field data-invalid={isInvalid}>
+                    <FieldLabel htmlFor={field.name}>Slug</FieldLabel>
+                    <Input
+                      id={field.name}
+                      name={field.name}
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      className="w-full font-mono"
+                    />
+                    {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                  </Field>
+                );
+              }}
+            </updateForm.Field>
+
+            <updateForm.Field name="description">
+              {(field) => {
+                const isInvalid = getFieldInvalid(field, updateForm);
+                return (
+                  <Field data-invalid={isInvalid}>
+                    <FieldLabel htmlFor={field.name}>Description</FieldLabel>
+                    <textarea
+                      id={field.name}
+                      name={field.name}
+                      value={field.state.value || ""}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      className="w-full border rounded-md p-2"
+                      rows={3}
+                    />
+                    {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                  </Field>
+                );
+              }}
+            </updateForm.Field>
+          </FieldGroup>
+
+          <div className="flex gap-2 justify-end mt-4">
+            <button
+              type="button"
+              className="px-4 py-2 border hover:bg-muted transition-colors"
+              onClick={() => {
+                updateForm.reset();
+                setIsEditing(false);
+              }}
+              disabled={updateProjectMutation.isPending}>
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={updateProjectMutation.isPending || !updateForm.state.canSubmit}
+              className="px-4 py-2 border bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors">
+              {updateProjectMutation.isPending ? "Saving..." : "Save Changes"}
+            </button>
+          </div>
         </form>
       ) : (
         <>
@@ -142,38 +215,33 @@ function ProjectSettingsPage() {
               <h1 className="text-2xl font-bold">Project Settings</h1>
             </div>
             <div className="ml-auto mr-20">
-              <button
-                onClick={() => setIsEditing(true)}
-                className="px-4 py-2 text-sm border rounded-md hover:bg-muted transition-colors"
-              >
+              <button className="px-4 py-2 text-sm border rounded hover:bg-muted transition-colors"
+                onClick={() => setIsEditing(true)}>
                 Edit Settings
               </button>
             </div>
           </div>
 
-          <div className="border border-gray-200 rounded-4xl overflow-hidden shadow-sm">
-            <div className="divide-y divide-gray-200">
-
+          <div className="border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+          <div className="divide-y divide-gray-200">
               <div className="grid grid-cols-2">
                 <div className="px-6 py-4 text-sm font-semibold">Name</div>
                 <div className="px-6 py-4 text-sm">{project?.name}</div>
               </div>
-
-              <div className="grid grid-cols-2">
+             <div className="grid grid-cols-2">
                 <div className="px-6 py-4 text-sm font-semibold">Slug</div>
-                <div className="px-6 py-4 text-sm">{project?.slug}</div>
+                <div className="px-6 py-4 text-sm font-mono">{project?.slug}</div>
               </div>
-
-              <div className="grid grid-cols-2">
+            <div className="grid grid-cols-2">
                 <div className="px-6 py-4 text-sm font-semibold">Description</div>
                 <div className="px-6 py-4 text-sm whitespace-normal wrap-break-words">
                   {project?.description || "No description provided."}
                 </div>
               </div>
-
-            </div>
-          </div>    
+          </div>
+          </div>
         </>
       )}
     </div>
-  );}
+  );
+}
