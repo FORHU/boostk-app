@@ -8,6 +8,9 @@
 		"serve": "bun --bun vite preview",
 		"format": "biome format --write",
 		"lint": "biome check",
+		"typecheck": "tsc --noEmit",
+		"test": "vitest run",
+		"test:watch": "vitest",
 		"setup-local-db": "bun prisma generate && bun prisma migrate reset && bun prisma db seed",
 		"start": "bun run .output/server/index.mjs"
 	},
