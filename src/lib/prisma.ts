@@ -2,8 +2,6 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { withAccelerate } from "@prisma/extension-accelerate";
 import { PrismaClient } from "../../prisma/generated/client";
 
-export type { Prisma } from "../../prisma/generated/client";
-
 const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL,
 });
