@@ -137,8 +137,9 @@ function OrganizationSettingsPage() {
       ) : (
         <>
           {/* ----- READ-ONLY MODE ----- */}
+          <h1 className="mb-6 text-2xl font-bold ">Settings</h1>
           <div className="grid grid-cols-2">
-            <Avatar className="size-50 ">
+            <Avatar className="size-50 mb-10">
               <AvatarImage src={organization?.logo || undefined} alt={`${organization?.name} logo`} />
               <AvatarFallback className="text-lg">{fallbackInitials}</AvatarFallback>
             </Avatar>
@@ -150,19 +151,25 @@ function OrganizationSettingsPage() {
                 Edit Settings
               </button>
             </div>
-            <p className="mt-5">Id: {organizationId}</p>
           </div>
-          <div className="flex flex-col">
-            <h2 className="font-bold mt-5">Name:</h2>
-            <p className="text-muted-foreground border-b border-border pb-2 mr-10">
-              {organization?.name}
-            </p>
 
-            <p className="font-bold mt-5">Slug:</p>
-            <p className="text-muted-foreground border-b border-border pb-2 mr-10">
-              {organization?.slug}
-            </p>
+          <div className="border border-gray-200 rounded-2xl overflow-hidden shadow-sm bg-white isolate mr-10">
+          <div className="divide-y divide-gray-200">
+            <div className="grid grid-cols-2">
+              <div className="px-6 py-4 text-sm font-semibold">Name</div>
+              <div className="px-6 py-4 text-sm text-muted-foreground">
+                {organization?.name}
+              </div>
+            </div>
+            <div className="grid grid-cols-2">
+              <div className="px-6 py-4 text-sm font-semibold">Slug</div>
+              <div className="px-6 py-4 text-sm text-muted-foreground">
+                {organization?.slug}
+              </div>
+            </div>
+
           </div>
+        </div>
         </>
       )}
     </div>

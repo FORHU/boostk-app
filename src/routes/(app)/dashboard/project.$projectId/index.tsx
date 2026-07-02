@@ -13,7 +13,7 @@ function ProjectPage() {
   const [isChatLarge, setIsChatLarge] = useState(false);
 
   return (
-<div className="p-6 relative min-h-screen">
+    <div className="p-6 relative min-h-screen">
       <h1 className="text-2xl font-bold mb-4">Project Page</h1>
       <div className="mb-6">
         <p className="text-gray-600 mb-4">

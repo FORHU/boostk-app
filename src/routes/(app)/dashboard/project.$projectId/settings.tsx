@@ -85,7 +85,7 @@ function ProjectSettingsPage() {
   };
 
   return (
-    <div className="mt-6 ml-6">
+    <div className="p-6">
       {isEditing ? (
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 mr-10">
               <div>
@@ -137,9 +137,9 @@ function ProjectSettingsPage() {
       ) : (
         <>
           {/* ----- READ-ONLY MODE ----- */}
-          <div className="grid grid-cols-2">
+          <div className="grid grid-cols-2 mb-10">
             <div>
-              <h1 className="text-3xl font-bold">Project Settings</h1>
+              <h1 className="text-2xl font-bold">Project Settings</h1>
             </div>
             <div className="ml-auto mr-20">
               <button
@@ -149,25 +149,30 @@ function ProjectSettingsPage() {
                 Edit Settings
               </button>
             </div>
-            <p className="mt-2">Id: {projectId}</p>
           </div>
-          
-          <div className="flex flex-col">
-            <h2 className="font-bold mt-5">Name:</h2>
-            <p className="text-muted-foreground border-b border-border pb-2 mr-10">
-              {project?.name}
-            </p>
 
-            <p className="font-bold mt-5">Slug:</p>
-            <p className="text-muted-foreground border-b border-border pb-2 mr-10">
-              {project?.slug}
-            </p>
+          <div className="border border-gray-200 rounded-4xl overflow-hidden shadow-sm">
+            <div className="divide-y divide-gray-200">
 
-            <p className="font-bold mt-5">Description:</p>
-            <p className="text-muted-foreground border-b border-border pb-2 mr-10">
-              {project?.description || "No description provided."}
-            </p>
-          </div>
+              <div className="grid grid-cols-2">
+                <div className="px-6 py-4 text-sm font-semibold">Name</div>
+                <div className="px-6 py-4 text-sm">{project?.name}</div>
+              </div>
+
+              <div className="grid grid-cols-2">
+                <div className="px-6 py-4 text-sm font-semibold">Slug</div>
+                <div className="px-6 py-4 text-sm">{project?.slug}</div>
+              </div>
+
+              <div className="grid grid-cols-2">
+                <div className="px-6 py-4 text-sm font-semibold">Description</div>
+                <div className="px-6 py-4 text-sm whitespace-normal wrap-break-words">
+                  {project?.description || "No description provided."}
+                </div>
+              </div>
+
+            </div>
+          </div>    
         </>
       )}
     </div>

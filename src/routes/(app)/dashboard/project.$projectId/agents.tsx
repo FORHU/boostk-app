@@ -63,7 +63,7 @@ function AgentTable({ projectId }: { projectId: string }) {
   const members = Allmembers.filter((m) => hasOrgRole(m.role, ORG_ROLE.AGENT));
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-gray-200">
+    <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">      
           <tr>
@@ -84,7 +84,7 @@ function AgentTable({ projectId }: { projectId: string }) {
                 {m.user?.email ?? "-"}
               </td>
               
-              <td className=" text-gray-500 px-6 py-4 whitespace-nowrap text-sm">
+              <td className="first-letter:uppercase text-gray-500 px-6 py-4 whitespace-nowrap text-sm">
                 {m.role ?? "AGENT"}
               </td>
             </tr>
