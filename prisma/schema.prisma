@@ -151,6 +151,8 @@ model Customer {
   email    String
   phone    String?
   metadata String?
+  // Detected language of the customer (English name, e.g. "Korean"); agent replies are translated into it.
+  language String?
 
   projectId String
   project   Project @relation(fields: [projectId], references: [id])
@@ -187,6 +189,12 @@ model TicketMessage {
   id          String                   @id @default(cuid())
   content     String
   contentType TicketMessageContentType @default(TEXT)
+
+  // Cached translation for cross-language support chat (see ticket-message.translation.ts).
+  // `content` is what the sender typed; `translatedContent` is the support-language version.
+  translatedContent String?
+  sourceLang        String?
+  targetLang        String?
 
   ticketId String
   ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
