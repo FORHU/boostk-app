@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Blocks, Boxes, CreditCard, Settings, Users } from "lucide-react";
+import { Blocks, Boxes, ChartBarBig, CreditCard, Settings, Users } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -36,10 +36,16 @@ const routes = [
     href: "/dashboard/org/$organizationId/billing",
   },
   {
+    label: "Usage",
+    icon: ChartBarBig,
+    href: "/dashboard/org/$organizationId/usage",
+  },
+  {
     label: "Settings",
     icon: Settings,
     href: "/dashboard/org/$organizationId/settings",
   },
+
 ];
 
 export default function OrganizationSidebar({ organizationId, ...props }: OrganizationSidebarProps) {
