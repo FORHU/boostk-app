@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as authRouteRouteImport } from './routes/(auth)/route'
 import { Route as appRouteRouteImport } from './routes/(app)/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiTranslateRouteImport } from './routes/api/translate'
 import { Route as authSignupRouteImport } from './routes/(auth)/signup'
 import { Route as authSigninRouteImport } from './routes/(auth)/signin'
 import { Route as ApiNotificationSseRouteImport } from './routes/api/notification/sse'
@@ -43,6 +44,11 @@ const appRouteRoute = appRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiTranslateRoute = ApiTranslateRouteImport.update({
+  id: '/api/translate',
+  path: '/api/translate',
   getParentRoute: () => rootRouteImport,
 } as any)
 const authSignupRoute = authSignupRouteImport.update({
@@ -160,6 +166,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/signin': typeof authSigninRoute
   '/signup': typeof authSignupRoute
+  '/api/translate': typeof ApiTranslateRoute
   '/dashboard/organizations': typeof appDashboardOrganizationsRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/notification/sse': typeof ApiNotificationSseRoute
@@ -182,6 +189,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/signin': typeof authSigninRoute
   '/signup': typeof authSignupRoute
+  '/api/translate': typeof ApiTranslateRoute
   '/dashboard/organizations': typeof appDashboardOrganizationsRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/notification/sse': typeof ApiNotificationSseRoute
@@ -205,6 +213,7 @@ export interface FileRoutesById {
   '/(auth)': typeof authRouteRouteWithChildren
   '/(auth)/signin': typeof authSigninRoute
   '/(auth)/signup': typeof authSignupRoute
+  '/api/translate': typeof ApiTranslateRoute
   '/(app)/dashboard/organizations': typeof appDashboardOrganizationsRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/notification/sse': typeof ApiNotificationSseRoute
@@ -229,6 +238,7 @@ export interface FileRouteTypes {
     | '/'
     | '/signin'
     | '/signup'
+    | '/api/translate'
     | '/dashboard/organizations'
     | '/api/auth/$'
     | '/api/notification/sse'
@@ -251,6 +261,7 @@ export interface FileRouteTypes {
     | '/'
     | '/signin'
     | '/signup'
+    | '/api/translate'
     | '/dashboard/organizations'
     | '/api/auth/$'
     | '/api/notification/sse'
@@ -273,6 +284,7 @@ export interface FileRouteTypes {
     | '/(auth)'
     | '/(auth)/signin'
     | '/(auth)/signup'
+    | '/api/translate'
     | '/(app)/dashboard/organizations'
     | '/api/auth/$'
     | '/api/notification/sse'
@@ -296,6 +308,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   appRouteRoute: typeof appRouteRouteWithChildren
   authRouteRoute: typeof authRouteRouteWithChildren
+  ApiTranslateRoute: typeof ApiTranslateRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiNotificationSseRoute: typeof ApiNotificationSseRoute
   publicSupportProjectIdChatWidgetRoute: typeof publicSupportProjectIdChatWidgetRoute
@@ -322,6 +335,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/translate': {
+      id: '/api/translate'
+      path: '/api/translate'
+      fullPath: '/api/translate'
+      preLoaderRoute: typeof ApiTranslateRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/(auth)/signup': {
@@ -553,6 +573,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   appRouteRoute: appRouteRouteWithChildren,
   authRouteRoute: authRouteRouteWithChildren,
+  ApiTranslateRoute: ApiTranslateRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiNotificationSseRoute: ApiNotificationSseRoute,
   publicSupportProjectIdChatWidgetRoute: publicSupportProjectIdChatWidgetRoute,

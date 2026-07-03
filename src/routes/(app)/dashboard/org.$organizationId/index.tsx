@@ -54,7 +54,7 @@ function OrganizationPage() {
         <ProjectForm organizationId={organizationId} />
 
         <Suspense fallback={<OrgProjectsSkeleton />}>
-          <OrgProjects organizationId={organizationId} />
+          <OrgProjects organizationId={organizationId} searchQuery={searchQuery}/>
         </Suspense>
       </div>
     </div>
@@ -138,7 +138,7 @@ const ProjectForm = ({ organizationId }: { organizationId: string }) => {
 
 const OrgProjectsSkeleton = () => {
   return (
-    <div className="lg:col-span-4 space-y-6">
+    <div className="lg:col-span-4 space-y-6">x
       <h2>Projects</h2>
       {Array.from({ length: 3 }).map((_, index) => (
         // biome-ignore lint/suspicious/noArrayIndexKey: <index is used as a fallback key for skeleton items>
@@ -150,17 +150,24 @@ const OrgProjectsSkeleton = () => {
   );
 };
 
-const OrgProjects = ({ organizationId }: { organizationId: string }) => {
+const OrgProjects = ({ organizationId, searchQuery }: { organizationId: string;searchQuery: string;}) => {
   const { data: projects } = useSuspenseQuery(projectQueries.allByOrgId(organizationId));
-
+  const filteredProjects = projects.filter((project) =>
+    project.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
   return (
     <div className="lg:col-span-4 space-y-6">
       <h2>Projects</h2>
-      {projects.map((project) => (
-        <Link to="/dashboard/project/$projectId" params={{ projectId: project.id }} key={project.id}>
-          <h3>{project.name}</h3>
-        </Link>
-      ))}
+      {filteredProjects.length === 0 ? (
+        <div className="text-center">
+          <p className="text-muted-foreground">No projects match "{searchQuery}"</p>
+        </div>
+      ) : (
+        filteredProjects.map((project) => (
+          <Link to="/dashboard/project/$projectId" params={{ projectId: project.id }} key={project.id}>
+            <h3>{project.name}</h3>
+          </Link>
+        ))
+      )}
     </div>
-  );
-};
+);};
