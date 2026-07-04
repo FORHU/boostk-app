@@ -1,21 +1,21 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
-import { z } from "zod";
-import { createServerFn } from "@tanstack/react-start";
-import { queryOptions, useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useForm } from "@tanstack/react-form";
+import { queryOptions, useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { prisma } from "@/lib/prisma";
+import { z } from "zod";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { getFieldInvalid } from "@/lib/form-utils";
 import { REDIRECT_REASON } from "@/enums/enums";
+import { getFieldInvalid } from "@/lib/form-utils";
+import { prisma } from "@/lib/prisma";
 import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
 import { requireProjectRole } from "@/modules/project/project.middleware";
 
 // Zod schema for validation
 export const updateProjectSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  slug:  z
+  slug: z
     .string()
     .min(1, "Slug is required")
     .regex(/^[a-z0-9-]+$/, "Slug must contain only lowercase letters, numbers, and hyphens"),
@@ -44,8 +44,8 @@ export const updateProjectFn = createServerFn({ method: "POST" })
           description: data.description,
         },
       });
-    } catch (error: any) {
-      if (error.code === "P2002") {
+    } catch (error) {
+      if (error && typeof error === "object" && "code" in error && error.code === "P2002") {
         throw new Error("This slug is already in use. Please choose another one.");
       }
       throw new Error("Failed to save project settings.");
@@ -74,9 +74,7 @@ function ProjectSettingsPage() {
   const [isEditing, setIsEditing] = useState(false);
   const queryClient = useQueryClient();
 
-  const { data: project } = useSuspenseQuery(
-    projectSettingQueries.allByProjectId(projectId)
-  );
+  const { data: project } = useSuspenseQuery(projectSettingQueries.allByProjectId(projectId));
 
   const updateProjectMutation = useMutation({
     mutationKey: ["update-project", projectId],
@@ -100,10 +98,10 @@ function ProjectSettingsPage() {
     },
     onSubmit: async ({ value }) => {
       await updateProjectMutation.mutateAsync({
-        data:{
+        data: {
           projectId,
-        ...value,
-        }
+          ...value,
+        },
       });
     },
   });
@@ -117,7 +115,8 @@ function ProjectSettingsPage() {
             e.preventDefault();
             e.stopPropagation();
             await updateForm.handleSubmit();
-          }}>
+          }}
+        >
           {/* Surface Server Errors */}
           {updateProjectMutation.error && (
             <div className="p-3 text-sm font-medium text-destructive-foreground bg-destructive/10 border border-destructive/20 rounded-md">
@@ -196,13 +195,15 @@ function ProjectSettingsPage() {
                 updateForm.reset();
                 setIsEditing(false);
               }}
-              disabled={updateProjectMutation.isPending}>
+              disabled={updateProjectMutation.isPending}
+            >
               Cancel
             </button>
             <button
               type="submit"
               disabled={updateProjectMutation.isPending || !updateForm.state.canSubmit}
-              className="px-4 py-2 border bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors">
+              className="px-4 py-2 border bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors"
+            >
               {updateProjectMutation.isPending ? "Saving..." : "Save Changes"}
             </button>
           </div>
@@ -215,30 +216,33 @@ function ProjectSettingsPage() {
               <h1 className="text-2xl font-bold">Project Settings</h1>
             </div>
             <div className="ml-auto mr-20">
-              <button className="px-4 py-2 text-sm border rounded hover:bg-muted transition-colors"
-                onClick={() => setIsEditing(true)}>
+              <button
+                type="button"
+                className="px-4 py-2 text-sm border rounded hover:bg-muted transition-colors"
+                onClick={() => setIsEditing(true)}
+              >
                 Edit Settings
               </button>
             </div>
           </div>
 
           <div className="border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-          <div className="divide-y divide-gray-200">
+            <div className="divide-y divide-gray-200">
               <div className="grid grid-cols-2">
                 <div className="px-6 py-4 text-sm font-semibold">Name</div>
                 <div className="px-6 py-4 text-sm">{project?.name}</div>
               </div>
-             <div className="grid grid-cols-2">
+              <div className="grid grid-cols-2">
                 <div className="px-6 py-4 text-sm font-semibold">Slug</div>
                 <div className="px-6 py-4 text-sm font-mono">{project?.slug}</div>
               </div>
-            <div className="grid grid-cols-2">
+              <div className="grid grid-cols-2">
                 <div className="px-6 py-4 text-sm font-semibold">Description</div>
                 <div className="px-6 py-4 text-sm whitespace-normal wrap-break-words">
                   {project?.description || "No description provided."}
                 </div>
               </div>
-          </div>
+            </div>
           </div>
         </>
       )}
