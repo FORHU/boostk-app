@@ -1,15 +1,15 @@
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { Bot, Send, Sparkles, Loader2 } from "lucide-react";
+import { Bot, Loader2, Send, Sparkles } from "lucide-react";
 import type { Project, TicketMessage } from "prisma/generated/client";
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useEffect, useState } from "react";
 import TicketChatMessageBubble from "@/components/chat-support/TicketChatMessageBubble";
+import TicketCustomerForm from "@/components/chat-support/TicketCustomerForm";
 import { getProjectPublicFn } from "@/modules/project/project.functions";
 import { getTicketCookieFn } from "@/modules/ticket/ticket.functions";
 import { createTicketMessageFn } from "@/modules/ticket-message/ticket-message.functions";
 import { ticketMessageQueries } from "@/modules/ticket-message/ticket-message.queries";
-import TicketCustomerForm from "@/components/chat-support/TicketCustomerForm";
 
 export const Route = createFileRoute("/(public)/support/$projectId/chat-widget")({
   beforeLoad: async ({ params }) => {
@@ -48,7 +48,7 @@ function RouteComponent() {
     <div className="flex flex-col h-screen max-h-screen bg-white overflow-hidden">
       <ChatHeader project={project} />
 
-<div className="flex-1 overflow-y-auto p-2 bg-slate-50 scroll-smooth pb-4">
+      <div className="flex-1 overflow-y-auto p-2 bg-slate-50 scroll-smooth pb-4">
         {/* If the timer is still running, show the spinner, otherwise let Suspense handle it */}
         {showSpinner ? (
           <LoadingFallback />
@@ -110,7 +110,7 @@ const TicketMessageList = () => {
   if (!ticketMessages) return <div>No messages</div>;
 
   return (
-    <>  
+    <>
       {ticketMessages.length === 0 ? (
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
@@ -122,9 +122,7 @@ const TicketMessageList = () => {
             <Sparkles className="text-indigo-500" size={32} />
           </div>
           <h3 className="font-semibold text-gray-900">Waiting for an agent</h3>
-          <p className="text-gray-500 text-sm mt-1 max-w-[200px]">
-            Our support team will be with you shortly.
-          </p>
+          <p className="text-gray-500 text-sm mt-1 max-w-[200px]">Our support team will be with you shortly.</p>
         </motion.div>
       ) : (
         ticketMessages.map((msg, index) => {
