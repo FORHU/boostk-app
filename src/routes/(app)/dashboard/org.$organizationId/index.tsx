@@ -6,6 +6,7 @@ import { Suspense, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/toast";
 import { getFieldInvalid } from "@/lib/form-utils";
 import { createProjectFn } from "@/modules/project/project.functions";
 import { projectQueries } from "@/modules/project/project.queries";
@@ -63,15 +64,18 @@ function OrganizationPage() {
 
 const ProjectForm = ({ organizationId }: { organizationId: string }) => {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const createProjectMutation = useMutation({
     mutationKey: ["create", "project"],
     mutationFn: createProjectFn,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: projectQueries.all });
+      toast("Project created successfully!", "success");
     },
     onError: (error) => {
       console.error(error);
+      toast("Failed to create project. Please try again.", "error");
     },
   });
 
