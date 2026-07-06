@@ -1,0 +1,60 @@
+name: CI
+
+# WHEN should this run?
+on:
+  push:
+    branches: [main] # runs when commits land on main
+  pull_request: # runs on every PR, targeting any branch
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest # the throwaway VM GitHub gives us
+
+    # Dummy env vars so the build/typecheck don't crash on missing config.
+    # These are NOT secrets and never touch a real database — they just let
+    # the code that reads process.env at build time succeed.
+    env:
+      DATABASE_URL: postgresql://user:pass@localhost:5432/ci
+      BETTER_AUTH_SECRET: ci-dummy-secret-not-real
+      BETTER_AUTH_URL: http://localhost:5000/
+
+    steps:
+      # 1. Pull our repo's code onto the CI machine.
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Install Bun (our runtime + package manager).
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest # pin to e.g. "1.1.38" once you want reproducibility
+
+      # 3. Install dependencies. --frozen-lockfile means "fail if bun.lock
+      #    doesn't match package.json" — catches forgotten lockfile updates.
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      # 4. Generate the Prisma client. REQUIRED: it's written to
+      #    prisma/generated/ which is gitignored, so it doesn't exist yet on a
+      #    fresh checkout. Every Prisma import breaks without this.
+      - name: Generate Prisma client
+        run: bun prisma generate
+
+      # 5. Lint (Biome). Catches style/formatting/obvious-bug issues.
+      - name: Lint
+        run: bun run lint
+
+      # 6. Type-check the whole project with TypeScript.
+      - name: Typecheck
+        run: bun run typecheck
+
+      # 7. Run the test suite (Vitest).
+      #    NOTE: if any test makes a real network call (e.g. the translation
+      #    test hitting FORHU_CHAT_URL), it may fail here. Mock those or move
+      #    them to a separate integration suite if CI goes red on them.
+      - name: Test
+        run: bun run test
+
+      # 8. Production build. Proves the app actually compiles for deploy.
+      - name: Build
+        run: bun run build

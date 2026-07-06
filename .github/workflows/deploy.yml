@@ -1,0 +1,37 @@
+
+name: Deploy to EC2
+
+on:
+  workflow_dispatch: # manual "Run workflow" button — safe default while learning
+  # push:
+  #   branches: [main]   # <-- uncomment later for fully automatic deploys
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # SSH into EC2 and run the deploy script there.
+      # appleboy/ssh-action opens the connection using your secrets.
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }} # EC2 public IP or DNS name
+          username: ${{ secrets.EC2_USER }} # usually "ubuntu" or "ec2-user"
+          key: ${{ secrets.EC2_SSH_KEY }} # contents of your .pem private key
+          script: |
+            set -e                              # stop immediately if any command fails
+            cd ~/boostk-app                     # the git clone living on the server
+            git pull origin main                # get the newest code
+            docker build -t boostk-app .        # rebuild the image
+            docker stop boostk-app || true      # stop old container (ignore if none)
+            docker rm boostk-app   || true      # remove old container (ignore if none)
+            docker run -d \
+              --name boostk-app \
+              --restart unless-stopped \
+              -p 5000:5000 \
+              --env-file .env \
+              boostk-app                        # start the new one on port 5000
+
