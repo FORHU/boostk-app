@@ -45,7 +45,6 @@ const routes = [
     icon: Settings,
     href: "/dashboard/org/$organizationId/settings",
   },
-
 ];
 
 export default function OrganizationSidebar({ organizationId, ...props }: OrganizationSidebarProps) {

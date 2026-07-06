@@ -28,10 +28,7 @@ export function normalizeRole(role: string | null | undefined): OrgRole {
 }
 
 /** Resolve a user's role within a set of organization members, or null if not a member. */
-export function getMemberRole(
-  members: Array<{ userId: string; role: string | null }>,
-  userId: string,
-): OrgRole | null {
+export function getMemberRole(members: Array<{ userId: string; role: string | null }>, userId: string): OrgRole | null {
   const member = members.find((m) => m.userId === userId);
   if (!member) return null;
   return normalizeRole(member.role);

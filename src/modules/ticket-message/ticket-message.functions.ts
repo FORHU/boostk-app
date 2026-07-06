@@ -7,8 +7,8 @@ import { CreateTicketMessageSchema } from "./ticket-message.schema";
 import {
   detectMessageLanguage,
   isSupportLanguage,
-  shouldDetectLanguage,
   SUPPORT_LANGUAGE,
+  shouldDetectLanguage,
   translateIncomingMessage,
   translateOutgoingMessage,
 } from "./ticket-message.translation";
