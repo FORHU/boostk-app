@@ -16,6 +16,7 @@ import {
 import { authClient } from "@/lib/auth-client";
 import { authQueries } from "@/modules/auth/auth.queries";
 import { RouterBreadcrumb } from "./RouterBreadcrumb";
+import ThemeToggle from '@/components/ThemeToggle';
 
 export default function AppTopbar() {
   const navigate = useNavigate();
@@ -54,6 +55,7 @@ export default function AppTopbar() {
         </div>
 
         <div className="flex items-center gap-4">
+          <ThemeToggle />
           <DropdownMenu>
             <DropdownMenuTrigger
               render={

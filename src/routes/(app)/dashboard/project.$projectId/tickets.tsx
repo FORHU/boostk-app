@@ -251,9 +251,9 @@ function ProjectTicketsPage() {
           </p>
         </div>
       ) : (
-        <div className="bg-white border border-gray-200 rounded-[7px] shadow-sm overflow-hidden">
+        <div className="border border-gray-200 rounded-[7px] shadow-sm overflow-hidden">
           <table className="min-w-full divide-y divide-gray-100">
-            <thead className="bg-gray-50">
+            <thead className="bg-muted/50">
               <tr>
                 {["referenceNumber", "status", "customerName", "createdAt"].map((col) => (
                   <th
@@ -267,7 +267,7 @@ function ProjectTicketsPage() {
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 bg-white">
+            <tbody className="divide-y divide-gray-100">
               {sortedTickets.map((ticket) => (
                 <tr
                   key={ticket.id}
@@ -283,7 +283,7 @@ function ProjectTicketsPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">{ticket.customer?.name}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
                     {new Date(ticket.createdAt).toLocaleDateString()}
                   </td>
                 </tr>
