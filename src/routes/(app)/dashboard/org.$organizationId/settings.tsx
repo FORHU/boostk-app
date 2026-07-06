@@ -7,6 +7,7 @@ import { z } from "zod";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/toast";
 import { REDIRECT_REASON } from "@/enums/enums";
 import { getFieldInvalid } from "@/lib/form-utils";
 import { prisma } from "@/lib/prisma";
@@ -75,6 +76,7 @@ function OrganizationSettingsPage() {
   const { organizationId } = Route.useParams();
   const [isEditing, setIsEditing] = useState(false);
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const { data: organization } = useSuspenseQuery(settingQueries.allByOrgId(organizationId));
 
@@ -87,6 +89,11 @@ function OrganizationSettingsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: settingQueries.setting });
       setIsEditing(false);
+      toast("Organization settings updated successfully!", "success");
+    },
+    onError: (error) => {
+      console.error(error);
+      toast("Failed to update organization settings.", "error");
     },
   });
 
@@ -121,13 +128,7 @@ function OrganizationSettingsPage() {
             await updateForm.handleSubmit();
           }}
         >
-          {/* Surface Server Errors (Duplicate Slug, etc.) */}
-          {updateOrgMutation.error && (
-            <div className="p-3 text-sm font-medium text-destructive-foreground bg-destructive/10 border border-destructive/20 rounded-md">
-              {updateOrgMutation.error.message}
-            </div>
-          )}
-
+          {/* Server errors (duplicate slug, etc.) are surfaced via the error toast. */}
           <FieldGroup className="flex flex-col gap-4">
             <updateForm.Field name="name">
               {(field) => {

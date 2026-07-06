@@ -6,6 +6,7 @@ import { useState } from "react";
 import { z } from "zod";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/toast";
 import { REDIRECT_REASON } from "@/enums/enums";
 import { getFieldInvalid } from "@/lib/form-utils";
 import { prisma } from "@/lib/prisma";
@@ -73,7 +74,7 @@ function ProjectSettingsPage() {
   const { projectId } = Route.useParams();
   const [isEditing, setIsEditing] = useState(false);
   const queryClient = useQueryClient();
-
+  const { toast } = useToast();
   const { data: project } = useSuspenseQuery(projectSettingQueries.allByProjectId(projectId));
 
   const updateProjectMutation = useMutation({
@@ -82,6 +83,11 @@ function ProjectSettingsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: projectSettingQueries.setting });
       setIsEditing(false);
+      toast("Project settings updated successfully!", "success");
+    },
+    onError: (error) => {
+      console.error(error);
+      toast("Failed to update project settings.", "error");
     },
   });
 
@@ -117,13 +123,7 @@ function ProjectSettingsPage() {
             await updateForm.handleSubmit();
           }}
         >
-          {/* Surface Server Errors */}
-          {updateProjectMutation.error && (
-            <div className="p-3 text-sm font-medium text-destructive-foreground bg-destructive/10 border border-destructive/20 rounded-md">
-              {updateProjectMutation.error.message}
-            </div>
-          )}
-
+          {/* Server errors (duplicate slug, etc.) are surfaced via the error toast. */}
           <FieldGroup className="flex flex-col gap-4">
             <updateForm.Field name="name">
               {(field) => {

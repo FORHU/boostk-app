@@ -197,6 +197,7 @@ function ProjectTicketsPage() {
   const filterTabs = [
     { label: "All", value: "ALL" },
     { label: "Open", value: "OPEN" },
+    { label: "Closed", value: "CLOSED" },
   ];
 
   return (
@@ -214,7 +215,7 @@ function ProjectTicketsPage() {
         <input
           type="text"
           placeholder="Search..."
-          className="p-2 border rounded-md min-w-250px md:w-64"
+          className="p-2 border rounded-[5px] min-w-62.5"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
@@ -225,7 +226,7 @@ function ProjectTicketsPage() {
               type="button"
               key={tab.value}
               onClick={() => setStatusFilter(tab.value)}
-              className={`px-4 py-2 text-sm font-medium rounded-md whitespace-nowrap ${
+              className={`px-4 py-2 text-sm font-medium rounded-[3px] whitespace-nowrap ${
                 statusFilter === tab.value ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-muted/80"
               }`}
             >
@@ -234,8 +235,9 @@ function ProjectTicketsPage() {
           ))}
         </div>
       </div>
+
       {sortedTickets.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 border rounded-lg bg-gray-50/50">
+        <div className="flex flex-col items-center justify-center py-20 border rounded-[5px] bg-gray-50/50">
           <div className="text-gray-400 mb-2">
             <X size={40} strokeWidth={1} />
           </div>
@@ -249,45 +251,48 @@ function ProjectTicketsPage() {
           </p>
         </div>
       ) : (
-        <table className="min-w-full divide-y divide-gray-200 border rounded-lg">
-          <thead className="bg-gray-50">
-            <tr>
-              {["referenceNumber", "status", "customerName", "createdAt"].map((col) => (
-                <th
-                  key={col}
-                  className="px-6 py-3 text-left text-xs font-medium uppercase cursor-pointer hover:bg-gray-100"
-                  onClick={() => handleSort(col)}
-                >
-                  {col === "customerName" ? "Customer Name" : col.replace(/([A-Z])/g, " $1")}
-                  {sortConfig?.key === col ? (sortConfig.direction === "asc" ? " ↑" : " ↓") : ""}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {sortedTickets.map((ticket) => (
-              <tr
-                key={ticket.id}
-                className="hover:bg-muted cursor-pointer transition-colors"
-                onClick={() => setSelectedTicketId(ticket.id)}
-              >
-                <td className="px-6 py-4 whitespace-nowrap text-sm">{ticket.referenceNumber}</td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusBadgeClasses(ticket.status)}`}
+        <div className="bg-white border border-gray-200 rounded-[7px] shadow-sm overflow-hidden">
+          <table className="min-w-full divide-y divide-gray-100">
+            <thead className="bg-gray-50">
+              <tr>
+                {["referenceNumber", "status", "customerName", "createdAt"].map((col) => (
+                  <th
+                    key={col}
+                    className="px-6 py-3 text-left text-xs font-medium uppercase cursor-pointer"
+                    onClick={() => handleSort(col)}
                   >
-                    {ticket.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm">{ticket.customer?.name}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {new Date(ticket.createdAt).toLocaleDateString()}
-                </td>
+                    {col === "customerName" ? "Customer Name" : col.replace(/([A-Z])/g, " $1")}
+                    {sortConfig?.key === col ? (sortConfig.direction === "asc" ? " ↑" : " ↓") : ""}
+                  </th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-gray-100 bg-white">
+              {sortedTickets.map((ticket) => (
+                <tr
+                  key={ticket.id}
+                  className="hover:bg-gray-50 cursor-pointer transition-colors"
+                  onClick={() => setSelectedTicketId(ticket.id)}
+                >
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">{ticket.referenceNumber}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusBadgeClasses(ticket.status)}`}
+                    >
+                      {ticket.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">{ticket.customer?.name}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {new Date(ticket.createdAt).toLocaleDateString()}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
+
       <TicketDetailPanel projectId={projectId} ticketId={selectedTicketId} onClose={() => setSelectedTicketId(null)} />
     </div>
   );
