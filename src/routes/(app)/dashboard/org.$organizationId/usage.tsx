@@ -70,11 +70,11 @@ function UsageCards({ organizationId }: { organizationId: string }) {
         <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Projects</h3>
-            <FolderKanban className="w-5 h-5 text-gray-400" strokeWidth={1.5} />
+            <FolderKanban className="w-5 h-5 text-muted-foreground" strokeWidth={1.5} />
           </div>
           <div>
             <p className="text-4xl font-bold text-foreground">{projects}</p>
-            <p className="text-xs text-gray-500 mt-1 font-medium">Total active projects</p>
+            <p className="text-xs text-muted-foreground mt-1 font-medium">Total active projects</p>
           </div>
         </div>
 
@@ -82,7 +82,7 @@ function UsageCards({ organizationId }: { organizationId: string }) {
         <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Members</h3>
-            <Users className="w-5 h-5 text-gray-400" strokeWidth={1.5} />
+            <Users className="w-5 h-5 text-muted-foreground" strokeWidth={1.5} />
           </div>
           <div>
             <p className="text-4xl font-bold text-foreground">{members}</p>
@@ -94,7 +94,7 @@ function UsageCards({ organizationId }: { organizationId: string }) {
         <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-muted-foreground  uppercase tracking-wider">Tickets</h3>
-            <Ticket className="w-5 h-5 text-gray-400" strokeWidth={1.5} />
+            <Ticket className="w-5 h-5 text-muted-foreground" strokeWidth={1.5} />
           </div>
           <div>
             <p className="text-4xl font-bold text-foreground">{tickets}</p>
