@@ -6,6 +6,7 @@ import { Suspense, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
 import { getFieldInvalid } from "@/lib/form-utils";
 import { createProjectFn } from "@/modules/project/project.functions";
@@ -142,34 +143,45 @@ const ProjectForm = ({ organizationId }: { organizationId: string }) => {
 
 const OrgProjectsSkeleton = () => {
   return (
-    <div className="lg:col-span-4 space-y-6">
-      x<h2>Projects</h2>
-      {Array.from({ length: 3 }).map((_, index) => (
-        // biome-ignore lint/suspicious/noArrayIndexKey: <index is used as a fallback key for skeleton items>
-        <div key={index}>
-          <h3>Loading...</h3>
-        </div>
-      ))}
+    <div className="lg:col-span-4 space-y-4">
+      <h2>Projects</h2>
+
+      <div className="grid gap-4">
+        {Array.from({ length: 3 }).map((_, index) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: <index is used as a fallback key for skeleton items>
+          <div key={index}>
+            {/* 2. Using your Skeleton component to draw a pulsing gray bar */}
+            <Skeleton className="h-5 w-[200px]" />
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
+
 const OrgProjects = ({ organizationId, searchQuery }: { organizationId: string; searchQuery: string }) => {
+  // ⏳ 3. Wrapped the Suspense query with the delay helper
   const { data: projects } = useSuspenseQuery(projectQueries.allByOrgId(organizationId));
+
   const filteredProjects = projects.filter((project) => project.name.toLowerCase().includes(searchQuery.toLowerCase()));
+
   return (
-    <div className="lg:col-span-4 space-y-6">
-      <h2>Projects</h2>
-      {filteredProjects.length === 0 ? (
-        <div className="text-center">
-          <p className="text-muted-foreground">No projects match "{searchQuery}"</p>
-        </div>
-      ) : (
-        filteredProjects.map((project) => (
-          <Link to="/dashboard/project/$projectId" params={{ projectId: project.id }} key={project.id}>
-            <h3>{project.name}</h3>
-          </Link>
-        ))
-      )}
+    <div className="lg:col-span-4 space-y-4">
+      <h2 className="font-bold">Projects</h2>
+
+      <div>
+        {filteredProjects.length === 0 ? (
+          <div className="text-center">
+            <p className="text-muted-foreground">No projects match "{searchQuery}"</p>
+          </div>
+        ) : (
+          filteredProjects.map((project) => (
+            <Link to="/dashboard/project/$projectId" params={{ projectId: project.id }} key={project.id}>
+              <h3>{project.name}</h3>
+            </Link>
+          ))
+        )}
+      </div>
     </div>
   );
 };
