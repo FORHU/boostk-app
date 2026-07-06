@@ -1,15 +1,15 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
-import { z } from "zod";
-import { createServerFn } from "@tanstack/react-start";
-import { queryOptions, useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useForm } from "@tanstack/react-form";
+import { queryOptions, useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { prisma } from "@/lib/prisma";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { z } from "zod";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { getFieldInvalid } from "@/lib/form-utils";
 import { REDIRECT_REASON } from "@/enums/enums";
+import { getFieldInvalid } from "@/lib/form-utils";
+import { prisma } from "@/lib/prisma";
 import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
 import { requireOrgRole } from "@/modules/organization/organization.middleware";
 
@@ -33,9 +33,7 @@ export const getSettingsFn = createServerFn({ method: "GET" })
   });
 
 export const updateOrganizationFn = createServerFn({ method: "POST" })
-  .inputValidator(
-    z.object({ organizationId: z.string() }).and(updateOrganizationSchema)
-  )
+  .inputValidator(z.object({ organizationId: z.string() }).and(updateOrganizationSchema))
   .middleware([requireOrgRole(ORG_ROLE.ADMIN)])
   .handler(async ({ context, data }) => {
     try {
@@ -47,12 +45,11 @@ export const updateOrganizationFn = createServerFn({ method: "POST" })
           logo: data.logo,
         },
       });
-    } catch (error: any) {
-      // Catch Prisma's duplicate unique constraint (e.g. on slug)
-      if (error.code === "P2002") {
+    } catch (error) {
+      if (error && typeof error === "object" && "code" in error && error.code === "P2002") {
         throw new Error("This slug is already in use. Please choose another one.");
       }
-      throw new Error("Failed to save organization settings. Please try again.");
+      throw new Error("Failed to save project settings.");
     }
   });
 
@@ -79,11 +76,9 @@ function OrganizationSettingsPage() {
   const [isEditing, setIsEditing] = useState(false);
   const queryClient = useQueryClient();
 
-  const { data: organization } = useSuspenseQuery(
-    settingQueries.allByOrgId(organizationId)
-  );
+  const { data: organization } = useSuspenseQuery(settingQueries.allByOrgId(organizationId));
 
- const fallbackInitials = organization?.name?.substring(0, 2).toUpperCase() || "OR";
+  const fallbackInitials = organization?.name?.substring(0, 2).toUpperCase() || "OR";
 
   //Mutation for Form Submission
   const updateOrgMutation = useMutation({
@@ -139,7 +134,9 @@ function OrganizationSettingsPage() {
                 const isInvalid = getFieldInvalid(field, updateForm);
                 return (
                   <Field data-invalid={isInvalid}>
-                    <FieldLabel htmlFor={field.name} className="block text-sm font-medium mb-1">Organization Name</FieldLabel>
+                    <FieldLabel htmlFor={field.name} className="block text-sm font-medium mb-1">
+                      Organization Name
+                    </FieldLabel>
                     <Input
                       id={field.name}
                       name={field.name}
@@ -161,7 +158,9 @@ function OrganizationSettingsPage() {
                 const isInvalid = getFieldInvalid(field, updateForm);
                 return (
                   <Field data-invalid={isInvalid}>
-                    <FieldLabel htmlFor={field.name} className="block text-sm font-medium mb-1">Slug</FieldLabel>
+                    <FieldLabel htmlFor={field.name} className="block text-sm font-medium mb-1">
+                      Slug
+                    </FieldLabel>
                     <Input
                       id={field.name}
                       name={field.name}
@@ -183,7 +182,9 @@ function OrganizationSettingsPage() {
                 const isInvalid = getFieldInvalid(field, updateForm);
                 return (
                   <Field data-invalid={isInvalid}>
-                    <FieldLabel htmlFor={field.name} className="block text-sm font-medium mb-1">Logo URL</FieldLabel>
+                    <FieldLabel htmlFor={field.name} className="block text-sm font-medium mb-1">
+                      Logo URL
+                    </FieldLabel>
                     <Input
                       id={field.name}
                       name={field.name}
@@ -210,13 +211,15 @@ function OrganizationSettingsPage() {
                 updateOrgMutation.reset();
                 setIsEditing(false);
               }}
-              disabled={updateOrgMutation.isPending}>
+              disabled={updateOrgMutation.isPending}
+            >
               Cancel
             </button>
             <button
               type="submit"
               disabled={updateOrgMutation.isPending || !updateForm.state.canSubmit}
-              className="px-4 py-2 border bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors">
+              className="px-4 py-2 border bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors"
+            >
               {updateOrgMutation.isPending ? "Saving..." : "Save Changes"}
             </button>
           </div>
@@ -233,8 +236,10 @@ function OrganizationSettingsPage() {
 
             <div className="ml-auto mr-20">
               <button
+                type="button"
                 onClick={() => setIsEditing(true)}
-                className="px-4 py-2 text-sm border rounded hover:bg-muted transition-colors">
+                className="px-4 py-2 text-sm border rounded hover:bg-muted transition-colors"
+              >
                 Edit Settings
               </button>
             </div>
@@ -244,19 +249,16 @@ function OrganizationSettingsPage() {
             <div className="divide-y divide-gray-200">
               <div className="grid grid-cols-2">
                 <div className="px-6 py-4 text-sm font-semibold">Name</div>
-                <div className="px-6 py-4 text-sm text-muted-foreground">
-                  {organization?.name}
-                </div>
+                <div className="px-6 py-4 text-sm text-muted-foreground">{organization?.name}</div>
               </div>
               <div className="grid grid-cols-2">
                 <div className="px-6 py-4 text-sm font-semibold">Slug</div>
-                <div className="px-6 py-4 text-sm text-muted-foreground">
-                  {organization?.slug}
-                </div>
+                <div className="px-6 py-4 text-sm text-muted-foreground">{organization?.slug}</div>
               </div>
             </div>
           </div>
         </>
       )}
     </div>
-);}
+  );
+}
