@@ -57,7 +57,7 @@ function OrganizationBillingPage() {
               </div>
               <p className="text-xs text-muted-foreground mb-6">Essential basic sharing tools.</p>  
               <button className="w-full bg-muted text-muted-foreground font-medium py-2 mb-6">
-                Currnent Plan
+                Current Plan
               </button>
               
               <ul className="space-y-3 text-sm text-foreground/80 flex-1">
@@ -125,7 +125,7 @@ function OrganizationBillingPage() {
                 <span className="text-muted-foreground text-sm"> / month</span>
               </div>
               <p className="text-xs text-muted-foreground mb-6">Advanced global support suite.</p>              
-              <button className="w-full bg-primary text-primary-foreground font-medium py-2 ransition-opacity mb-6">
+              <button className="w-full bg-primary text-primary-foreground font-medium py-2 transition-opacity mb-6">
                 Subscribe
               </button>
                 
