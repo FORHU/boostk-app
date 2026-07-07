@@ -246,8 +246,8 @@ function OrganizationSettingsPage() {
             </div>
           </div>
 
-          <div className="border border-gray-200 rounded-2xl overflow-hidden shadow-sm bg-white isolate mr-10">
-            <div className="divide-y divide-gray-200">
+          <div className="border border-border rounded-2xl overflow-hidden shadow-sm bg-background isolate mr-10">
+            <div className="divide-y divide-border">
               <div className="grid grid-cols-2">
                 <div className="px-6 py-4 text-sm font-semibold">Name</div>
                 <div className="px-6 py-4 text-sm text-muted-foreground">{organization?.name}</div>

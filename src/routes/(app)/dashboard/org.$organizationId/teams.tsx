@@ -67,9 +67,9 @@ const formatDate = (dateInput?: Date | string | null) => {
 function getStatusBadgeClasses(status: string) {
   switch (status.toUpperCase()) {
     case "ACTIVE":
-      return "bg-emerald-50 text-emerald-600 border-emerald-100";
+      return "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-400 dark:border-emerald-500/30"
     case "INACTIVE":
-      return "bg-gray-50 text-gray-500 border-gray-200";
+      return "bg-muted text-muted-foreground border-border";
     default:
       return "bg-gray-50 text-gray-500 border-gray-200";
   }
@@ -98,14 +98,14 @@ function TeamTable({ organizationId }: { organizationId: string }) {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Team Management</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-2xl font-bold text-foreground*2 tracking-tight">Team Management</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Control access levels and manage system users across your platform.
           </p>
         </div>
         <button
           type="button"
-          className="inline-flex items-center justify-center rounded-[2px] bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+          className="inline-flex items-center justify-center rounded-[2px] bg-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
         >
           <svg
             aria-hidden="true"
@@ -124,7 +124,7 @@ function TeamTable({ organizationId }: { organizationId: string }) {
       </div>
 
       <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-        <div className="flex items-center space-x-1 bg-gray-100/80 p-1 rounded-[5px] self-start md:self-auto overflow-x-auto">
+        <div className="flex items-center space-x-1 bg-muted p-1 rounded-[5px] self-start md:self-auto overflow-x-auto">
           {["ALL USERS", "ADMIN", "AGENT", "MEMBER"].map((tab) => (
             <button
               type="button"
@@ -132,8 +132,8 @@ function TeamTable({ organizationId }: { organizationId: string }) {
               onClick={() => setActiveTab(tab)}
               className={`px-4 py-1.5 text-xs font-bold rounded-[5px] transition-all whitespace-nowrap ${
                 activeTab === tab
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-500 hover:text-gray-900 hover:bg-gray-200/50"
+                  ? "bg-background shadow-sm"
+                  : "text-muted-foreground hover:text-foreground hover:bg-background/50 transition-colors"
               }`}
             >
               {tab}
@@ -144,7 +144,7 @@ function TeamTable({ organizationId }: { organizationId: string }) {
         <div className="relative w-full md:w-72">
           <svg
             aria-hidden="true"
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -160,17 +160,17 @@ function TeamTable({ organizationId }: { organizationId: string }) {
             placeholder="Search users..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-[5px] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow placeholder:text-gray-400"
+            className="w-full pl-9 pr-4 py-2 border border-border rounded-[5px] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow placeholder:text-muted-foreground"
           />
         </div>
       </div>
 
-      <div className="bg-white rounded-[7px] border border-gray-200 shadow-sm overflow-hidden">
+      <div className="bg-background rounded-[7px] border border-border shadow-sm overflow-hidden">
         {filteredMembers.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 bg-gray-50/50">
+          <div className="flex flex-col items-center justify-center py-20 bg-muted/50">
             <svg
               aria-hidden="true"
-              className="w-12 h-12 text-gray-300 mb-4"
+              className="w-12 h-12 text-muted-foreground mb-4"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -182,8 +182,8 @@ function TeamTable({ organizationId }: { organizationId: string }) {
                 d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
               />
             </svg>
-            <h3 className="text-lg font-medium text-gray-900">No users found</h3>
-            <p className="text-sm text-gray-500 mt-1">
+            <h3 className="text-lg font-medium text-muted-foreground*2">No users found</h3>
+            <p className="text-sm text-muted-foreground mt-1">
               {searchQuery
                 ? "Try adjusting your search query."
                 : `There are currently no users matching the ${activeTab} role.`}
@@ -191,28 +191,28 @@ function TeamTable({ organizationId }: { organizationId: string }) {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-100">
-              <thead className="bg-gray-50/50">
+            <table className="min-w-full divide-y divide-border">
+              <thead className="bg-muted/50">
                 <tr>
-                  <th className="px-6 py-4 text-left text-[11px] font-bold text-gray-400 uppercase tracking-wider group cursor-pointer">
+                  <th className="px-6 py-4 text-left text-[11px] font-bold text-muted-foreground uppercase tracking-wider group cursor-pointer">
                     User / Role
                   </th>
-                  <th className="px-6 py-4 text-left text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-4 text-left text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
                     Email
                   </th>
-                  <th className="px-6 py-4 text-left text-[11px] font-bold text-gray-400 uppercase tracking-wider group cursor-pointer">
+                  <th className="px-6 py-4 text-left text-[11px] font-bold text-muted-foreground uppercase tracking-wider group cursor-pointer">
                     Joined
                   </th>
-                  <th className="px-6 py-4 text-right text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-right text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
                     <span className="sr-only">Actions</span>
                   </th>
                 </tr>
               </thead>
 
-              <tbody className="divide-y divide-gray-100 bg-white">
+              <tbody className="divide-y divide-border bg-background">
                 {filteredMembers.map((m) => {
                   const isRole = (role: string) => m.role?.toLowerCase() === role.toLowerCase();
 
@@ -223,17 +223,17 @@ function TeamTable({ organizationId }: { organizationId: string }) {
                   const joinedDate = safeMember.createdAt ?? safeUser?.createdAt;
 
                   return (
-                    <tr key={m.id} className="hover:bg-gray-50/50 transition-colors">
+                    <tr key={m.id} className="hover:bg-muted/50 transition-colors">
                       {/* User & Role Column */}
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div
                             className={`h-10 w-10 rounded-[5px] flex items-center justify-center border ${
                               isRole("admin")
-                                ? "bg-blue-50/50 border-blue-100 text-blue-500"
+                                ? "bg-blue-100 border-blue-200 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400 dark:border-blue-500/30"
                                 : isRole("agent")
-                                  ? "bg-green-50/50 border-green-100 text-green-500"
-                                  : "bg-gray-50 border-gray-200 text-gray-500"
+                                  ? "bg-green-100 border-green-200 text-green-700 dark:bg-green-500/20 dark:text-green-400 dark:border-green-500/30"
+                                  : "bg-muted border-border text-muted-foreground"
                             }`}
                           >
                             {isRole("admin") && (
@@ -281,8 +281,8 @@ function TeamTable({ organizationId }: { organizationId: string }) {
                             )}
                           </div>
                           <div className="ml-4">
-                            <div className="text-sm font-semibold text-gray-900">{m.user?.name ?? "Unknown User"}</div>
-                            <div className="text-[11px] text-gray-500 uppercase tracking-wide font-medium mt-0.5">
+                            <div className="text-sm font-semibold text-foreground">{m.user?.name ?? "Unknown User"}</div>
+                            <div className="text-[11px] text-muted-foreground uppercase tracking-wide font-medium mt-0.5">
                               {m.role ?? "MEMBER"}
                             </div>
                           </div>
@@ -301,10 +301,10 @@ function TeamTable({ organizationId }: { organizationId: string }) {
                       </td>
 
                       {/* Email Column */}
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{m.user?.email ?? "-"}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">{m.user?.email ?? "-"}</td>
 
                       {/* Joined Date Column */}
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatDate(joinedDate)}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">{formatDate(joinedDate)}</td>
 
                       {/* Actions Column */}
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">

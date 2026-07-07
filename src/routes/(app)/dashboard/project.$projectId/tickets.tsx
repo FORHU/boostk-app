@@ -59,7 +59,7 @@ function TicketsLoadingFallback() {
     <div className="p-6 flex flex-col min-h-[50vh]">
       <h1 className="text-2xl font-bold mb-6">Tickets</h1>
       <div className="flex-1 flex items-center justify-center h-full">
-        <Loader2 className="animate-spin text-indigo-600" size={32} />
+        <Loader2 className="animate-spin text-primary" size={32} />
       </div>
     </div>
   );
@@ -85,8 +85,8 @@ function TicketChatMessageBubble({ message, isCustomer }: { message: string; isC
       <div
         className={`max-w-[80%] p-3 shadow-sm overflow-hidden ${
           isCustomer
-            ? "bg-white text-gray-800 rounded-[16px] rounded-tl-none"
-            : "bg-primary text-white rounded-[16px] rounded-tr-none"
+            ? "bg-background rounded-[16px] rounded-tl-none"
+            : "bg-primary rounded-[16px] rounded-tr-none"
         }`}
       >
         <p className="text-sm whitespace-pre-wrap">{message}</p>
@@ -98,11 +98,11 @@ function TicketChatMessageBubble({ message, isCustomer }: { message: string; isC
 function getStatusBadgeClasses(status: string) {
   switch (status.toUpperCase()) {
     case "OPEN":
-      return "bg-green-100 text-green-500";
+      return "bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400"
     case "CLOSED":
-      return "bg-gray-100 text-gray-800";
+      return "bg-gray-100 text-gray-700 dark:bg-gray-500/20 dark:text-gray-400";
     default:
-      return "bg-gray-100 text-gray-800"; // Fallback color
+      return "bg-muted text-muted-foreground";
   }
 }
 
@@ -124,27 +124,27 @@ function TicketDetailPanel({
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/30 backdrop-blur-sm transition-opacity">
-      <div className="w-full max-w-lg bg-white h-full flex flex-col animate-in slide-in-from-right duration-300">
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+      <div className="w-full max-w-lg bg-background dark:bg-muted h-full flex flex-col animate-in slide-in-from-right duration-300">
+        <div className="flex items-center justify-between p-4 border-b border-border">
           <h2 className="text-lg font-semibold">
             {isLoading ? "Loading..." : ticket?.customer?.name || "Customer Ticket"}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors"
+            className="p-2 text-muted-foreground hover:bg-muted rounded-full transition-colors"
           >
             <X size={20} />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
+        <div className="flex-1 overflow-y-auto p-4 bg-muted/10">
           {isLoading ? (
             <div className="h-full flex items-center justify-center">
-              <Loader2 className="animate-spin text-indigo-600" size={24} />
+              <Loader2 className="animate-spin text-primary" size={24} />
             </div>
           ) : !ticket?.ticketMessages || ticket.ticketMessages.length === 0 ? (
-            <div className="text-center text-sm text-gray-500 mt-10">No messages found.</div>
+            <div className="text-center text-sm text-muted-foreground mt-10">No messages found.</div>
           ) : (
             <div className="flex flex-col">
               {ticket.ticketMessages.map((msg) => (
@@ -237,11 +237,11 @@ function ProjectTicketsPage() {
       </div>
 
       {sortedTickets.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 border rounded-[5px] bg-gray-50/50">
-          <div className="text-gray-400 mb-2">
+        <div className="flex flex-col items-center justify-center py-20 border rounded-[5px] bg-muted/10">
+          <div className="text-muted-foreground mb-2">
             <X size={40} strokeWidth={1} />
           </div>
-          <h3 className="text-lg font-medium text-gray-900">
+          <h3 className="text-lg font-medium text-foreground">
             {searchQuery ? "Reference doesn't match" : `No ${statusFilter.toLowerCase()} tickets found`}
           </h3>
           <p className="text-sm text-muted-foreground mt-1">
@@ -251,9 +251,9 @@ function ProjectTicketsPage() {
           </p>
         </div>
       ) : (
-        <div className="bg-white border border-gray-200 rounded-[7px] shadow-sm overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-100">
-            <thead className="bg-gray-50">
+        <div className="border border-muted rounded-[7px] shadow-sm overflow-hidden">
+          <table className="min-w-full divide-y divide-muted">
+            <thead className="bg-muted/50">
               <tr>
                 {["referenceNumber", "status", "customerName", "createdAt"].map((col) => (
                   <th
@@ -267,11 +267,11 @@ function ProjectTicketsPage() {
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 bg-white">
+            <tbody className="divide-y divide-muted">
               {sortedTickets.map((ticket) => (
                 <tr
                   key={ticket.id}
-                  className="hover:bg-gray-50 cursor-pointer transition-colors"
+                  className="hover:bg-muted cursor-pointer transition-colors"
                   onClick={() => setSelectedTicketId(ticket.id)}
                 >
                   <td className="px-6 py-4 whitespace-nowrap text-sm">{ticket.referenceNumber}</td>
@@ -283,7 +283,7 @@ function ProjectTicketsPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">{ticket.customer?.name}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
                     {new Date(ticket.createdAt).toLocaleDateString()}
                   </td>
                 </tr>
