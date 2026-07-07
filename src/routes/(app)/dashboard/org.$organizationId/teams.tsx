@@ -64,17 +64,6 @@ const formatDate = (dateInput?: Date | string | null) => {
   });
 };
 
-function getStatusBadgeClasses(status: string) {
-  switch (status.toUpperCase()) {
-    case "ACTIVE":
-      return "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-400 dark:border-emerald-500/30"
-    case "INACTIVE":
-      return "bg-muted text-muted-foreground border-border";
-    default:
-      return "bg-gray-50 text-gray-500 border-gray-200";
-  }
-}
-
 function TeamTable({ organizationId }: { organizationId: string }) {
   const query = useSuspenseQuery(memberQueries.allByOrgId(organizationId));
   const members = (query.data ?? []) as Array<Member & { user: User }>;
@@ -98,7 +87,7 @@ function TeamTable({ organizationId }: { organizationId: string }) {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground*2 tracking-tight">Team Management</h1>
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">Team Management</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Control access levels and manage system users across your platform.
           </p>
@@ -182,7 +171,7 @@ function TeamTable({ organizationId }: { organizationId: string }) {
                 d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
               />
             </svg>
-            <h3 className="text-lg font-medium text-muted-foreground*2">No users found</h3>
+            <h3 className="text-lg font-medium text-muted-foreground">No users found</h3>
             <p className="text-sm text-muted-foreground mt-1">
               {searchQuery
                 ? "Try adjusting your search query."
@@ -196,9 +185,6 @@ function TeamTable({ organizationId }: { organizationId: string }) {
                 <tr>
                   <th className="px-6 py-4 text-left text-[11px] font-bold text-muted-foreground uppercase tracking-wider group cursor-pointer">
                     User / Role
-                  </th>
-                  <th className="px-6 py-4 text-left text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-                    Status
                   </th>
                   <th className="px-6 py-4 text-left text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
                     Email
@@ -216,11 +202,7 @@ function TeamTable({ organizationId }: { organizationId: string }) {
                 {filteredMembers.map((m) => {
                   const isRole = (role: string) => m.role?.toLowerCase() === role.toLowerCase();
 
-                  const safeMember = m as unknown as { status?: string; createdAt?: string | Date };
-                  const safeUser = m.user as unknown as { createdAt?: string | Date };
-
-                  const status = safeMember.status || "ACTIVE";
-                  const joinedDate = safeMember.createdAt ?? safeUser?.createdAt;
+                  const joinedDate = m.createdAt ?? m.user?.createdAt;
 
                   return (
                     <tr key={m.id} className="hover:bg-muted/50 transition-colors">
@@ -281,7 +263,9 @@ function TeamTable({ organizationId }: { organizationId: string }) {
                             )}
                           </div>
                           <div className="ml-4">
-                            <div className="text-sm font-semibold text-foreground">{m.user?.name ?? "Unknown User"}</div>
+                            <div className="text-sm font-semibold text-foreground">
+                              {m.user?.name ?? "Unknown User"}
+                            </div>
                             <div className="text-[11px] text-muted-foreground uppercase tracking-wide font-medium mt-0.5">
                               {m.role ?? "MEMBER"}
                             </div>
@@ -289,28 +273,21 @@ function TeamTable({ organizationId }: { organizationId: string }) {
                         </div>
                       </td>
 
-                      {/* Status Column */}
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`inline-flex items-center px-2 py-1 rounded text-[10px] font-extrabold uppercase tracking-widest border ${getStatusBadgeClasses(
-                            status,
-                          )}`}
-                        >
-                          {status}
-                        </span>
+                      {/* Email Column */}
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                        {m.user?.email ?? "-"}
                       </td>
 
-                      {/* Email Column */}
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">{m.user?.email ?? "-"}</td>
-
                       {/* Joined Date Column */}
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">{formatDate(joinedDate)}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                        {formatDate(joinedDate)}
+                      </td>
 
                       {/* Actions Column */}
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <button
                           type="button"
-                          className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-[5px] hover:bg-gray-100"
+                          className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-[5px] hover:bg-muted"
                         >
                           <svg
                             aria-hidden="true"

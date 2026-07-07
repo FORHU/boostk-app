@@ -84,9 +84,7 @@ function TicketChatMessageBubble({ message, isCustomer }: { message: string; isC
     <div className={`flex w-full mb-4 ${isCustomer ? "justify-start" : "justify-end"}`}>
       <div
         className={`max-w-[80%] p-3 shadow-sm overflow-hidden ${
-          isCustomer
-            ? "bg-background rounded-[16px] rounded-tl-none"
-            : "bg-primary rounded-[16px] rounded-tr-none"
+          isCustomer ? "bg-background rounded-[16px] rounded-tl-none" : "bg-primary rounded-[16px] rounded-tr-none"
         }`}
       >
         <p className="text-sm whitespace-pre-wrap">{message}</p>
@@ -98,7 +96,7 @@ function TicketChatMessageBubble({ message, isCustomer }: { message: string; isC
 function getStatusBadgeClasses(status: string) {
   switch (status.toUpperCase()) {
     case "OPEN":
-      return "bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400"
+      return "bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400";
     case "CLOSED":
       return "bg-gray-100 text-gray-700 dark:bg-gray-500/20 dark:text-gray-400";
     default:
