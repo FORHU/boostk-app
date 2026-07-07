@@ -123,13 +123,7 @@ function ProjectSettingsPage() {
             await updateForm.handleSubmit();
           }}
         >
-          {/* Surface Server Errors */}
-          {updateProjectMutation.error && (
-            <div className="p-3 text-sm font-medium text-destructive-foreground bg-destructive/10 border border-destructive/20 rounded-md">
-              {updateProjectMutation.error.message}
-            </div>
-          )}
-
+          {/* Server errors (duplicate slug, etc.) are surfaced via the error toast. */}
           <FieldGroup className="flex flex-col gap-4">
             <updateForm.Field name="name">
               {(field) => {

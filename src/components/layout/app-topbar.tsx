@@ -3,7 +3,7 @@
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { BadgeCheckIcon, BellIcon, CreditCardIcon, LogOutIcon, SparklesIcon, ZapIcon } from "lucide-react";
-import ThemeToggle from '@/components/ThemeToggle';
+import ThemeToggle from "@/components/ThemeToggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,

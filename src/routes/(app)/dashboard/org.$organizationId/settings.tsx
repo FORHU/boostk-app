@@ -128,13 +128,7 @@ function OrganizationSettingsPage() {
             await updateForm.handleSubmit();
           }}
         >
-          {/* Surface Server Errors (Duplicate Slug, etc.) */}
-          {updateOrgMutation.error && (
-            <div className="p-3 text-sm font-medium text-destructive-foreground bg-destructive/10 border border-destructive/20 rounded-md">
-              {updateOrgMutation.error.message}
-            </div>
-          )}
-
+          {/* Server errors (duplicate slug, etc.) are surfaced via the error toast. */}
           <FieldGroup className="flex flex-col gap-4">
             <updateForm.Field name="name">
               {(field) => {
