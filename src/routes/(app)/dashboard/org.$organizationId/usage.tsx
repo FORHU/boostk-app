@@ -4,6 +4,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { FolderKanban, Ticket, Users } from "lucide-react";
 import { Suspense } from "react";
 import { z } from "zod";
+import { TextSkeleton, UsageCardsSkeleton } from "@/components/ui/skeleton";
 import { REDIRECT_REASON } from "@/enums/enums";
 import { prisma } from "@/lib/prisma";
 import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
@@ -48,7 +49,14 @@ function OrganizationUsagePage() {
   const { organizationId } = Route.useParams();
   return (
     <div>
-      <Suspense fallback={<p className="text-center">Loading usage statistics...</p>}>
+      <Suspense
+        fallback={
+          <div className="mx-auto p-6 md:p-10 space-y-10">
+            <TextSkeleton lines={2} className="max-w-sm" />
+            <UsageCardsSkeleton />
+          </div>
+        }
+      >
         <UsageCards organizationId={organizationId} />
       </Suspense>
     </div>
