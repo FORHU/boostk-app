@@ -67,7 +67,7 @@ const formatDate = (dateInput?: Date | string | null) => {
 function getStatusBadgeClasses(status: string) {
   switch (status.toUpperCase()) {
     case "ACTIVE":
-      return "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-400 dark:border-emerald-500/30"
+      return "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-400 dark:border-emerald-500/30";
     case "INACTIVE":
       return "bg-muted text-muted-foreground border-border";
     default:
@@ -281,7 +281,9 @@ function TeamTable({ organizationId }: { organizationId: string }) {
                             )}
                           </div>
                           <div className="ml-4">
-                            <div className="text-sm font-semibold text-foreground">{m.user?.name ?? "Unknown User"}</div>
+                            <div className="text-sm font-semibold text-foreground">
+                              {m.user?.name ?? "Unknown User"}
+                            </div>
                             <div className="text-[11px] text-muted-foreground uppercase tracking-wide font-medium mt-0.5">
                               {m.role ?? "MEMBER"}
                             </div>
@@ -301,10 +303,14 @@ function TeamTable({ organizationId }: { organizationId: string }) {
                       </td>
 
                       {/* Email Column */}
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">{m.user?.email ?? "-"}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                        {m.user?.email ?? "-"}
+                      </td>
 
                       {/* Joined Date Column */}
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">{formatDate(joinedDate)}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                        {formatDate(joinedDate)}
+                      </td>
 
                       {/* Actions Column */}
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">

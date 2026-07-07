@@ -3,6 +3,7 @@
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { BadgeCheckIcon, BellIcon, CreditCardIcon, LogOutIcon, SparklesIcon, ZapIcon } from "lucide-react";
+import ThemeToggle from '@/components/ThemeToggle';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -16,7 +17,6 @@ import {
 import { authClient } from "@/lib/auth-client";
 import { authQueries } from "@/modules/auth/auth.queries";
 import { RouterBreadcrumb } from "./RouterBreadcrumb";
-import ThemeToggle from '@/components/ThemeToggle';
 
 export default function AppTopbar() {
   const navigate = useNavigate();
