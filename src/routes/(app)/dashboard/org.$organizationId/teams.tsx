@@ -4,6 +4,7 @@ import { createServerFn } from "@tanstack/react-start";
 import type { Member, User } from "prisma/generated/client";
 import { Suspense, useState } from "react";
 import { z } from "zod";
+import { DataTableSkeleton, ToolbarSkeleton } from "@/components/ui/skeleton";
 import { REDIRECT_REASON } from "@/enums/enums";
 import { prisma } from "@/lib/prisma";
 import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
@@ -46,9 +47,17 @@ export const Route = createFileRoute("/(app)/dashboard/org/$organizationId/teams
 
 function OrganizationTeamsPage() {
   const { organizationId } = Route.useParams();
+  const tableColumns = ["User", "Email", "Joined", "Actions"];
   return (
     <div className="p-8 max-w-7xl mx-auto w-full">
-      <Suspense fallback={<p className="text-muted-foreground">Loading members...</p>}>
+      <Suspense
+        fallback={
+          <div className="space-y-6 w-full">
+            <ToolbarSkeleton />
+            <DataTableSkeleton columnCount={tableColumns.length} rowCount={5} hasActionColumn={true} />
+          </div>
+        }
+      >
         <TeamTable organizationId={organizationId} />
       </Suspense>
     </div>
