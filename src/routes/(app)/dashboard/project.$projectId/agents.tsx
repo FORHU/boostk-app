@@ -67,11 +67,11 @@ function AgentTable({ projectId }: { projectId: string }) {
   const members = Allmembers.filter((m) => hasOrgRole(m.role, ORG_ROLE.AGENT));
 
   return (
-    <div className="p-6">
-      <div className="mb-8">
+    <div className="p-4 md:p-6 w-full overflow-hidden">
+      <div className="mb-6 md:mb-8">
         <h1 className="text-2xl font-bold mb-10">Agents</h1>
       </div>
-      <div className="overflow-x-auto rounded-lg border border-border shadow-sm">
+      <div className="overflow-x-auto w-full rounded-lg border border-border shadow-sm">
         <table className="min-w-full divide-y divide-border">
           <thead className="bg-muted">
             <tr>

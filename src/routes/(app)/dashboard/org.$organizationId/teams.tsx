@@ -49,7 +49,7 @@ function OrganizationTeamsPage() {
   const { organizationId } = Route.useParams();
   const tableColumns = ["User", "Email", "Joined", "Actions"];
   return (
-    <div className="p-8 max-w-7xl mx-auto w-full">
+    <div className="p-4 md:p-8 max-w-7xl mx-auto w-full overflow-hidden">
       <Suspense
         fallback={
           <div className="space-y-6 w-full">
@@ -93,7 +93,7 @@ function TeamTable({ organizationId }: { organizationId: string }) {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-w-0 w-full">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground tracking-tight">Team Management</h1>
@@ -121,8 +121,8 @@ function TeamTable({ organizationId }: { organizationId: string }) {
         </button>
       </div>
 
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-        <div className="flex items-center space-x-1 bg-muted p-1 rounded-[5px] self-start md:self-auto overflow-x-auto">
+      <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4">
+        <div className="flex items-center space-x-1 bg-muted p-1 rounded-[5px] w-full md:w-auto overflow-x-auto">
           {["ALL USERS", "ADMIN", "AGENT", "MEMBER"].map((tab) => (
             <button
               type="button"
@@ -163,7 +163,7 @@ function TeamTable({ organizationId }: { organizationId: string }) {
         </div>
       </div>
 
-      <div className="bg-background rounded-[7px] border border-border shadow-sm overflow-hidden">
+      <div className="bg-background rounded-[7px] border border-border shadow-sm overflow-hidden w-full">
         {filteredMembers.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 bg-muted/50">
             <svg
@@ -188,7 +188,7 @@ function TeamTable({ organizationId }: { organizationId: string }) {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto w-full">
             <table className="min-w-full divide-y divide-border">
               <thead className="bg-muted/50">
                 <tr>

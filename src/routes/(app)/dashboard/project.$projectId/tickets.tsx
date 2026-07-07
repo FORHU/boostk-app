@@ -199,7 +199,7 @@ function ProjectTicketsPage() {
   ];
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-8">
+    <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-8 w-full overflow-hidden">
       <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 border-b border-border pb-6">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Tickets</h1>
@@ -209,16 +209,18 @@ function ProjectTicketsPage() {
         </div>
       </div>
 
-      <div className="flex items-center gap-2 overflow-x-auto pb-2">
-        <input
-          type="text"
-          placeholder="Search..."
-          className="p-2 border rounded-[5px] min-w-62.5"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
+      <div className="flex flex-col md:flex-row items-start md:items-center gap-4 w-full">
+        <div className="w-full md:w-64 shrink-0">
+          <input
+            type="text"
+            placeholder="Search..."
+            className="p-2 border rounded-[5px] min-w-62.5"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0">
           {filterTabs.map((tab) => (
             <button
               type="button"
@@ -249,7 +251,7 @@ function ProjectTicketsPage() {
           </p>
         </div>
       ) : (
-        <div className="border border-muted rounded-[7px] shadow-sm overflow-hidden">
+        <div className="border border-muted rounded-[7px] shadow-sm overflow-x-auto w-full">
           <table className="min-w-full divide-y divide-muted">
             <thead className="bg-muted/50">
               <tr>
@@ -269,8 +271,16 @@ function ProjectTicketsPage() {
               {sortedTickets.map((ticket) => (
                 <tr
                   key={ticket.id}
-                  className="hover:bg-muted cursor-pointer transition-colors"
+                  tabIndex={0}
+                  className="hover:bg-muted cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
                   onClick={() => setSelectedTicketId(ticket.id)}
+                  onKeyDown={(e) => {
+                    // Listen for both Enter and Space keys
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setSelectedTicketId(ticket.id);
+                    }
+                  }}
                 >
                   <td className="px-6 py-4 whitespace-nowrap text-sm">{ticket.referenceNumber}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
