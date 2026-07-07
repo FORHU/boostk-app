@@ -28,10 +28,9 @@ describe("translateIncomingMessage (offline short-circuits)", () => {
   });
 
   it("skips translation when the message already looks English", async () => {
-    const r = await translateIncomingMessage(
-      "The order has not arrived and you should check the tracking",
-      { ticketId: "t1" },
-    );
+    const r = await translateIncomingMessage("The order has not arrived and you should check the tracking", {
+      ticketId: "t1",
+    });
     expect(r.translatedContent).toBeNull();
     expect(r.sourceLang).toBe("en");
   });

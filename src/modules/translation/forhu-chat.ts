@@ -83,9 +83,7 @@ export interface ChatOptions {
 }
 
 /** Lenient parse of the /chat response: we only depend on `response`, keep the rest. */
-const ChatResponseSchema = z
-  .object({ response: z.string().default("") })
-  .passthrough();
+const ChatResponseSchema = z.object({ response: z.string().default("") }).passthrough();
 
 export type ChatResponse = z.infer<typeof ChatResponseSchema>;
 

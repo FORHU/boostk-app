@@ -1,0 +1,72 @@
+name: Deploy to EC2
+
+on:
+  workflow_dispatch: # manual "Run workflow" button — safe default while learning
+  # push:
+  #   branches: [main]   # <-- uncomment later for fully automatic deploys
+
+env:
+  ECR_REPOSITORY: boostk
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Authenticate to AWS so we can push to ECR.
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # Build ON THE RUNNER (not on EC2) and push to ECR.
+      - name: Build and push image
+        env:
+          REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+        run: |
+          docker build -t "$REGISTRY/$ECR_REPOSITORY:${{ github.sha }}" \
+                       -t "$REGISTRY/$ECR_REPOSITORY:latest" .
+          docker push "$REGISTRY/$ECR_REPOSITORY:${{ github.sha }}"
+          docker push "$REGISTRY/$ECR_REPOSITORY:latest"
+
+      # mint a fresh ECR password per deploy
+      - name: Get ECR pull password
+        id: ecr-pw
+        run: |
+          PASSWORD=$(aws ecr get-login-password)
+          echo "::add-mask::$PASSWORD"
+          echo "password=$PASSWORD" >> "$GITHUB_OUTPUT"
+
+      # EC2 only logs in, pulls the prebuilt image, and swaps containers.
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }} # EC2 public IP or DNS name
+          username: ${{ secrets.EC2_USER }} # usually "ubuntu" or "ec2-user"
+          key: ${{ secrets.EC2_SSH_KEY }} # contents of your .pem private key
+          envs: REGISTRY,IMAGE,ECR_PASSWORD
+          script: |
+            set -e
+            echo "$ECR_PASSWORD" | docker login --username AWS --password-stdin "$REGISTRY"
+            docker pull "$IMAGE"
+            docker stop boostk-app || true
+            docker rm boostk-app || true
+            docker run -d \
+              --name boostk-app \
+              --restart unless-stopped \
+              -p 5000:5000 \
+              --env-file ~/boostk-app/.env \
+              "$IMAGE"
+            docker image prune -f            # clean up old image layers
+        env:
+          REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+          IMAGE: ${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+          ECR_PASSWORD: ${{ steps.ecr-pw.outputs.password }}
