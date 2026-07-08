@@ -14,7 +14,7 @@ export const Route = createFileRoute("/(app)/dashboard/project/$projectId/agents
     }
   },
   loader: ({ context }) => {
-    context.queryClient.ensureQueryData(memberQueries.allByOrgId(context.project.organizationId));
+    context.queryClient.ensureQueryData(memberQueries.agentAllByOrgId(context.project.organizationId));
   },
   component: ProjectAgentsPage,
 });
@@ -39,7 +39,7 @@ function ProjectAgentsPage() {
 }
 
 function AgentTable({ organizationId }: { organizationId: string }) {
-  const query = useSuspenseQuery(memberQueries.allByOrgId(organizationId));
+  const query = useSuspenseQuery(memberQueries.agentAllByOrgId(organizationId));
   const Allmembers = (query.data ?? []) as Array<Member & { user: User }>;
   const members = Allmembers.filter((m) => hasOrgRole(m.role, ORG_ROLE.AGENT));
 

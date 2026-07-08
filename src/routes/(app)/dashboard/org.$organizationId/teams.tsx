@@ -17,7 +17,7 @@ export const Route = createFileRoute("/(app)/dashboard/org/$organizationId/teams
     }
   },
   loader: ({ context, params }) => {
-    context.queryClient.ensureQueryData(memberQueries.allByOrgId(params.organizationId));
+    context.queryClient.ensureQueryData(memberQueries.adminAllByOrgId(params.organizationId));
   },
   component: OrganizationTeamsPage,
 });
@@ -51,7 +51,7 @@ const formatDate = (dateInput?: Date | string | null) => {
 };
 
 function TeamTable({ organizationId }: { organizationId: string }) {
-  const query = useSuspenseQuery(memberQueries.allByOrgId(organizationId));
+  const query = useSuspenseQuery(memberQueries.adminAllByOrgId(organizationId));
   const members = (query.data ?? []) as Array<Member & { user: User }>;
 
   const [searchQuery, setSearchQuery] = useState("");

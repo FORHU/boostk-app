@@ -5,22 +5,40 @@ import { prisma } from "@/lib/prisma";
 import { ORG_ROLE } from "@/modules/auth/roles";
 import { requireOrgRole } from "@/modules/organization/organization.middleware";
 
-export const getOrgMembersFn = createServerFn({ method: "GET" })
+const fetchMembers = async (organizationId: string) => {
+  return prisma.member.findMany({
+    where: { organizationId },
+    include: { user: true },
+    orderBy: { createdAt: "asc" as const },
+  });
+};
+
+export const getAdminOrgMembersFn = createServerFn({ method: "GET" })
+  .inputValidator(z.object({ organizationId: z.string() }))
+  .middleware([requireOrgRole(ORG_ROLE.ADMIN)])
+  .handler(async ({ context }) => {
+    return fetchMembers(context.organization.id);
+  });
+
+export const getAgentProjectMembersFn = createServerFn({ method: "GET" })
   .inputValidator(z.object({ organizationId: z.string() }))
   .middleware([requireOrgRole(ORG_ROLE.AGENT)])
   .handler(async ({ context }) => {
-    return prisma.member.findMany({
-      where: { organizationId: context.organization.id },
-      include: { user: true },
-      orderBy: { createdAt: "asc" as const },
-    });
+    return fetchMembers(context.organization.id);
   });
 
 export const memberQueries = {
   members: ["members"],
-  allByOrgId: (organizationId: string) =>
+
+  adminAllByOrgId: (organizationId: string) =>
     queryOptions({
-      queryKey: [...memberQueries.members, organizationId],
-      queryFn: () => getOrgMembersFn({ data: { organizationId } }),
+      queryKey: [...memberQueries.members, "admin", organizationId],
+      queryFn: () => getAdminOrgMembersFn({ data: { organizationId } }),
+    }),
+
+  agentAllByOrgId: (organizationId: string) =>
+    queryOptions({
+      queryKey: [...memberQueries.members, "agent", organizationId],
+      queryFn: () => getAgentProjectMembersFn({ data: { organizationId } }),
     }),
 };
