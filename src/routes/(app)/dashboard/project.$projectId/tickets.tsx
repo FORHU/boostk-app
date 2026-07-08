@@ -1,13 +1,14 @@
-import { queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { queryOptions, useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import { Loader2, X } from "lucide-react";
+import { Loader2, Maximize, Minimize, Send, X } from "lucide-react";
 import { useState } from "react";
 import { z } from "zod";
 import { REDIRECT_REASON } from "@/enums/enums";
 import { prisma } from "@/lib/prisma";
 import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
 import { requireProjectRole } from "@/modules/project/project.middleware";
+import { createAgentTicketMessageFn } from "@/modules/ticket-message/ticket-message.functions";
 
 // 1. Fetching Function. Agent-only.
 export const getProjectTicketsFn = createServerFn({ method: "GET" })
@@ -78,16 +79,76 @@ export const Route = createFileRoute("/(app)/dashboard/project/$projectId/ticket
   component: ProjectTicketsPage,
 });
 
+export function PanelReplyInput({
+  projectId,
+  ticketId,
+  language,
+}: {
+  projectId: string;
+  ticketId: string;
+  language?: string | null;
+}) {
+  const queryClient = useQueryClient();
+  const [message, setMessage] = useState("");
+
+  const replyMutation = useMutation({
+    mutationFn: createAgentTicketMessageFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: projectTicketQueries.detailById(projectId, ticketId).queryKey,
+      });
+    },
+    onError: (error) => console.log("error", error),
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = message.trim();
+    if (!trimmed) return;
+
+    replyMutation.mutate({
+      data: { content: trimmed, contentType: "TEXT", ticketId: ticketId },
+    });
+    setMessage("");
+  };
+
+  const placeholder = language
+    ? `Reply in your language — the customer reads it in ${language}`
+    : "Reply to the customer...";
+
+  return (
+    <form onSubmit={handleSubmit} className="flex items-center gap-2 p-3 border-t border-border bg-background">
+      <input
+        type="text"
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
+        placeholder={placeholder}
+        disabled={replyMutation.isPending}
+        className="flex-1 bg-muted rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-primary disabled:opacity-60"
+      />
+      <button
+        type="submit"
+        disabled={!message.trim() || replyMutation.isPending}
+        className="bg-primary text-primary-foreground p-2.5 rounded-xl active:scale-95 disabled:opacity-50"
+      >
+        <Send size={18} />
+      </button>
+    </form>
+  );
+}
+
 // Chat Bubble Component
 function TicketChatMessageBubble({ message, isCustomer }: { message: string; isCustomer: boolean }) {
   return (
     <div className={`flex w-full mb-4 ${isCustomer ? "justify-start" : "justify-end"}`}>
       <div
-        className={`max-w-[80%] p-3 shadow-sm overflow-hidden ${
-          isCustomer ? "bg-background rounded-[16px] rounded-tl-none" : "bg-primary rounded-[16px] rounded-tr-none"
+        className={`w-fit max-w-[85%] sm:max-w-112.5 md:max-w-150 p-3 shadow-sm overflow-hidden wrap-break-words ${
+          isCustomer
+            ? "bg-background rounded-[16px] rounded-tl-none border border-border/50"
+            : "bg-primary text-primary-foreground rounded-[16px] rounded-tr-none"
         }`}
       >
-        <p className="text-sm whitespace-pre-wrap">{message}</p>
+        <p className="text-sm whitespace-pre-wrap wrap-break-words">{message}</p>
       </div>
     </div>
   );
@@ -113,6 +174,8 @@ function TicketDetailPanel({
   ticketId: string | null;
   onClose: () => void;
 }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
   const { data: ticket, isLoading } = useQuery({
     ...projectTicketQueries.detailById(projectId, ticketId || ""),
     enabled: !!ticketId,
@@ -122,18 +185,34 @@ function TicketDetailPanel({
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/30 backdrop-blur-sm transition-opacity">
-      <div className="w-full max-w-lg bg-background dark:bg-muted h-full flex flex-col animate-in slide-in-from-right duration-300">
+      <div
+        className={`bg-background dark:bg-muted h-full flex flex-col animate-in slide-in-from-right duration-300 transition-all ease-in-out w-full ${
+          isExpanded ? "max-w-full" : "max-w-lg"
+        }`}
+      >
         <div className="flex items-center justify-between p-4 border-b border-border">
           <h2 className="text-lg font-semibold">
             {isLoading ? "Loading..." : ticket?.customer?.name || "Customer Ticket"}
           </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-2 text-muted-foreground hover:bg-muted rounded-full transition-colors"
-          >
-            <X size={20} />
-          </button>
+
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="p-2 text-muted-foreground hover:bg-muted rounded-full transition-colors"
+              title={isExpanded ? "Collapse panel" : "Expand panel"}
+            >
+              {isExpanded ? <Minimize size={18} /> : <Maximize size={18} />}
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-2 text-muted-foreground hover:bg-muted rounded-full transition-colors"
+              title="Close panel"
+            >
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 bg-muted/10">
@@ -151,6 +230,10 @@ function TicketDetailPanel({
             </div>
           )}
         </div>
+
+        {!isLoading && ticket && (
+          <PanelReplyInput projectId={projectId} ticketId={ticketId} language={ticket.customer?.language} />
+        )}
       </div>
     </div>
   );
