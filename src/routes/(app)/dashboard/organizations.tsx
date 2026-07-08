@@ -6,6 +6,7 @@ import { Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { UsageCardsSkeleton } from "@/components/ui/skeleton";
 import { getFieldInvalid } from "@/lib/form-utils";
 import { createOrganizationFn } from "@/modules/organization/organization.functions";
 import { organizationQueries } from "@/modules/organization/organization.queries";
@@ -151,7 +152,7 @@ const OrganizationForm = () => {
 
 const OrganizationListSuspense = () => {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<UsageCardsSkeleton count={1} className="md:grid-cols-1" />}>
       <OrganizationList />
     </Suspense>
   );

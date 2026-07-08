@@ -1,34 +1,11 @@
-import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
 import type { Member, User } from "prisma/generated/client";
 import { Suspense } from "react";
-import { z } from "zod";
 import { DataTableSkeleton, TextSkeleton } from "@/components/ui/skeleton";
 import { REDIRECT_REASON } from "@/enums/enums";
-import { prisma } from "@/lib/prisma";
 import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
-import { requireProjectRole } from "@/modules/project/project.middleware";
-
-export const getAgentsFn = createServerFn({ method: "GET" })
-  .inputValidator(z.object({ projectId: z.string() }))
-  .middleware([requireProjectRole(ORG_ROLE.AGENT)])
-  .handler(async ({ context }) => {
-    return prisma.member.findMany({
-      where: { organizationId: context.project.organizationId },
-      include: { user: true },
-      orderBy: { createdAt: "asc" },
-    });
-  });
-
-export const agentQueries = {
-  agents: ["agents"],
-  allByProjectId: (projectId: string) =>
-    queryOptions({
-      queryKey: [...agentQueries.agents, projectId],
-      queryFn: () => getAgentsFn({ data: { projectId } }),
-    }),
-};
+import { memberQueries } from "@/modules/members/member.queries";
 
 export const Route = createFileRoute("/(app)/dashboard/project/$projectId/agents")({
   beforeLoad: ({ context }) => {
@@ -36,14 +13,14 @@ export const Route = createFileRoute("/(app)/dashboard/project/$projectId/agents
       throw redirect({ to: "/dashboard/organizations", search: { reason: REDIRECT_REASON.PERMISSION_DENIED } });
     }
   },
-  loader: ({ context, params }) => {
-    context.queryClient.ensureQueryData(agentQueries.allByProjectId(params.projectId));
+  loader: ({ context }) => {
+    context.queryClient.ensureQueryData(memberQueries.allByOrgId(context.project.organizationId));
   },
   component: ProjectAgentsPage,
 });
 
 function ProjectAgentsPage() {
-  const { projectId } = Route.useParams();
+  const { project } = Route.useRouteContext();
 
   return (
     <div>
@@ -55,14 +32,14 @@ function ProjectAgentsPage() {
           </div>
         }
       >
-        <AgentTable projectId={projectId} />
+        <AgentTable organizationId={project.organizationId} />
       </Suspense>
     </div>
   );
 }
 
-function AgentTable({ projectId }: { projectId: string }) {
-  const query = useSuspenseQuery(agentQueries.allByProjectId(projectId));
+function AgentTable({ organizationId }: { organizationId: string }) {
+  const query = useSuspenseQuery(memberQueries.allByOrgId(organizationId));
   const Allmembers = (query.data ?? []) as Array<Member & { user: User }>;
   const members = Allmembers.filter((m) => hasOrgRole(m.role, ORG_ROLE.AGENT));
 

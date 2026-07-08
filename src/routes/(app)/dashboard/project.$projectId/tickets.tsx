@@ -261,8 +261,13 @@ function ProjectTicketsPage() {
 
   const sortedTickets = [...filteredTickets].sort((a, b) => {
     if (!sortConfig) return 0;
-    const aValue = a[sortConfig.key as keyof typeof a];
-    const bValue = b[sortConfig.key as keyof typeof b];
+    let aValue = a[sortConfig.key as keyof typeof a];
+    let bValue = b[sortConfig.key as keyof typeof b];
+
+    if (sortConfig.key === "customerName") {
+      aValue = a.customer?.name ?? "";
+      bValue = b.customer?.name ?? "";
+    }
     if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
     if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
     return 0;
@@ -297,7 +302,7 @@ function ProjectTicketsPage() {
           <input
             type="text"
             placeholder="Search..."
-            className="p-2 border rounded-[5px] min-w-62.5"
+            className="p-2 border rounded-[5px] min-w-[250px]"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -341,7 +346,7 @@ function ProjectTicketsPage() {
                 {["referenceNumber", "status", "customerName", "createdAt"].map((col) => (
                   <th
                     key={col}
-                    className="px-6 py-3 text-left text-xs font-medium uppercase cursor-pointer"
+                    className="px-6 py-3 text-left text-xs font-medium uppercase cursor-pointer hover:bg-muted transition-colors"
                     onClick={() => handleSort(col)}
                   >
                     {col === "customerName" ? "Customer Name" : col.replace(/([A-Z])/g, " $1")}

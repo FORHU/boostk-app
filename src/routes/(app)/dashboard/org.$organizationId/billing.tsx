@@ -170,7 +170,7 @@ function OrganizationBillingPage() {
               <p className="text-xs text-muted-foreground mb-6">Advanced global support suite.</p>
               <button
                 type="button"
-                className="w-full bg-primary text-primary-foreground font-medium py-2 ransition-opacity mb-6"
+                className="w-full bg-primary text-primary-foreground font-medium py-2 transition-opacity mb-6"
               >
                 Subscribe
               </button>

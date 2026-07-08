@@ -76,10 +76,16 @@ function ToolbarSkeleton() {
   );
 }
 
-function UsageCardsSkeleton() {
+interface UsageCardsSkeletonProps {
+  count?: number;
+  className?: string;
+}
+
+function UsageCardsSkeleton({ count = 3, className }: UsageCardsSkeletonProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      {Array.from({ length: 3 }).map((_, i) => (
+    // Added className here so you can override the grid-cols if you have more or less than 3 cards
+    <div className={cn("grid grid-cols-1 md:grid-cols-3 gap-6", className)}>
+      {Array.from({ length: count }).map((_, i) => (
         <div key={i} className="bg-card border border-border rounded-xl p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <Skeleton className="h-4 w-20" />
@@ -94,7 +100,6 @@ function UsageCardsSkeleton() {
     </div>
   );
 }
-
 interface TextSkeletonProps {
   lines?: number;
   className?: string;
