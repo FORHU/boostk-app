@@ -1,34 +1,11 @@
-import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
 import type { Member, User } from "prisma/generated/client";
 import { Suspense, useState } from "react";
-import { z } from "zod";
 import { DataTableSkeleton, ToolbarSkeleton } from "@/components/ui/skeleton";
 import { REDIRECT_REASON } from "@/enums/enums";
-import { prisma } from "@/lib/prisma";
 import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
-import { requireOrgRole } from "@/modules/organization/organization.middleware";
-
-export const getOrgMembersFn = createServerFn({ method: "GET" })
-  .inputValidator(z.object({ organizationId: z.string() }))
-  .middleware([requireOrgRole(ORG_ROLE.ADMIN)])
-  .handler(async ({ context }) => {
-    return prisma.member.findMany({
-      where: { organizationId: context.organization.id },
-      include: { user: true },
-      orderBy: { createdAt: "asc" as const },
-    });
-  });
-
-export const memberQueries = {
-  members: ["members"],
-  allByOrgId: (organizationId: string) =>
-    queryOptions({
-      queryKey: [...memberQueries.members, organizationId],
-      queryFn: () => getOrgMembersFn({ data: { organizationId } }),
-    }),
-};
+import { memberQueries } from "@/modules/members/member.queries";
 
 export const Route = createFileRoute("/(app)/dashboard/org/$organizationId/teams")({
   beforeLoad: ({ context }) => {
@@ -40,7 +17,7 @@ export const Route = createFileRoute("/(app)/dashboard/org/$organizationId/teams
     }
   },
   loader: ({ context, params }) => {
-    context.queryClient.ensureQueryData(memberQueries.allByOrgId(params.organizationId));
+    context.queryClient.ensureQueryData(memberQueries.adminAllByOrgId(params.organizationId));
   },
   component: OrganizationTeamsPage,
 });
@@ -74,7 +51,7 @@ const formatDate = (dateInput?: Date | string | null) => {
 };
 
 function TeamTable({ organizationId }: { organizationId: string }) {
-  const query = useSuspenseQuery(memberQueries.allByOrgId(organizationId));
+  const query = useSuspenseQuery(memberQueries.adminAllByOrgId(organizationId));
   const members = (query.data ?? []) as Array<Member & { user: User }>;
 
   const [searchQuery, setSearchQuery] = useState("");

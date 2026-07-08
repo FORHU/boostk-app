@@ -53,7 +53,7 @@ function OrganizationUsagePage() {
         fallback={
           <div className="mx-auto p-6 md:p-10 space-y-10">
             <TextSkeleton lines={2} className="max-w-sm" />
-            <UsageCardsSkeleton />
+            <UsageCardsSkeleton className="max-w-7xl mx-auto p-6 md:p-10 space-y-10" />
           </div>
         }
       >
