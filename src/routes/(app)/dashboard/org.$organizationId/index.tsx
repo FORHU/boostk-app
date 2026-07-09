@@ -6,6 +6,7 @@ import { Suspense, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { InviteModal } from "@/components/ui/invite-modals";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
 import { getFieldInvalid } from "@/lib/form-utils";
@@ -23,6 +24,7 @@ export const Route = createFileRoute("/(app)/dashboard/org/$organizationId/")({
 function OrganizationPage() {
   const { organizationId } = Route.useParams();
   const [searchQuery, setSearchQuery] = useState("");
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
   return (
     <div className="p-6 space-y-8 max-w-7xl mx-auto">
@@ -45,6 +47,7 @@ function OrganizationPage() {
           </div>
           <button
             type="button"
+            onClick={() => setIsInviteModalOpen(true)}
             className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
           >
             Invite Members
@@ -59,6 +62,11 @@ function OrganizationPage() {
           <OrgProjects organizationId={organizationId} searchQuery={searchQuery} />
         </Suspense>
       </div>
+      <InviteModal
+        isOpen={isInviteModalOpen}
+        onClose={() => setIsInviteModalOpen(false)}
+        organizationId={organizationId}
+      />
     </div>
   );
 }
