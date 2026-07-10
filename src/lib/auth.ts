@@ -1,6 +1,7 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { organization } from "better-auth/plugins";
+import { ac, roles } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 
 export const auth = betterAuth({
@@ -15,5 +16,5 @@ export const auth = betterAuth({
     process.env.TRUSTED_ORIGINS?.split(",")
       .map((o) => o.trim())
       .filter(Boolean) ?? [],
-  plugins: [organization()],
+  plugins: [organization({ ac, roles })],
 });

@@ -9,7 +9,7 @@ interface InviteModalProps {
 }
 
 export function InviteModal({ isOpen, onClose, organizationId }: InviteModalProps) {
-  type OrgRole = "member" | "admin" | "agent";
+  type OrgRole = "member" | "agent" | "admin";
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<OrgRole>("member");
   const [isLoading, setIsLoading] = useState(false);
@@ -97,8 +97,8 @@ export function InviteModal({ isOpen, onClose, organizationId }: InviteModalProp
                 className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-shadow"
                 >
                 <option value="member">Member</option>
+                <option value="agent">Agent</option>
                 <option value="admin">Admin</option>
-                <option value="agent">Agent</option> 
             </select>
           </div>
 
