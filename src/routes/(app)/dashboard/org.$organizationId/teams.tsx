@@ -6,7 +6,8 @@ import { InviteModal } from "@/components/ui/invite-modals";
 import { DataTableSkeleton, ToolbarSkeleton } from "@/components/ui/skeleton";
 import { REDIRECT_REASON } from "@/enums/enums";
 import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
-import { memberQueries, removeMemberFn, updateMemberRoleFn } from "@/modules/members/member.queries";
+import { removeMemberFn, updateMemberRoleFn } from "@/modules/members/member.functions";
+import { memberQueries } from "@/modules/members/member.queries";
 
 export const Route = createFileRoute("/(app)/dashboard/org/$organizationId/teams")({
   beforeLoad: ({ context }) => {
