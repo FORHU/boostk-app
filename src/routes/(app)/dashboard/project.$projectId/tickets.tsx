@@ -4,6 +4,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { Loader2, Maximize, Minimize, Send, X } from "lucide-react";
 import { useState } from "react";
 import { z } from "zod";
+import { TicketPriorityBadge, TicketPrioritySelect, type TicketPriorityType } from "@/components/ui/ticket-priority";
 import { REDIRECT_REASON } from "@/enums/enums";
 import { prisma } from "@/lib/prisma";
 import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
@@ -55,6 +56,25 @@ export const updateTicketStatusFn = createServerFn({ method: "POST" })
         projectId: data.projectId,
       },
       data: { status: data.status },
+    });
+  });
+
+export const updateTicketPriorityFn = createServerFn({ method: "POST" })
+  .inputValidator(
+    z.object({
+      projectId: z.string(),
+      ticketId: z.string(),
+      priority: z.enum(["LOW", "MEDIUM", "HIGH"]),
+    }),
+  )
+  .middleware([requireProjectRole(ORG_ROLE.AGENT)])
+  .handler(async ({ data }) => {
+    return prisma.ticket.update({
+      where: {
+        id: data.ticketId,
+        projectId: data.projectId,
+      },
+      data: { priority: data.priority },
     });
   });
 
@@ -214,6 +234,19 @@ function TicketDetailPanel({
     },
   });
 
+  const updatePriorityMutation = useMutation({
+    mutationFn: updateTicketPriorityFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: projectTicketQueries.detailById(projectId, ticketId || "").queryKey,
+      });
+      queryClient.invalidateQueries({
+        queryKey: projectTicketQueries.allByProjectId(projectId).queryKey,
+      });
+    },
+    onError: (error) => console.error("Failed to update priority:", error),
+  });
+
   if (!ticketId) return null;
 
   return (
@@ -224,9 +257,22 @@ function TicketDetailPanel({
         }`}
       >
         <div className="flex items-center justify-between p-4 border-b border-border">
-          <h2 className="text-lg font-semibold">
-            {isLoading ? "Loading..." : ticket?.customer?.name || "Customer Ticket"}
-          </h2>
+          <div className="flex flex-col gap-1">
+            <h2 className="text-lg font-semibold">
+              {isLoading ? "Loading..." : ticket?.customer?.name || "Customer Ticket"}
+            </h2>
+            {!isLoading && ticket && (
+              <TicketPrioritySelect
+                priority={ticket.priority}
+                isPending={updatePriorityMutation.isPending}
+                onPriorityChange={(newPriority: TicketPriorityType) => {
+                  updatePriorityMutation.mutate({
+                    data: { projectId, ticketId, priority: newPriority },
+                  });
+                }}
+              />
+            )}
+          </div>
 
           <div className="flex items-center gap-1">
             <button
@@ -400,7 +446,7 @@ function ProjectTicketsPage() {
           <table className="min-w-full divide-y divide-muted">
             <thead className="bg-muted/50">
               <tr>
-                {["referenceNumber", "status", "customerName", "createdAt"].map((col) => (
+                {["referenceNumber", "priority", "status", "customerName", "createdAt"].map((col) => (
                   <th
                     key={col}
                     className="px-6 py-3 text-left text-xs font-medium uppercase cursor-pointer hover:bg-muted transition-colors"
@@ -428,6 +474,9 @@ function ProjectTicketsPage() {
                   }}
                 >
                   <td className="px-6 py-4 whitespace-nowrap text-sm">{ticket.referenceNumber}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <TicketPriorityBadge priority={ticket.priority} />
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
                       className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusBadgeClasses(ticket.status)}`}
