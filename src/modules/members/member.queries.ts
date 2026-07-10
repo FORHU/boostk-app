@@ -32,7 +32,9 @@ export const updateMemberRoleFn = createServerFn({ method: "POST" })
     z.object({
       organizationId: z.string(),
       memberId: z.string(),
-      role: z.string(),
+      // Only these roles are assignable via the UI. `owner` is intentionally
+      // excluded — it stays a protected role reserved for the org creator.
+      role: z.enum([ORG_ROLE.MEMBER, ORG_ROLE.AGENT, ORG_ROLE.ADMIN]),
     }),
   )
   .middleware([requireOrgRole(ORG_ROLE.ADMIN)])
@@ -43,6 +45,11 @@ export const updateMemberRoleFn = createServerFn({ method: "POST" })
 
     if (!member || member.organizationId !== context.organization.id) {
       throw new Error("Member not found or does not belong to this organization.");
+    }
+
+    // The organization owner is protected: admins cannot change its role.
+    if (member.role === ORG_ROLE.OWNER) {
+      throw new Error("The organization owner's role cannot be changed.");
     }
 
     const updatedMember = await prisma.member.update({
@@ -69,6 +76,11 @@ export const removeMemberFn = createServerFn({ method: "POST" })
 
     if (!member || member.organizationId !== context.organization.id) {
       throw new Error("Member not found or does not belong to this organization.");
+    }
+
+    // The organization owner is protected: admins cannot remove it.
+    if (member.role === ORG_ROLE.OWNER) {
+      throw new Error("The organization owner cannot be removed.");
     }
 
     // 2. Remove the member

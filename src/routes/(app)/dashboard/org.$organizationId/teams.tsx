@@ -57,7 +57,9 @@ function MemberRowActions({ member, organizationId }: { member: Member & { user:
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
   const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
 
-  const [selectedRole, setSelectedRole] = useState(member.role || "MEMBER");
+  const [selectedRole, setSelectedRole] = useState<"member" | "agent" | "admin">(
+    member.role === "agent" || member.role === "admin" ? member.role : "member",
+  );
   const [serverError, setServerError] = useState("");
 
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -160,14 +162,17 @@ function MemberRowActions({ member, organizationId }: { member: Member & { user:
             <div className="mt-4">
               <select
                 value={selectedRole}
-                onChange={(e) => setSelectedRole(e.target.value)}
+                onChange={(e) => setSelectedRole(e.target.value as "member" | "agent" | "admin")}
                 className="w-full rounded-[5px] border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               >
-                {Object.values(ORG_ROLE).map((role) => (
-                  <option key={role} value={role}>
-                    {role.toUpperCase()}
-                  </option>
-                ))}
+                {/* `owner` is a protected role — not assignable via the UI. */}
+                {Object.values(ORG_ROLE)
+                  .filter((role) => role !== ORG_ROLE.OWNER)
+                  .map((role) => (
+                    <option key={role} value={role}>
+                      {role.toUpperCase()}
+                    </option>
+                  ))}
               </select>
             </div>
 
