@@ -1,12 +1,12 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import type { Member, User } from "prisma/generated/client";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { InviteModal } from "@/components/ui/invite-modals";
 import { DataTableSkeleton, ToolbarSkeleton } from "@/components/ui/skeleton";
 import { REDIRECT_REASON } from "@/enums/enums";
 import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
-import { memberQueries } from "@/modules/members/member.queries";
+import { memberQueries, removeMemberFn, updateMemberRoleFn } from "@/modules/members/member.queries";
 
 export const Route = createFileRoute("/(app)/dashboard/org/$organizationId/teams")({
   beforeLoad: ({ context }) => {
@@ -51,6 +51,199 @@ const formatDate = (dateInput?: Date | string | null) => {
   });
 };
 
+// Row Actions & Modals
+function MemberRowActions({ member, organizationId }: { member: Member & { user: User }; organizationId: string }) {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
+  const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
+
+  const [selectedRole, setSelectedRole] = useState<"member" | "agent" | "admin">(
+    member.role === "agent" || member.role === "admin" ? member.role : "member",
+  );
+  const [serverError, setServerError] = useState("");
+
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const updateRoleMutation = useMutation({
+    mutationFn: () =>
+      updateMemberRoleFn({
+        data: { organizationId, memberId: member.id, role: selectedRole },
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: memberQueries.members });
+      setIsRoleModalOpen(false);
+      setServerError("");
+    },
+    onError: (error) => setServerError(error.message || "Failed to update role."),
+  });
+
+  const removeMemberMutation = useMutation({
+    mutationFn: () =>
+      removeMemberFn({
+        data: { organizationId, memberId: member.id },
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: memberQueries.members });
+      setIsRemoveModalOpen(false);
+      setServerError("");
+    },
+    onError: (error) => setServerError(error.message || "Failed to remove member."),
+  });
+
+  return (
+    <div className="relative inline-block text-left" ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+        className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-[5px] hover:bg-muted"
+      >
+        <svg
+          aria-hidden="true"
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <circle cx="12" cy="12" r="1" />
+          <circle cx="12" cy="5" r="1" />
+          <circle cx="12" cy="19" r="1" />
+        </svg>
+      </button>
+
+      {/* Dropdown Menu */}
+      {isDropdownOpen && (
+        <div className="absolute right-0 z-10 mt-2 w-40 origin-top-right rounded-[5px] bg-background border border-border shadow-lg focus:outline-none overflow-hidden">
+          <button
+            type="button"
+            onClick={() => {
+              setIsRoleModalOpen(true);
+              setIsDropdownOpen(false);
+            }}
+            className="block w-full text-left px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors"
+          >
+            Change Role
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setIsRemoveModalOpen(true);
+              setIsDropdownOpen(false);
+            }}
+            className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-950 transition-colors"
+          >
+            Remove
+          </button>
+        </div>
+      )}
+
+      {/* Change Role Modal */}
+      {isRoleModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-sm rounded-[7px] bg-background p-6 shadow-lg border border-border">
+            <h3 className="text-lg font-bold text-foreground">Change Role</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Update the access level for {member.user?.name || "this user"}.
+            </p>
+
+            <div className="mt-4">
+              <select
+                value={selectedRole}
+                onChange={(e) => setSelectedRole(e.target.value as "member" | "agent" | "admin")}
+                className="w-full rounded-[5px] border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              >
+                {/* `owner` is a protected role — not assignable via the UI. */}
+                {Object.values(ORG_ROLE)
+                  .filter((role) => role !== ORG_ROLE.OWNER)
+                  .map((role) => (
+                    <option key={role} value={role}>
+                      {role.toUpperCase()}
+                    </option>
+                  ))}
+              </select>
+            </div>
+
+            {serverError && <p className="mt-2 text-sm text-red-500">{serverError}</p>}
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsRoleModalOpen(false);
+                  setServerError("");
+                }}
+                disabled={updateRoleMutation.isPending}
+                className="rounded-[5px] px-4 py-2 text-sm font-medium text-foreground hover:bg-muted border border-border transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => updateRoleMutation.mutate()}
+                disabled={updateRoleMutation.isPending}
+                className="rounded-[5px] bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors disabled:opacity-50"
+              >
+                {updateRoleMutation.isPending ? "Saving..." : "Save Changes"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Remove Member Confirmation Modal */}
+      {isRemoveModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-sm rounded-[7px] bg-background p-6 shadow-lg border border-border">
+            <h3 className="text-lg font-bold text-foreground">Remove Member</h3>
+            <p className="mt-2 text-sm text-red-500">
+              Are you sure you want to remove <strong>{member.user?.name || "this user"}</strong>
+            </p>
+            <p className="text-sm text-red-500">from the organization? They will lose all access.</p>
+
+            {serverError && <p className="mt-2 text-sm text-red-500">{serverError}</p>}
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsRemoveModalOpen(false);
+                  setServerError("");
+                }}
+                disabled={removeMemberMutation.isPending}
+                className="rounded-[5px] px-4 py-2 text-sm font-medium text-foreground hover:bg-muted border border-border transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => removeMemberMutation.mutate()}
+                disabled={removeMemberMutation.isPending}
+                className="rounded-[5px] bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors disabled:opacity-50"
+              >
+                {removeMemberMutation.isPending ? "Removing..." : "Remove"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// MAIN COMPONENT
 function TeamTable({ organizationId }: { organizationId: string }) {
   const query = useSuspenseQuery(memberQueries.adminAllByOrgId(organizationId));
   const members = (query.data ?? []) as Array<Member & { user: User }>;
@@ -62,7 +255,6 @@ function TeamTable({ organizationId }: { organizationId: string }) {
   const filteredMembers = members.filter((m) => {
     const matchesTab = activeTab === "ALL USERS" || m.role?.toUpperCase() === activeTab;
 
-    // Search query match (against name or email)
     const searchLower = searchQuery.toLowerCase();
     const matchesSearch =
       (m.user?.name ?? "").toLowerCase().includes(searchLower) ||
@@ -161,24 +353,20 @@ function TeamTable({ organizationId }: { organizationId: string }) {
               />
             </svg>
             <h3 className="text-lg font-medium text-muted-foreground">No users found</h3>
-            <p className="text-sm text-muted-foreground mt-1">
-              {searchQuery
-                ? "Try adjusting your search query."
-                : `There are currently no users matching the ${activeTab} role.`}
-            </p>
           </div>
         ) : (
           <div className="overflow-x-auto w-full">
             <table className="min-w-full divide-y divide-border">
+              {/* Table Header */}
               <thead className="bg-muted/50">
                 <tr>
-                  <th className="px-6 py-4 text-left text-[11px] font-bold text-muted-foreground uppercase tracking-wider group cursor-pointer">
+                  <th className="px-6 py-4 text-left text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
                     User / Role
                   </th>
                   <th className="px-6 py-4 text-left text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
                     Email
                   </th>
-                  <th className="px-6 py-4 text-left text-[11px] font-bold text-muted-foreground uppercase tracking-wider group cursor-pointer">
+                  <th className="px-6 py-4 text-left text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
                     Joined
                   </th>
                   <th className="px-6 py-4 text-right text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
@@ -190,12 +378,10 @@ function TeamTable({ organizationId }: { organizationId: string }) {
               <tbody className="divide-y divide-border bg-background">
                 {filteredMembers.map((m) => {
                   const isRole = (role: string) => m.role?.toLowerCase() === role.toLowerCase();
-
                   const joinedDate = m.createdAt ?? m.user?.createdAt;
 
                   return (
                     <tr key={m.id} className="hover:bg-muted/50 transition-colors">
-                      {/* User & Role Column */}
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div
@@ -262,37 +448,16 @@ function TeamTable({ organizationId }: { organizationId: string }) {
                         </div>
                       </td>
 
-                      {/* Email Column */}
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                         {m.user?.email ?? "-"}
                       </td>
 
-                      {/* Joined Date Column */}
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                         {formatDate(joinedDate)}
                       </td>
 
-                      {/* Actions Column */}
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button
-                          type="button"
-                          className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-[5px] hover:bg-muted"
-                        >
-                          <svg
-                            aria-hidden="true"
-                            className="w-5 h-5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <circle cx="12" cy="12" r="1" />
-                            <circle cx="12" cy="5" r="1" />
-                            <circle cx="12" cy="19" r="1" />
-                          </svg>
-                        </button>
+                        <MemberRowActions member={m} organizationId={organizationId} />
                       </td>
                     </tr>
                   );
