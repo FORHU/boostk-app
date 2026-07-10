@@ -232,17 +232,17 @@ function TicketDetailPanel({
             <button
               type="button"
               disabled={updateStatusMutation.isPending}
-             onClick={() => {
-              if (!ticketId) return;
-              const newStatus = ticket?.status === "OPEN" ? "CLOSED" : "OPEN";
-              updateStatusMutation.mutate({ 
-                data: {
-                  projectId, 
-                  ticketId: ticketId,
-                  status: newStatus 
-                }
-              });
-            }}
+              onClick={() => {
+                if (!ticketId) return;
+                const newStatus = ticket?.status === "OPEN" ? "CLOSED" : "OPEN";
+                updateStatusMutation.mutate({
+                  data: {
+                    projectId,
+                    ticketId: ticketId,
+                    status: newStatus,
+                  },
+                });
+              }}
               className="px-3 py-1.5 text-xs font-medium rounded-[4px] bg-muted hover:bg-muted/80 disabled:opacity-50"
             >
               {updateStatusMutation.isPending ? (
