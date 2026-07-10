@@ -2,6 +2,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import type { Member, User } from "prisma/generated/client";
 import { Suspense, useState } from "react";
+import { InviteModal } from "@/components/ui/invite-modals";
 import { DataTableSkeleton, ToolbarSkeleton } from "@/components/ui/skeleton";
 import { REDIRECT_REASON } from "@/enums/enums";
 import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
@@ -53,6 +54,7 @@ const formatDate = (dateInput?: Date | string | null) => {
 function TeamTable({ organizationId }: { organizationId: string }) {
   const query = useSuspenseQuery(memberQueries.adminAllByOrgId(organizationId));
   const members = (query.data ?? []) as Array<Member & { user: User }>;
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("ALL USERS");
@@ -80,6 +82,7 @@ function TeamTable({ organizationId }: { organizationId: string }) {
         </div>
         <button
           type="button"
+          onClick={() => setIsInviteModalOpen(true)}
           className="inline-flex items-center justify-center rounded-[2px] bg-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
         >
           <svg
@@ -299,6 +302,11 @@ function TeamTable({ organizationId }: { organizationId: string }) {
           </div>
         )}
       </div>
+      <InviteModal
+        isOpen={isInviteModalOpen}
+        onClose={() => setIsInviteModalOpen(false)}
+        organizationId={organizationId}
+      />
     </div>
   );
 }
