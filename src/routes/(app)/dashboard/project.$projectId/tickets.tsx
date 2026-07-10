@@ -39,6 +39,25 @@ export const getTicketByIdFn = createServerFn({ method: "GET" })
     });
   });
 
+export const updateTicketStatusFn = createServerFn({ method: "POST" })
+  .inputValidator(
+    z.object({
+      projectId: z.string(),
+      ticketId: z.string(),
+      status: z.enum(["OPEN", "CLOSED"]),
+    }),
+  )
+  .middleware([requireProjectRole(ORG_ROLE.AGENT)])
+  .handler(async ({ data }) => {
+    return prisma.ticket.update({
+      where: {
+        id: data.ticketId,
+        projectId: data.projectId,
+      },
+      data: { status: data.status },
+    });
+  });
+
 // 2. Query Options
 export const projectTicketQueries = {
   tickets: ["project-tickets"],
@@ -181,6 +200,20 @@ function TicketDetailPanel({
     enabled: !!ticketId,
   });
 
+  const queryClient = useQueryClient();
+
+  const updateStatusMutation = useMutation({
+    mutationFn: updateTicketStatusFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: projectTicketQueries.detailById(projectId, ticketId || "").queryKey,
+      });
+      queryClient.invalidateQueries({
+        queryKey: projectTicketQueries.allByProjectId(projectId).queryKey,
+      });
+    },
+  });
+
   if (!ticketId) return null;
 
   return (
@@ -196,6 +229,30 @@ function TicketDetailPanel({
           </h2>
 
           <div className="flex items-center gap-1">
+            <button
+              type="button"
+              disabled={updateStatusMutation.isPending}
+              onClick={() => {
+                if (!ticketId) return;
+                const newStatus = ticket?.status === "OPEN" ? "CLOSED" : "OPEN";
+                updateStatusMutation.mutate({
+                  data: {
+                    projectId,
+                    ticketId: ticketId,
+                    status: newStatus,
+                  },
+                });
+              }}
+              className="px-3 py-1.5 text-xs font-medium rounded-[4px] bg-muted hover:bg-muted/80 disabled:opacity-50"
+            >
+              {updateStatusMutation.isPending ? (
+                <Loader2 className="animate-spin" size={14} />
+              ) : ticket?.status === "OPEN" ? (
+                "Close Ticket"
+              ) : (
+                "Reopen Ticket"
+              )}
+            </button>
             <button
               type="button"
               onClick={() => setIsExpanded(!isExpanded)}
