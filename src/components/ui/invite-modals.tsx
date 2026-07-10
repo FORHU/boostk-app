@@ -98,7 +98,7 @@ export function InviteModal({ isOpen, onClose, organizationId }: InviteModalProp
                 >
                 <option value="member">Member</option>
                 <option value="admin">Admin</option>
-                <option value="agent">agent</option> 
+                <option value="agent">Agent</option> 
             </select>
           </div>
 
