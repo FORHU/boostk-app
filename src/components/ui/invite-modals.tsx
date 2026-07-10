@@ -9,7 +9,7 @@ interface InviteModalProps {
 }
 
 export function InviteModal({ isOpen, onClose, organizationId }: InviteModalProps) {
-  type OrgRole = "member" | "admin" | "owner";
+  type OrgRole = "member" | "admin" | "agent";
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<OrgRole>("member");
   const [isLoading, setIsLoading] = useState(false);
@@ -98,7 +98,7 @@ export function InviteModal({ isOpen, onClose, organizationId }: InviteModalProp
                 >
                 <option value="member">Member</option>
                 <option value="admin">Admin</option>
-                <option value="owner">Owner</option> 
+                <option value="agent">agent</option> 
             </select>
           </div>
 
