@@ -5,6 +5,7 @@ import { Loader2, Maximize, Minimize, Send, X } from "lucide-react";
 import { useState } from "react";
 import { z } from "zod";
 import { TicketPriorityBadge, TicketPrioritySelect, type TicketPriorityType } from "@/components/ui/ticket-priority";
+import { useToast } from "@/components/ui/toast";
 import { REDIRECT_REASON } from "@/enums/enums";
 import { prisma } from "@/lib/prisma";
 import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
@@ -128,6 +129,7 @@ export function PanelReplyInput({
   language?: string | null;
 }) {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [message, setMessage] = useState("");
 
   const replyMutation = useMutation({
@@ -137,7 +139,9 @@ export function PanelReplyInput({
         queryKey: projectTicketQueries.detailById(projectId, ticketId).queryKey,
       });
     },
-    onError: (error) => console.log("error", error),
+    onError: () => {
+      toast("Failed to send message. Please try again.", "error");
+    },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -214,6 +218,7 @@ function TicketDetailPanel({
   onClose: () => void;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const { toast } = useToast();
 
   const { data: ticket, isLoading } = useQuery({
     ...projectTicketQueries.detailById(projectId, ticketId || ""),
@@ -244,7 +249,7 @@ function TicketDetailPanel({
         queryKey: projectTicketQueries.allByProjectId(projectId).queryKey,
       });
     },
-    onError: (error) => console.error("Failed to update priority:", error),
+    onError: () => toast("Failed to update priority."),
   });
 
   if (!ticketId) return null;

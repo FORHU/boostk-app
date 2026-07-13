@@ -84,7 +84,7 @@ function RouteComponent() {
   );
 }
 
-const ChatHeader = ({ project }: { project: Project }) => {
+const ChatHeader = ({ project }: { project: Pick<Project, "id" | "name" | "logo" | "description"> }) => {
   return (
     <header className="flex-none bg-indigo-600 p-4 text-white flex items-center justify-between shadow-sm">
       <div className="flex items-center gap-3">
