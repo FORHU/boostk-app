@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { HatGlasses, Home, MessageCircle, Settings, Ticket } from "lucide-react";
+import { HatGlasses, Home, MessageCircle, Settings, Ticket, Users } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -29,6 +29,11 @@ const routes = [
     label: "Tickets",
     icon: Ticket,
     href: "/dashboard/project/$projectId/tickets",
+  },
+  {
+    label: "Customers",
+    icon: Users,
+    href: "/dashboard/project/$projectId/customers",
   },
   {
     label: "Agents",
