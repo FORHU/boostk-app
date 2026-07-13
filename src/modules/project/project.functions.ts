@@ -42,5 +42,7 @@ export const getProjectPublicFn = createServerFn({ method: "GET" })
     return {
       name: project.name,
       id: project.id,
+      logo: project.logo,
+      description: project.description,
     };
   });
