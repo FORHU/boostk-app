@@ -27,6 +27,20 @@ export const getProjectPublicFn = createServerFn({ method: "GET" })
   .inputValidator(getProjectSchema)
   .handler(async ({ data }) => {
     const project = await getProjectById(data.projectId);
+    // Abort if the project ID is invalid or deleted.
+    // This ensures `project` is defined before we check privacy settings.
+    if (!project) {
+      throw new Error("Project Not Found");
+    }
 
-    return project;
+    // suggestion: If we have a concept of "private" projects
+    // if (project.isPrivate) {
+    //   throw new Error("This project is private and cannot accept public users.");
+    // }
+
+    //to avoid leaking all the data add only what public can show so dont return the whole project(return project)
+    return {
+      name: project.name,
+      description: project.description,
+    };
   });
