@@ -41,6 +41,6 @@ export const getProjectPublicFn = createServerFn({ method: "GET" })
     //to avoid leaking all the data add only what public can show so dont return the whole project(return project)
     return {
       name: project.name,
-      description: project.description,
+      id: project.id
     };
   });
