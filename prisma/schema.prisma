@@ -88,6 +88,7 @@ model Organization {
   members     Member[]
   invitations Invitation[]
   projects    Project[]
+  integrations Integration[]
 
   @@unique([slug])
   @@map("organizations")
@@ -164,6 +165,21 @@ model Customer {
   ticketMessages TicketMessage[]
 
   @@map("customers")
+}
+
+model Integration {
+  id             String       @id @default(cuid())
+  organizationId String
+  provider       String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  // Assuming your organization model is named 'Organization'
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  // An org should only have one active connection per provider
+  @@unique([organizationId, provider])
+  @@map("integrations")  
 }
 
 model Ticket {

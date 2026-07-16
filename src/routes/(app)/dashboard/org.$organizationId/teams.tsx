@@ -168,7 +168,7 @@ function MemberRowActions({ member, organizationId }: { member: Member & { user:
               >
                 {/* `owner` is a protected role — not assignable via the UI. */}
                 {Object.values(ORG_ROLE)
-                  .filter((role) => role !== ORG_ROLE.OWNER)
+                  .filter((role) => role !== ORG_ROLE.ADMIN)
                   .map((role) => (
                     <option key={role} value={role}>
                       {role.toUpperCase()}
