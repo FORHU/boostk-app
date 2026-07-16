@@ -106,7 +106,17 @@ function TicketsLoadingFallback() {
   );
 }
 
+// 4. URL Search Schema validation
+const ticketSearchSchema = z.object({
+  selectedTicketId: z.string().optional().catch(undefined),
+  statusFilter: z.string().default("ALL").catch("ALL"),
+  searchQuery: z.string().optional().catch(undefined),
+  sortBy: z.string().optional().catch(undefined),
+  sortDir: z.enum(["asc", "desc"]).optional().catch(undefined),
+});
+
 export const Route = createFileRoute("/(app)/dashboard/project/$projectId/tickets")({
+  validateSearch: (search) => ticketSearchSchema.parse(search),
   beforeLoad: ({ context }) => {
     if (!hasOrgRole(context.role, ORG_ROLE.AGENT)) {
       throw redirect({
@@ -350,10 +360,14 @@ function TicketDetailPanel({
 // Main Page Component
 function ProjectTicketsPage() {
   const { projectId } = Route.useParams();
-  const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<string>("ALL");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" } | null>(null);
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
+
+  const selectedTicketId = search.selectedTicketId ?? null;
+  const statusFilter = search.statusFilter;
+  const searchQuery = search.searchQuery ?? "";
+  const sortConfig = search.sortBy && search.sortDir ? { key: search.sortBy, direction: search.sortDir } : null;
+
   const { data: tickets } = useSuspenseQuery(projectTicketQueries.allByProjectId(projectId));
 
   const getCount = (status: string) =>
@@ -382,10 +396,17 @@ function ProjectTicketsPage() {
   });
 
   const handleSort = (key: string) => {
-    setSortConfig((current) => ({
-      key,
-      direction: current?.key === key && current.direction === "desc" ? "asc" : "desc",
-    }));
+    navigate({
+      search: (prev) => {
+        const isCurrent = prev.sortBy === key;
+        const newDir = isCurrent && prev.sortDir === "desc" ? "asc" : "desc";
+        return {
+          ...prev,
+          sortBy: key,
+          sortDir: newDir,
+        };
+      },
+    });
   };
 
   const filterTabs = [
@@ -412,7 +433,15 @@ function ProjectTicketsPage() {
             placeholder="Search..."
             className="p-2 border rounded-[5px] min-w-[250px]"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) =>
+              navigate({
+                search: (prev) => ({
+                  ...prev,
+                  searchQuery: e.target.value || undefined, // Cleans the URL if the string is empty
+                }),
+                replace: true, // Prevents blowing up browser history stack on every keystroke
+              })
+            }
           />
         </div>
 
@@ -421,7 +450,11 @@ function ProjectTicketsPage() {
             <button
               type="button"
               key={tab.value}
-              onClick={() => setStatusFilter(tab.value)}
+              onClick={() =>
+                navigate({
+                  search: (prev) => ({ ...prev, statusFilter: tab.value }),
+                })
+              }
               className={`px-4 py-2 text-sm font-medium rounded-[3px] whitespace-nowrap ${
                 statusFilter === tab.value ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-muted/80"
               }`}
@@ -469,12 +502,18 @@ function ProjectTicketsPage() {
                   key={ticket.id}
                   tabIndex={0}
                   className="hover:bg-muted cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
-                  onClick={() => setSelectedTicketId(ticket.id)}
+                  onClick={() =>
+                    navigate({
+                      search: (prev) => ({ ...prev, selectedTicketId: ticket.id }),
+                    })
+                  }
                   onKeyDown={(e) => {
                     // Listen for both Enter and Space keys
                     if (e.key === "Enter" || e.key === " ") {
                       e.preventDefault();
-                      setSelectedTicketId(ticket.id);
+                      navigate({
+                        search: (prev) => ({ ...prev, selectedTicketId: ticket.id }),
+                      });
                     }
                   }}
                 >
@@ -500,7 +539,15 @@ function ProjectTicketsPage() {
         </div>
       )}
 
-      <TicketDetailPanel projectId={projectId} ticketId={selectedTicketId} onClose={() => setSelectedTicketId(null)} />
+      <TicketDetailPanel
+        projectId={projectId}
+        ticketId={selectedTicketId}
+        onClose={() =>
+          navigate({
+            search: (prev) => ({ ...prev, selectedTicketId: undefined }),
+          })
+        }
+      />
     </div>
   );
 }
