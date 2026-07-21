@@ -12,8 +12,76 @@ export const Route = createFileRoute("/(app)/dashboard/org/$organizationId/billi
   component: OrganizationBillingPage,
 });
 
+// Define the Plan types
+interface Plan {
+  id: string;
+  name: string;
+  monthlyPrice: number;
+  annualPrice: number;
+  description: string;
+  isPopular?: boolean;
+  isCurrent?: boolean;
+  features: string[];
+}
+
+// Extract plans into a configuration array
+const PLAN_CONFIG: Plan[] = [
+  {
+    id: "free",
+    name: "Free",
+    monthlyPrice: 0,
+    annualPrice: 0,
+    description: "Essential basic sharing tools.",
+    isCurrent: true,
+    features: ["Image and document file uploads", "Message delivery status indicators"],
+  },
+  {
+    id: "starter",
+    name: "Starter",
+    monthlyPrice: 149,
+    annualPrice: 1699,
+    description: "Real-time messaging capabilities.",
+    features: ["Real-time customer messaging", "Image and document file uploads", "Message delivery status indicators"],
+  },
+  {
+    id: "explorer",
+    name: "Explorer",
+    monthlyPrice: 349,
+    annualPrice: 3999,
+    description: "Team and customer management.",
+    isPopular: true,
+    features: [
+      "Real-time customer messaging",
+      "Image and document file uploads",
+      "Message delivery status indicators",
+      "Role based access control",
+      "Categorized quick response templates",
+      "Basic customer management panel",
+    ],
+  },
+  {
+    id: "pro",
+    name: "Pro",
+    monthlyPrice: 800,
+    annualPrice: 9499,
+    description: "Advanced global support suite.",
+    features: [
+      "Real-time customer messaging",
+      "Image and document file uploads",
+      "Message delivery status indicators",
+      "Role based access control",
+      "Categorized quick response templates",
+      "Basic customer management panel",
+      "Real-time AI language translation",
+      "Advanced Customer 360 view",
+      "CSV and PDF analytics exports",
+    ],
+  },
+];
+
 function OrganizationBillingPage() {
   const [isAnnual, setIsAnnual] = useState(false);
+
   return (
     <div className="h-screen overflow-y-auto">
       <div className="max-w-7xl mx-auto p-6 md:p-10 space-y-10 bg-background text-foreground">
@@ -21,9 +89,6 @@ function OrganizationBillingPage() {
           <div className="flex space-x-6 text-sm font-medium">
             <button type="button" className="pb-3 text-primary border-b-2 border-primary">
               Billing
-            </button>
-            <button type="button" className="pb-3 text-muted-foreground hover:text-foreground transition-colors">
-              Billing Details
             </button>
           </div>
         </section>
@@ -52,156 +117,60 @@ function OrganizationBillingPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            {/* Current use*/}
-            <div className="bg-card border border-border rounded-xl p-6 shadow-sm hover:shadow-md  flex flex-col relative">
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="font-semibold text-lg">Free</h3>
-              </div>
-              <div className="mb-1">
-                <span className="text-2xl font-bold">$0</span>
-                <span className="text-muted-foreground text-sm">/ month</span>
-              </div>
-              <p className="text-xs text-muted-foreground mb-6">Essential basic sharing tools.</p>
-              <button type="button" className="w-full bg-muted text-muted-foreground font-medium py-2 mb-6">
-                Current Plan
-              </button>
-
-              <ul className="space-y-3 text-sm text-foreground/80 flex-1">
-                {["Image and document file uploads", "Message delivery status indicators"].map((feature) => (
-                  <li key={feature} className="flex items-start gap-2">
-                    <svg
-                      aria-hidden="true"
-                      className="w-4 h-4 text-primary mt-0.5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Starter Plan */}
-            <div className="bg-card border border-border rounded-xl p-6 shadow-sm hover:shadow-md  flex flex-col">
-              <h3 className="font-semibold text-lg">Starter</h3>
-              <div className="mt-2 mb-1">
-                <span className="text-2xl font-bold">$149</span>
-                <span className="text-muted-foreground text-sm"> / month</span>
-              </div>
-              <p className="text-xs text-muted-foreground mb-6">Real-time messaging capabilities.</p>
-              <button type="button" className="w-full bg-primary text-primary-foreground font-medium py-2 mb-6">
-                Subscribe
-              </button>
-
-              <ul className="space-y-3 text-sm text-foreground/80 flex-1">
-                {[
-                  "Real-time customer messaging",
-                  "Image and document file uploads",
-                  "Message delivery status indicators",
-                ].map((feature) => (
-                  <li key={feature} className="flex items-start gap-2">
-                    <svg
-                      aria-hidden="true"
-                      className="w-4 h-4 text-primary mt-0.5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Explorer Plan (Highlighted) */}
-            <div className="bg-card border border-border rounded-xl p-6 shadow-sm hover:shadow-md flex flex-col relative">
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="font-semibold text-lg">Explorer</h3>
-                <span className="bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                  Popular
-                </span>
-              </div>
-              <div className="mb-1">
-                <span className="text-2xl font-bold">$349</span>
-                <span className="text-muted-foreground text-sm"> / month</span>
-              </div>
-              <p className="text-xs text-muted-foreground mb-6">Team and customer management.</p>
-              <button type="button" className="w-full bg-primary text-primary-foreground font-medium py-2 mb-6">
-                Subscribe
-              </button>
-
-              <ul className="space-y-3 text-sm text-foreground/80 flex-1">
-                {[
-                  "Real-time customer messaging",
-                  "Image and document file uploads",
-                  "Message delivery status indicators",
-                  "Role based access control",
-                  "Categorized quick response templates",
-                  "Basic customer management panel",
-                ].map((feature) => (
-                  <li key={feature} className="flex items-start gap-2">
-                    <svg
-                      aria-hidden="true"
-                      className="w-4 h-4 text-primary mt-0.5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Pro Plan */}
-            <div className="bg-card border border-border rounded-xl p-6 shadow-sm hover:shadow-md  flex flex-col">
-              <h3 className="font-semibold text-lg">Pro</h3>
-              <div className="mt-2 mb-1">
-                <span className="text-2xl font-bold">$800</span>
-                <span className="text-muted-foreground text-sm"> / month</span>
-              </div>
-              <p className="text-xs text-muted-foreground mb-6">Advanced global support suite.</p>
-              <button
-                type="button"
-                className="w-full bg-primary text-primary-foreground font-medium py-2 transition-opacity mb-6"
+            {PLAN_CONFIG.map((plan) => (
+              <div
+                key={plan.id}
+                className="bg-card border border-border rounded-xl p-6 shadow-sm hover:shadow-md flex flex-col relative"
               >
-                Subscribe
-              </button>
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="font-semibold text-lg">{plan.name}</h3>
+                  {plan.isPopular && (
+                    <span className="bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                      Popular
+                    </span>
+                  )}
+                </div>
 
-              <ul className="space-y-3 text-sm text-foreground/80 flex-1">
-                {[
-                  "Real-time customer messaging",
-                  "Image and document file uploads",
-                  "Message delivery status indicators",
-                  "Role based access control",
-                  "Categorized quick response templates",
-                  "Basic customer management panel",
-                  "Real-time AI language translation",
-                  "Advanced Customer 360 view",
-                  "CSV and PDF analytics exports",
-                ].map((feature) => (
-                  <li key={feature} className="flex items-start gap-2">
-                    <svg
-                      aria-hidden="true"
-                      className="w-4 h-4 text-primary mt-0.5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-            </div>
+                <div className="mb-1">
+                  <span className="text-2xl font-bold">${isAnnual ? plan.annualPrice : plan.monthlyPrice}</span>
+                  <span className="text-muted-foreground text-sm">
+                    {plan.monthlyPrice === 0 ? " / forever" : isAnnual ? " / year" : " / month"}
+                  </span>
+                </div>
+
+                <p className="text-xs text-muted-foreground mb-6">{plan.description}</p>
+
+                {plan.isCurrent ? (
+                  <button type="button" className="w-full bg-muted text-muted-foreground font-medium py-2 mb-6">
+                    Current Plan
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="w-full bg-primary text-primary-foreground font-medium py-2 mb-6 transition-opacity"
+                  >
+                    Subscribe
+                  </button>
+                )}
+
+                <ul className="space-y-3 text-sm text-foreground/80 flex-1">
+                  {plan.features.map((feature) => (
+                    <li key={feature} className="flex items-start gap-2">
+                      <svg
+                        aria-hidden="true"
+                        className="w-4 h-4 text-primary mt-0.5 shrink-0"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                      </svg>
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
         </section>
       </div>
