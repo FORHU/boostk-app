@@ -157,7 +157,7 @@ function SigninPage() {
             </form>
             <div className="relative hidden bg-muted md:block">
               <img
-                src="public\sign-in.png"
+                src="/sign-in.png"
                 alt="placeholder"
                 className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
               />
