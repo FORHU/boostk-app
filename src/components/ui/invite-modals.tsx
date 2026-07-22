@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 // Import your frontend Better Auth client
 import { authClient } from "@/lib/auth-client"; 
 
@@ -14,6 +14,56 @@ export function InviteModal({ isOpen, onClose, organizationId }: InviteModalProp
   const [role, setRole] = useState<OrgRole>("member");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const modalRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLElement | null>(null);
+
+  // Capture trigger element on open & restore focus on close
+  useEffect(() => {
+    if (isOpen) {
+      triggerRef.current = document.activeElement as HTMLElement;
+    } else {
+      triggerRef.current?.focus();
+    }
+  }, [isOpen]);
+
+  // Escape-to-close & Focus Trap
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+
+      if (e.key === "Tab") {
+        const modal = modalRef.current;
+        if (!modal) return;
+
+        const focusableElements = modal.querySelectorAll(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        const firstElement = focusableElements[0] as HTMLElement;
+        const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+
+        if (e.shiftKey) {
+          if (document.activeElement === firstElement) {
+            lastElement?.focus();
+            e.preventDefault();
+          }
+        } else {
+          if (document.activeElement === lastElement) {
+            firstElement?.focus();
+            e.preventDefault();
+          }
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -45,12 +95,22 @@ export function InviteModal({ isOpen, onClose, organizationId }: InviteModalProp
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="bg-background rounded-[12px] shadow-2xl w-full max-w-md border border-border overflow-hidden animate-in zoom-in-95 duration-200">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+    >
+      <div 
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="invite-modal-title"
+        aria-describedby="invite-modal-desc"
+        className="bg-background rounded-[12px] shadow-2xl w-full max-w-md border border-border overflow-hidden animate-in zoom-in-95 duration-200 focus:outline-none"
+        tabIndex={-1}
+      >
         <div className="px-6 py-5 border-b border-border flex justify-between items-start">
           <div>
-            <h2 className="text-lg font-semibold text-foreground tracking-tight">Invite Team Member</h2>
-            <p className="text-sm text-muted-foreground mt-1">Add a new user to your organization.</p>
+            <h2 id="invite-modal-title" className="text-lg font-semibold text-foreground tracking-tight">Invite Team Member</h2>
+            <p id="invite-modal-desc" className="text-sm text-muted-foreground mt-1">Add a new user to your organization.</p>
           </div>
           <button 
             onClick={onClose} 
@@ -95,7 +155,7 @@ export function InviteModal({ isOpen, onClose, organizationId }: InviteModalProp
                 value={role}
                 onChange={(e) => setRole(e.target.value as OrgRole)} 
                 className="flex h-10 w-full items-center justify-between rounded-[8px] border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-shadow"
-                >
+              >
                 <option value="member">Member</option>
                 <option value="agent">Agent</option>
                 <option value="admin">Admin</option>
