@@ -64,6 +64,12 @@ function MemberRowActions({ member, organizationId }: { member: Member & { user:
   const [serverError, setServerError] = useState("");
 
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const roleModalRef = useRef<HTMLDivElement>(null);
+  const removeModalRef = useRef<HTMLDivElement>(null);
+
+  const roleTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const removeTriggerRef = useRef<HTMLButtonElement | null>(null);
+
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -76,6 +82,72 @@ function MemberRowActions({ member, organizationId }: { member: Member & { user:
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Handle Focus return and Keyboard interactions for Role Modal
+  useEffect(() => {
+    if (!isRoleModalOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsRoleModalOpen(false);
+        setServerError("");
+        roleTriggerRef.current?.focus();
+        return;
+      }
+      if (e.key === "Tab") {
+        const modal = roleModalRef.current;
+        if (!modal) return;
+        const focusable = modal.querySelectorAll(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+        );
+        const first = focusable[0] as HTMLElement;
+        const last = focusable[focusable.length - 1] as HTMLElement;
+        if (e.shiftKey && document.activeElement === first) {
+          last?.focus();
+          e.preventDefault();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          first?.focus();
+          e.preventDefault();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isRoleModalOpen]);
+
+  // Handle Focus return and Keyboard interactions for Remove Modal
+  useEffect(() => {
+    if (!isRemoveModalOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsRemoveModalOpen(false);
+        setServerError("");
+        removeTriggerRef.current?.focus();
+        return;
+      }
+      if (e.key === "Tab") {
+        const modal = removeModalRef.current;
+        if (!modal) return;
+        const focusable = modal.querySelectorAll(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+        );
+        const first = focusable[0] as HTMLElement;
+        const last = focusable[focusable.length - 1] as HTMLElement;
+        if (e.shiftKey && document.activeElement === first) {
+          last?.focus();
+          e.preventDefault();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          first?.focus();
+          e.preventDefault();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isRemoveModalOpen]);
+
   const updateRoleMutation = useMutation({
     mutationFn: () =>
       updateMemberRoleFn({
@@ -85,6 +157,7 @@ function MemberRowActions({ member, organizationId }: { member: Member & { user:
       queryClient.invalidateQueries({ queryKey: memberQueries.members });
       setIsRoleModalOpen(false);
       setServerError("");
+      roleTriggerRef.current?.focus();
     },
     onError: (error) => setServerError(error.message || "Failed to update role."),
   });
@@ -98,6 +171,7 @@ function MemberRowActions({ member, organizationId }: { member: Member & { user:
       queryClient.invalidateQueries({ queryKey: memberQueries.members });
       setIsRemoveModalOpen(false);
       setServerError("");
+      removeTriggerRef.current?.focus();
     },
     onError: (error) => setServerError(error.message || "Failed to remove member."),
   });
@@ -108,6 +182,7 @@ function MemberRowActions({ member, organizationId }: { member: Member & { user:
         type="button"
         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
         className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-[5px] hover:bg-muted"
+        aria-label="Member actions"
       >
         <svg
           aria-hidden="true"
@@ -130,7 +205,8 @@ function MemberRowActions({ member, organizationId }: { member: Member & { user:
         <div className="absolute right-0 z-10 mt-2 w-40 origin-top-right rounded-[5px] bg-background border border-border shadow-lg focus:outline-none overflow-hidden">
           <button
             type="button"
-            onClick={() => {
+            onClick={(e) => {
+              roleTriggerRef.current = e.currentTarget;
               setIsRoleModalOpen(true);
               setIsDropdownOpen(false);
             }}
@@ -140,7 +216,8 @@ function MemberRowActions({ member, organizationId }: { member: Member & { user:
           </button>
           <button
             type="button"
-            onClick={() => {
+            onClick={(e) => {
+              removeTriggerRef.current = e.currentTarget;
               setIsRemoveModalOpen(true);
               setIsDropdownOpen(false);
             }}
@@ -154,8 +231,17 @@ function MemberRowActions({ member, organizationId }: { member: Member & { user:
       {/* Change Role Modal */}
       {isRoleModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-sm rounded-[7px] bg-background p-6 shadow-lg border border-border">
-            <h3 className="text-lg font-bold text-foreground">Change Role</h3>
+          <div
+            ref={roleModalRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="role-modal-title"
+            tabIndex={-1}
+            className="w-full max-w-sm rounded-[7px] bg-background p-6 shadow-lg border border-border focus:outline-none"
+          >
+            <h3 id="role-modal-title" className="text-lg font-bold text-foreground">
+              Change Role
+            </h3>
             <p className="mt-2 text-sm text-muted-foreground">
               Update the access level for {member.user?.name || "this user"}.
             </p>
@@ -166,7 +252,6 @@ function MemberRowActions({ member, organizationId }: { member: Member & { user:
                 onChange={(e) => setSelectedRole(e.target.value as "member" | "agent" | "admin")}
                 className="w-full rounded-[5px] border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               >
-                {/* `owner` is a protected role — not assignable via the UI. */}
                 {Object.values(ORG_ROLE)
                   .filter((role) => role !== ORG_ROLE.ADMIN)
                   .map((role) => (
@@ -185,6 +270,7 @@ function MemberRowActions({ member, organizationId }: { member: Member & { user:
                 onClick={() => {
                   setIsRoleModalOpen(false);
                   setServerError("");
+                  roleTriggerRef.current?.focus();
                 }}
                 disabled={updateRoleMutation.isPending}
                 className="rounded-[5px] px-4 py-2 text-sm font-medium text-foreground hover:bg-muted border border-border transition-colors"
@@ -207,8 +293,17 @@ function MemberRowActions({ member, organizationId }: { member: Member & { user:
       {/* Remove Member Confirmation Modal */}
       {isRemoveModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-sm rounded-[7px] bg-background p-6 shadow-lg border border-border">
-            <h3 className="text-lg font-bold text-foreground">Remove Member</h3>
+          <div
+            ref={removeModalRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="remove-modal-title"
+            tabIndex={-1}
+            className="w-full max-w-sm rounded-[7px] bg-background p-6 shadow-lg border border-border focus:outline-none"
+          >
+            <h3 id="remove-modal-title" className="text-lg font-bold text-foreground">
+              Remove Member
+            </h3>
             <p className="mt-2 text-sm text-red-500">
               Are you sure you want to remove <strong>{member.user?.name || "this user"}</strong>
             </p>
@@ -222,6 +317,7 @@ function MemberRowActions({ member, organizationId }: { member: Member & { user:
                 onClick={() => {
                   setIsRemoveModalOpen(false);
                   setServerError("");
+                  removeTriggerRef.current?.focus();
                 }}
                 disabled={removeMemberMutation.isPending}
                 className="rounded-[5px] px-4 py-2 text-sm font-medium text-foreground hover:bg-muted border border-border transition-colors"
