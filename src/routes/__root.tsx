@@ -2,6 +2,7 @@ import { TanStackDevtools } from "@tanstack/react-devtools";
 import type { QueryClient } from "@tanstack/react-query";
 import { createRootRouteWithContext, HeadContent, Scripts } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
+import { useEffect } from "react";
 import { ToastProvider } from "@/components/ui/toast";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { authQueries } from "@/modules/auth/auth.queries";
@@ -23,13 +24,34 @@ export const Route = createRootRouteWithContext<RootRouterContext>()({
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Boostk" },
+      { name: "description", content: "Boostk support dashboard — manage inboxes, projects, and organizations." },
+      // PWA / installability
+      { name: "theme-color", content: "#1447e6" },
+      { name: "application-name", content: "Boostk" },
+      { name: "mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "default" },
+      { name: "apple-mobile-web-app-title", content: "Boostk" },
     ],
-    links: [{ rel: "stylesheet", href: appCss }],
+    links: [
+      { rel: "stylesheet", href: appCss },
+      { rel: "manifest", href: "/manifest.json" },
+      { rel: "icon", href: "/favicon.ico", sizes: "any" },
+      { rel: "icon", type: "image/png", href: "/icon-192.png", sizes: "192x192" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+    ],
   }),
   shellComponent: RootDocument,
 });
 
 function RootDocument({ children }: { children: React.ReactNode }) {
+  useEffect(() => {
+    // Register the service worker in production only (keeps HMR clean in dev).
+    if (import.meta.env.PROD && "serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").catch(() => {});
+    }
+  }, []);
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
