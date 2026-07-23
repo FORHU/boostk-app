@@ -143,9 +143,7 @@ const ProjectForm = ({ organizationId }: { organizationId: string }) => {
         className="w-full h-14 px-2 sm:px-4 bg-primary hover:bg-primary/90 text-white font-bold text-sm sm:text-base xl:text-lg group rounded flex items-center justify-center whitespace-nowrap"
       >
         {/* Wrapped text in a truncate span to guarantee it never overflows the button */}
-        <span className="truncate">
-          {createProjectMutation.isPending ? "Creating..." : "Create Project"}
-        </span>
+        <span className="truncate"> {createProjectMutation.isPending ? "Creating..." : "Create Project"}</span>
         <Plus className="ml-1.5 sm:ml-2 size-4 sm:size-5 shrink-0 group-hover:translate-x-1 transition-transform" />
       </Button>
     </form>
