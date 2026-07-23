@@ -1,7 +1,7 @@
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useLayoutEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel, FieldSeparator } from "@/components/ui/field";
@@ -18,6 +18,38 @@ function SigninPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [serverError, setServerError] = useState<string | null>(null);
+
+  // Force Light Mode on mount and restore original theme on unmount
+  useLayoutEffect(() => {
+    const html = document.documentElement;
+
+    // Cache original theme states to restore later
+    const hasDark = html.classList.contains("dark");
+    const hasLight = html.classList.contains("light");
+    const originalTheme = html.getAttribute("data-theme");
+    const originalColorScheme = html.style.colorScheme;
+
+    // Apply forced light mode
+    html.classList.remove("dark");
+    html.classList.add("light");
+    html.setAttribute("data-theme", "light");
+    html.style.colorScheme = "light";
+
+    // Cleanup function runs when navigating away (e.g., successful login)
+    return () => {
+      html.classList.remove("light", "dark");
+      if (hasDark) html.classList.add("dark");
+      if (hasLight) html.classList.add("light");
+
+      if (originalTheme !== null) {
+        html.setAttribute("data-theme", originalTheme);
+      } else {
+        html.removeAttribute("data-theme");
+      }
+
+      html.style.colorScheme = originalColorScheme;
+    };
+  }, []);
 
   const { mutateAsync: signInMutation } = useMutation({
     mutationFn: async (value: SignInInput) => {
@@ -53,7 +85,7 @@ function SigninPage() {
   });
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
+    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-12 sm:px-6 lg:px-8">
       <div className="w-full max-w-sm md:max-w-3xl">
         <Card className="overflow-hidden p-0">
           <CardContent className="grid p-0 md:grid-cols-2">
@@ -71,7 +103,7 @@ function SigninPage() {
                   <p className="text-balance text-muted-foreground">Login to your Boostk account</p>
                 </div>
 
-                {serverError && <p className="text-sm text-destructive text-center">{serverError}</p>}
+                {serverError && <p className="text-sm text-center text-destructive">{serverError}</p>}
 
                 <signInForm.Field name="email">
                   {(field) => {
