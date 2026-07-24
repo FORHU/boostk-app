@@ -1,29 +1,16 @@
-import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import {
-  ArrowLeft,
-  Briefcase,
-  Calendar,
-  CheckCheck,
-  FileText,
-  Hash,
-  Image as ImageIcon,
-  Info,
-  Languages,
-  Loader2,
-  Mail,
-  Paperclip,
-  Search,
-  Send,
-  X,
-} from "lucide-react";
+import { ArrowLeft, Briefcase, Calendar, Hash, Info, Mail, Search, X } from "lucide-react";
+
+import type { TicketMessage } from "prisma/generated/client";
 import { useState } from "react";
+import { ReplyInput } from "@/components/chat-support/reply-input";
+import TicketChatMessageBubble from "@/components/chat-support/TicketChatMessageBubble";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TicketPriorityBadge } from "@/components/ui/ticket-priority";
 import { REDIRECT_REASON } from "@/enums/enums";
 import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
 import { projectCustomerQueries } from "@/modules/customer/customer.queries";
-import { createAgentTicketMessageFn } from "@/modules/ticket-message/ticket-message.functions";
 
 function CustomersLoadingFallback() {
   return (
@@ -143,6 +130,14 @@ export const Route = createFileRoute("/(app)/dashboard/project/$projectId/custom
   component: ProjectCustomersPage,
 });
 
+// Chat Bubble Grouping Helper
+const isSameGroup = (m1?: TicketMessage, m2?: TicketMessage) => {
+  if (!m1 || !m2) return false;
+  if (m1.userId !== m2.userId) return false;
+  if (m1.customerId !== m2.customerId) return false;
+  return Math.abs(new Date(m2.createdAt).getTime() - new Date(m1.createdAt).getTime()) <= 30000;
+};
+
 // MAIN UI COMPONENT
 
 function ProjectCustomersPage() {
@@ -151,12 +146,10 @@ function ProjectCustomersPage() {
 
   const [activeCustomerId, setActiveCustomerId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [showOriginalLanguage, setShowOriginalLanguage] = useState<Record<string, boolean>>({});
 
   const [showMobileDetails, setShowMobileDetails] = useState(false);
   const [showDesktopDetails, setShowDesktopDetails] = useState(true);
 
-  const [messageInput, setMessageInput] = useState("");
   const { data: customers } = useSuspenseQuery(projectCustomerQueries.allByProjectId(projectId));
 
   const activeCustomer = customers.find((c) => c.id === activeCustomerId) ?? customers[0] ?? null;
@@ -167,33 +160,6 @@ function ProjectCustomersPage() {
       c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.email.toLowerCase().includes(searchQuery.toLowerCase()),
   );
-
-  const replyMutation = useMutation({
-    mutationFn: createAgentTicketMessageFn,
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: projectCustomerQueries.allByProjectId(projectId).queryKey,
-      });
-      setMessageInput("");
-    },
-  });
-
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!messageInput.trim() || !activeTicket) return;
-
-    replyMutation.mutate({
-      data: {
-        ticketId: activeTicket.id,
-        content: messageInput.trim(),
-        contentType: "TEXT",
-      },
-    });
-  };
-
-  const toggleTranslation = (messageId: string) => {
-    setShowOriginalLanguage((prev) => ({ ...prev, [messageId]: !prev[messageId] }));
-  };
 
   const getStatusIndicator = (status: string) => {
     return status === "OPEN" ? (
@@ -329,118 +295,44 @@ function ProjectCustomersPage() {
                 <p>No messages in this ticket yet.</p>
               </div>
             ) : (
-              activeTicket.ticketMessages.map((msg) => {
-                const isAgent = msg.userId !== null;
-                const displayContent =
-                  msg.translatedContent && !showOriginalLanguage[msg.id] ? msg.translatedContent : msg.content;
+              <div className="flex flex-col space-y-0.5">
+                {activeTicket.ticketMessages.map((msg, index, list) => {
+                  const isStart = !isSameGroup(list[index - 1], msg);
+                  const isEnd = !isSameGroup(msg, list[index + 1]);
 
-                return (
-                  <div key={msg.id} className={`flex flex-col gap-1 ${isAgent ? "items-end" : "items-start"}`}>
-                    {/* Message Bubble */}
-                    <div
-                      className={`max-w-[85%] md:max-w-[70%] px-4 py-3 shadow-sm text-sm ${
-                        isAgent
-                          ? "bg-primary text-primary-foreground rounded-[16px] rounded-tr-none"
-                          : "bg-card border border-border text-card-foreground rounded-[16px] rounded-tl-none"
-                      }`}
-                    >
-                      {msg.contentType === "TEXT" && (
-                        <p className="whitespace-pre-wrap break-words">{displayContent}</p>
-                      )}
-
-                      {msg.contentType === "IMAGE" && (
-                        <div className="flex flex-col items-center gap-2 bg-muted rounded-[8px] p-2 max-w-full">
-                          <ImageIcon className="w-12 h-12 opacity-50 text-muted-foreground shrink-0" />
-                          <span className="text-xs italic text-muted-foreground truncate w-full text-center">
-                            Image Attachment
-                          </span>
-                        </div>
-                      )}
-
-                      {msg.contentType === "FILE" && (
-                        <div
-                          className={`flex items-center gap-3 p-3 rounded-[8px] border max-w-full overflow-hidden ${isAgent ? "bg-primary-foreground/10 border-transparent" : "bg-muted/50 border-border"}`}
-                        >
-                          <FileText className="w-8 h-8 shrink-0" />
-                          <div className="flex flex-col flex-1 min-w-0">
-                            <span className="font-semibold truncate">{msg.content}</span>
-                            <span className="text-xs opacity-70 truncate">Click to download</span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Translations */}
-                    <div
-                      className={`flex items-center gap-2 text-[10px] text-muted-foreground mt-1 flex-wrap ${isAgent ? "mr-1 justify-end" : "ml-1"}`}
-                    >
-                      <span>
-                        {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                      </span>
-                      {isAgent && <CheckCheck className="w-3 h-3 text-primary shrink-0" />}
-
-                      {msg.translatedContent && (
-                        <button
-                          type="button"
-                          onClick={() => toggleTranslation(msg.id)}
-                          className="flex items-center gap-1 hover:text-primary transition-colors bg-muted px-1.5 py-0.5 rounded-[4px] max-w-full truncate"
-                        >
-                          <Languages className="w-3 h-3 shrink-0" />
-                          <span className="truncate">
-                            {showOriginalLanguage[msg.id]
-                              ? `Translated to ${activeCustomer.language || "your language"}`
-                              : `Show Original (${msg.sourceLang})`}
-                          </span>
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })
+                  return (
+                    <TicketChatMessageBubble key={msg.id} msg={msg} isStart={isStart} isEnd={isEnd} viewer="agent" />
+                  );
+                })}
+              </div>
             )}
           </div>
 
           {/* Chat Input */}
-          <div className="p-3 md:p-4 bg-background border-t border-border">
+          <div className="bg-background border-t border-border">
             {activeTicket?.status === "CLOSED" ? (
-              <div className="text-center p-3 text-sm text-muted-foreground bg-muted rounded-[10px] border border-border">
-                This ticket is closed. Reopen it to continue the conversation.
+              <div className="p-3">
+                <div className="text-center p-3 text-sm text-muted-foreground bg-muted rounded-[10px] border border-border">
+                  This ticket is closed. Reopen it to continue the conversation.
+                </div>
               </div>
             ) : !activeTicket ? (
-              <div className="text-center p-3 text-sm text-muted-foreground bg-muted/50 rounded-[10px] border border-dashed border-border">
-                Select or create a ticket to send a message.
+              <div className="p-3">
+                <div className="text-center p-3 text-sm text-muted-foreground bg-muted/50 rounded-[10px] border border-dashed border-border">
+                  Select or create a ticket to send a message.
+                </div>
               </div>
             ) : (
-              <form
-                onSubmit={handleSendMessage}
-                className="flex items-end gap-2 bg-muted/50 border border-input rounded-[10px] p-1.5 md:p-2 focus-within:ring-2 focus-within:ring-primary transition-all"
-              >
-                <button
-                  type="button"
-                  className="p-2 text-muted-foreground hover:text-foreground rounded-[8px] shrink-0"
-                >
-                  <Paperclip className="w-5 h-5" />
-                </button>
-                <input
-                  type="text"
-                  value={messageInput}
-                  onChange={(e) => setMessageInput(e.target.value)}
-                  placeholder={`Reply to ${activeCustomer.name}...`}
-                  disabled={replyMutation.isPending}
-                  className="flex-1 min-w-0 bg-transparent resize-none outline-none py-2 px-1 text-sm disabled:opacity-60 placeholder:text-muted-foreground"
-                />
-                <button
-                  type="submit"
-                  disabled={replyMutation.isPending || !messageInput.trim()}
-                  className="p-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-[8px] shadow-sm disabled:opacity-50 shrink-0"
-                >
-                  {replyMutation.isPending ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <Send className="w-5 h-5" />
-                  )}
-                </button>
-              </form>
+              <ReplyInput
+                ticketId={activeTicket.id}
+                customerName={activeCustomer.name}
+                customerLanguage={activeCustomer.language}
+                onSuccess={() => {
+                  queryClient.invalidateQueries({
+                    queryKey: projectCustomerQueries.allByProjectId(projectId).queryKey,
+                  });
+                }}
+              />
             )}
           </div>
         </main>
