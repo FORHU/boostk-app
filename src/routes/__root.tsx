@@ -2,7 +2,7 @@ import { TanStackDevtools } from "@tanstack/react-devtools";
 import type { QueryClient } from "@tanstack/react-query";
 import { createRootRouteWithContext, HeadContent, Scripts } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
-import { useEffect } from "react";
+import { PwaUpdatePrompt } from "@/components/pwa-update-prompt";
 import { ToastProvider } from "@/components/ui/toast";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { authQueries } from "@/modules/auth/auth.queries";
@@ -25,18 +25,17 @@ export const Route = createRootRouteWithContext<RootRouterContext>()({
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Boostk" },
       { name: "description", content: "Boostk support dashboard — manage inboxes, projects, and organizations." },
-      // PWA / installability
+      // Browser chrome tint only. The PWA install tags deliberately do NOT live here:
+      // anything in the root head applies to every page, which made the entire site
+      // installable as one app. Installability belongs to the customer chat widget alone
+      // — see src/routes/(public)/support.$projectId/chat-widget.tsx.
       { name: "theme-color", content: "#1447e6" },
       { name: "application-name", content: "Boostk" },
-      { name: "mobile-web-app-capable", content: "yes" },
-      { name: "apple-mobile-web-app-capable", content: "yes" },
-      { name: "apple-mobile-web-app-status-bar-style", content: "default" },
-      { name: "apple-mobile-web-app-title", content: "Boostk" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
-      { rel: "manifest", href: "/manifest.json" },
-      { rel: "icon", href: "/favicon.ico", sizes: "any" },
+      { rel: "icon", type: "image/png", href: "/favicon-32.png", sizes: "32x32" },
+      { rel: "icon", type: "image/png", href: "/favicon-16.png", sizes: "16x16" },
       { rel: "icon", type: "image/png", href: "/icon-192.png", sizes: "192x192" },
       { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
     ],
@@ -45,13 +44,6 @@ export const Route = createRootRouteWithContext<RootRouterContext>()({
 });
 
 function RootDocument({ children }: { children: React.ReactNode }) {
-  useEffect(() => {
-    // Register the service worker in production only (keeps HMR clean in dev).
-    if (import.meta.env.PROD && "serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js").catch(() => {});
-    }
-  }, []);
-
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -63,6 +55,8 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <ToastProvider>
           <TooltipProvider>{children}</TooltipProvider>
         </ToastProvider>
+
+        <PwaUpdatePrompt />
 
         <TanStackDevtools
           config={{

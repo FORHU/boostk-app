@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AuthGuard } from "@/components/guards/auth-guard";
+import { VisualPricing } from "@/components/landing/visual-pricing";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/")({
@@ -124,6 +125,8 @@ function LandingPage() {
             ))}
           </div>
         </div>
+
+        <VisualPricing />
       </main>
 
       <footer className="mt-20 border-t border-gray-100 py-10 text-center">

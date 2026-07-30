@@ -180,6 +180,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/org/$organizationId': typeof appDashboardOrgOrganizationIdRouteRouteWithChildren
   '/dashboard/project/$projectId': typeof appDashboardProjectProjectIdRouteRouteWithChildren
   '/support/$projectId/chat-widget': typeof publicSupportProjectIdChatWidgetRoute
+  '/support/$projectId/manifest': typeof publicSupportProjectIdManifestRoute
   '/dashboard/org/$organizationId/billing': typeof appDashboardOrgOrganizationIdBillingRoute
   '/dashboard/org/$organizationId/integrations': typeof appDashboardOrgOrganizationIdIntegrationsRoute
   '/dashboard/org/$organizationId/settings': typeof appDashboardOrgOrganizationIdSettingsRoute
@@ -202,6 +203,7 @@ export interface FileRoutesByTo {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/notification/sse': typeof ApiNotificationSseRoute
   '/support/$projectId/chat-widget': typeof publicSupportProjectIdChatWidgetRoute
+  '/support/$projectId/manifest': typeof publicSupportProjectIdManifestRoute
   '/dashboard/org/$organizationId/billing': typeof appDashboardOrgOrganizationIdBillingRoute
   '/dashboard/org/$organizationId/integrations': typeof appDashboardOrgOrganizationIdIntegrationsRoute
   '/dashboard/org/$organizationId/settings': typeof appDashboardOrgOrganizationIdSettingsRoute
@@ -229,6 +231,7 @@ export interface FileRoutesById {
   '/(app)/dashboard/org/$organizationId': typeof appDashboardOrgOrganizationIdRouteRouteWithChildren
   '/(app)/dashboard/project/$projectId': typeof appDashboardProjectProjectIdRouteRouteWithChildren
   '/(public)/support/$projectId/chat-widget': typeof publicSupportProjectIdChatWidgetRoute
+  '/(public)/support/$projectId/manifest': typeof publicSupportProjectIdManifestRoute
   '/(app)/dashboard/org/$organizationId/billing': typeof appDashboardOrgOrganizationIdBillingRoute
   '/(app)/dashboard/org/$organizationId/integrations': typeof appDashboardOrgOrganizationIdIntegrationsRoute
   '/(app)/dashboard/org/$organizationId/settings': typeof appDashboardOrgOrganizationIdSettingsRoute
@@ -255,6 +258,7 @@ export interface FileRouteTypes {
     | '/dashboard/org/$organizationId'
     | '/dashboard/project/$projectId'
     | '/support/$projectId/chat-widget'
+    | '/support/$projectId/manifest'
     | '/dashboard/org/$organizationId/billing'
     | '/dashboard/org/$organizationId/integrations'
     | '/dashboard/org/$organizationId/settings'
@@ -277,6 +281,7 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/notification/sse'
     | '/support/$projectId/chat-widget'
+    | '/support/$projectId/manifest'
     | '/dashboard/org/$organizationId/billing'
     | '/dashboard/org/$organizationId/integrations'
     | '/dashboard/org/$organizationId/settings'
@@ -303,6 +308,7 @@ export interface FileRouteTypes {
     | '/(app)/dashboard/org/$organizationId'
     | '/(app)/dashboard/project/$projectId'
     | '/(public)/support/$projectId/chat-widget'
+    | '/(public)/support/$projectId/manifest'
     | '/(app)/dashboard/org/$organizationId/billing'
     | '/(app)/dashboard/org/$organizationId/integrations'
     | '/(app)/dashboard/org/$organizationId/settings'
@@ -325,6 +331,7 @@ export interface RootRouteChildren {
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiNotificationSseRoute: typeof ApiNotificationSseRoute
   publicSupportProjectIdChatWidgetRoute: typeof publicSupportProjectIdChatWidgetRoute
+  publicSupportProjectIdManifestRoute: typeof publicSupportProjectIdManifestRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -600,6 +607,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiNotificationSseRoute: ApiNotificationSseRoute,
   publicSupportProjectIdChatWidgetRoute: publicSupportProjectIdChatWidgetRoute,
+  publicSupportProjectIdManifestRoute: publicSupportProjectIdManifestRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
