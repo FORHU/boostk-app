@@ -432,6 +432,19 @@ declare module '@tanstack/react-router' {
       path: '/support/$projectId/manifest'
       fullPath: '/support/$projectId/manifest'
       preLoaderRoute: typeof publicSupportProjectIdManifestRouteImport
+    }
+    '/(app)/dashboard/project/$projectId': {
+      id: '/(app)/dashboard/project/$projectId'
+      path: '/dashboard/project/$projectId'
+      fullPath: '/dashboard/project/$projectId'
+      preLoaderRoute: typeof appDashboardProjectProjectIdRouteRouteImport
+      parentRoute: typeof appRouteRoute
+    }
+    '/(public)/support/$projectId/chat-widget': {
+      id: '/(public)/support/$projectId/chat-widget'
+      path: '/support/$projectId/chat-widget'
+      fullPath: '/support/$projectId/chat-widget'
+      preLoaderRoute: typeof publicSupportProjectIdChatWidgetRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/(app)/dashboard/org/$organizationId/': {
