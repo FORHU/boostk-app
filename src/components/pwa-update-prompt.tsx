@@ -40,9 +40,12 @@ export function PwaUpdatePrompt() {
       .catch(() => {});
 
     // Long-lived installed windows may stay open for days — re-check hourly.
-    const interval = window.setInterval(() => {
-      reg?.update().catch(() => {});
-    }, 60 * 60 * 1000);
+    const interval = window.setInterval(
+      () => {
+        reg?.update().catch(() => {});
+      },
+      60 * 60 * 1000,
+    );
 
     return () => window.clearInterval(interval);
   }, []);
@@ -50,11 +53,7 @@ export function PwaUpdatePrompt() {
   const applyUpdate = () => {
     if (!waiting) return;
     // Reload exactly once, when the new worker has taken control.
-    navigator.serviceWorker.addEventListener(
-      "controllerchange",
-      () => window.location.reload(),
-      { once: true },
-    );
+    navigator.serviceWorker.addEventListener("controllerchange", () => window.location.reload(), { once: true });
     waiting.postMessage({ type: "SKIP_WAITING" });
   };
 
@@ -63,9 +62,7 @@ export function PwaUpdatePrompt() {
   return (
     <div className="fixed inset-x-0 bottom-4 z-[60] flex justify-center px-4">
       <div className="pointer-events-auto flex items-center gap-3 rounded-xl border border-border bg-background/95 px-4 py-3 shadow-lg backdrop-blur-md">
-        <span className="text-sm font-medium text-foreground">
-          A new version of Boostk is available.
-        </span>
+        <span className="text-sm font-medium text-foreground">A new version of Boostk is available.</span>
         <button
           type="button"
           onClick={applyUpdate}
