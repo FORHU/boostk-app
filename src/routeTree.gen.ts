@@ -9,67 +9,57 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as authRouteRouteImport } from './routes/(auth)/route'
-import { Route as appRouteRouteImport } from './routes/(app)/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ApiTranslateRouteImport } from './routes/api/translate'
-import { Route as authSignupRouteImport } from './routes/(auth)/signup'
+import { Route as appRouteRouteImport } from './routes/(app)/route'
+import { Route as authRouteRouteImport } from './routes/(auth)/route'
 import { Route as authSigninRouteImport } from './routes/(auth)/signin'
-import { Route as ApiNotificationSseRouteImport } from './routes/api/notification/sse'
-import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as authSignupRouteImport } from './routes/(auth)/signup'
+import { Route as ApiTranslateRouteImport } from './routes/api/translate'
 import { Route as appDashboardOrganizationsRouteImport } from './routes/(app)/dashboard/organizations'
-import { Route as publicSupportProjectIdChatWidgetRouteImport } from './routes/(public)/support.$projectId/chat-widget'
-import { Route as appDashboardProjectProjectIdRouteRouteImport } from './routes/(app)/dashboard/project.$projectId/route'
+import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as ApiNotificationSseRouteImport } from './routes/api/notification/sse'
 import { Route as appDashboardOrgOrganizationIdRouteRouteImport } from './routes/(app)/dashboard/org.$organizationId/route'
-import { Route as appDashboardProjectProjectIdIndexRouteImport } from './routes/(app)/dashboard/project.$projectId/index'
+import { Route as appDashboardProjectProjectIdRouteRouteImport } from './routes/(app)/dashboard/project.$projectId/route'
+import { Route as publicSupportProjectIdChatWidgetRouteImport } from './routes/(public)/support.$projectId/chat-widget'
 import { Route as appDashboardOrgOrganizationIdIndexRouteImport } from './routes/(app)/dashboard/org.$organizationId/index'
-import { Route as appDashboardProjectProjectIdTicketsRouteImport } from './routes/(app)/dashboard/project.$projectId/tickets'
-import { Route as appDashboardProjectProjectIdSettingsRouteImport } from './routes/(app)/dashboard/project.$projectId/settings'
-import { Route as appDashboardProjectProjectIdCustomersRouteImport } from './routes/(app)/dashboard/project.$projectId/customers'
-import { Route as appDashboardProjectProjectIdChatSupportRouteImport } from './routes/(app)/dashboard/project.$projectId/chat-support'
-import { Route as appDashboardProjectProjectIdAgentsRouteImport } from './routes/(app)/dashboard/project.$projectId/agents'
-import { Route as appDashboardOrgOrganizationIdUsageRouteImport } from './routes/(app)/dashboard/org.$organizationId/usage'
-import { Route as appDashboardOrgOrganizationIdTeamsRouteImport } from './routes/(app)/dashboard/org.$organizationId/teams'
-import { Route as appDashboardOrgOrganizationIdSettingsRouteImport } from './routes/(app)/dashboard/org.$organizationId/settings'
-import { Route as appDashboardOrgOrganizationIdIntegrationsRouteImport } from './routes/(app)/dashboard/org.$organizationId/integrations'
 import { Route as appDashboardOrgOrganizationIdBillingRouteImport } from './routes/(app)/dashboard/org.$organizationId/billing'
+import { Route as appDashboardOrgOrganizationIdIntegrationsRouteImport } from './routes/(app)/dashboard/org.$organizationId/integrations'
+import { Route as appDashboardOrgOrganizationIdSettingsRouteImport } from './routes/(app)/dashboard/org.$organizationId/settings'
+import { Route as appDashboardOrgOrganizationIdTeamsRouteImport } from './routes/(app)/dashboard/org.$organizationId/teams'
+import { Route as appDashboardOrgOrganizationIdUsageRouteImport } from './routes/(app)/dashboard/org.$organizationId/usage'
+import { Route as appDashboardProjectProjectIdIndexRouteImport } from './routes/(app)/dashboard/project.$projectId/index'
+import { Route as appDashboardProjectProjectIdAgentsRouteImport } from './routes/(app)/dashboard/project.$projectId/agents'
+import { Route as appDashboardProjectProjectIdChatSupportRouteImport } from './routes/(app)/dashboard/project.$projectId/chat-support'
+import { Route as appDashboardProjectProjectIdCustomersRouteImport } from './routes/(app)/dashboard/project.$projectId/customers'
+import { Route as appDashboardProjectProjectIdSettingsRouteImport } from './routes/(app)/dashboard/project.$projectId/settings'
+import { Route as appDashboardProjectProjectIdTicketsRouteImport } from './routes/(app)/dashboard/project.$projectId/tickets'
 
-const authRouteRoute = authRouteRouteImport.update({
-  id: '/(auth)',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const appRouteRoute = appRouteRouteImport.update({
   id: '/(app)',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const authRouteRoute = authRouteRouteImport.update({
+  id: '/(auth)',
   getParentRoute: () => rootRouteImport,
-} as any)
-const ApiTranslateRoute = ApiTranslateRouteImport.update({
-  id: '/api/translate',
-  path: '/api/translate',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const authSignupRoute = authSignupRouteImport.update({
-  id: '/signup',
-  path: '/signup',
-  getParentRoute: () => authRouteRoute,
 } as any)
 const authSigninRoute = authSigninRouteImport.update({
   id: '/signin',
   path: '/signin',
   getParentRoute: () => authRouteRoute,
 } as any)
-const ApiNotificationSseRoute = ApiNotificationSseRouteImport.update({
-  id: '/api/notification/sse',
-  path: '/api/notification/sse',
-  getParentRoute: () => rootRouteImport,
+const authSignupRoute = authSignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => authRouteRoute,
 } as any)
-const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
-  id: '/api/auth/$',
-  path: '/api/auth/$',
+const ApiTranslateRoute = ApiTranslateRouteImport.update({
+  id: '/api/translate',
+  path: '/api/translate',
   getParentRoute: () => rootRouteImport,
 } as any)
 const appDashboardOrganizationsRoute =
@@ -78,11 +68,21 @@ const appDashboardOrganizationsRoute =
     path: '/dashboard/organizations',
     getParentRoute: () => appRouteRoute,
   } as any)
-const publicSupportProjectIdChatWidgetRoute =
-  publicSupportProjectIdChatWidgetRouteImport.update({
-    id: '/(public)/support/$projectId/chat-widget',
-    path: '/support/$projectId/chat-widget',
-    getParentRoute: () => rootRouteImport,
+const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
+  id: '/api/auth/$',
+  path: '/api/auth/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiNotificationSseRoute = ApiNotificationSseRouteImport.update({
+  id: '/api/notification/sse',
+  path: '/api/notification/sse',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const appDashboardOrgOrganizationIdRouteRoute =
+  appDashboardOrgOrganizationIdRouteRouteImport.update({
+    id: '/dashboard/org/$organizationId',
+    path: '/dashboard/org/$organizationId',
+    getParentRoute: () => appRouteRoute,
   } as any)
 const appDashboardProjectProjectIdRouteRoute =
   appDashboardProjectProjectIdRouteRouteImport.update({
@@ -90,17 +90,11 @@ const appDashboardProjectProjectIdRouteRoute =
     path: '/dashboard/project/$projectId',
     getParentRoute: () => appRouteRoute,
   } as any)
-const appDashboardOrgOrganizationIdRouteRoute =
-  appDashboardOrgOrganizationIdRouteRouteImport.update({
-    id: '/dashboard/org/$organizationId',
-    path: '/dashboard/org/$organizationId',
-    getParentRoute: () => appRouteRoute,
-  } as any)
-const appDashboardProjectProjectIdIndexRoute =
-  appDashboardProjectProjectIdIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => appDashboardProjectProjectIdRouteRoute,
+const publicSupportProjectIdChatWidgetRoute =
+  publicSupportProjectIdChatWidgetRouteImport.update({
+    id: '/(public)/support/$projectId/chat-widget',
+    path: '/support/$projectId/chat-widget',
+    getParentRoute: () => rootRouteImport,
   } as any)
 const appDashboardOrgOrganizationIdIndexRoute =
   appDashboardOrgOrganizationIdIndexRouteImport.update({
@@ -108,52 +102,10 @@ const appDashboardOrgOrganizationIdIndexRoute =
     path: '/',
     getParentRoute: () => appDashboardOrgOrganizationIdRouteRoute,
   } as any)
-const appDashboardProjectProjectIdTicketsRoute =
-  appDashboardProjectProjectIdTicketsRouteImport.update({
-    id: '/tickets',
-    path: '/tickets',
-    getParentRoute: () => appDashboardProjectProjectIdRouteRoute,
-  } as any)
-const appDashboardProjectProjectIdSettingsRoute =
-  appDashboardProjectProjectIdSettingsRouteImport.update({
-    id: '/settings',
-    path: '/settings',
-    getParentRoute: () => appDashboardProjectProjectIdRouteRoute,
-  } as any)
-const appDashboardProjectProjectIdCustomersRoute =
-  appDashboardProjectProjectIdCustomersRouteImport.update({
-    id: '/customers',
-    path: '/customers',
-    getParentRoute: () => appDashboardProjectProjectIdRouteRoute,
-  } as any)
-const appDashboardProjectProjectIdChatSupportRoute =
-  appDashboardProjectProjectIdChatSupportRouteImport.update({
-    id: '/chat-support',
-    path: '/chat-support',
-    getParentRoute: () => appDashboardProjectProjectIdRouteRoute,
-  } as any)
-const appDashboardProjectProjectIdAgentsRoute =
-  appDashboardProjectProjectIdAgentsRouteImport.update({
-    id: '/agents',
-    path: '/agents',
-    getParentRoute: () => appDashboardProjectProjectIdRouteRoute,
-  } as any)
-const appDashboardOrgOrganizationIdUsageRoute =
-  appDashboardOrgOrganizationIdUsageRouteImport.update({
-    id: '/usage',
-    path: '/usage',
-    getParentRoute: () => appDashboardOrgOrganizationIdRouteRoute,
-  } as any)
-const appDashboardOrgOrganizationIdTeamsRoute =
-  appDashboardOrgOrganizationIdTeamsRouteImport.update({
-    id: '/teams',
-    path: '/teams',
-    getParentRoute: () => appDashboardOrgOrganizationIdRouteRoute,
-  } as any)
-const appDashboardOrgOrganizationIdSettingsRoute =
-  appDashboardOrgOrganizationIdSettingsRouteImport.update({
-    id: '/settings',
-    path: '/settings',
+const appDashboardOrgOrganizationIdBillingRoute =
+  appDashboardOrgOrganizationIdBillingRouteImport.update({
+    id: '/billing',
+    path: '/billing',
     getParentRoute: () => appDashboardOrgOrganizationIdRouteRoute,
   } as any)
 const appDashboardOrgOrganizationIdIntegrationsRoute =
@@ -162,11 +114,59 @@ const appDashboardOrgOrganizationIdIntegrationsRoute =
     path: '/integrations',
     getParentRoute: () => appDashboardOrgOrganizationIdRouteRoute,
   } as any)
-const appDashboardOrgOrganizationIdBillingRoute =
-  appDashboardOrgOrganizationIdBillingRouteImport.update({
-    id: '/billing',
-    path: '/billing',
+const appDashboardOrgOrganizationIdSettingsRoute =
+  appDashboardOrgOrganizationIdSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
     getParentRoute: () => appDashboardOrgOrganizationIdRouteRoute,
+  } as any)
+const appDashboardOrgOrganizationIdTeamsRoute =
+  appDashboardOrgOrganizationIdTeamsRouteImport.update({
+    id: '/teams',
+    path: '/teams',
+    getParentRoute: () => appDashboardOrgOrganizationIdRouteRoute,
+  } as any)
+const appDashboardOrgOrganizationIdUsageRoute =
+  appDashboardOrgOrganizationIdUsageRouteImport.update({
+    id: '/usage',
+    path: '/usage',
+    getParentRoute: () => appDashboardOrgOrganizationIdRouteRoute,
+  } as any)
+const appDashboardProjectProjectIdIndexRoute =
+  appDashboardProjectProjectIdIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => appDashboardProjectProjectIdRouteRoute,
+  } as any)
+const appDashboardProjectProjectIdAgentsRoute =
+  appDashboardProjectProjectIdAgentsRouteImport.update({
+    id: '/agents',
+    path: '/agents',
+    getParentRoute: () => appDashboardProjectProjectIdRouteRoute,
+  } as any)
+const appDashboardProjectProjectIdChatSupportRoute =
+  appDashboardProjectProjectIdChatSupportRouteImport.update({
+    id: '/chat-support',
+    path: '/chat-support',
+    getParentRoute: () => appDashboardProjectProjectIdRouteRoute,
+  } as any)
+const appDashboardProjectProjectIdCustomersRoute =
+  appDashboardProjectProjectIdCustomersRouteImport.update({
+    id: '/customers',
+    path: '/customers',
+    getParentRoute: () => appDashboardProjectProjectIdRouteRoute,
+  } as any)
+const appDashboardProjectProjectIdSettingsRoute =
+  appDashboardProjectProjectIdSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => appDashboardProjectProjectIdRouteRoute,
+  } as any)
+const appDashboardProjectProjectIdTicketsRoute =
+  appDashboardProjectProjectIdTicketsRouteImport.update({
+    id: '/tickets',
+    path: '/tickets',
+    getParentRoute: () => appDashboardProjectProjectIdRouteRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -329,11 +329,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/(auth)': {
-      id: '/(auth)'
-      path: ''
-      fullPath: ''
-      preLoaderRoute: typeof authRouteRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/(app)': {
@@ -343,26 +343,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof appRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/(auth)': {
+      id: '/(auth)'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof authRouteRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/api/translate': {
-      id: '/api/translate'
-      path: '/api/translate'
-      fullPath: '/api/translate'
-      preLoaderRoute: typeof ApiTranslateRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/(auth)/signup': {
-      id: '/(auth)/signup'
-      path: '/signup'
-      fullPath: '/signup'
-      preLoaderRoute: typeof authSignupRouteImport
-      parentRoute: typeof authRouteRoute
     }
     '/(auth)/signin': {
       id: '/(auth)/signin'
@@ -371,18 +357,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof authSigninRouteImport
       parentRoute: typeof authRouteRoute
     }
-    '/api/notification/sse': {
-      id: '/api/notification/sse'
-      path: '/api/notification/sse'
-      fullPath: '/api/notification/sse'
-      preLoaderRoute: typeof ApiNotificationSseRouteImport
-      parentRoute: typeof rootRouteImport
+    '/(auth)/signup': {
+      id: '/(auth)/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof authSignupRouteImport
+      parentRoute: typeof authRouteRoute
     }
-    '/api/auth/$': {
-      id: '/api/auth/$'
-      path: '/api/auth/$'
-      fullPath: '/api/auth/$'
-      preLoaderRoute: typeof ApiAuthSplatRouteImport
+    '/api/translate': {
+      id: '/api/translate'
+      path: '/api/translate'
+      fullPath: '/api/translate'
+      preLoaderRoute: typeof ApiTranslateRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/(app)/dashboard/organizations': {
@@ -392,19 +378,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof appDashboardOrganizationsRouteImport
       parentRoute: typeof appRouteRoute
     }
-    '/(public)/support/$projectId/chat-widget': {
-      id: '/(public)/support/$projectId/chat-widget'
-      path: '/support/$projectId/chat-widget'
-      fullPath: '/support/$projectId/chat-widget'
-      preLoaderRoute: typeof publicSupportProjectIdChatWidgetRouteImport
+    '/api/auth/$': {
+      id: '/api/auth/$'
+      path: '/api/auth/$'
+      fullPath: '/api/auth/$'
+      preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/(app)/dashboard/project/$projectId': {
-      id: '/(app)/dashboard/project/$projectId'
-      path: '/dashboard/project/$projectId'
-      fullPath: '/dashboard/project/$projectId'
-      preLoaderRoute: typeof appDashboardProjectProjectIdRouteRouteImport
-      parentRoute: typeof appRouteRoute
+    '/api/notification/sse': {
+      id: '/api/notification/sse'
+      path: '/api/notification/sse'
+      fullPath: '/api/notification/sse'
+      preLoaderRoute: typeof ApiNotificationSseRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/(app)/dashboard/org/$organizationId': {
       id: '/(app)/dashboard/org/$organizationId'
@@ -413,12 +399,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof appDashboardOrgOrganizationIdRouteRouteImport
       parentRoute: typeof appRouteRoute
     }
-    '/(app)/dashboard/project/$projectId/': {
-      id: '/(app)/dashboard/project/$projectId/'
-      path: '/'
-      fullPath: '/dashboard/project/$projectId/'
-      preLoaderRoute: typeof appDashboardProjectProjectIdIndexRouteImport
-      parentRoute: typeof appDashboardProjectProjectIdRouteRoute
+    '/(app)/dashboard/project/$projectId': {
+      id: '/(app)/dashboard/project/$projectId'
+      path: '/dashboard/project/$projectId'
+      fullPath: '/dashboard/project/$projectId'
+      preLoaderRoute: typeof appDashboardProjectProjectIdRouteRouteImport
+      parentRoute: typeof appRouteRoute
+    }
+    '/(public)/support/$projectId/chat-widget': {
+      id: '/(public)/support/$projectId/chat-widget'
+      path: '/support/$projectId/chat-widget'
+      fullPath: '/support/$projectId/chat-widget'
+      preLoaderRoute: typeof publicSupportProjectIdChatWidgetRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/(app)/dashboard/org/$organizationId/': {
       id: '/(app)/dashboard/org/$organizationId/'
@@ -427,60 +420,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof appDashboardOrgOrganizationIdIndexRouteImport
       parentRoute: typeof appDashboardOrgOrganizationIdRouteRoute
     }
-    '/(app)/dashboard/project/$projectId/tickets': {
-      id: '/(app)/dashboard/project/$projectId/tickets'
-      path: '/tickets'
-      fullPath: '/dashboard/project/$projectId/tickets'
-      preLoaderRoute: typeof appDashboardProjectProjectIdTicketsRouteImport
-      parentRoute: typeof appDashboardProjectProjectIdRouteRoute
-    }
-    '/(app)/dashboard/project/$projectId/settings': {
-      id: '/(app)/dashboard/project/$projectId/settings'
-      path: '/settings'
-      fullPath: '/dashboard/project/$projectId/settings'
-      preLoaderRoute: typeof appDashboardProjectProjectIdSettingsRouteImport
-      parentRoute: typeof appDashboardProjectProjectIdRouteRoute
-    }
-    '/(app)/dashboard/project/$projectId/customers': {
-      id: '/(app)/dashboard/project/$projectId/customers'
-      path: '/customers'
-      fullPath: '/dashboard/project/$projectId/customers'
-      preLoaderRoute: typeof appDashboardProjectProjectIdCustomersRouteImport
-      parentRoute: typeof appDashboardProjectProjectIdRouteRoute
-    }
-    '/(app)/dashboard/project/$projectId/chat-support': {
-      id: '/(app)/dashboard/project/$projectId/chat-support'
-      path: '/chat-support'
-      fullPath: '/dashboard/project/$projectId/chat-support'
-      preLoaderRoute: typeof appDashboardProjectProjectIdChatSupportRouteImport
-      parentRoute: typeof appDashboardProjectProjectIdRouteRoute
-    }
-    '/(app)/dashboard/project/$projectId/agents': {
-      id: '/(app)/dashboard/project/$projectId/agents'
-      path: '/agents'
-      fullPath: '/dashboard/project/$projectId/agents'
-      preLoaderRoute: typeof appDashboardProjectProjectIdAgentsRouteImport
-      parentRoute: typeof appDashboardProjectProjectIdRouteRoute
-    }
-    '/(app)/dashboard/org/$organizationId/usage': {
-      id: '/(app)/dashboard/org/$organizationId/usage'
-      path: '/usage'
-      fullPath: '/dashboard/org/$organizationId/usage'
-      preLoaderRoute: typeof appDashboardOrgOrganizationIdUsageRouteImport
-      parentRoute: typeof appDashboardOrgOrganizationIdRouteRoute
-    }
-    '/(app)/dashboard/org/$organizationId/teams': {
-      id: '/(app)/dashboard/org/$organizationId/teams'
-      path: '/teams'
-      fullPath: '/dashboard/org/$organizationId/teams'
-      preLoaderRoute: typeof appDashboardOrgOrganizationIdTeamsRouteImport
-      parentRoute: typeof appDashboardOrgOrganizationIdRouteRoute
-    }
-    '/(app)/dashboard/org/$organizationId/settings': {
-      id: '/(app)/dashboard/org/$organizationId/settings'
-      path: '/settings'
-      fullPath: '/dashboard/org/$organizationId/settings'
-      preLoaderRoute: typeof appDashboardOrgOrganizationIdSettingsRouteImport
+    '/(app)/dashboard/org/$organizationId/billing': {
+      id: '/(app)/dashboard/org/$organizationId/billing'
+      path: '/billing'
+      fullPath: '/dashboard/org/$organizationId/billing'
+      preLoaderRoute: typeof appDashboardOrgOrganizationIdBillingRouteImport
       parentRoute: typeof appDashboardOrgOrganizationIdRouteRoute
     }
     '/(app)/dashboard/org/$organizationId/integrations': {
@@ -490,12 +434,68 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof appDashboardOrgOrganizationIdIntegrationsRouteImport
       parentRoute: typeof appDashboardOrgOrganizationIdRouteRoute
     }
-    '/(app)/dashboard/org/$organizationId/billing': {
-      id: '/(app)/dashboard/org/$organizationId/billing'
-      path: '/billing'
-      fullPath: '/dashboard/org/$organizationId/billing'
-      preLoaderRoute: typeof appDashboardOrgOrganizationIdBillingRouteImport
+    '/(app)/dashboard/org/$organizationId/settings': {
+      id: '/(app)/dashboard/org/$organizationId/settings'
+      path: '/settings'
+      fullPath: '/dashboard/org/$organizationId/settings'
+      preLoaderRoute: typeof appDashboardOrgOrganizationIdSettingsRouteImport
       parentRoute: typeof appDashboardOrgOrganizationIdRouteRoute
+    }
+    '/(app)/dashboard/org/$organizationId/teams': {
+      id: '/(app)/dashboard/org/$organizationId/teams'
+      path: '/teams'
+      fullPath: '/dashboard/org/$organizationId/teams'
+      preLoaderRoute: typeof appDashboardOrgOrganizationIdTeamsRouteImport
+      parentRoute: typeof appDashboardOrgOrganizationIdRouteRoute
+    }
+    '/(app)/dashboard/org/$organizationId/usage': {
+      id: '/(app)/dashboard/org/$organizationId/usage'
+      path: '/usage'
+      fullPath: '/dashboard/org/$organizationId/usage'
+      preLoaderRoute: typeof appDashboardOrgOrganizationIdUsageRouteImport
+      parentRoute: typeof appDashboardOrgOrganizationIdRouteRoute
+    }
+    '/(app)/dashboard/project/$projectId/': {
+      id: '/(app)/dashboard/project/$projectId/'
+      path: '/'
+      fullPath: '/dashboard/project/$projectId/'
+      preLoaderRoute: typeof appDashboardProjectProjectIdIndexRouteImport
+      parentRoute: typeof appDashboardProjectProjectIdRouteRoute
+    }
+    '/(app)/dashboard/project/$projectId/agents': {
+      id: '/(app)/dashboard/project/$projectId/agents'
+      path: '/agents'
+      fullPath: '/dashboard/project/$projectId/agents'
+      preLoaderRoute: typeof appDashboardProjectProjectIdAgentsRouteImport
+      parentRoute: typeof appDashboardProjectProjectIdRouteRoute
+    }
+    '/(app)/dashboard/project/$projectId/chat-support': {
+      id: '/(app)/dashboard/project/$projectId/chat-support'
+      path: '/chat-support'
+      fullPath: '/dashboard/project/$projectId/chat-support'
+      preLoaderRoute: typeof appDashboardProjectProjectIdChatSupportRouteImport
+      parentRoute: typeof appDashboardProjectProjectIdRouteRoute
+    }
+    '/(app)/dashboard/project/$projectId/customers': {
+      id: '/(app)/dashboard/project/$projectId/customers'
+      path: '/customers'
+      fullPath: '/dashboard/project/$projectId/customers'
+      preLoaderRoute: typeof appDashboardProjectProjectIdCustomersRouteImport
+      parentRoute: typeof appDashboardProjectProjectIdRouteRoute
+    }
+    '/(app)/dashboard/project/$projectId/settings': {
+      id: '/(app)/dashboard/project/$projectId/settings'
+      path: '/settings'
+      fullPath: '/dashboard/project/$projectId/settings'
+      preLoaderRoute: typeof appDashboardProjectProjectIdSettingsRouteImport
+      parentRoute: typeof appDashboardProjectProjectIdRouteRoute
+    }
+    '/(app)/dashboard/project/$projectId/tickets': {
+      id: '/(app)/dashboard/project/$projectId/tickets'
+      path: '/tickets'
+      fullPath: '/dashboard/project/$projectId/tickets'
+      preLoaderRoute: typeof appDashboardProjectProjectIdTicketsRouteImport
+      parentRoute: typeof appDashboardProjectProjectIdRouteRoute
     }
   }
 }
