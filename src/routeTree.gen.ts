@@ -21,6 +21,7 @@ import { Route as ApiNotificationSseRouteImport } from './routes/api/notificatio
 import { Route as appDashboardOrgOrganizationIdRouteRouteImport } from './routes/(app)/dashboard/org.$organizationId/route'
 import { Route as appDashboardProjectProjectIdRouteRouteImport } from './routes/(app)/dashboard/project.$projectId/route'
 import { Route as publicSupportProjectIdChatWidgetRouteImport } from './routes/(public)/support.$projectId/chat-widget'
+import { Route as publicSupportProjectIdManifestRouteImport } from './routes/(public)/support.$projectId/manifest'
 import { Route as appDashboardOrgOrganizationIdIndexRouteImport } from './routes/(app)/dashboard/org.$organizationId/index'
 import { Route as appDashboardOrgOrganizationIdBillingRouteImport } from './routes/(app)/dashboard/org.$organizationId/billing'
 import { Route as appDashboardOrgOrganizationIdIntegrationsRouteImport } from './routes/(app)/dashboard/org.$organizationId/integrations'
@@ -94,6 +95,12 @@ const publicSupportProjectIdChatWidgetRoute =
   publicSupportProjectIdChatWidgetRouteImport.update({
     id: '/(public)/support/$projectId/chat-widget',
     path: '/support/$projectId/chat-widget',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const publicSupportProjectIdManifestRoute =
+  publicSupportProjectIdManifestRouteImport.update({
+    id: '/(public)/support/$projectId/manifest',
+    path: '/support/$projectId/manifest',
     getParentRoute: () => rootRouteImport,
   } as any)
 const appDashboardOrgOrganizationIdIndexRoute =
@@ -405,6 +412,26 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/org/$organizationId'
       preLoaderRoute: typeof appDashboardOrgOrganizationIdRouteRouteImport
       parentRoute: typeof appRouteRoute
+    }
+    '/(app)/dashboard/project/$projectId': {
+      id: '/(app)/dashboard/project/$projectId'
+      path: '/dashboard/project/$projectId'
+      fullPath: '/dashboard/project/$projectId'
+      preLoaderRoute: typeof appDashboardProjectProjectIdRouteRouteImport
+      parentRoute: typeof appRouteRoute
+    }
+    '/(public)/support/$projectId/chat-widget': {
+      id: '/(public)/support/$projectId/chat-widget'
+      path: '/support/$projectId/chat-widget'
+      fullPath: '/support/$projectId/chat-widget'
+      preLoaderRoute: typeof publicSupportProjectIdChatWidgetRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(public)/support/$projectId/manifest': {
+      id: '/(public)/support/$projectId/manifest'
+      path: '/support/$projectId/manifest'
+      fullPath: '/support/$projectId/manifest'
+      preLoaderRoute: typeof publicSupportProjectIdManifestRouteImport
     }
     '/(app)/dashboard/project/$projectId': {
       id: '/(app)/dashboard/project/$projectId'
