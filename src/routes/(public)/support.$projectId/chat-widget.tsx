@@ -22,7 +22,23 @@ export const Route = createFileRoute("/(public)/support/$projectId/chat-widget")
   },
   loader: ({ context }) => {
     context.queryClient.ensureQueryData(ticketMessageQueries.getTicketMessages());
+    // Surfaced so `head` can title the installed app after the project.
+    return { projectName: context.project.name };
   },
+  // This route is the ONLY installable surface in the app. The manifest link lives here
+  // rather than in __root.tsx so the marketing site and the agent dashboard are not
+  // offered for install at all — and so the manifest can be scoped per project.
+  head: ({ params, loaderData }) => ({
+    meta: [
+      { title: loaderData?.projectName ? `${loaderData.projectName} Support` : "Support" },
+      { name: "theme-color", content: "#4f46e5" },
+      { name: "mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "default" },
+      { name: "apple-mobile-web-app-title", content: loaderData?.projectName ?? "Support" },
+    ],
+    links: [{ rel: "manifest", href: `/support/${params.projectId}/manifest` }],
+  }),
   component: RouteComponent,
 });
 

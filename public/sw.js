@@ -3,13 +3,17 @@
 // navigations, API calls, server functions, and event streams always go straight to the
 // network. We only cache immutable static build assets + icons to speed up warm loads.
 
-const VERSION = "boostk-v1";
+// Replaced at build time by scripts/stamp-sw.mjs with a git SHA / timestamp so every
+// deploy ships a changed sw.js — that byte change is what makes browsers detect updates.
+const VERSION = "__BUILD_ID__";
 const SHELL_CACHE = `boostk-shell-${VERSION}`;
 
 // Static, backend-independent assets safe to pre-cache.
+// The manifest is intentionally absent: it is now generated per project at
+// /support/<projectId>/manifest, so there is no single static manifest to cache.
 const PRECACHE = [
-  "/manifest.json",
-  "/favicon.ico",
+  "/favicon-32.png",
+  "/favicon-16.png",
   "/icon-192.png",
   "/icon-512.png",
   "/icon-maskable-512.png",
@@ -17,10 +21,17 @@ const PRECACHE = [
 ];
 
 self.addEventListener("install", (event) => {
-  self.skipWaiting();
+  // Do NOT skipWaiting automatically: a new version installs but stays "waiting" until
+  // the user accepts the update prompt, so we never reload the page out from under them.
   event.waitUntil(
     caches.open(SHELL_CACHE).then((cache) => cache.addAll(PRECACHE)).catch(() => {}),
   );
+});
+
+// The app posts { type: "SKIP_WAITING" } when the user clicks "Reload"; only then do we
+// activate the new worker (which triggers a controllerchange -> page reload on the client).
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
