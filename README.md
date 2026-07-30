@@ -104,7 +104,8 @@ volumes:
 10. # Define named volumes for shared data storage
 volumes:
  boostk_local:
-
+11. # Docker Setup Buil
+docker build -t (name) .
 ### compose snippet code
 services:
   local-db:

@@ -1,14 +1,14 @@
-import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { Loader2, Send } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import type { Customer, Project, Ticket, TicketMessage } from "prisma/generated/client";
 import { Suspense, useState } from "react";
+import { ReplyInput } from "@/components/chat-support/reply-input";
 import TicketChatMessageBubble from "@/components/chat-support/TicketChatMessageBubble";
 import { REDIRECT_REASON } from "@/enums/enums";
 import { cn } from "@/lib/utils";
 import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
 import { ticketQueries } from "@/modules/ticket/query.queries";
-import { createAgentTicketMessageFn } from "@/modules/ticket-message/ticket-message.functions";
 import { ticketMessageQueries } from "@/modules/ticket-message/ticket-message.queries";
 
 type TicketWithCustomer = Ticket & { customer: Customer };
@@ -99,6 +99,8 @@ const TicketDetails = ({ ticket }: { ticket: TicketWithCustomer | null }) => {
 };
 
 const ChatWindow = ({ ticket }: { ticket: TicketWithCustomer | null }) => {
+  const queryClient = useQueryClient();
+
   if (!ticket) {
     return (
       <div className="h-full w-1/2 flex items-center justify-center text-sm text-muted-foreground">
@@ -110,7 +112,16 @@ const ChatWindow = ({ ticket }: { ticket: TicketWithCustomer | null }) => {
   return (
     <div className="h-full w-1/2 flex flex-col min-h-0">
       <AgentMessageList ticket={ticket} />
-      <AgentReplyInput ticket={ticket} />
+      <ReplyInput
+        ticketId={ticket.id}
+        customerName={ticket.customer.name}
+        customerLanguage={ticket.customer.language}
+        onSuccess={() => {
+          queryClient.invalidateQueries({
+            queryKey: ticketMessageQueries.getByTicket(ticket.id).queryKey,
+          });
+        }}
+      />
     </div>
   );
 };
@@ -148,51 +159,6 @@ const AgentMessageList = ({ ticket }: { ticket: TicketWithCustomer }) => {
         })
       )}
     </div>
-  );
-};
-
-const AgentReplyInput = ({ ticket }: { ticket: TicketWithCustomer }) => {
-  const queryClient = useQueryClient();
-  const [message, setMessage] = useState("");
-
-  const replyMutation = useMutation({
-    mutationFn: createAgentTicketMessageFn,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ticketMessageQueries.getByTicket(ticket.id).queryKey });
-    },
-    onError: (error) => console.log("error", error),
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmed = message.trim();
-    if (!trimmed) return;
-    replyMutation.mutate({ data: { content: trimmed, contentType: "TEXT", ticketId: ticket.id } });
-    setMessage("");
-  };
-
-  const placeholder = ticket.customer.language
-    ? `Reply in your language — the customer reads it in ${ticket.customer.language}`
-    : "Reply to the customer...";
-
-  return (
-    <form onSubmit={handleSubmit} className="flex items-center gap-2 p-3 border-t bg-background">
-      <input
-        type="text"
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-        placeholder={placeholder}
-        disabled={replyMutation.isPending}
-        className="flex-1 bg-muted rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-primary disabled:opacity-60"
-      />
-      <button
-        type="submit"
-        disabled={!message.trim() || replyMutation.isPending}
-        className="bg-primary text-primary-foreground p-2.5 rounded-xl active:scale-95 disabled:opacity-50"
-      >
-        <Send size={18} />
-      </button>
-    </form>
   );
 };
 
