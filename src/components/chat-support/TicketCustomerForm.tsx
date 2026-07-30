@@ -5,12 +5,14 @@ import { motion } from "framer-motion";
 import { ArrowRight, Hash, Mail, User } from "lucide-react";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/toast";
 import { getFieldInvalid } from "@/lib/form-utils";
 import { upsertTicketSessionFn } from "@/modules/ticket/ticket.functions";
 import { UpsertTicketSessionInput } from "@/modules/ticket/ticket.schema";
 
 export default function TicketCustomerForm({ projectId }: { projectId: string }) {
   const router = useRouter();
+  const { toast } = useToast();
 
   const upsertTicketSessionMutation = useMutation({
     mutationFn: upsertTicketSessionFn,
@@ -18,9 +20,7 @@ export default function TicketCustomerForm({ projectId }: { projectId: string })
       console.log("data", data);
       await router.invalidate();
     },
-    onError: (error: unknown) => {
-      console.log("error", error);
-    },
+    onError: () => toast("Failed to create ticket. Please try again."),
   });
 
   const form = useForm({

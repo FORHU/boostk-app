@@ -6,6 +6,7 @@ import type { Project, TicketMessage } from "prisma/generated/client";
 import { Suspense, useEffect, useState } from "react";
 import TicketChatMessageBubble from "@/components/chat-support/TicketChatMessageBubble";
 import TicketCustomerForm from "@/components/chat-support/TicketCustomerForm";
+import { useToast } from "@/components/ui/toast";
 import { getProjectPublicFn } from "@/modules/project/project.functions";
 import { getTicketCookieFn } from "@/modules/ticket/ticket.functions";
 import { createTicketMessageFn } from "@/modules/ticket-message/ticket-message.functions";
@@ -169,6 +170,7 @@ interface ChatInputProps {
 
 const ChatInput = ({ ticketId }: ChatInputProps) => {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [message, setMessage] = useState<string>("");
   //   const { lastMessage } = useNotifications(`ticket_${ticketId}`);
 
@@ -178,9 +180,7 @@ const ChatInput = ({ ticketId }: ChatInputProps) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ticketMessageQueries.all });
     },
-    onError: (error) => {
-      console.log("error", error);
-    },
+    onError: () => toast("Failed to send message. Please try again."),
   });
 
   const handleSubmit = async (e: React.SubmitEvent) => {
