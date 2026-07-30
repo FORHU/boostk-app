@@ -1,9 +1,12 @@
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { Bot, Loader2, Send, Sparkles } from "lucide-react";
+import { Bot, Loader2, Send, Sparkles, CheckCircle2 } from "lucide-react";
+import { useToast } from "@/components/ui/toast";
 import type { Project, TicketMessage } from "prisma/generated/client";
 import { Suspense, useEffect, useState } from "react";
+import { useNotifications } from "@/hooks/use-notifications";
+import { EventType } from "@/lib/notifier/core";
 import TicketChatMessageBubble from "@/components/chat-support/TicketChatMessageBubble";
 import TicketCustomerForm from "@/components/chat-support/TicketCustomerForm";
 import { getProjectPublicFn } from "@/modules/project/project.functions";
@@ -93,7 +96,7 @@ function RouteComponent() {
           exit={{ opacity: 0, y: 8 }}
           transition={{ duration: 0.15, ease: "easeOut" }}
         >
-          <ChatInput ticketId={ticket.id} />
+          <ChatInput ticketId={ticket.id} initialStatus={ticket.status} />
         </motion.div>
       ) : null}
     </div>
@@ -164,13 +167,24 @@ const TicketMessageList = () => {
 
 interface ChatInputProps {
   ticketId: string;
-  //   onNewMessage: (msg: TicketMessage) => void;
+  initialStatus: string;
 }
 
-const ChatInput = ({ ticketId }: ChatInputProps) => {
+const ChatInput = ({ ticketId, initialStatus }: ChatInputProps) => {
   const queryClient = useQueryClient();
   const [message, setMessage] = useState<string>("");
-  //   const { lastMessage } = useNotifications(`ticket_${ticketId}`);
+  const [status, setStatus] = useState(initialStatus);
+  const { toast } = useToast();
+  const { lastMessage } = useNotifications({ ticketId });
+
+  // Listen for TICKET_STATUS_CHANGED events
+  useEffect(() => {
+    if (lastMessage?.event === EventType.TICKET_STATUS_CHANGED) {
+      if (lastMessage.data.ticketId === ticketId) {
+        setStatus(lastMessage.data.status);
+      }
+    }
+  }, [lastMessage, ticketId]);
 
   const createTicketMessageMutation = useMutation({
     mutationKey: ticketMessageQueries.all,
@@ -178,8 +192,8 @@ const ChatInput = ({ ticketId }: ChatInputProps) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ticketMessageQueries.all });
     },
-    onError: (error) => {
-      console.log("error", error);
+    onError: () => {
+      toast("Failed to send message.");
     },
   });
 
@@ -191,6 +205,18 @@ const ChatInput = ({ ticketId }: ChatInputProps) => {
     createTicketMessageMutation.mutate({ data: { content: trimmed, contentType: "TEXT", ticketId } });
     setMessage("");
   };
+
+  if (status === "CLOSED") {
+    return (
+      <div className="p-4 bg-white border-t border-gray-100 flex flex-col items-center justify-center text-center">
+        <CheckCircle2 className="text-emerald-500 mb-2" size={24} />
+        <h4 className="font-semibold text-gray-900 text-sm">This conversation has been closed</h4>
+        <p className="text-xs text-gray-500 mt-1 max-w-[250px]">
+          The agent has marked this issue as resolved. Thank you for contacting support!
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="p-3 bg-white border-t border-gray-100">

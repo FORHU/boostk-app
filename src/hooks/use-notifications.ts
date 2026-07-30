@@ -1,14 +1,19 @@
 import { useEffect, useState } from "react";
 import { EventType, type Message } from "@/lib/notifier/core";
 
-export function useNotifications(userId: string) {
+export function useNotifications({ userId, ticketId }: { userId?: string; ticketId?: string }) {
   const [lastMessage, setLastMessage] = useState<Message | null>(null);
   const [status, setStatus] = useState<"connecting" | "connected" | "disconnected">("connecting");
 
   useEffect(() => {
-    if (!userId || typeof window === "undefined") return;
+    if (!userId && !ticketId) return;
+    if (typeof window === "undefined") return;
 
-    const eventSource = new EventSource(`/api/notification/sse?userId=${userId}`);
+    const params = new URLSearchParams();
+    if (userId) params.append("userId", userId);
+    if (ticketId) params.append("ticketId", ticketId);
+
+    const eventSource = new EventSource(`/api/notification/sse?${params.toString()}`);
 
     const handleMessage = (e: MessageEvent) => {
       try {
@@ -35,6 +40,7 @@ export function useNotifications(userId: string) {
     eventSource.addEventListener(EventType.TEST, handleMessage);
     eventSource.addEventListener(EventType.TICKET_CREATED, handleMessage);
     eventSource.addEventListener(EventType.CHAT_MESSAGE, handleMessage);
+    eventSource.addEventListener(EventType.TICKET_STATUS_CHANGED, handleMessage);
 
     // This handles messages WITHOUT an "event:" line in the SSE stream
     // Should never happen if everything is configured correctly
@@ -50,7 +56,7 @@ export function useNotifications(userId: string) {
       console.log("[SSE] Closing connection");
       eventSource.close();
     };
-  }, [userId]);
+  }, [userId, ticketId]);
 
   return { lastMessage, status };
 }
