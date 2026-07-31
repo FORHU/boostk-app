@@ -9,6 +9,7 @@ import { useNotifications } from "@/hooks/use-notifications";
 import { EventType } from "@/lib/notifier/core";
 import TicketChatMessageBubble from "@/components/chat-support/TicketChatMessageBubble";
 import TicketCustomerForm from "@/components/chat-support/TicketCustomerForm";
+import { useToast } from "@/components/ui/toast";
 import { getProjectPublicFn } from "@/modules/project/project.functions";
 import { getTicketCookieFn } from "@/modules/ticket/ticket.functions";
 import { createTicketMessageFn } from "@/modules/ticket-message/ticket-message.functions";
@@ -172,6 +173,7 @@ interface ChatInputProps {
 
 const ChatInput = ({ ticketId, initialStatus }: ChatInputProps) => {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [message, setMessage] = useState<string>("");
   const [status, setStatus] = useState(initialStatus);
   const { toast } = useToast();
@@ -192,9 +194,7 @@ const ChatInput = ({ ticketId, initialStatus }: ChatInputProps) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ticketMessageQueries.all });
     },
-    onError: () => {
-      toast("Failed to send message.");
-    },
+    onError: () => toast("Failed to send message. Please try again."),
   });
 
   const handleSubmit = async (e: React.SubmitEvent) => {
