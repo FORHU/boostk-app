@@ -16,6 +16,7 @@ import {
 import { Suspense, useState } from "react";
 import { z } from "zod";
 import { TextSkeleton, UsageCardsSkeleton } from "@/components/ui/skeleton";
+import { useViewport } from "@/hooks/use-viewport";
 import { prisma } from "@/lib/prisma";
 import { ORG_ROLE } from "@/modules/auth/roles";
 import { requireProjectRole } from "@/modules/project/project.middleware";
@@ -65,6 +66,7 @@ export const Route = createFileRoute("/(app)/dashboard/project/$projectId/")({
 // 4. FRONTEND COMPONENTS
 function ProjectOverviewPage() {
   const { projectId } = Route.useParams();
+  const { isMobile } = useViewport();
 
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isChatLarge, setIsChatLarge] = useState(false);
@@ -90,7 +92,9 @@ function ProjectOverviewPage() {
       </div>
 
       {/* ----- FLOATING CHAT WIDGET UI ----- */}
-      <div className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-50 flex flex-col items-end max-w-[calc(100vw-2rem)]">
+      <div
+        className={`fixed right-4 z-50 flex flex-col items-end max-w-[calc(100vw-2rem)] ${isMobile ? "bottom-24" : "bottom-6"}`}
+      >
         {isChatOpen && (
           <div
             className={`mb-4 rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-in slide-in-from-bottom-5 fade-in duration-200 relative transition-all border border-border

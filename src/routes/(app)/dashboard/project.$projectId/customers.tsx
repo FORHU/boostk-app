@@ -9,6 +9,7 @@ import TicketChatMessageBubble from "@/components/chat-support/TicketChatMessage
 import { Skeleton } from "@/components/ui/skeleton";
 import { TicketPriorityBadge } from "@/components/ui/ticket-priority";
 import { REDIRECT_REASON } from "@/enums/enums";
+import { useViewport } from "@/hooks/use-viewport";
 import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
 import { projectCustomerQueries } from "@/modules/customer/customer.queries";
 
@@ -19,12 +20,12 @@ function CustomersLoadingFallback() {
       <aside className="border-r border-border bg-background flex-col w-full md:w-80 flex">
         <div className="p-4 border-b border-border/50">
           <Skeleton className="h-6 w-40 mb-4" />
-          <Skeleton className="h-9 w-full rounded-[8px]" />
+          <Skeleton className="h-9 w-full rounded-md" />
         </div>
 
         <div className="flex-1 overflow-y-auto p-2 space-y-2">
           {[...Array(6)].map((id) => (
-            <div key={id} className="p-3 border border-transparent rounded-[8px] flex flex-col gap-2">
+            <div key={id} className="p-3 border border-transparent rounded-md flex flex-col gap-2">
               <div className="flex justify-between items-start gap-2">
                 <div className="flex items-center gap-2 flex-1">
                   <Skeleton className="w-6 h-6 rounded-full shrink-0" />
@@ -48,37 +49,37 @@ function CustomersLoadingFallback() {
             <div className="flex-1 min-w-0 space-y-2">
               <div className="flex items-center gap-2">
                 <Skeleton className="h-5 w-32" />
-                <Skeleton className="h-5 w-16 rounded-[4px] shrink-0" />
+                <Skeleton className="h-5 w-16 rounded-sm shrink-0" />
               </div>
               <Skeleton className="h-3 w-48" />
             </div>
           </div>
-          <Skeleton className="lg:hidden w-9 h-9 rounded-[4px] shrink-0" />
+          <Skeleton className="lg:hidden w-9 h-9 rounded-sm shrink-0" />
         </header>
 
         {/* Message History */}
         <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 bg-muted/20">
           <div className="flex flex-col gap-1 items-start">
-            <Skeleton className="h-16 w-[80%] md:w-[60%] rounded-[16px] rounded-tl-none" />
+            <Skeleton className="h-16 w-[80%] md:w-[60%] rounded-2xl rounded-tl-none" />
             <Skeleton className="h-3 w-16 mt-1 ml-1" />
           </div>
 
           <div className="flex flex-col gap-1 items-end">
-            <Skeleton className="h-12 w-[70%] md:w-[45%] rounded-[16px] rounded-tr-none" />
+            <Skeleton className="h-12 w-[70%] md:w-[45%] rounded-2xl rounded-tr-none" />
             <Skeleton className="h-3 w-20 mt-1 mr-1" />
           </div>
           <div className="flex flex-col gap-1 items-start">
-            <Skeleton className="h-24 w-[85%] md:w-[65%] rounded-[16px] rounded-tl-none" />
+            <Skeleton className="h-24 w-[85%] md:w-[65%] rounded-2xl rounded-tl-none" />
             <Skeleton className="h-3 w-16 mt-1 ml-1" />
           </div>
         </div>
 
         {/* Chat Input */}
         <div className="p-3 md:p-4 bg-background border-t border-border">
-          <div className="flex items-end gap-2 bg-muted/50 border border-input rounded-[10px] p-1.5 md:p-2">
-            <Skeleton className="w-9 h-9 rounded-[8px] shrink-0" />
+          <div className="flex items-end gap-2 bg-muted/50 border border-input rounded-lg p-1.5 md:p-2">
+            <Skeleton className="w-9 h-9 rounded-md shrink-0" />
             <Skeleton className="flex-1 h-9 bg-transparent" />
-            <Skeleton className="w-9 h-9 rounded-[8px] shrink-0" />
+            <Skeleton className="w-9 h-9 rounded-md shrink-0" />
           </div>
         </div>
       </main>
@@ -94,7 +95,7 @@ function CustomersLoadingFallback() {
             <Skeleton className="w-20 h-20 rounded-full shrink-0" />
             <div className="w-full flex flex-col items-center gap-2">
               <Skeleton className="h-6 w-3/4" />
-              <Skeleton className="h-5 w-24 rounded-[4px]" />
+              <Skeleton className="h-5 w-24 rounded-sm" />
             </div>
           </div>
 
@@ -152,6 +153,12 @@ function ProjectCustomersPage() {
 
   const { data: customers } = useSuspenseQuery(projectCustomerQueries.allByProjectId(projectId));
 
+  const { isMd, isLg, isMounted } = useViewport();
+
+  if (!isMounted) {
+    return <CustomersLoadingFallback />;
+  }
+
   const activeCustomer = customers.find((c) => c.id === activeCustomerId) ?? customers[0] ?? null;
   const activeTicket = activeCustomer?.tickets?.[0] ?? null;
 
@@ -170,10 +177,10 @@ function ProjectCustomersPage() {
   };
 
   return (
-    <div className="flex h-screen w-full bg-muted/20 text-foreground font-sans overflow-hidden">
+    <div className="flex min-h-screen w-full bg-muted/20 text-foreground font-sans">
       {/* CUSTOMER LIST SIDEBAR */}
       <aside
-        className={`border-r border-border bg-background flex-col w-full md:w-80 md:flex ${activeCustomerId ? "hidden" : "flex"}`}
+        className={`border-r border-border bg-background flex-col ${isMd ? "w-80 flex" : `w-full ${activeCustomerId ? "hidden" : "flex"}`}`}
       >
         <div className="p-4 border-b border-border/50">
           <h2 className="text-lg font-semibold tracking-tight mb-4">Customers Chats</h2>
@@ -184,7 +191,7 @@ function ProjectCustomersPage() {
               placeholder="Search customers..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-muted/50 border border-input rounded-[8px] text-sm focus:outline-none focus:ring-2 focus:ring-primary min-w-0"
+              className="w-full pl-9 pr-4 py-2 bg-muted/50 border border-input rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary min-w-0"
             />
           </div>
         </div>
@@ -202,7 +209,7 @@ function ProjectCustomersPage() {
                   type="button"
                   key={customer.id}
                   onClick={() => setActiveCustomerId(customer.id)}
-                  className={`w-full text-left p-3 border rounded-[8px] cursor-pointer flex flex-col gap-1 transition-all ${activeCustomer?.id === customer.id ? "bg-primary/5 border-primary/20 shadow-sm" : "bg-background border-transparent hover:bg-muted/50"}`}
+                  className={`w-full text-left p-3 border rounded-md cursor-pointer flex flex-col gap-1 transition-all ${activeCustomer?.id === customer.id ? "bg-primary/5 border-primary/20 shadow-sm" : "bg-background border-transparent hover:bg-muted/50"}`}
                 >
                   <div className="flex justify-between items-start gap-2">
                     <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -242,17 +249,20 @@ function ProjectCustomersPage() {
       {/* ACTIVE CHAT AREA*/}
       {activeCustomer && (
         <main
-          className={`flex-1 flex flex-col mb-8 bg-background relative transition-all duration-300 ease-in-out ${!activeCustomerId && customers.length > 0 ? "hidden md:flex" : "flex"}`}
+          className={`flex-1 flex flex-col mb-8 bg-background relative transition-all duration-300 ease-in-out ${isMd || activeCustomerId || customers.length === 0 ? "flex" : "hidden"}`}
         >
-          <header className="h-16 flex justify-between items-center px-3 md:px-6 bg-muted/50 z-10 gap-2">
-            <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
-              <button
-                type="button"
-                className="md:hidden p-1.5 -ml-1 text-muted-foreground shrink-0 hover:bg-muted rounded-md transition-colors"
-                onClick={() => setActiveCustomerId(null)}
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </button>
+          <header className={`h-16 flex justify-between items-center ${isMd ? "px-6" : "px-3"} bg-muted/50 z-10 gap-2`}>
+            <div className={`flex items-center ${isMd ? "gap-3" : "gap-2"} flex-1 min-w-0`}>
+              {!isMd && (
+                <button
+                  type="button"
+                  className="flex items-center gap-1.5 p-1.5 -ml-1 text-muted-foreground shrink-0 hover:bg-muted rounded-md transition-colors"
+                  onClick={() => setActiveCustomerId(null)}
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                  <span className="text-sm">Customers</span>
+                </button>
+              )}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <h1 className="font-bold text-foreground truncate">{activeCustomer.name}</h1>
@@ -274,17 +284,19 @@ function ProjectCustomersPage() {
                 )}
               </div>
             </div>
-            <button
-              type="button"
-              className="lg:hidden p-2 text-primary bg-primary/10 hover:bg-primary/20 rounded-[4px] shrink-0 transition-colors"
-              onClick={() => setShowMobileDetails(true)}
-            >
-              <Info className="w-5 h-5" />
-            </button>
+            {!isLg && (
+              <button
+                type="button"
+                className="p-2 text-primary bg-primary/10 hover:bg-primary/20 rounded-sm shrink-0 transition-colors"
+                onClick={() => setShowMobileDetails(true)}
+              >
+                <Info className="w-5 h-5" />
+              </button>
+            )}
           </header>
 
           {/* Message History */}
-          <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 mt-3 ">
+          <div className={`flex-1 overflow-y-auto ${isMd ? "p-6" : "p-4"} space-y-6 mt-3`}>
             {!activeTicket ? (
               <div className="flex h-full flex-col items-center justify-center text-muted-foreground space-y-4 p-4 text-center">
                 <Briefcase className="w-12 h-12 opacity-20 shrink-0" />
@@ -312,13 +324,13 @@ function ProjectCustomersPage() {
           <div className="bg-background border-t border-border">
             {activeTicket?.status === "CLOSED" ? (
               <div className="p-3">
-                <div className="text-center p-3 text-sm text-muted-foreground bg-muted rounded-[10px] border border-border">
+                <div className="text-center p-3 text-sm text-muted-foreground bg-muted rounded-lg border border-border">
                   This ticket is closed. Reopen it to continue the conversation.
                 </div>
               </div>
             ) : !activeTicket ? (
               <div className="p-3">
-                <div className="text-center p-3 text-sm text-muted-foreground bg-muted/50 rounded-[10px] border border-dashed border-border">
+                <div className="text-center p-3 text-sm text-muted-foreground bg-muted/50 rounded-lg border border-dashed border-border">
                   Select or create a ticket to send a message.
                 </div>
               </div>
@@ -340,39 +352,45 @@ function ProjectCustomersPage() {
 
       {/* CUSTOMER DETAILS */}
       <aside
-        className={`fixed inset-y-0 right-0 z-20 flex h-full transition-all duration-300 ease-in-out ${
-          showMobileDetails ? "translate-x-0 shadow-2xl" : "translate-x-full"
-        } lg:translate-x-0 lg:relative lg:shadow-none ${showDesktopDetails ? "lg:w-72" : "lg:w-0"}`}
+        className={`flex h-full transition-all duration-300 ease-in-out ${
+          isLg
+            ? `relative shadow-none ${showDesktopDetails ? "w-72" : "w-0"}`
+            : `fixed inset-y-0 right-0 z-50 ${showMobileDetails ? "translate-x-0 shadow-2xl" : "translate-x-full"}`
+        }`}
       >
         {/* Toggle Folder Tab (Desktop Only) */}
-        <button
-          type="button"
-          onClick={() => setShowDesktopDetails((prev) => !prev)}
-          className="hidden lg:flex absolute -left-[31px] top-9 -translate-y-1/2 w-8 h-22 bg-background border border-border border-r-0 rounded-l-[8px] items-center justify-center hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer z-30 shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.05)] group"
-          title={showDesktopDetails ? "Hide Customer Details" : "Show Customer Details"}
-        >
-          <span
-            className="text-[10px] font-bold tracking-[0.2em] rotate-180 group-hover:text-foreground transition-colors"
-            style={{ writingMode: "vertical-rl" }}
+        {isLg && (
+          <button
+            type="button"
+            onClick={() => setShowDesktopDetails((prev) => !prev)}
+            className="absolute -left-[31px] top-9 -translate-y-1/2 w-8 h-22 bg-background border border-border border-r-0 rounded-l-md items-center justify-center hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer z-30 shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.05)] group flex"
+            title={showDesktopDetails ? "Hide Customer Details" : "Show Customer Details"}
           >
-            DETAIL
-          </span>
-        </button>
+            <span
+              className="text-xs font-bold tracking-[0.2em] rotate-180 group-hover:text-foreground transition-colors"
+              style={{ writingMode: "vertical-rl" }}
+            >
+              DETAIL
+            </span>
+          </button>
+        )}
 
         <div className="w-72 max-w-[85vw] bg-background border-l border-border h-full flex flex-col shrink-0">
-          <div className="p-4 md:p-5 border-b border-border/50 flex justify-between items-center">
+          <div className={`${isMd ? "p-5" : "p-4"} border-b border-border/50 flex justify-between items-center`}>
             <h3 className="text-sm font-bold text-foreground uppercase truncate pr-2">Customer Profile</h3>
-            <button
-              type="button"
-              className="lg:hidden text-muted-foreground hover:text-foreground shrink-0 p-1 bg-muted/50 rounded-md"
-              onClick={() => setShowMobileDetails(false)}
-            >
-              <X className="w-5 h-5" />
-            </button>
+            {!isLg && (
+              <button
+                type="button"
+                className="text-muted-foreground hover:text-foreground shrink-0 p-1 bg-muted/50 rounded-md"
+                onClick={() => setShowMobileDetails(false)}
+              >
+                <X className="w-5 h-5" />
+              </button>
+            )}
           </div>
 
           {activeCustomer && (
-            <div className="p-4 md:p-6 space-y-6 overflow-y-auto h-[calc(100vh-65px)]">
+            <div className={`${isMd ? "p-6" : "p-4"} space-y-6 overflow-y-auto h-[calc(100vh-65px)]`}>
               <div className="flex flex-col items-center text-center gap-3">
                 <div className="w-20 h-20 bg-muted text-muted-foreground rounded-full flex items-center justify-center text-2xl font-bold shadow-inner uppercase shrink-0">
                   {activeCustomer.name.charAt(0)}
@@ -380,7 +398,7 @@ function ProjectCustomersPage() {
                 <div className="w-full min-w-0">
                   <h4 className="font-bold text-foreground text-lg break-words">{activeCustomer.name}</h4>
                   {activeCustomer.language && (
-                    <span className="text-xs font-semibold px-2 py-1 bg-muted text-muted-foreground rounded-[4px] border border-border mt-1 inline-block truncate max-w-full">
+                    <span className="text-xs font-semibold px-2 py-1 bg-muted text-muted-foreground rounded-sm border border-border mt-1 inline-block truncate max-w-full">
                       Speaks: {activeCustomer.language}
                     </span>
                   )}
@@ -395,7 +413,7 @@ function ProjectCustomersPage() {
                     <Mail className="w-4 h-4" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[10px] uppercase font-bold text-muted-foreground truncate">Email Address</p>
+                    <p className="text-xs uppercase font-bold text-muted-foreground truncate">Email Address</p>
                     <p className="font-medium text-foreground truncate">{activeCustomer.email}</p>
                   </div>
                 </li>
@@ -404,7 +422,7 @@ function ProjectCustomersPage() {
                     <Briefcase className="w-4 h-4" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[10px] uppercase font-bold text-muted-foreground truncate">Project</p>
+                    <p className="text-xs uppercase font-bold text-muted-foreground truncate">Project</p>
                     <p className="font-medium text-foreground truncate">{activeCustomer.project.name}</p>
                   </div>
                 </li>
@@ -413,7 +431,7 @@ function ProjectCustomersPage() {
                     <Hash className="w-4 h-4" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[10px] uppercase font-bold text-muted-foreground truncate">Ticket</p>
+                    <p className="text-xs uppercase font-bold text-muted-foreground truncate">Ticket</p>
                     <p className="font-medium text-foreground truncate">{activeTicket?.referenceNumber || "None"}</p>
                   </div>
                 </li>
@@ -422,7 +440,7 @@ function ProjectCustomersPage() {
                     <Calendar className="w-4 h-4" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[10px] uppercase font-bold text-muted-foreground truncate">Customer Since</p>
+                    <p className="text-xs uppercase font-bold text-muted-foreground truncate">Customer Since</p>
                     <p className="font-medium text-foreground truncate">
                       {new Date(activeCustomer.createdAt).toLocaleDateString()}
                     </p>
@@ -434,10 +452,10 @@ function ProjectCustomersPage() {
         </div>
       </aside>
 
-      {showMobileDetails && (
+      {showMobileDetails && !isLg && (
         <button
           type="button"
-          className="fixed inset-0 bg-foreground/20 z-10 lg:hidden backdrop-blur-sm"
+          className="fixed inset-0 bg-foreground/20 z-40 backdrop-blur-sm"
           onClick={() => setShowMobileDetails(false)}
         />
       )}
