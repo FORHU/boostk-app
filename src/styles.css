@@ -10,6 +10,10 @@
 
 @custom-variant dark (&:is(.dark *));
 
+html {
+  font-size: clamp(13px, 0.5vw + 10px, 16px);
+}
+
 body {
   @apply m-0;
   font-family:
