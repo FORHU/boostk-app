@@ -1,36 +1,11 @@
-import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
 import { FolderKanban, Ticket, Users } from "lucide-react";
 import { Suspense } from "react";
-import { z } from "zod";
 import { TextSkeleton, UsageCardsSkeleton } from "@/components/ui/skeleton";
 import { REDIRECT_REASON } from "@/enums/enums";
-import { prisma } from "@/lib/prisma";
 import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
-import { requireOrgRole } from "@/modules/organization/organization.middleware";
-
-// 1. BACKEND: Server Function
-export const getOrgUsageFn = createServerFn({ method: "GET" })
-  .inputValidator(z.object({ organizationId: z.string() }))
-  .middleware([requireOrgRole(ORG_ROLE.ADMIN)])
-  .handler(async ({ context }) => {
-    const [projects, members, tickets] = await prisma.$transaction([
-      prisma.project.count({ where: { organizationId: context.organization.id } }),
-      prisma.member.count({ where: { organizationId: context.organization.id } }),
-      prisma.ticket.count({ where: { project: { organizationId: context.organization.id } } }),
-    ]);
-    return { projects, members, tickets };
-  });
-
-export const usageQueries = {
-  usage: ["usage"],
-  allByOrgId: (organizationId: string) =>
-    queryOptions({
-      queryKey: [...usageQueries.usage, organizationId],
-      queryFn: () => getOrgUsageFn({ data: { organizationId } }),
-    }),
-};
+import { usageQueries } from "@/modules/usage/usage.queries";
 
 export const Route = createFileRoute("/(app)/dashboard/org/$organizationId/usage")({
   beforeLoad: ({ context }) => {
