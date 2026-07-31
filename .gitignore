@@ -12,6 +12,11 @@ dist-ssr
 __unconfig*
 todos.json
 
+# This is a Bun project — keep only bun.lock (no npm/yarn/pnpm lockfiles).
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
 prisma/generated
 
 docs/

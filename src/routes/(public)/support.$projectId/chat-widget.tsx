@@ -1,14 +1,14 @@
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { Bot, Loader2, Send, Sparkles, CheckCircle2 } from "lucide-react";
-import { useToast } from "@/components/ui/toast";
+import { Bot, CheckCircle2, Loader2, Send, Sparkles } from "lucide-react";
 import type { Project, TicketMessage } from "prisma/generated/client";
 import { Suspense, useEffect, useState } from "react";
-import { useNotifications } from "@/hooks/use-notifications";
-import { EventType } from "@/lib/notifier/core";
 import TicketChatMessageBubble from "@/components/chat-support/TicketChatMessageBubble";
 import TicketCustomerForm from "@/components/chat-support/TicketCustomerForm";
+import { useToast } from "@/components/ui/toast";
+import { useNotifications } from "@/hooks/use-notifications";
+import { EventType } from "@/lib/notifier/core";
 import { getProjectPublicFn } from "@/modules/project/project.functions";
 import { getTicketCookieFn } from "@/modules/ticket/ticket.functions";
 import { createTicketMessageFn } from "@/modules/ticket-message/ticket-message.functions";

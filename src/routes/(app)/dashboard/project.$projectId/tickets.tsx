@@ -8,11 +8,11 @@ import { z } from "zod";
 import { ReplyInput } from "@/components/chat-support/reply-input";
 import TicketChatMessageBubble from "@/components/chat-support/TicketChatMessageBubble";
 import { TicketPriorityBadge, TicketPrioritySelect, type TicketPriorityType } from "@/components/ui/ticket-priority";
-import { EventType } from "@/lib/notifier/core";
-import { publishEvent } from "@/lib/rabbitmq";
 import { useToast } from "@/components/ui/toast";
 import { REDIRECT_REASON } from "@/enums/enums";
+import { EventType } from "@/lib/notifier/core";
 import { prisma } from "@/lib/prisma";
+import { publishEvent } from "@/lib/rabbitmq";
 import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
 import { requireProjectRole } from "@/modules/project/project.middleware";
 
