@@ -1,7 +1,9 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import OrganizationBottomNav from "@/components/layout/organization-bottom-nav";
 import OrganizationSidebar from "@/components/layout/organization-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { REDIRECT_REASON } from "@/enums/enums";
+import { useViewport } from "@/hooks/use-viewport";
 import { getMemberRole } from "@/modules/auth/roles";
 import { getOrganizationFn } from "@/modules/organization/organization.functions";
 
@@ -22,6 +24,7 @@ export const Route = createFileRoute("/(app)/dashboard/org/$organizationId")({
 
 function OrganizationLayout() {
   const { organizationId } = Route.useParams();
+  const { isMobile } = useViewport();
 
   return (
     <div className="flex-1 min-h-0 relative">
@@ -37,11 +40,12 @@ function OrganizationLayout() {
       >
         <OrganizationSidebar organizationId={organizationId} />
         <SidebarInset>
-          <div className="flex-1 overflow-auto">
+          <div className={`flex-1 overflow-auto ${isMobile ? "pb-24" : ""}`}>
             <Outlet />
           </div>
         </SidebarInset>
       </SidebarProvider>
+      <OrganizationBottomNav organizationId={organizationId} />
     </div>
   );
 }
