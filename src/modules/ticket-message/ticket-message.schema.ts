@@ -7,3 +7,8 @@ export const CreateTicketMessageSchema = z.object({
   ticketId: z.string(),
 });
 export type CreateTicketMessageInput = z.infer<typeof CreateTicketMessageSchema>;
+
+export const CreateCustomerTicketMessageSchema = CreateTicketMessageSchema.extend({
+  projectId: z.string(),
+});
+export type CreateCustomerTicketMessageInput = z.infer<typeof CreateCustomerTicketMessageSchema>;

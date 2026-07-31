@@ -3,7 +3,6 @@ import { z } from "zod";
 import { CreateCustomerSchema } from "@/modules/customer/customer.schema";
 
 export const CreateTicketSchema = z.object({
-  referenceNumber: z.string(),
   status: z.enum(TicketStatus).optional().default(TicketStatus.OPEN),
   priority: z.enum(TicketPriority).optional().default(TicketPriority.LOW),
   projectId: z.string(),
