@@ -20,9 +20,7 @@ export default function TicketCustomerForm({ projectId }: { projectId: string })
       console.log("data", data);
       await router.invalidate();
     },
-    onError: () => {
-      toast("Failed to start conversation.");
-    },
+    onError: () => toast("Failed to create ticket. Please try again."),
   });
 
   const form = useForm({
