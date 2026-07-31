@@ -3,10 +3,10 @@ import { getTicketMessagesByTicketFn, getTicketMessagesFn } from "./ticket-messa
 
 export const ticketMessageQueries = {
   all: ["ticket-messages"],
-  getTicketMessages: () =>
+  getTicketMessages: (projectId: string) =>
     queryOptions({
-      queryKey: [...ticketMessageQueries.all],
-      queryFn: () => getTicketMessagesFn(),
+      queryKey: [...ticketMessageQueries.all, projectId],
+      queryFn: () => getTicketMessagesFn({ data: { projectId } }),
     }),
   getByTicket: (ticketId: string) =>
     queryOptions({

@@ -19,12 +19,12 @@ export const Route = createFileRoute("/(public)/support/$projectId/chat-widget")
     const project = await getProjectPublicFn({ data: { projectId: params.projectId } });
     if (!project) throw notFound();
 
-    const ticket = await getTicketCookieFn();
+    const ticket = await getTicketCookieFn({ data: { projectId: params.projectId } });
 
     return { project, ticket };
   },
-  loader: ({ context }) => {
-    context.queryClient.ensureQueryData(ticketMessageQueries.getTicketMessages());
+  loader: ({ context, params }) => {
+    context.queryClient.ensureQueryData(ticketMessageQueries.getTicketMessages(params.projectId));
     // Surfaced so `head` can title the installed app after the project.
     return { projectName: context.project.name };
   },
@@ -73,7 +73,7 @@ function RouteComponent() {
           <LoadingFallback />
         ) : (
           <Suspense fallback={<LoadingFallback />}>
-            <TicketMessageList />
+            <TicketMessageList projectId={project.id} />
           </Suspense>
         )}
       </div>
@@ -96,7 +96,7 @@ function RouteComponent() {
           exit={{ opacity: 0, y: 8 }}
           transition={{ duration: 0.15, ease: "easeOut" }}
         >
-          <ChatInput ticketId={ticket.id} initialStatus={ticket.status} />
+          <ChatInput ticketId={ticket.id} initialStatus={ticket.status} projectId={project.id} />
         </motion.div>
       ) : null}
     </div>
@@ -123,8 +123,8 @@ const ChatHeader = ({ project }: { project: Pick<Project, "id" | "name" | "logo"
   );
 };
 
-const TicketMessageList = () => {
-  const { data: ticketMessages } = useSuspenseQuery(ticketMessageQueries.getTicketMessages());
+const TicketMessageList = ({ projectId }: { projectId: string }) => {
+  const { data: ticketMessages } = useSuspenseQuery(ticketMessageQueries.getTicketMessages(projectId));
 
   if (!ticketMessages) return <div>No messages</div>;
 
@@ -168,9 +168,10 @@ const TicketMessageList = () => {
 interface ChatInputProps {
   ticketId: string;
   initialStatus: string;
+  projectId: string;
 }
 
-const ChatInput = ({ ticketId, initialStatus }: ChatInputProps) => {
+const ChatInput = ({ ticketId, initialStatus, projectId }: ChatInputProps) => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [message, setMessage] = useState<string>("");
@@ -200,7 +201,7 @@ const ChatInput = ({ ticketId, initialStatus }: ChatInputProps) => {
     const trimmed = message.trim();
     if (!trimmed) return;
 
-    createTicketMessageMutation.mutate({ data: { content: trimmed, contentType: "TEXT", ticketId } });
+    createTicketMessageMutation.mutate({ data: { content: trimmed, contentType: "TEXT", ticketId, projectId } });
     setMessage("");
   };
 
