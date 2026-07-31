@@ -7,6 +7,8 @@ import { Suspense, useEffect, useState } from "react";
 import TicketChatMessageBubble from "@/components/chat-support/TicketChatMessageBubble";
 import TicketCustomerForm from "@/components/chat-support/TicketCustomerForm";
 import { useToast } from "@/components/ui/toast";
+import { useNotifications } from "@/hooks/use-notifications";
+import { EventType } from "@/lib/notifier/core";
 import { getProjectPublicFn } from "@/modules/project/project.functions";
 import { getTicketCookieFn } from "@/modules/ticket/ticket.functions";
 import { createTicketMessageFn } from "@/modules/ticket-message/ticket-message.functions";
@@ -173,7 +175,6 @@ const ChatInput = ({ ticketId, initialStatus }: ChatInputProps) => {
   const { toast } = useToast();
   const [message, setMessage] = useState<string>("");
   const [status, setStatus] = useState(initialStatus);
-  const { toast } = useToast();
   const { lastMessage } = useNotifications({ ticketId });
 
   // Listen for TICKET_STATUS_CHANGED events

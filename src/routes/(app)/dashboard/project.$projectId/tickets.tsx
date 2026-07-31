@@ -11,6 +11,7 @@ import { TicketPriorityBadge, TicketPrioritySelect, type TicketPriorityType } fr
 import { useToast } from "@/components/ui/toast";
 import { REDIRECT_REASON } from "@/enums/enums";
 import { useViewport } from "@/hooks/use-viewport";
+import { EventType } from "@/lib/notifier/core";
 import { prisma } from "@/lib/prisma";
 import { publishEvent } from "@/lib/rabbitmq";
 import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
