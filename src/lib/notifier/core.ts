@@ -7,6 +7,7 @@ export enum EventType {
 
   TICKET_CREATED = "ticket_created",
   TICKET_ASSIGNED = "ticket_assigned",
+  TICKET_STATUS_CHANGED = "ticket_status_changed",
   CHAT_MESSAGE = "chat_message",
 
   TEST = "test",

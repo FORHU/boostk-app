@@ -8,6 +8,8 @@ import { z } from "zod";
 import { ReplyInput } from "@/components/chat-support/reply-input";
 import TicketChatMessageBubble from "@/components/chat-support/TicketChatMessageBubble";
 import { TicketPriorityBadge, TicketPrioritySelect, type TicketPriorityType } from "@/components/ui/ticket-priority";
+import { EventType } from "@/lib/notifier/core";
+import { publishEvent } from "@/lib/rabbitmq";
 import { useToast } from "@/components/ui/toast";
 import { REDIRECT_REASON } from "@/enums/enums";
 import { prisma } from "@/lib/prisma";
@@ -53,13 +55,21 @@ export const updateTicketStatusFn = createServerFn({ method: "POST" })
   )
   .middleware([requireProjectRole(ORG_ROLE.AGENT)])
   .handler(async ({ data }) => {
-    return prisma.ticket.update({
+    const updatedTicket = await prisma.ticket.update({
       where: {
         id: data.ticketId,
         projectId: data.projectId,
       },
       data: { status: data.status },
     });
+
+    // Notify listeners about the status change
+    await publishEvent(`ticket.${data.ticketId}.status`, {
+      event: EventType.TICKET_STATUS_CHANGED,
+      data: { ticketId: data.ticketId, status: data.status },
+    });
+
+    return updatedTicket;
   });
 
 export const updateTicketPriorityFn = createServerFn({ method: "POST" })
@@ -179,6 +189,7 @@ function TicketDetailPanel({
         queryKey: projectTicketQueries.allByProjectId(projectId).queryKey,
       });
     },
+    onError: () => toast("Failed to update status."),
   });
 
   const updatePriorityMutation = useMutation({
