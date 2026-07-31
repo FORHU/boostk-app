@@ -355,7 +355,7 @@ function ProjectCustomersPage() {
         className={`flex h-full transition-all duration-300 ease-in-out ${
           isLg
             ? `relative shadow-none ${showDesktopDetails ? "w-72" : "w-0"}`
-            : `fixed inset-y-0 right-0 z-20 ${showMobileDetails ? "translate-x-0 shadow-2xl" : "translate-x-full"}`
+            : `fixed inset-y-0 right-0 z-50 ${showMobileDetails ? "translate-x-0 shadow-2xl" : "translate-x-full"}`
         }`}
       >
         {/* Toggle Folder Tab (Desktop Only) */}
@@ -455,7 +455,7 @@ function ProjectCustomersPage() {
       {showMobileDetails && !isLg && (
         <button
           type="button"
-          className="fixed inset-0 bg-foreground/20 z-10 backdrop-blur-sm"
+          className="fixed inset-0 bg-foreground/20 z-40 backdrop-blur-sm"
           onClick={() => setShowMobileDetails(false)}
         />
       )}
