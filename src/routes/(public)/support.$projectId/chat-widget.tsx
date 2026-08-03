@@ -8,7 +8,7 @@ import TicketChatMessageBubble from "@/components/chat-support/TicketChatMessage
 import TicketCustomerForm from "@/components/chat-support/TicketCustomerForm";
 import { useToast } from "@/components/ui/toast";
 import { useNotifications } from "@/hooks/use-notifications";
-import { EventType } from "@/lib/notifier/core";
+import { EventType, type Message } from "@/lib/notifier/core";
 import { getProjectPublicFn } from "@/modules/project/project.functions";
 import { getTicketCookieFn } from "@/modules/ticket/ticket.functions";
 import { createTicketMessageFn } from "@/modules/ticket-message/ticket-message.functions";
@@ -48,6 +48,7 @@ export const Route = createFileRoute("/(public)/support/$projectId/chat-widget")
 function RouteComponent() {
   const { project, ticket } = Route.useRouteContext();
   const [showSpinner, setShowSpinner] = useState(true);
+  const { lastMessage, status } = useNotifications({ ticketId: ticket?.id });
 
   // This effect forces the spinner to stay for at least 500ms
   useEffect(() => {
@@ -65,7 +66,7 @@ function RouteComponent() {
 
   return (
     <div className="flex flex-col h-screen max-h-screen bg-white overflow-hidden">
-      <ChatHeader project={project} />
+      <ChatHeader project={project} connectionStatus={ticket ? status : undefined} />
 
       <div className="flex-1 overflow-y-auto p-2 bg-slate-50 scroll-smooth pb-4">
         {/* If the timer is still running, show the spinner, otherwise let Suspense handle it */}
@@ -96,14 +97,27 @@ function RouteComponent() {
           exit={{ opacity: 0, y: 8 }}
           transition={{ duration: 0.15, ease: "easeOut" }}
         >
-          <ChatInput ticketId={ticket.id} initialStatus={ticket.status} projectId={project.id} />
+          <ChatInput
+            ticketId={ticket.id}
+            initialStatus={ticket.status}
+            projectId={project.id}
+            lastMessage={lastMessage}
+          />
         </motion.div>
       ) : null}
     </div>
   );
 }
 
-const ChatHeader = ({ project }: { project: Pick<Project, "id" | "name" | "logo" | "description"> }) => {
+const ChatHeader = ({
+  project,
+  connectionStatus,
+}: {
+  project: Pick<Project, "id" | "name" | "logo" | "description">;
+  connectionStatus?: "connecting" | "connected" | "reconnecting";
+}) => {
+  const isReconnecting = connectionStatus != null && connectionStatus !== "connected";
+
   return (
     <header className="flex-none bg-indigo-600 p-4 text-white flex items-center justify-between shadow-sm">
       <div className="flex items-center gap-3">
@@ -113,8 +127,17 @@ const ChatHeader = ({ project }: { project: Pick<Project, "id" | "name" | "logo"
         <div>
           <h2 className="text-sm font-bold leading-none">{project.name} Support Chat</h2>
           <span className="text-[10px] text-indigo-200 flex items-center gap-1">
-            <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
-            Always active
+            {isReconnecting ? (
+              <>
+                <span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-pulse"></span>
+                {connectionStatus === "connecting" ? "Connecting…" : "Reconnecting…"}
+              </>
+            ) : (
+              <>
+                <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
+                Always active
+              </>
+            )}
           </span>
         </div>
       </div>
@@ -169,14 +192,14 @@ interface ChatInputProps {
   ticketId: string;
   initialStatus: string;
   projectId: string;
+  lastMessage: Message | null;
 }
 
-const ChatInput = ({ ticketId, initialStatus, projectId }: ChatInputProps) => {
+const ChatInput = ({ ticketId, initialStatus, projectId, lastMessage }: ChatInputProps) => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [message, setMessage] = useState<string>("");
   const [status, setStatus] = useState(initialStatus);
-  const { lastMessage } = useNotifications({ ticketId });
 
   // Listen for TICKET_STATUS_CHANGED events
   useEffect(() => {

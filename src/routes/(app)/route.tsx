@@ -20,7 +20,7 @@ function AppLayout() {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden">
-      <AppTopbar />
+      <AppTopbar connectionStatus={status} />
       <Outlet />
     </div>
   );
