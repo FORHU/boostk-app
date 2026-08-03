@@ -18,7 +18,11 @@ import { authClient } from "@/lib/auth-client";
 import { authQueries } from "@/modules/auth/auth.queries";
 import { RouterBreadcrumb } from "./RouterBreadcrumb";
 
-export default function AppTopbar() {
+interface AppTopbarProps {
+  connectionStatus?: "connecting" | "connected" | "reconnecting";
+}
+
+export default function AppTopbar({ connectionStatus }: AppTopbarProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -55,6 +59,12 @@ export default function AppTopbar() {
         </div>
 
         <div className="flex items-center gap-4">
+          {connectionStatus && connectionStatus !== "connected" && (
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <span className="size-2 rounded-full bg-amber-500 animate-pulse" />
+              {connectionStatus === "connecting" ? "Connecting…" : "Reconnecting…"}
+            </div>
+          )}
           <ThemeToggle />
           <DropdownMenu>
             <DropdownMenuTrigger
