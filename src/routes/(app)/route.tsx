@@ -13,14 +13,20 @@ export const Route = createFileRoute("/(app)")({
 
 function AppLayout() {
   const { authSession } = Route.useRouteContext();
-  const { status, lastMessage } = useNotifications({ userId: authSession.user.id });
+  const { status, notifications, unreadCount, markAllRead } = useNotifications({
+    userId: authSession.user.id,
+  });
 
   console.log("[AppLayout] Status:", status);
-  console.log("[AppLayout] Last Message:", lastMessage);
 
   return (
     <div className="flex flex-col h-screen overflow-hidden">
-      <AppTopbar connectionStatus={status} />
+      <AppTopbar
+        connectionStatus={status}
+        notifications={notifications}
+        unreadCount={unreadCount}
+        markAllRead={markAllRead}
+      />
       <Outlet />
     </div>
   );
