@@ -65,6 +65,11 @@ export const Route = createFileRoute("/api/notification/sse")({
 
                 await channel.bindQueue(sseQueue, EXCHANGE_NAME, "test.queue");
 
+                // Bind to user queues (agent dashboard notifications)
+                if (userId && userId !== "anonymous") {
+                  await channel.bindQueue(sseQueue, EXCHANGE_NAME, `user.${userId}.*`);
+                }
+
                 // Bind to project and ticket queues
                 if (projectId) {
                   await channel.bindQueue(sseQueue, EXCHANGE_NAME, `project.${projectId}.*`);

@@ -4,6 +4,7 @@ import type { ConfirmChannel, ConsumeMessage } from "amqplib";
 const PERMANENT_QUEUES = ["test.queue"];
 export const EXCHANGE_NAME = "boostk.exchange";
 const RABBIT_URL = process.env.RABBITMQ_URL || "amqp://127.0.0.1:5672";
+const PUBLISH_TIMEOUT_MS = 5000;
 
 export const connection = amqp.connect([RABBIT_URL]);
 
@@ -24,11 +25,14 @@ export const channelWrapper = connection.createChannel({
 });
 
 export const publishMessage = async <T>(queue: string, data: T): Promise<void> => {
-  await channelWrapper.sendToQueue(queue, data, { persistent: true });
+  await channelWrapper.sendToQueue(queue, data, { persistent: true, timeout: PUBLISH_TIMEOUT_MS });
 };
 
 export const publishEvent = async <T>(routingKey: string, data: T): Promise<void> => {
-  await channelWrapper.publish(EXCHANGE_NAME, routingKey, data, { persistent: true });
+  await channelWrapper.publish(EXCHANGE_NAME, routingKey, data, {
+    persistent: true,
+    timeout: PUBLISH_TIMEOUT_MS,
+  });
 };
 
 export const consumeTestQueue = async () => {
