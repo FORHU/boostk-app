@@ -4,7 +4,6 @@ import { TicketPriority, TicketStatus } from "prisma/generated/enums";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { CreateCustomerSchema } from "@/modules/customer/customer.schema";
-import { generateTicketReferenceNumber } from "@/modules/ticket/ticket.utils";
 import { createCustomer } from "../customer/customer.service";
 import { GetTicketByReferenceNumberSchema, UpsertTicketSessionInput } from "./ticket.schema";
 import { createTicket, getTicketByReferenceNumber } from "./ticket.service";
@@ -27,7 +26,6 @@ export const createTicketFn = createServerFn({ method: "POST" })
     });
 
     const ticket = await createTicket({
-      referenceNumber: await generateTicketReferenceNumber(),
       status: TicketStatus.OPEN,
       priority: TicketPriority.LOW,
       projectId: project.id,
@@ -44,7 +42,7 @@ export const upsertTicketSessionFn = createServerFn({ method: "POST" })
   .inputValidator(UpsertTicketSessionInput)
   .handler(async ({ data }) => {
     if (data.referenceNumber) {
-      const ticket = await getTicketByReferenceNumber(data.referenceNumber);
+      const ticket = await getTicketByReferenceNumber(data.referenceNumber, data.projectId);
       if (!ticket) throw new Error("Invalid ticket reference number");
 
       // set cookie for 1 day
@@ -65,7 +63,6 @@ export const upsertTicketSessionFn = createServerFn({ method: "POST" })
     });
 
     const ticket = await createTicket({
-      referenceNumber: await generateTicketReferenceNumber(),
       status: TicketStatus.OPEN,
       priority: TicketPriority.LOW,
       projectId: project.id,
@@ -104,27 +101,31 @@ export const setTicketCookieFn = createServerFn({ method: "POST" })
     return true;
   });
 
-export const getTicketCookieFn = createServerFn({ method: "GET" }).handler(async () => {
-  const ticketReferenceNumber = getCookie("ticketReferenceNumber");
-  if (!ticketReferenceNumber) return null;
+export const getTicketCookieFn = createServerFn({ method: "GET" })
+  .inputValidator(z.object({ projectId: z.string().min(1) }))
+  .handler(async ({ data }) => {
+    const ticketReferenceNumber = getCookie("ticketReferenceNumber");
+    if (!ticketReferenceNumber) return null;
 
-  const ticket = await prisma.ticket.findUnique({
-    where: { referenceNumber: ticketReferenceNumber },
-    include: {
-      customer: true,
-    },
-  });
-
-  if (!ticket) {
-    setCookie("ticketReferenceNumber", "", {
-      maxAge: 0,
-      path: "/",
+    // Scope the session to the project being viewed so a stale cookie from
+    // another project's support chat can never resume a foreign conversation.
+    const ticket = await prisma.ticket.findFirst({
+      where: { referenceNumber: ticketReferenceNumber, projectId: data.projectId },
+      include: {
+        customer: true,
+      },
     });
-    return null;
-  }
 
-  return ticket;
-});
+    if (!ticket) {
+      setCookie("ticketReferenceNumber", "", {
+        maxAge: 0,
+        path: "/",
+      });
+      return null;
+    }
+
+    return ticket;
+  });
 
 export const getProjectTicketsFn = createServerFn({ method: "GET" })
   .inputValidator(z.object({ projectId: z.string().min(1) }))

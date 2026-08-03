@@ -3,8 +3,14 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useState } from "react";
 import { REDIRECT_REASON } from "@/enums/enums";
 import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
-import { connectIntegrationFn, disconnectIntegrationFn } from "@/modules/integrations/integration-functions";
+import {
+  connectIntegrationFn,
+  disconnectIntegrationFn,
+  type INTEGRATION_PROVIDERS,
+} from "@/modules/integrations/integration-functions";
 import { organizationIntegrationQueries } from "@/modules/integrations/integration-queries";
+
+type IntegrationProvider = (typeof INTEGRATION_PROVIDERS)[number];
 
 export const Route = createFileRoute("/(app)/dashboard/org/$organizationId/integrations")({
   beforeLoad: ({ context }) => {
@@ -17,7 +23,7 @@ export const Route = createFileRoute("/(app)/dashboard/org/$organizationId/integ
 
 const AVAILABLE_INTEGRATIONS = [
   {
-    id: "openai",
+    id: "openai" as IntegrationProvider,
     name: "OpenAI",
     category: "AI & Productivity",
     description: "Enable real-time AI translation and advanced chat summarization features.",
@@ -35,7 +41,7 @@ const AVAILABLE_INTEGRATIONS = [
     ),
   },
   {
-    id: "whatsapp",
+    id: "whatsapp" as IntegrationProvider,
     name: "WhatsApp Business",
     category: "Communication Channels",
     description: "Route messages from WhatsApp directly into your Boostk unified inbox.",
@@ -58,7 +64,7 @@ const AVAILABLE_INTEGRATIONS = [
     ),
   },
   {
-    id: "slack",
+    id: "slack" as IntegrationProvider,
     name: "Slack Notifications",
     category: "Operational Tools",
     description: "Receive instant notifications in your workspace when a high-priority chat arrives.",
@@ -81,7 +87,7 @@ const AVAILABLE_INTEGRATIONS = [
     ),
   },
   {
-    id: "webhooks",
+    id: "webhooks" as IntegrationProvider,
     name: "Custom Webhooks",
     category: "Operational Tools",
     description: "Send raw event data from internal systems into Boostk for custom workflows.",
@@ -109,6 +115,7 @@ function OrganizationIntegrationsPage() {
   const { organizationId } = Route.useParams();
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState("All");
+  const [pendingProvider, setPendingProvider] = useState<IntegrationProvider | null>(null);
 
   const { data: activeIntegrations } = useSuspenseQuery(organizationIntegrationQueries.all(organizationId));
 
@@ -121,6 +128,7 @@ function OrganizationIntegrationsPage() {
         queryKey: organizationIntegrationQueries.all(organizationId).queryKey,
       });
     },
+    onSettled: () => setPendingProvider(null),
   });
 
   const disconnectMutation = useMutation({
@@ -130,6 +138,7 @@ function OrganizationIntegrationsPage() {
         queryKey: organizationIntegrationQueries.all(organizationId).queryKey,
       });
     },
+    onSettled: () => setPendingProvider(null),
   });
 
   // Filter Catalog
@@ -137,7 +146,8 @@ function OrganizationIntegrationsPage() {
   const filteredIntegrations =
     filter === "All" ? AVAILABLE_INTEGRATIONS : AVAILABLE_INTEGRATIONS.filter((item) => item.category === filter);
 
-  const toggleIntegration = (providerId: string, isCurrentlyConnected: boolean) => {
+  const toggleIntegration = (providerId: IntegrationProvider, isCurrentlyConnected: boolean) => {
+    setPendingProvider(providerId);
     if (isCurrentlyConnected) {
       disconnectMutation.mutate({ data: { organizationId, provider: providerId } });
     } else {
@@ -179,7 +189,7 @@ function OrganizationIntegrationsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredIntegrations.map((integration) => {
             const isConnected = connectedProviders.has(integration.id);
-            const isPending = connectMutation.isPending || disconnectMutation.isPending;
+            const isPending = pendingProvider === integration.id;
 
             return (
               <div
