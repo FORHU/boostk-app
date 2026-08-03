@@ -135,7 +135,9 @@ BETTER_AUTH_URL=http://localhost:3000/
 
 RABBITMQ_URL=amqp://[user]:[password]@[ip]:5672
 
-OPENAI_API_KEY= openai-api-key-here
+FORHU_CHAT_URL=https://chat-dev.forhu.ai
+
+SUPPORT_LANGUAGE=en
 
 # Initialize Database
 For first-time implementation, initialize the Prisma client, run migrations, and seed the database using the consolidated script:
