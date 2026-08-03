@@ -1,16 +1,37 @@
+import { getCookie, setCookie } from "@tanstack/react-start/server";
 import { TicketPriority, TicketStatus } from "prisma/generated/enums";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { prisma } from "@/lib/prisma";
+import { createCustomer } from "../customer/customer.service";
 
 vi.mock("@/lib/prisma", () => ({
-  prisma: { ticket: { create: vi.fn() } },
+  prisma: {
+    ticket: { create: vi.fn(), findFirst: vi.fn() },
+    project: { findUnique: vi.fn() },
+  },
 }));
 
 vi.mock("./ticket.utils", () => ({
   generateTicketReferenceNumber: vi.fn(),
 }));
 
-import { prisma } from "@/lib/prisma";
-import { createTicket } from "./ticket.service";
+vi.mock("@tanstack/react-start/server", () => ({
+  getCookie: vi.fn(),
+  setCookie: vi.fn(),
+}));
+
+vi.mock("../customer/customer.service", () => ({
+  createCustomer: vi.fn(),
+}));
+
+import {
+  createTicket,
+  createTicketSession,
+  getTicketSession,
+  TICKET_COOKIE_MAX_AGE,
+  TICKET_COOKIE_NAME,
+  TICKET_COOKIE_PATH,
+} from "./ticket.service";
 import { generateTicketReferenceNumber } from "./ticket.utils";
 
 const baseData = {
@@ -20,6 +41,14 @@ const baseData = {
   customerId: "customer-1",
 };
 
+const customerInput = {
+  name: "Jane Doe",
+  email: "jane@example.com",
+  phone: "",
+  metadata: "",
+  projectId: "project-1",
+};
+
 const ticket = {
   id: "ticket-1",
   referenceNumber: "TK-AAAAAA",
@@ -27,6 +56,30 @@ const ticket = {
   priority: TicketPriority.LOW,
   projectId: "project-1",
   customerId: "customer-1",
+  createdAt: new Date("2026-01-01T00:00:00.000Z"),
+  updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+};
+
+const customer = {
+  id: "customer-1",
+  name: "Jane Doe",
+  email: "jane@example.com",
+  phone: "",
+  metadata: "",
+  language: null,
+  projectId: "project-1",
+  createdAt: new Date("2026-01-01T00:00:00.000Z"),
+  updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+};
+
+const ticketWithCustomer = { ...ticket, customer };
+
+const project = {
+  id: "project-1",
+  name: "Project 1",
+  description: null,
+  logo: null,
+  slug: "project-1",
   createdAt: new Date("2026-01-01T00:00:00.000Z"),
   updatedAt: new Date("2026-01-01T00:00:00.000Z"),
 };
@@ -85,5 +138,93 @@ describe("createTicket", () => {
 
     await expect(createTicket(baseData)).rejects.toThrow();
     expect(createMock).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("getTicketSession", () => {
+  const getCookieMock = vi.mocked(getCookie);
+  const setCookieMock = vi.mocked(setCookie);
+  const findFirstMock = vi.mocked(prisma.ticket.findFirst);
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+    getCookieMock.mockReturnValue("TK-AAAAAA");
+    findFirstMock.mockResolvedValue(ticketWithCustomer);
+  });
+
+  it("returns null without querying when no cookie is set", async () => {
+    getCookieMock.mockReturnValue(undefined);
+
+    const result = await getTicketSession("project-1");
+
+    expect(result).toBeNull();
+    expect(findFirstMock).not.toHaveBeenCalled();
+  });
+
+  it("returns the project-scoped ticket when the cookie matches", async () => {
+    const result = await getTicketSession("project-1");
+
+    expect(result).toEqual(ticketWithCustomer);
+    expect(findFirstMock).toHaveBeenCalledWith({
+      where: { referenceNumber: "TK-AAAAAA", projectId: "project-1" },
+      include: { customer: true },
+    });
+    expect(setCookieMock).not.toHaveBeenCalled();
+  });
+
+  it("clears the stale cookie and returns null when no ticket matches", async () => {
+    findFirstMock.mockResolvedValue(null);
+
+    const result = await getTicketSession("project-1");
+
+    expect(result).toBeNull();
+    expect(setCookieMock).toHaveBeenCalledWith(TICKET_COOKIE_NAME, "", {
+      maxAge: 0,
+      path: TICKET_COOKIE_PATH,
+    });
+  });
+});
+
+describe("createTicketSession", () => {
+  const findUniqueMock = vi.mocked(prisma.project.findUnique);
+  const createCustomerMock = vi.mocked(createCustomer);
+  const createMock = vi.mocked(prisma.ticket.create);
+  const refMock = vi.mocked(generateTicketReferenceNumber);
+  const setCookieMock = vi.mocked(setCookie);
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+    findUniqueMock.mockResolvedValue(project);
+    createCustomerMock.mockResolvedValue(customer);
+    refMock.mockReturnValueOnce("TK-AAAAAA");
+    createMock.mockResolvedValue(ticket);
+  });
+
+  it("throws when the project does not exist without creating a customer or ticket", async () => {
+    findUniqueMock.mockResolvedValue(null);
+
+    await expect(createTicketSession(customerInput)).rejects.toThrow("Project not found");
+    expect(createCustomerMock).not.toHaveBeenCalled();
+    expect(createMock).not.toHaveBeenCalled();
+  });
+
+  it("creates a customer and an OPEN/LOW ticket, then sets the ticket cookie", async () => {
+    const result = await createTicketSession(customerInput);
+
+    expect(createCustomerMock).toHaveBeenCalledWith(customerInput);
+    expect(createMock).toHaveBeenCalledWith({
+      data: {
+        status: TicketStatus.OPEN,
+        priority: TicketPriority.LOW,
+        projectId: "project-1",
+        customerId: "customer-1",
+        referenceNumber: "TK-AAAAAA",
+      },
+    });
+    expect(setCookieMock).toHaveBeenCalledWith(TICKET_COOKIE_NAME, "TK-AAAAAA", {
+      maxAge: TICKET_COOKIE_MAX_AGE,
+      path: TICKET_COOKIE_PATH,
+    });
+    expect(result).toEqual({ customer, ticket });
   });
 });

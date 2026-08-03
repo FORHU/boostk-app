@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAuthMiddleware } from "@/modules/auth/auth.middleware";
-import { getTicketCookieFn } from "../ticket/ticket.functions";
+import { requireCustomerTicketMiddleware } from "../ticket/ticket.middleware";
 import { CreateCustomerTicketMessageSchema, CreateTicketMessageSchema } from "./ticket-message.schema";
 import {
   detectMessageLanguage,
@@ -14,10 +14,10 @@ import {
 } from "./ticket-message.translation";
 
 export const getTicketMessagesFn = createServerFn({ method: "GET" })
+  .middleware([requireCustomerTicketMiddleware])
   .inputValidator(z.object({ projectId: z.string().min(1) }))
-  // .middleware([]) // TODO: add customer middleware and move ticket cookie to middleware
-  .handler(async ({ data }) => {
-    const ticket = await getTicketCookieFn({ data: { projectId: data.projectId } });
+  .handler(async ({ context }) => {
+    const ticket = context.ticket;
     if (!ticket) return [];
 
     const messages = await prisma.ticketMessage.findMany({
@@ -33,9 +33,10 @@ export const getTicketMessagesFn = createServerFn({ method: "GET" })
   });
 
 export const createTicketMessageFn = createServerFn({ method: "POST" })
+  .middleware([requireCustomerTicketMiddleware])
   .inputValidator(CreateCustomerTicketMessageSchema)
-  .handler(async ({ data }) => {
-    const ticket = await getTicketCookieFn({ data: { projectId: data.projectId } });
+  .handler(async ({ data, context }) => {
+    const ticket = context.ticket;
     if (!ticket) return null;
     if (ticket.id !== data.ticketId) return null;
 
