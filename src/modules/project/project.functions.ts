@@ -22,7 +22,6 @@ export const getProjectFn = createServerFn({ method: "GET" })
     return { project: context.project, role: context.role };
   });
 
-// TODO: make this more secure
 export const getProjectPublicFn = createServerFn({ method: "GET" })
   .inputValidator(getProjectSchema)
   .handler(async ({ data }) => {
