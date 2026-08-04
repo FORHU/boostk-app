@@ -27,7 +27,10 @@ export async function startRealtimeRelay(io: Server): Promise<ChannelWrapper> {
         try {
           const payload = JSON.parse(msg.content.toString());
           const [scope, id, ...rest] = msg.fields.routingKey.split(".");
-          const event = rest.join(".");
+          const routingEvent = rest.join(".");
+          // Prefer the explicit `event` on the payload (matches SSE semantics);
+          // fall back to the last routing-key segment.
+          const event = payload && typeof payload.event === "string" ? payload.event : routingEvent;
 
           if (scope && id && event) {
             console.log(`[Socket.IO] Relaying [${msg.fields.routingKey}] -> ${scope}:${id}`);
@@ -37,7 +40,7 @@ export async function startRealtimeRelay(io: Server): Promise<ChannelWrapper> {
           channel.ack(msg);
         } catch (error) {
           console.error("[Socket.IO] Failed to relay RabbitMQ message:", error);
-          channel.nack(msg);
+          channel.nack(msg, false, false);
         }
       });
     },

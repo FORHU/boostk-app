@@ -17,8 +17,6 @@ function AppLayout() {
     userId: authSession.user.id,
   });
 
-  console.log("[AppLayout] Status:", status);
-
   return (
     <div className="flex flex-col h-screen overflow-hidden">
       <AppTopbar
