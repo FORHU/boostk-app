@@ -2,10 +2,12 @@ import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-quer
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 import type { Customer, Project, Ticket, TicketMessage } from "prisma/generated/client";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { ReplyInput } from "@/components/chat-support/reply-input";
 import TicketChatMessageBubble from "@/components/chat-support/TicketChatMessageBubble";
 import { REDIRECT_REASON } from "@/enums/enums";
+import { useSocket } from "@/hooks/use-socket";
+import { EventType } from "@/lib/notifier/core";
 import { cn } from "@/lib/utils";
 import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
 import { ticketQueries } from "@/modules/ticket/query.queries";
@@ -27,8 +29,29 @@ export const Route = createFileRoute("/(app)/dashboard/project/$projectId/chat-s
 });
 
 function ProjectChatSupportPage() {
-  const { project } = Route.useRouteContext();
+  const { project, authSession } = Route.useRouteContext();
+  const queryClient = useQueryClient();
   const [selectedTicket, setSelectedTicket] = useState<TicketWithCustomer | null>(null);
+
+  // Realtime: keep the open conversation and the ticket list fresh when new
+  // events arrive over socket.io (agent dashboards do not send these messages).
+  const { lastMessage } = useSocket({ userId: authSession?.user.id });
+
+  useEffect(() => {
+    if (!lastMessage) return;
+
+    if (
+      lastMessage.event === EventType.CHAT_MESSAGE &&
+      selectedTicket &&
+      lastMessage.data?.ticketId === selectedTicket.id
+    ) {
+      queryClient.invalidateQueries({ queryKey: ticketMessageQueries.getByTicket(selectedTicket.id).queryKey });
+    }
+
+    if (lastMessage.event === EventType.TICKET_CREATED) {
+      queryClient.invalidateQueries({ queryKey: ticketQueries.getProjectTickets(project.id).queryKey });
+    }
+  }, [lastMessage, selectedTicket, queryClient, project.id]);
 
   return (
     <div className="flex flex-col h-full">
