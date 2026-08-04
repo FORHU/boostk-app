@@ -144,7 +144,7 @@ function OverviewContent({ projectId }: { projectId: string }) {
     <div className="space-y-6 lg:space-y-8">
       {/* STAT CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-        <div className="bg-card border border-border rounded-[10px] p-6 shadow-sm">
+        <div className="bg-card border border-border rounded-3xl p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Open Tickets</h3>
             <CircleDot className="w-5 h-5 text-emerald-500" strokeWidth={1.5} />
@@ -155,7 +155,7 @@ function OverviewContent({ projectId }: { projectId: string }) {
           </div>
         </div>
 
-        <div className="bg-card border border-border rounded-[10px] p-6 shadow-sm">
+        <div className="bg-card border border-border rounded-3xl p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Resolved</h3>
             <CheckCircle2 className="w-5 h-5 text-muted-foreground" strokeWidth={1.5} />
@@ -166,7 +166,7 @@ function OverviewContent({ projectId }: { projectId: string }) {
           </div>
         </div>
 
-        <div className="bg-card border border-border rounded-[10px] p-6 shadow-sm sm:col-span-2 md:col-span-1">
+        <div className="bg-card border border-border rounded-3xl p-6 shadow-sm sm:col-span-2 md:col-span-1">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Customers</h3>
             <Users className="w-5 h-5 text-muted-foreground" strokeWidth={1.5} />
@@ -180,7 +180,7 @@ function OverviewContent({ projectId }: { projectId: string }) {
 
       {/* Recent Tickets & Quick Links */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        <div className="lg:col-span-2 bg-card border border-border rounded-[10px] shadow-sm overflow-hidden flex flex-col">
+        <div className="lg:col-span-2 bg-card border border-border rounded-3xl shadow-sm overflow-hidden flex flex-col">
           <div className="px-4 md:px-6 py-5 border-b border-border flex justify-between items-center">
             <h3 className="font-semibold text-foreground">Recent Tickets</h3>
             <Link
@@ -232,7 +232,7 @@ function OverviewContent({ projectId }: { projectId: string }) {
         </div>
 
         {/* Quick Links */}
-        <div className="bg-card border border-border rounded-[10px] shadow-sm h-fit">
+        <div className="bg-card border border-border rounded-3xl shadow-sm h-fit">
           <div className="px-4 md:px-6 py-5 border-b border-border">
             <h3 className="font-semibold text-foreground">Quick Links</h3>
           </div>

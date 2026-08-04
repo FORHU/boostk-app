@@ -6,7 +6,7 @@ This application is built with a modern, high-performance stack:
 * **Frontend/SSR:** TanStack Start (Full-stack React)
 * **Runtime & Package Manager:** Bun
 * **Database:** PostgreSQL with Prisma ORM
-* **Real-Time Websockets:** Standalone Hono server running Socket.io
+* **Real-Time:** RabbitMQ topic exchange + standalone Socket.io relay server (SSE fallback)
 
 ## 🛠 Prerequisites
 Before setting up the project, make sure you have the following installed on your machine:
@@ -159,6 +159,17 @@ bun prisma db seed
 # Running the Project
 Run the development server from your terminal in the boostk-app root directory:
 bun run dev
+
+### Real-Time Socket.io Relay
+The realtime layer needs two processes: the main app and the Socket.io relay (which subscribes to RabbitMQ and pushes events to the browser). Start both together:
+
+bun run dev:all
+
+Or run them in separate terminals:
+bun run dev          # main app (port 3000)
+bun run socket:dev   # Socket.io relay (port 3001, SOCKET_PORT to override)
+
+If the Socket.io relay is unreachable, the browser automatically falls back to the SSE stream (`/api/notification/sse`).
 
 
 # Seed Account

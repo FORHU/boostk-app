@@ -7,7 +7,7 @@ import { Suspense, useEffect, useState } from "react";
 import TicketChatMessageBubble from "@/components/chat-support/TicketChatMessageBubble";
 import TicketCustomerForm from "@/components/chat-support/TicketCustomerForm";
 import { useToast } from "@/components/ui/toast";
-import { useNotifications } from "@/hooks/use-notifications";
+import { useSocket } from "@/hooks/use-socket";
 import { EventType, type Message } from "@/lib/notifier/core";
 import { getProjectPublicFn } from "@/modules/project/project.functions";
 import { getTicketCookieFn } from "@/modules/ticket/ticket.functions";
@@ -47,8 +47,17 @@ export const Route = createFileRoute("/(public)/support/$projectId/chat-widget")
 
 function RouteComponent() {
   const { project, ticket } = Route.useRouteContext();
+  const queryClient = useQueryClient();
   const [showSpinner, setShowSpinner] = useState(true);
-  const { lastMessage, status } = useNotifications({ ticketId: ticket?.id });
+  const { lastMessage, status } = useSocket({ ticketId: ticket?.id, projectId: project.id });
+
+  // Realtime: refetch the message list whenever a new message arrives over
+  // socket.io so agent replies appear without a manual refresh.
+  useEffect(() => {
+    if (lastMessage?.event === EventType.CHAT_MESSAGE) {
+      queryClient.invalidateQueries({ queryKey: ticketMessageQueries.all });
+    }
+  }, [lastMessage, queryClient]);
 
   // This effect forces the spinner to stay for at least 500ms
   useEffect(() => {

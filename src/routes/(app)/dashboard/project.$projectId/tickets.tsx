@@ -3,13 +3,14 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { ArrowLeft, Loader2, Maximize, Minimize, X } from "lucide-react";
 import type { TicketMessage } from "prisma/generated/client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 import { ReplyInput } from "@/components/chat-support/reply-input";
 import TicketChatMessageBubble from "@/components/chat-support/TicketChatMessageBubble";
 import { TicketPriorityBadge, TicketPrioritySelect, type TicketPriorityType } from "@/components/ui/ticket-priority";
 import { useToast } from "@/components/ui/toast";
 import { REDIRECT_REASON } from "@/enums/enums";
+import { useSocket } from "@/hooks/use-socket";
 import { useViewport } from "@/hooks/use-viewport";
 import { EventType } from "@/lib/notifier/core";
 import { prisma } from "@/lib/prisma";
@@ -360,7 +361,34 @@ function ProjectTicketsPage() {
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
 
+  const { authSession } = Route.useRouteContext();
+  const queryClient = useQueryClient();
   const selectedTicketId = search.selectedTicketId ?? null;
+
+  // Realtime: keep the open conversation and the ticket list fresh when new
+  // events arrive over socket.io (agent dashboards do not send these messages).
+  const { lastMessage } = useSocket({ userId: authSession?.user.id });
+
+  useEffect(() => {
+    if (!lastMessage) return;
+
+    if (
+      lastMessage.event === EventType.CHAT_MESSAGE &&
+      selectedTicketId &&
+      lastMessage.data?.ticketId === selectedTicketId
+    ) {
+      queryClient.invalidateQueries({
+        queryKey: projectTicketQueries.detailById(projectId, selectedTicketId).queryKey,
+      });
+    }
+
+    if (lastMessage.event === EventType.TICKET_CREATED) {
+      queryClient.invalidateQueries({
+        queryKey: projectTicketQueries.allByProjectId(projectId).queryKey,
+      });
+    }
+  }, [lastMessage, selectedTicketId, projectId, queryClient]);
+
   const statusFilter = search.statusFilter;
   const searchQuery = search.searchQuery ?? "";
   const sortConfig = search.sortBy && search.sortDir ? { key: search.sortBy, direction: search.sortDir } : null;

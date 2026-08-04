@@ -20,13 +20,22 @@ export type NotificationItem = {
 // Only these business events surface in the notification bell (new ticket / new message).
 const NOTIFICATION_EVENTS = new Set<EventType>([EventType.TICKET_CREATED, EventType.CHAT_MESSAGE]);
 
-export function useNotifications({ userId, ticketId }: { userId?: string; ticketId?: string }) {
+export function useNotifications({
+  userId,
+  ticketId,
+  enabled = true,
+}: {
+  userId?: string;
+  ticketId?: string;
+  enabled?: boolean;
+}) {
   const [lastMessage, setLastMessage] = useState<Message | null>(null);
   const [status, setStatus] = useState<ConnectionStatus>("connecting");
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const localIdRef = useRef(0);
 
   useEffect(() => {
+    if (!enabled) return;
     if (!userId && !ticketId) return;
     if (typeof window === "undefined") return;
 
@@ -160,7 +169,6 @@ export function useNotifications({ userId, ticketId }: { userId?: string; ticket
 
     connect();
     if (!navigator.onLine) markOffline();
-
     // Watchdog: surface silent drops (where onerror may fire late or not at all)
     // by flagging "reconnecting" if no connected/heartbeat message has arrived recently.
     const watchdog = setInterval(() => {
@@ -191,7 +199,7 @@ export function useNotifications({ userId, ticketId }: { userId?: string; ticket
       console.log("[SSE] Closing connection");
       if (eventSource) eventSource.close();
     };
-  }, [userId, ticketId]);
+  }, [userId, ticketId, enabled]);
 
   const markAllRead = useCallback(() => {
     setNotifications((prev) => (prev.some((n) => !n.read) ? prev.map((n) => ({ ...n, read: true })) : prev));

@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import AppTopbar from "@/components/layout/app-topbar";
-import { useNotifications } from "@/hooks/use-notifications";
+import { useSocket } from "@/hooks/use-socket";
 
 export const Route = createFileRoute("/(app)")({
   beforeLoad: ({ context }) => {
@@ -13,11 +13,9 @@ export const Route = createFileRoute("/(app)")({
 
 function AppLayout() {
   const { authSession } = Route.useRouteContext();
-  const { status, notifications, unreadCount, markAllRead } = useNotifications({
+  const { status, notifications, unreadCount, markAllRead } = useSocket({
     userId: authSession.user.id,
   });
-
-  console.log("[AppLayout] Status:", status);
 
   return (
     <div className="flex flex-col h-screen overflow-hidden">
