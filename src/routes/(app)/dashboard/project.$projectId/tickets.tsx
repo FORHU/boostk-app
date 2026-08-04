@@ -1,7 +1,8 @@
 import { queryOptions, useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import { ArrowLeft, Loader2, Maximize, Minimize, X } from "lucide-react";
+import { motion } from "framer-motion";
+import { ArrowLeft, Bot, Loader2, Maximize, Minimize, Sparkles, X } from "lucide-react";
 import type { TicketMessage } from "prisma/generated/client";
 import { useEffect, useState } from "react";
 import { z } from "zod";
@@ -225,38 +226,32 @@ function TicketDetailPanel({
           onBack ? "" : "animate-in slide-in-from-right duration-300 transition-all ease-in-out max-w-lg"
         } ${isExpanded ? "max-w-full" : ""}`}
       >
-        <div className="flex items-center justify-between p-4 border-b border-border shadow-sm z-10">
-          {onBack ? (
-            <div className="flex items-center gap-3">
+        <header className="flex-none bg-indigo-600 dark:bg-indigo-800 p-4 text-white flex items-center justify-between shadow-sm z-10">
+          <div className="flex items-center gap-3">
+            {onBack && (
               <button
                 type="button"
                 onClick={onBack}
-                className="p-1.5 -ml-1 text-muted-foreground hover:bg-muted rounded-full transition-colors"
+                className="p-1.5 -ml-1 text-indigo-100 hover:bg-white/10 rounded-full transition-colors"
               >
                 <ArrowLeft className="size-5" />
               </button>
-              <div className="flex flex-col gap-1">
-                <h2 className="text-lg font-semibold">
-                  {isLoading ? "Loading..." : ticket?.customer?.name || "Customer Ticket"}
-                </h2>
-                {!isLoading && ticket && (
-                  <TicketPrioritySelect
-                    priority={ticket.priority}
-                    isPending={updatePriorityMutation.isPending}
-                    onPriorityChange={(newPriority: TicketPriorityType) => {
-                      updatePriorityMutation.mutate({
-                        data: { projectId, ticketId, priority: newPriority },
-                      });
-                    }}
-                  />
-                )}
-              </div>
+            )}
+            <div className="bg-indigo-400/30 p-2 rounded-lg">
+              <Bot size={20} />
             </div>
-          ) : (
             <div className="flex flex-col gap-1">
-              <h2 className="text-lg font-semibold">
+              <h2 className="text-sm font-bold leading-none">
                 {isLoading ? "Loading..." : ticket?.customer?.name || "Customer Ticket"}
               </h2>
+              <span className="text-[10px] text-indigo-200 flex items-center gap-1">
+                <span
+                  className={`w-1.5 h-1.5 rounded-full animate-pulse ${
+                    ticket?.status === "OPEN" ? "bg-green-400" : "bg-gray-400"
+                  }`}
+                ></span>
+                {ticket?.status === "OPEN" ? "Open" : "Closed"}
+              </span>
               {!isLoading && ticket && (
                 <TicketPrioritySelect
                   priority={ticket.priority}
@@ -269,7 +264,7 @@ function TicketDetailPanel({
                 />
               )}
             </div>
-          )}
+          </div>
 
           <div className="flex items-center gap-1">
             <button
@@ -286,7 +281,7 @@ function TicketDetailPanel({
                   },
                 });
               }}
-              className="px-3 py-1.5 text-xs font-medium rounded-sm bg-muted hover:bg-muted/80 disabled:opacity-50"
+              className="px-3 py-1.5 text-xs font-medium rounded-sm bg-white/15 hover:bg-white/25 disabled:opacity-50"
             >
               {updateStatusMutation.isPending ? (
                 <Loader2 className="animate-spin size-3.5" />
@@ -301,7 +296,7 @@ function TicketDetailPanel({
                 <button
                   type="button"
                   onClick={() => setIsExpanded(!isExpanded)}
-                  className="p-2 text-muted-foreground hover:bg-muted rounded-full transition-colors"
+                  className="p-2 text-white/80 hover:bg-white/10 rounded-full transition-colors"
                   title={isExpanded ? "Collapse panel" : "Expand panel"}
                 >
                   {isExpanded ? <Minimize className="size-[1.125rem]" /> : <Maximize className="size-[1.125rem]" />}
@@ -309,23 +304,36 @@ function TicketDetailPanel({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="p-2 text-muted-foreground hover:bg-muted rounded-full transition-colors"
+                  className="p-2 text-white/80 hover:bg-white/10 rounded-full transition-colors"
                   title="Close panel"
                 >
                   <X className="size-5" />
                 </button>
               </>
             )}
+            <Sparkles size={16} className="text-indigo-300 ml-1" />
           </div>
-        </div>
+        </header>
 
-        <div className="flex-1 overflow-y-auto p-4 bg-muted/30">
+        <div className="flex-1 overflow-y-auto p-2 bg-slate-50 dark:bg-slate-900/50 scroll-smooth pb-4">
           {isLoading ? (
             <div className="h-full flex items-center justify-center">
-              <Loader2 className="animate-spin text-primary size-6" />
+              <Loader2 className="animate-spin text-indigo-600 size-6" />
             </div>
           ) : !ticket?.ticketMessages || ticket.ticketMessages.length === 0 ? (
-            <div className="text-center text-sm text-muted-foreground mt-10">No messages found.</div>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="flex flex-col items-center justify-center h-full text-center p-6"
+            >
+              <div className="bg-indigo-50 dark:bg-indigo-500/10 p-4 rounded-full mb-3">
+                <Sparkles className="text-indigo-500 dark:text-indigo-400" size={32} />
+              </div>
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100">Waiting for the customer</h3>
+              <p className="text-gray-500 dark:text-gray-400 text-sm mt-1 max-w-[200px]">
+                Replies from the customer will appear here.
+              </p>
+            </motion.div>
           ) : (
             <div className="flex flex-col space-y-0.5">
               {ticket.ticketMessages.map((msg, index, list) => {
