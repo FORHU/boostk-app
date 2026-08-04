@@ -2,7 +2,7 @@
 
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { BadgeCheckIcon, BellIcon, CreditCardIcon, LogOutIcon, SparklesIcon, ZapIcon } from "lucide-react";
+import { BadgeCheckIcon, CreditCardIcon, LogOutIcon, SparklesIcon, ZapIcon } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -14,15 +14,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import type { NotificationItem } from "@/hooks/use-notifications";
 import { authClient } from "@/lib/auth-client";
 import { authQueries } from "@/modules/auth/auth.queries";
+import { NotificationBell } from "./notification-bell";
 import { RouterBreadcrumb } from "./RouterBreadcrumb";
 
 interface AppTopbarProps {
   connectionStatus?: "connecting" | "connected" | "reconnecting";
+  notifications: NotificationItem[];
+  unreadCount: number;
+  markAllRead: () => void;
 }
 
-export default function AppTopbar({ connectionStatus }: AppTopbarProps) {
+export default function AppTopbar({ connectionStatus, notifications, unreadCount, markAllRead }: AppTopbarProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -66,6 +71,7 @@ export default function AppTopbar({ connectionStatus }: AppTopbarProps) {
             </div>
           )}
           <ThemeToggle />
+          <NotificationBell notifications={notifications} unreadCount={unreadCount} markAllRead={markAllRead} />
           <DropdownMenu>
             <DropdownMenuTrigger
               render={
@@ -111,10 +117,6 @@ export default function AppTopbar({ connectionStatus }: AppTopbarProps) {
                 <DropdownMenuItem>
                   <CreditCardIcon />
                   Billing
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <BellIcon />
-                  Notifications
                 </DropdownMenuItem>
               </DropdownMenuGroup>
               <DropdownMenuSeparator />

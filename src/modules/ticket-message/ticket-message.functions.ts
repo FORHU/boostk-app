@@ -1,7 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { EventType } from "@/lib/notifier/core";
 import { prisma } from "@/lib/prisma";
 import { requireAuthMiddleware } from "@/modules/auth/auth.middleware";
+import { publishToProjectAgents, publishToTicketChannel } from "@/modules/notification/notification.publish";
 import { requireCustomerTicketMiddleware } from "../ticket/ticket.middleware";
 import { CreateCustomerTicketMessageSchema, CreateTicketMessageSchema } from "./ticket-message.schema";
 import {
@@ -68,6 +70,27 @@ export const createTicketMessageFn = createServerFn({ method: "POST" })
       },
     });
 
+    const project = await prisma.project.findUnique({
+      where: { id: ticket.projectId },
+      select: { name: true },
+    });
+
+    await publishToProjectAgents({
+      projectId: ticket.projectId,
+      event: EventType.CHAT_MESSAGE,
+      data: {
+        ticketId: ticket.id,
+        referenceNumber: ticket.referenceNumber,
+        projectId: ticket.projectId,
+        projectName: project?.name ?? "",
+        customerName: ticket.customer.name,
+        customerEmail: ticket.customer.email,
+        content: data.content,
+        sender: "customer",
+        createdAt: message.createdAt.toISOString(),
+      },
+    });
+
     return message;
   });
 
@@ -103,7 +126,7 @@ export const createAgentTicketMessageFn = createServerFn({ method: "POST" })
           })
         : { translatedContent: null, sourceLang: null, targetLang: SUPPORT_LANGUAGE };
 
-    return prisma.ticketMessage.create({
+    const message = await prisma.ticketMessage.create({
       data: {
         content: data.content,
         contentType: data.contentType,
@@ -114,4 +137,20 @@ export const createAgentTicketMessageFn = createServerFn({ method: "POST" })
         targetLang: translation.targetLang,
       },
     });
+
+    await publishToTicketChannel({
+      ticketId: ticket.id,
+      event: EventType.CHAT_MESSAGE,
+      data: {
+        ticketId: ticket.id,
+        referenceNumber: ticket.referenceNumber,
+        projectId: ticket.projectId,
+        customerName: ticket.customer.name,
+        content: data.content,
+        sender: "agent",
+        createdAt: message.createdAt.toISOString(),
+      },
+    });
+
+    return message;
   });

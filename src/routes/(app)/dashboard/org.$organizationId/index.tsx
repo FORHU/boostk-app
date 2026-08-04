@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { InviteModal } from "@/components/ui/invite-modals";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
+import { useDebounce } from "@/hooks/use-debounce";
 import { getFieldInvalid } from "@/lib/form-utils";
 import { createProjectFn } from "@/modules/project/project.functions";
 import { projectQueries } from "@/modules/project/project.queries";
@@ -24,6 +25,7 @@ export const Route = createFileRoute("/(app)/dashboard/org/$organizationId/")({
 function OrganizationPage() {
   const { organizationId } = Route.useParams();
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearchQuery = useDebounce(searchQuery);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
   return (
@@ -59,7 +61,7 @@ function OrganizationPage() {
         <ProjectForm organizationId={organizationId} />
 
         <Suspense fallback={<OrgProjectsSkeleton />}>
-          <OrgProjects organizationId={organizationId} searchQuery={searchQuery} />
+          <OrgProjects organizationId={organizationId} searchQuery={debouncedSearchQuery} />
         </Suspense>
       </div>
       <InviteModal
@@ -184,11 +186,30 @@ const OrgProjects = ({ organizationId, searchQuery }: { organizationId: string; 
             <p className="text-muted-foreground">No projects match "{searchQuery}"</p>
           </div>
         ) : (
-          filteredProjects.map((project) => (
-            <Link to="/dashboard/project/$projectId" params={{ projectId: project.id }} key={project.id}>
-              <h3>{project.name}</h3>
-            </Link>
-          ))
+          <div className="grid gap-4 sm:grid-cols-2">
+            {filteredProjects.map((project) => (
+              <Link
+                to="/dashboard/project/$projectId"
+                params={{ projectId: project.id }}
+                key={project.id}
+                className="group block rounded-3xl border border-border bg-card p-4 transition-colors hover:border-primary/40 hover:bg-accent/40"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-md border bg-muted text-lg">
+                    {project.logo || project.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="truncate transition-all duration-300 underline-offset-4 decoration-purple-500 group-hover:bg-linear-to-r group-hover:from-blue-500 group-hover:to-purple-500 group-hover:bg-clip-text group-hover:text-transparent group-hover:underline">
+                      {project.name}
+                    </h3>
+                    {project.description && (
+                      <p className="truncate text-sm text-muted-foreground">{project.description}</p>
+                    )}
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
         )}
       </div>
     </div>

@@ -1,16 +1,41 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { EventType, type Message } from "@/lib/notifier/core";
 
 const HEARTBEAT_TIMEOUT_MS = 25000;
 const RECONNECTING_MIN_HOLD_MS = 1500;
 
+const MAX_NOTIFICATIONS = 20;
+
 export type ConnectionStatus = "connecting" | "connected" | "reconnecting";
 
-export function useNotifications({ userId, ticketId }: { userId?: string; ticketId?: string }) {
+export type NotificationItem = {
+  localId: number;
+  event: EventType;
+  // biome-ignore lint/suspicious/noExplicitAny: <data shape varies per event type>
+  data: any;
+  timestamp: number;
+  read: boolean;
+};
+
+// Only these business events surface in the notification bell (new ticket / new message).
+const NOTIFICATION_EVENTS = new Set<EventType>([EventType.TICKET_CREATED, EventType.CHAT_MESSAGE]);
+
+export function useNotifications({
+  userId,
+  ticketId,
+  enabled = true,
+}: {
+  userId?: string;
+  ticketId?: string;
+  enabled?: boolean;
+}) {
   const [lastMessage, setLastMessage] = useState<Message | null>(null);
   const [status, setStatus] = useState<ConnectionStatus>("connecting");
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const localIdRef = useRef(0);
 
   useEffect(() => {
+    if (!enabled) return;
     if (!userId && !ticketId) return;
     if (typeof window === "undefined") return;
 
@@ -63,7 +88,26 @@ export function useNotifications({ userId, ticketId }: { userId?: string; ticket
         const data = JSON.parse(e.data);
         console.log(`[SSE] Received ${e.type} event:`, data);
 
-        setLastMessage({ event: e.type as EventType, data: data });
+        const message = { event: e.type as EventType, data: data };
+        setLastMessage(message);
+
+        if (NOTIFICATION_EVENTS.has(message.event)) {
+          const signature = JSON.stringify(message.data);
+          setNotifications((prev) => {
+            if (prev.some((n) => n.event === message.event && JSON.stringify(n.data) === signature)) {
+              return prev;
+            }
+            localIdRef.current += 1;
+            const item: NotificationItem = {
+              localId: localIdRef.current,
+              event: message.event,
+              data: message.data,
+              timestamp: Date.now(),
+              read: false,
+            };
+            return [item, ...prev].slice(0, MAX_NOTIFICATIONS);
+          });
+        }
       } catch (err) {
         console.error("Error parsing SSE data", err);
       }
@@ -125,7 +169,6 @@ export function useNotifications({ userId, ticketId }: { userId?: string; ticket
 
     connect();
     if (!navigator.onLine) markOffline();
-
     // Watchdog: surface silent drops (where onerror may fire late or not at all)
     // by flagging "reconnecting" if no connected/heartbeat message has arrived recently.
     const watchdog = setInterval(() => {
@@ -156,7 +199,13 @@ export function useNotifications({ userId, ticketId }: { userId?: string; ticket
       console.log("[SSE] Closing connection");
       if (eventSource) eventSource.close();
     };
-  }, [userId, ticketId]);
+  }, [userId, ticketId, enabled]);
 
-  return { lastMessage, status };
+  const markAllRead = useCallback(() => {
+    setNotifications((prev) => (prev.some((n) => !n.read) ? prev.map((n) => ({ ...n, read: true })) : prev));
+  }, []);
+
+  const unreadCount = notifications.filter((n) => !n.read).length;
+
+  return { lastMessage, status, notifications, unreadCount, markAllRead };
 }

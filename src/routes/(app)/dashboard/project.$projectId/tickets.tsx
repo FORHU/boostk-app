@@ -1,15 +1,18 @@
 import { queryOptions, useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import { ArrowLeft, Loader2, Maximize, Minimize, X } from "lucide-react";
+import { motion } from "framer-motion";
+import { ArrowLeft, Bot, Loader2, Maximize, Minimize, Sparkles, X } from "lucide-react";
 import type { TicketMessage } from "prisma/generated/client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 import { ReplyInput } from "@/components/chat-support/reply-input";
 import TicketChatMessageBubble from "@/components/chat-support/TicketChatMessageBubble";
 import { TicketPriorityBadge, TicketPrioritySelect, type TicketPriorityType } from "@/components/ui/ticket-priority";
 import { useToast } from "@/components/ui/toast";
 import { REDIRECT_REASON } from "@/enums/enums";
+import { useDebounce } from "@/hooks/use-debounce";
+import { useSocket } from "@/hooks/use-socket";
 import { useViewport } from "@/hooks/use-viewport";
 import { EventType } from "@/lib/notifier/core";
 import { prisma } from "@/lib/prisma";
@@ -223,38 +226,32 @@ function TicketDetailPanel({
           onBack ? "" : "animate-in slide-in-from-right duration-300 transition-all ease-in-out max-w-lg"
         } ${isExpanded ? "max-w-full" : ""}`}
       >
-        <div className="flex items-center justify-between p-4 border-b border-border shadow-sm z-10">
-          {onBack ? (
-            <div className="flex items-center gap-3">
+        <header className="flex-none bg-blue-600 dark:bg-blue-800 p-4 text-white flex items-center justify-between shadow-sm z-10">
+          <div className="flex items-center gap-3">
+            {onBack && (
               <button
                 type="button"
                 onClick={onBack}
-                className="p-1.5 -ml-1 text-muted-foreground hover:bg-muted rounded-full transition-colors"
+                className="p-1.5 -ml-1 text-blue-100 hover:bg-white/10 rounded-full transition-colors"
               >
                 <ArrowLeft className="size-5" />
               </button>
-              <div className="flex flex-col gap-1">
-                <h2 className="text-lg font-semibold">
-                  {isLoading ? "Loading..." : ticket?.customer?.name || "Customer Ticket"}
-                </h2>
-                {!isLoading && ticket && (
-                  <TicketPrioritySelect
-                    priority={ticket.priority}
-                    isPending={updatePriorityMutation.isPending}
-                    onPriorityChange={(newPriority: TicketPriorityType) => {
-                      updatePriorityMutation.mutate({
-                        data: { projectId, ticketId, priority: newPriority },
-                      });
-                    }}
-                  />
-                )}
-              </div>
+            )}
+            <div className="bg-blue-400/30 p-2 rounded-lg">
+              <Bot size={20} />
             </div>
-          ) : (
             <div className="flex flex-col gap-1">
-              <h2 className="text-lg font-semibold">
+              <h2 className="text-sm font-bold leading-none">
                 {isLoading ? "Loading..." : ticket?.customer?.name || "Customer Ticket"}
               </h2>
+              <span className="text-[10px] text-blue-200 flex items-center gap-1">
+                <span
+                  className={`w-1.5 h-1.5 rounded-full animate-pulse ${
+                    ticket?.status === "OPEN" ? "bg-green-400" : "bg-gray-400"
+                  }`}
+                ></span>
+                {ticket?.status === "OPEN" ? "Open" : "Closed"}
+              </span>
               {!isLoading && ticket && (
                 <TicketPrioritySelect
                   priority={ticket.priority}
@@ -267,7 +264,7 @@ function TicketDetailPanel({
                 />
               )}
             </div>
-          )}
+          </div>
 
           <div className="flex items-center gap-1">
             <button
@@ -284,7 +281,7 @@ function TicketDetailPanel({
                   },
                 });
               }}
-              className="px-3 py-1.5 text-xs font-medium rounded-sm bg-muted hover:bg-muted/80 disabled:opacity-50"
+              className="px-3 py-1.5 text-xs font-medium rounded-sm bg-white/15 hover:bg-white/25 disabled:opacity-50"
             >
               {updateStatusMutation.isPending ? (
                 <Loader2 className="animate-spin size-3.5" />
@@ -299,7 +296,7 @@ function TicketDetailPanel({
                 <button
                   type="button"
                   onClick={() => setIsExpanded(!isExpanded)}
-                  className="p-2 text-muted-foreground hover:bg-muted rounded-full transition-colors"
+                  className="p-2 text-white/80 hover:bg-white/10 rounded-full transition-colors"
                   title={isExpanded ? "Collapse panel" : "Expand panel"}
                 >
                   {isExpanded ? <Minimize className="size-[1.125rem]" /> : <Maximize className="size-[1.125rem]" />}
@@ -307,23 +304,36 @@ function TicketDetailPanel({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="p-2 text-muted-foreground hover:bg-muted rounded-full transition-colors"
+                  className="p-2 text-white/80 hover:bg-white/10 rounded-full transition-colors"
                   title="Close panel"
                 >
                   <X className="size-5" />
                 </button>
               </>
             )}
+            <Sparkles size={16} className="text-blue-300 ml-1" />
           </div>
-        </div>
+        </header>
 
-        <div className="flex-1 overflow-y-auto p-4 bg-muted/30">
+        <div className="flex-1 overflow-y-auto p-2 bg-slate-50 dark:bg-slate-900/50 scroll-smooth pb-4">
           {isLoading ? (
             <div className="h-full flex items-center justify-center">
-              <Loader2 className="animate-spin text-primary size-6" />
+              <Loader2 className="animate-spin text-blue-600 size-6" />
             </div>
           ) : !ticket?.ticketMessages || ticket.ticketMessages.length === 0 ? (
-            <div className="text-center text-sm text-muted-foreground mt-10">No messages found.</div>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="flex flex-col items-center justify-center h-full text-center p-6"
+            >
+              <div className="bg-blue-50 dark:bg-blue-500/10 p-4 rounded-full mb-3">
+                <Sparkles className="text-blue-500 dark:text-blue-400" size={32} />
+              </div>
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100">Waiting for the customer</h3>
+              <p className="text-gray-500 dark:text-gray-400 text-sm mt-1 max-w-[200px]">
+                Replies from the customer will appear here.
+              </p>
+            </motion.div>
           ) : (
             <div className="flex flex-col space-y-0.5">
               {ticket.ticketMessages.map((msg, index, list) => {
@@ -360,10 +370,52 @@ function ProjectTicketsPage() {
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
 
+  const { authSession } = Route.useRouteContext();
+  const queryClient = useQueryClient();
   const selectedTicketId = search.selectedTicketId ?? null;
+
+  // Realtime: keep the open conversation and the ticket list fresh when new
+  // events arrive over socket.io (agent dashboards do not send these messages).
+  const { lastMessage } = useSocket({ userId: authSession?.user.id });
+
+  useEffect(() => {
+    if (!lastMessage) return;
+
+    if (
+      lastMessage.event === EventType.CHAT_MESSAGE &&
+      selectedTicketId &&
+      lastMessage.data?.ticketId === selectedTicketId
+    ) {
+      queryClient.invalidateQueries({
+        queryKey: projectTicketQueries.detailById(projectId, selectedTicketId).queryKey,
+      });
+    }
+
+    if (lastMessage.event === EventType.TICKET_CREATED) {
+      queryClient.invalidateQueries({
+        queryKey: projectTicketQueries.allByProjectId(projectId).queryKey,
+      });
+    }
+  }, [lastMessage, selectedTicketId, projectId, queryClient]);
+
   const statusFilter = search.statusFilter;
   const searchQuery = search.searchQuery ?? "";
   const sortConfig = search.sortBy && search.sortDir ? { key: search.sortBy, direction: search.sortDir } : null;
+
+  const [inputValue, setInputValue] = useState(searchQuery);
+  const debouncedSearchQuery = useDebounce(inputValue);
+
+  useEffect(() => {
+    setInputValue(searchQuery);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    if (debouncedSearchQuery === searchQuery) return;
+    navigate({
+      search: (prev) => ({ ...prev, searchQuery: debouncedSearchQuery || undefined }),
+      replace: true,
+    });
+  }, [debouncedSearchQuery, searchQuery, navigate]);
 
   const { data: tickets } = useSuspenseQuery(projectTicketQueries.allByProjectId(projectId));
 
@@ -449,16 +501,8 @@ function ProjectTicketsPage() {
                 type="text"
                 placeholder="Search..."
                 className="p-2 border rounded-md w-full"
-                value={searchQuery}
-                onChange={(e) =>
-                  navigate({
-                    search: (prev) => ({
-                      ...prev,
-                      searchQuery: e.target.value || undefined,
-                    }),
-                    replace: true,
-                  })
-                }
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
               />
 
               <div className="flex items-center gap-2 overflow-x-auto pb-2">
@@ -572,16 +616,8 @@ function ProjectTicketsPage() {
                 type="text"
                 placeholder="Search..."
                 className="p-2 border rounded-md min-w-64"
-                value={searchQuery}
-                onChange={(e) =>
-                  navigate({
-                    search: (prev) => ({
-                      ...prev,
-                      searchQuery: e.target.value || undefined,
-                    }),
-                    replace: true,
-                  })
-                }
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
               />
             </div>
 

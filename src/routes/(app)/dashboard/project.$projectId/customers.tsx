@@ -9,6 +9,7 @@ import TicketChatMessageBubble from "@/components/chat-support/TicketChatMessage
 import { Skeleton } from "@/components/ui/skeleton";
 import { TicketPriorityBadge } from "@/components/ui/ticket-priority";
 import { REDIRECT_REASON } from "@/enums/enums";
+import { useDebounce } from "@/hooks/use-debounce";
 import { useViewport } from "@/hooks/use-viewport";
 import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
 import { projectCustomerQueries } from "@/modules/customer/customer.queries";
@@ -147,6 +148,7 @@ function ProjectCustomersPage() {
 
   const [activeCustomerId, setActiveCustomerId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearchQuery = useDebounce(searchQuery);
 
   const [showMobileDetails, setShowMobileDetails] = useState(false);
   const [showDesktopDetails, setShowDesktopDetails] = useState(true);
@@ -164,8 +166,8 @@ function ProjectCustomersPage() {
 
   const filteredCustomers = customers.filter(
     (c) =>
-      c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.email.toLowerCase().includes(searchQuery.toLowerCase()),
+      c.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
+      c.email.toLowerCase().includes(debouncedSearchQuery.toLowerCase()),
   );
 
   const getStatusIndicator = (status: string) => {

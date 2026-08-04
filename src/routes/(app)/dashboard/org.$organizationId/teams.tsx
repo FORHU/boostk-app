@@ -5,6 +5,7 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { InviteModal } from "@/components/ui/invite-modals";
 import { DataTableSkeleton, ToolbarSkeleton } from "@/components/ui/skeleton";
 import { REDIRECT_REASON } from "@/enums/enums";
+import { useDebounce } from "@/hooks/use-debounce";
 import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
 import { removeMemberFn, updateMemberRoleFn } from "@/modules/members/member.functions";
 import { memberQueries } from "@/modules/members/member.queries";
@@ -347,12 +348,13 @@ function TeamTable({ organizationId }: { organizationId: string }) {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearchQuery = useDebounce(searchQuery);
   const [activeTab, setActiveTab] = useState("ALL USERS");
 
   const filteredMembers = members.filter((m) => {
     const matchesTab = activeTab === "ALL USERS" || m.role?.toUpperCase() === activeTab;
 
-    const searchLower = searchQuery.toLowerCase();
+    const searchLower = debouncedSearchQuery.toLowerCase();
     const matchesSearch =
       (m.user?.name ?? "").toLowerCase().includes(searchLower) ||
       (m.user?.email ?? "").toLowerCase().includes(searchLower);

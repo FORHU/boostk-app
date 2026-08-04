@@ -1,7 +1,9 @@
 import { getCookie, setCookie } from "@tanstack/react-start/server";
 import { TicketPriority, TicketStatus } from "prisma/generated/enums";
+import { EventType } from "@/lib/notifier/core";
 import { prisma } from "@/lib/prisma";
 import type { CreateCustomerInput } from "@/modules/customer/customer.schema";
+import { publishToProjectAgents } from "@/modules/notification/notification.publish";
 import { createCustomer } from "../customer/customer.service";
 import type { CreateTicketInput } from "./ticket.schema";
 import { generateTicketReferenceNumber } from "./ticket.utils";
@@ -64,6 +66,20 @@ export const createTicketSession = async (data: CreateCustomerInput) => {
   });
 
   setTicketCookie(ticket.referenceNumber);
+
+  await publishToProjectAgents({
+    projectId: project.id,
+    event: EventType.TICKET_CREATED,
+    data: {
+      ticketId: ticket.id,
+      referenceNumber: ticket.referenceNumber,
+      projectId: project.id,
+      projectName: project.name,
+      customerName: customer.name,
+      customerEmail: customer.email,
+      createdAt: ticket.createdAt.toISOString(),
+    },
+  });
 
   return { customer, ticket };
 };
