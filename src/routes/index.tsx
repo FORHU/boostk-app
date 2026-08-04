@@ -7,6 +7,17 @@ export const Route = createFileRoute("/")({
   component: LandingPage,
 });
 
+// Which project's support inbox receives chats started from the marketing site.
+//
+// The landing page itself can never be the installable customer form: a browser only
+// offers install when the current page falls inside the manifest's `scope`, and the widget
+// manifest is scoped to `/support/<projectId>/`. Making `/` installable would require
+// `scope: "/"`, which is what used to swallow the whole site. So we send visitors one hop
+// to the widget, where the manifest applies and the install prompt appears.
+//
+// Unset (the default) hides the link, since there is no sensible fallback project.
+const supportProjectId = import.meta.env.VITE_SUPPORT_PROJECT_ID as string | undefined;
+
 function LandingPage() {
   return (
     <div className="min-h-screen bg-[#fafafa] text-[#1d1d1f] font-sans antialiased selection:bg-blue-100">
@@ -18,6 +29,15 @@ function LandingPage() {
             </Link>
           </div>
           <div className="flex flex-row items-center gap-4">
+            {supportProjectId ? (
+              <Link
+                to="/support/$projectId/chat-widget"
+                params={{ projectId: supportProjectId }}
+                className="text-sm font-medium hover:text-blue-600 transition-colors"
+              >
+                Chat with us
+              </Link>
+            ) : null}
             <AuthGuard>
               <Link to="/dashboard/organizations" className="text-sm font-medium hover:text-blue-600 transition-colors">
                 <Button>Dashboard</Button>

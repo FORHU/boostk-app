@@ -10,14 +10,22 @@ import { getFieldInvalid } from "@/lib/form-utils";
 import { upsertTicketSessionFn } from "@/modules/ticket/ticket.functions";
 import { UpsertTicketSessionInput } from "@/modules/ticket/ticket.schema";
 
-export default function TicketCustomerForm({ projectId }: { projectId: string }) {
+export default function TicketCustomerForm({
+  projectId,
+  // From the widget's `?ref=` search param. Stored on `Customer.metadata` so one shared
+  // widget can serve a client whose chats still need splitting by their own project/site.
+  // There is deliberately no input for it: it comes from the link, not the customer.
+  sourceRef,
+}: {
+  projectId: string;
+  sourceRef?: string;
+}) {
   const router = useRouter();
   const { toast } = useToast();
 
   const upsertTicketSessionMutation = useMutation({
     mutationFn: upsertTicketSessionFn,
-    onSuccess: async (data) => {
-      console.log("data", data);
+    onSuccess: async () => {
       await router.invalidate();
     },
     onError: () => toast("Failed to create ticket. Please try again."),
@@ -28,7 +36,7 @@ export default function TicketCustomerForm({ projectId }: { projectId: string })
       name: "",
       email: "",
       phone: "",
-      metadata: "",
+      metadata: sourceRef ?? "",
       projectId,
       referenceNumber: "",
     } as UpsertTicketSessionInput,

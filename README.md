@@ -135,9 +135,13 @@ BETTER_AUTH_URL=http://localhost:3000/
 
 RABBITMQ_URL=amqp://[user]:[password]@[ip]:5672
 
-FORHU_CHAT_URL=https://chat-dev.forhu.ai
+  FORHU_CHAT_URL=https://chat-dev.forhu.ai
 
 SUPPORT_LANGUAGE=en
+
+# Optional. Project whose support inbox receives chats started from the landing page.
+# Unset hides the "Chat with us" link.
+VITE_SUPPORT_PROJECT_ID=your_project_id_here
 
 # Initialize Database
 For first-time implementation, initialize the Prisma client, run migrations, and seed the database using the consolidated script:

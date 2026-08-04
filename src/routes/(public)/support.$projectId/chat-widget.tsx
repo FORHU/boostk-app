@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Bot, CheckCircle2, Loader2, Send, Sparkles } from "lucide-react";
 import type { Project, TicketMessage } from "prisma/generated/client";
 import { Suspense, useEffect, useState } from "react";
+import { z } from "zod";
 import TicketChatMessageBubble from "@/components/chat-support/TicketChatMessageBubble";
 import TicketCustomerForm from "@/components/chat-support/TicketCustomerForm";
 import { useToast } from "@/components/ui/toast";
@@ -14,7 +15,18 @@ import { getTicketCookieFn } from "@/modules/ticket/ticket.functions";
 import { createTicketMessageFn } from "@/modules/ticket-message/ticket-message.functions";
 import { ticketMessageQueries } from "@/modules/ticket-message/ticket-message.queries";
 
+// Optional `?ref=` label identifying which of a client's own projects/sites a chat came
+// from, so one shared widget can still be split apart in the inbox. It is stored verbatim
+// on `Customer.metadata`.
+//
+// SECURITY: this is a LABEL, not a permission. Anyone holding the link can edit it, so it
+// must never gate access to anything — `projectId` remains the only trust boundary.
+const REF_MAX = 64;
+
 export const Route = createFileRoute("/(public)/support/$projectId/chat-widget")({
+  validateSearch: z.object({
+    ref: z.string().trim().min(1).max(REF_MAX).optional().catch(undefined),
+  }),
   beforeLoad: async ({ params }) => {
     const project = await getProjectPublicFn({ data: { projectId: params.projectId } });
     if (!project) throw notFound();
@@ -47,6 +59,7 @@ export const Route = createFileRoute("/(public)/support/$projectId/chat-widget")
 
 function RouteComponent() {
   const { project, ticket } = Route.useRouteContext();
+  const { ref } = Route.useSearch();
   const [showSpinner, setShowSpinner] = useState(true);
   const { lastMessage, status } = useNotifications({ ticketId: ticket?.id });
 
@@ -87,7 +100,7 @@ function RouteComponent() {
           exit={{ opacity: 0, y: 8 }}
           transition={{ duration: 0.15, ease: "easeOut" }}
         >
-          <TicketCustomerForm projectId={project.id} />
+          <TicketCustomerForm projectId={project.id} sourceRef={ref} />
         </motion.div>
       ) : ticket ? (
         <motion.div

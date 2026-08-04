@@ -16,11 +16,11 @@ const config = defineConfig({
     nitro({
       preset: "bun",
       plugins: ["./src/modules/plugins/rabbitmq.plugin.ts"],
-      // Always let the browser/CDN revalidate the SW + manifest so PWA updates are picked
-      // up promptly (the #1 "my PWA won't update" gotcha is a long-cached sw.js).
+      // Always let the browser/CDN revalidate the SW so PWA updates are picked up promptly
+      // (the #1 "my PWA won't update" gotcha is a long-cached sw.js). The only manifest is
+      // generated per project at /support/<projectId>/manifest, which sets its own TTL.
       routeRules: {
         "/sw.js": { headers: { "cache-control": "no-cache" } },
-        "/manifest.json": { headers: { "cache-control": "no-cache" } },
       },
     }),
   ],

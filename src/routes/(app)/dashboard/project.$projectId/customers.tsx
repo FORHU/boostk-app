@@ -1,6 +1,6 @@
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { ArrowLeft, Briefcase, Calendar, Hash, Info, Mail, Search, X } from "lucide-react";
+import { ArrowLeft, Briefcase, Calendar, Hash, Info, Mail, Search, Tag, X } from "lucide-react";
 
 import type { TicketMessage } from "prisma/generated/client";
 import { useState } from "react";
@@ -217,6 +217,13 @@ function ProjectCustomersPage() {
                         {customer.name.charAt(0)}
                       </div>
                       <span className="font-semibold text-sm text-foreground truncate">{customer.name}</span>
+                      {/* Source label from the widget's `?ref=`; lets one shared inbox be
+                          scanned per client project without opening each conversation. */}
+                      {customer.metadata ? (
+                        <span className="shrink-0 rounded-full border border-border bg-muted/50 px-2 py-0.5 text-[10px] font-medium text-muted-foreground max-w-24 truncate">
+                          {customer.metadata}
+                        </span>
+                      ) : null}
                     </div>
                     {latestTicket && (
                       <span className="text-xs text-muted-foreground shrink-0 pl-1">
@@ -426,6 +433,18 @@ function ProjectCustomersPage() {
                     <p className="font-medium text-foreground truncate">{activeCustomer.project.name}</p>
                   </div>
                 </li>
+                {/* Only rendered when the widget link carried `?ref=` — most chats won't have one. */}
+                {activeCustomer.metadata ? (
+                  <li className="flex items-center gap-3 text-sm">
+                    <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center text-muted-foreground border border-border shrink-0">
+                      <Tag className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs uppercase font-bold text-muted-foreground truncate">Source</p>
+                      <p className="font-medium text-foreground truncate">{activeCustomer.metadata}</p>
+                    </div>
+                  </li>
+                ) : null}
                 <li className="flex items-center gap-3 text-sm">
                   <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center text-muted-foreground border border-border shrink-0">
                     <Hash className="w-4 h-4" />
