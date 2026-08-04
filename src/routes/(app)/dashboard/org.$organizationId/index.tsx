@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { InviteModal } from "@/components/ui/invite-modals";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
+import { useDebounce } from "@/hooks/use-debounce";
 import { getFieldInvalid } from "@/lib/form-utils";
 import { createProjectFn } from "@/modules/project/project.functions";
 import { projectQueries } from "@/modules/project/project.queries";
@@ -24,6 +25,7 @@ export const Route = createFileRoute("/(app)/dashboard/org/$organizationId/")({
 function OrganizationPage() {
   const { organizationId } = Route.useParams();
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearchQuery = useDebounce(searchQuery);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
   return (
@@ -59,7 +61,7 @@ function OrganizationPage() {
         <ProjectForm organizationId={organizationId} />
 
         <Suspense fallback={<OrgProjectsSkeleton />}>
-          <OrgProjects organizationId={organizationId} searchQuery={searchQuery} />
+          <OrgProjects organizationId={organizationId} searchQuery={debouncedSearchQuery} />
         </Suspense>
       </div>
       <InviteModal
