@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getMemberRole, hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
-import { TICKET_COOKIE_NAME } from "@/modules/ticket/ticket.service";
+import { TICKET_COOKIE_NAME } from "@/modules/ticket/ticket.constants";
 import { ATTACHMENT_MAX_BYTES, isAllowedMimeType, isImageMimeType, type UploadedAttachment } from "./attachment.schema";
 
 /** Public URL an attachment is served from. Stored verbatim in `TicketMessage.content`. */

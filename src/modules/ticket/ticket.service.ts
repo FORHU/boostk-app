@@ -5,14 +5,15 @@ import { prisma } from "@/lib/prisma";
 import type { CreateCustomerInput } from "@/modules/customer/customer.schema";
 import { publishToProjectAgents } from "@/modules/notification/notification.publish";
 import { createCustomer } from "../customer/customer.service";
+import { TICKET_COOKIE_MAX_AGE, TICKET_COOKIE_NAME, TICKET_COOKIE_PATH } from "./ticket.constants";
 import type { CreateTicketInput } from "./ticket.schema";
 import { generateTicketReferenceNumber } from "./ticket.utils";
 
 const MAX_REFERENCE_ATTEMPTS = 5;
 
-export const TICKET_COOKIE_NAME = "ticketReferenceNumber";
-export const TICKET_COOKIE_MAX_AGE = 60 * 60 * 24; // 1 day
-export const TICKET_COOKIE_PATH = "/";
+// Re-exported so existing callers keep their import path; new server-only callers
+// should prefer ./ticket.constants directly.
+export { TICKET_COOKIE_MAX_AGE, TICKET_COOKIE_NAME, TICKET_COOKIE_PATH };
 
 export const setTicketCookie = (referenceNumber: string) =>
   setCookie(TICKET_COOKIE_NAME, referenceNumber, {
