@@ -157,6 +157,7 @@ const ChatWindow = ({ ticket }: { ticket: TicketWithCustomer | null }) => {
       <AgentMessageList ticket={ticket} />
       <ReplyInput
         ticketId={ticket.id}
+        projectId={ticket.projectId}
         customerName={ticket.customer.name}
         customerLanguage={ticket.customer.language}
         onSuccess={() => {

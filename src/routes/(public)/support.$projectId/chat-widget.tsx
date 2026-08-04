@@ -3,11 +3,13 @@ import { createFileRoute, notFound } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { Bot, CheckCircle2, Loader2, Send, Sparkles } from "lucide-react";
 import type { Project, TicketMessage } from "prisma/generated/client";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { z } from "zod";
+import { AttachmentButton, AttachmentPreview } from "@/components/chat-support/attachment-picker";
 import TicketChatMessageBubble from "@/components/chat-support/TicketChatMessageBubble";
 import TicketCustomerForm from "@/components/chat-support/TicketCustomerForm";
 import { useToast } from "@/components/ui/toast";
+import { useAttachmentUpload } from "@/hooks/use-attachment-upload";
 import { useSocket } from "@/hooks/use-socket";
 import { EventType, type Message } from "@/lib/notifier/core";
 import { getProjectPublicFn } from "@/modules/project/project.functions";
@@ -223,6 +225,13 @@ const ChatInput = ({ ticketId, initialStatus, projectId, lastMessage }: ChatInpu
   const [message, setMessage] = useState<string>("");
   const [status, setStatus] = useState(initialStatus);
 
+  const onUploadError = useCallback((error: string) => toast(error, "error"), [toast]);
+  const { attachment, isUploading, upload, clear } = useAttachmentUpload({
+    ticketId,
+    projectId,
+    onError: onUploadError,
+  });
+
   // Listen for TICKET_STATUS_CHANGED events
   useEffect(() => {
     if (lastMessage?.event === EventType.TICKET_STATUS_CHANGED) {
@@ -244,10 +253,34 @@ const ChatInput = ({ ticketId, initialStatus, projectId, lastMessage }: ChatInpu
   const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
     const trimmed = message.trim();
-    if (!trimmed) return;
+    if (!trimmed && !attachment) return;
 
-    createTicketMessageMutation.mutate({ data: { content: trimmed, contentType: "TEXT", ticketId, projectId } });
-    setMessage("");
+    try {
+      // A message carries one contentType, so a file sent with a caption goes as
+      // two messages — the attachment first.
+      if (attachment) {
+        await createTicketMessageMutation.mutateAsync({
+          data: {
+            content: attachment.url,
+            contentType: attachment.contentType,
+            attachmentId: attachment.id,
+            ticketId,
+            projectId,
+          },
+        });
+        clear();
+      }
+
+      if (trimmed) {
+        await createTicketMessageMutation.mutateAsync({
+          data: { content: trimmed, contentType: "TEXT", ticketId, projectId },
+        });
+      }
+
+      setMessage("");
+    } catch {
+      // onError already toasted; keep the draft so the customer does not retype it.
+    }
   };
 
   if (status === "CLOSED") {
@@ -264,22 +297,38 @@ const ChatInput = ({ ticketId, initialStatus, projectId, lastMessage }: ChatInpu
 
   return (
     <div className="p-3 bg-white border-t border-gray-100">
-      <form onSubmit={handleSubmit} className="flex items-center gap-2">
-        <input
-          type="text"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          placeholder="Type your message..."
-          disabled={createTicketMessageMutation.isPending}
-          className="flex-1 bg-gray-100 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-60"
-        />
-        <button
-          type="submit"
-          disabled={!message.trim() || createTicketMessageMutation.isPending}
-          className="bg-indigo-600 text-white p-2.5 rounded-xl active:scale-95 disabled:opacity-50"
-        >
-          <Send size={18} />
-        </button>
+      <form onSubmit={handleSubmit}>
+        {attachment && (
+          <AttachmentPreview
+            attachment={attachment}
+            onRemove={clear}
+            disabled={createTicketMessageMutation.isPending}
+          />
+        )}
+
+        <div className="flex items-center gap-2">
+          <AttachmentButton
+            onSelect={upload}
+            disabled={createTicketMessageMutation.isPending}
+            isUploading={isUploading}
+            className="text-gray-400 hover:text-gray-700 hover:bg-gray-100"
+          />
+          <input
+            type="text"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="Type your message..."
+            disabled={createTicketMessageMutation.isPending}
+            className="flex-1 min-w-0 bg-gray-100 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-60"
+          />
+          <button
+            type="submit"
+            disabled={(!message.trim() && !attachment) || createTicketMessageMutation.isPending || isUploading}
+            className="bg-indigo-600 text-white p-2.5 rounded-xl active:scale-95 disabled:opacity-50 shrink-0"
+          >
+            <Send size={18} />
+          </button>
+        </div>
       </form>
     </div>
   );

@@ -15,6 +15,32 @@ import {
   translateOutgoingMessage,
 } from "./ticket-message.translation";
 
+// Attachment metadata travels with every message so a bubble can render a filename
+// and size without a second round trip. The bytes themselves are never selected —
+// they are streamed by GET /api/attachments/:id instead.
+const ATTACHMENT_SELECT = { select: { id: true, filename: true, mimeType: true, size: true } } as const;
+
+/**
+ * Confirm an attachment exists and belongs to this ticket before a message points at
+ * it, so a caller who is legitimately in one conversation cannot graft a file from
+ * another onto their own message. Returns the display label for notifications.
+ */
+const resolveMessageAttachment = async (attachmentId: string, ticketId: string) => {
+  const attachment = await prisma.attachment.findUnique({
+    where: { id: attachmentId },
+    select: { id: true, filename: true, ticketId: true },
+  });
+  if (!attachment || attachment.ticketId !== ticketId) return null;
+  return attachment;
+};
+
+/**
+ * What a notification shows for a message. For attachments `content` is a URL, which
+ * is useless in a toast or a push — send the filename instead.
+ */
+const notificationPreview = (content: string, contentType: string, attachment: { filename: string } | null) =>
+  attachment ? `${contentType === "IMAGE" ? "📷" : "📎"} ${attachment.filename}` : content;
+
 export const getTicketMessagesFn = createServerFn({ method: "GET" })
   .middleware([requireCustomerTicketMiddleware])
   .inputValidator(z.object({ projectId: z.string().min(1) }))
@@ -26,8 +52,11 @@ export const getTicketMessagesFn = createServerFn({ method: "GET" })
       where: {
         ticketId: ticket.id,
       },
+      include: { attachment: ATTACHMENT_SELECT },
+      // Pinned: an inline literal here widens to `string` and collapses the `include`
+      // payload type back to plain scalars.
       orderBy: {
-        createdAt: "asc",
+        createdAt: "asc" as const,
       },
     });
 
@@ -41,6 +70,9 @@ export const createTicketMessageFn = createServerFn({ method: "POST" })
     const ticket = context.ticket;
     if (!ticket) return null;
     if (ticket.id !== data.ticketId) return null;
+
+    const attachment = data.attachmentId ? await resolveMessageAttachment(data.attachmentId, ticket.id) : null;
+    if (data.attachmentId && !attachment) return null;
 
     // Translate inbound customer text into the support language so agents can read it.
     const translation =
@@ -64,10 +96,12 @@ export const createTicketMessageFn = createServerFn({ method: "POST" })
         contentType: data.contentType,
         ticketId: ticket.id,
         customerId: ticket.customerId,
+        attachmentId: attachment?.id ?? null,
         translatedContent: translation.translatedContent,
         sourceLang: translation.sourceLang,
         targetLang: translation.targetLang,
       },
+      include: { attachment: ATTACHMENT_SELECT },
     });
 
     const project = await prisma.project.findUnique({
@@ -85,7 +119,7 @@ export const createTicketMessageFn = createServerFn({ method: "POST" })
         projectName: project?.name ?? "",
         customerName: ticket.customer.name,
         customerEmail: ticket.customer.email,
-        content: data.content,
+        content: notificationPreview(data.content, data.contentType, attachment),
         sender: "customer",
         createdAt: message.createdAt.toISOString(),
       },
@@ -101,7 +135,8 @@ export const getTicketMessagesByTicketFn = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     return prisma.ticketMessage.findMany({
       where: { ticketId: data.ticketId },
-      orderBy: { createdAt: "asc" },
+      include: { attachment: ATTACHMENT_SELECT },
+      orderBy: { createdAt: "asc" as const },
     });
   });
 
@@ -118,6 +153,9 @@ export const createAgentTicketMessageFn = createServerFn({ method: "POST" })
     });
     if (!ticket) return null;
 
+    const attachment = data.attachmentId ? await resolveMessageAttachment(data.attachmentId, ticket.id) : null;
+    if (data.attachmentId && !attachment) return null;
+
     const translation =
       data.contentType === "TEXT"
         ? await translateOutgoingMessage(data.content, {
@@ -132,10 +170,12 @@ export const createAgentTicketMessageFn = createServerFn({ method: "POST" })
         contentType: data.contentType,
         ticketId: ticket.id,
         userId,
+        attachmentId: attachment?.id ?? null,
         translatedContent: translation.translatedContent,
         sourceLang: translation.sourceLang,
         targetLang: translation.targetLang,
       },
+      include: { attachment: ATTACHMENT_SELECT },
     });
 
     await publishToTicketChannel({
@@ -146,7 +186,7 @@ export const createAgentTicketMessageFn = createServerFn({ method: "POST" })
         referenceNumber: ticket.referenceNumber,
         projectId: ticket.projectId,
         customerName: ticket.customer.name,
-        content: data.content,
+        content: notificationPreview(data.content, data.contentType, attachment),
         sender: "agent",
         createdAt: message.createdAt.toISOString(),
       },

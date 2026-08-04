@@ -346,6 +346,7 @@ function ProjectCustomersPage() {
             ) : (
               <ReplyInput
                 ticketId={activeTicket.id}
+                projectId={projectId}
                 customerName={activeCustomer.name}
                 customerLanguage={activeCustomer.language}
                 onSuccess={() => {
