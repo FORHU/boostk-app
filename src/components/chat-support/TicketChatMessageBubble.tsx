@@ -1,4 +1,5 @@
 import type { TicketMessage } from "prisma/generated/client";
+import { formatRelative } from "@/lib/format-date";
 import { cn } from "@/lib/utils";
 
 interface TicketChatMessageBubbleProps {
@@ -31,7 +32,7 @@ const TicketChatMessageBubble = ({ msg, isStart, isEnd, viewer = "customer" }: T
 
   return (
     <div className={cn("flex flex-col", isOwn ? "items-end" : "items-start")}>
-      {isStart && <p className="text-[10px] text-muted-foreground my-1">{msg.createdAt.toLocaleTimeString()}</p>}
+      {isStart && <p className="text-[10px] text-muted-foreground my-1">{formatRelative(msg.createdAt)}</p>}
       <div
         className={cn(
           "mb-0.5 max-w-[60%] px-4 py-2 text-sm shadow-sm w-fit",
