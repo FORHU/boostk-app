@@ -36,14 +36,14 @@ export function TicketPrioritySelect({ priority, isPending, onPriorityChange }: 
         value={priority || ""}
         disabled={isPending}
         onChange={(e) => onPriorityChange(e.target.value as TicketPriorityType)}
-        className="text-xs bg-muted rounded-[4px] px-2 py-1 outline-none border border-transparent focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-50 cursor-pointer"
+        className="text-xs bg-white/10 text-white rounded-[4px] px-2 py-1 outline-none border border-transparent focus:border-white/50 focus:ring-1 focus:ring-white/50 disabled:opacity-50 cursor-pointer"
       >
-        <option value="" disabled>Set Priority</option>
-        <option value="LOW">Low Priority</option>
-        <option value="MEDIUM">Medium Priority</option>
-        <option value="HIGH">High Priority</option>
+        <option value="" disabled style={{ color: "black", backgroundColor: "white" }}>Set Priority</option>
+        <option value="LOW" style={{ color: "black", backgroundColor: "white" }}>Low Priority</option>
+        <option value="MEDIUM" style={{ color: "black", backgroundColor: "white" }}>Medium Priority</option>
+        <option value="HIGH" style={{ color: "black", backgroundColor: "white" }}>High Priority</option>
       </select>
-      {isPending && <Loader2 className="animate-spin text-muted-foreground" size={14} />}
+      {isPending && <Loader2 className="animate-spin text-indigo-200" size={14} />}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { Loader2 } from "lucide-react";
+import { motion } from "framer-motion";
+import { Bot, Loader2, Sparkles } from "lucide-react";
 import type { Customer, Project, Ticket, TicketMessage } from "prisma/generated/client";
 import { Suspense, useEffect, useState } from "react";
 import { ReplyInput } from "@/components/chat-support/reply-input";
@@ -87,12 +88,12 @@ const TicketList = ({ project, selectedTicket, onSelect }: TicketListProps) => {
             onClick={() => onSelect(ticket)}
             className={cn(
               "px-2 py-1 min-w-[200px] max-w-[240px] flex items-center justify-between rounded-t-lg border border-b-0 cursor-pointer transition-colors text-left",
-              active ? "bg-background" : "bg-muted hover:bg-muted/70",
+              active ? "bg-blue-600 dark:bg-blue-800 text-white" : "bg-muted hover:bg-muted/70",
             )}
           >
             <div className="flex flex-col truncate">
               <span className="text-sm font-semibold truncate">{ticket.customer.name}</span>
-              <span className="text-xs text-muted-foreground truncate">
+              <span className={cn("text-xs truncate", active ? "text-blue-200" : "text-muted-foreground")}>
                 Ticket #{ticket.referenceNumber.slice(0, 8)}
                 {ticket.customer.language ? ` · ${ticket.customer.language}` : ""}
               </span>
@@ -134,6 +135,25 @@ const ChatWindow = ({ ticket }: { ticket: TicketWithCustomer | null }) => {
 
   return (
     <div className="h-full w-1/2 flex flex-col min-h-0">
+      <header className="flex-none bg-blue-600 dark:bg-blue-800 p-4 text-white flex items-center justify-between shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="bg-blue-400/30 p-2 rounded-lg">
+            <Bot size={20} />
+          </div>
+          <div>
+            <h2 className="text-sm font-bold leading-none">{ticket.customer.name}</h2>
+            <span className="text-[10px] text-blue-200 flex items-center gap-1">
+              <span
+                className={`w-1.5 h-1.5 rounded-full animate-pulse ${
+                  ticket.status === "OPEN" ? "bg-green-400" : "bg-gray-400"
+                }`}
+              ></span>
+              {ticket.status === "OPEN" ? "Open" : "Closed"}
+            </span>
+          </div>
+        </div>
+        <Sparkles size={16} className="text-blue-300" />
+      </header>
       <AgentMessageList ticket={ticket} />
       <ReplyInput
         ticketId={ticket.id}
@@ -162,8 +182,8 @@ const AgentMessageList = ({ ticket }: { ticket: TicketWithCustomer }) => {
 
   if (isLoading) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <Loader2 className="animate-spin text-muted-foreground" size={20} />
+      <div className="flex-1 flex items-center justify-center bg-slate-50 dark:bg-slate-900/50">
+        <Loader2 className="animate-spin text-indigo-600" size={20} />
       </div>
     );
   }
@@ -171,9 +191,21 @@ const AgentMessageList = ({ ticket }: { ticket: TicketWithCustomer }) => {
   const list = messages ?? [];
 
   return (
-    <div className="flex-1 overflow-y-auto p-3 space-y-0.5 bg-muted/30">
+    <div className="flex-1 overflow-y-auto p-2 space-y-0.5 bg-slate-50 dark:bg-slate-900/50 scroll-smooth pb-4">
       {list.length === 0 ? (
-        <div className="h-full flex items-center justify-center text-sm text-muted-foreground">No messages yet</div>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="flex flex-col items-center justify-center h-full text-center p-6"
+        >
+          <div className="bg-blue-50 dark:bg-blue-500/10 p-4 rounded-full mb-3">
+            <Sparkles className="text-blue-500 dark:text-blue-400" size={32} />
+          </div>
+          <h3 className="font-semibold text-gray-900 dark:text-gray-100">Waiting for the customer</h3>
+          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1 max-w-[200px]">
+            Replies from the customer will appear here.
+          </p>
+        </motion.div>
       ) : (
         list.map((msg, index) => {
           const isStart = !isSameGroup(list[index - 1], msg);
