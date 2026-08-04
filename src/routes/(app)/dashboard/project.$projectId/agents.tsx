@@ -17,6 +17,7 @@ import { Suspense, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { DataTableSkeleton, TextSkeleton } from "@/components/ui/skeleton";
 import { REDIRECT_REASON } from "@/enums/enums";
+import { useDebounce } from "@/hooks/use-debounce";
 import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
 import { projectCustomerQueries } from "@/modules/customer/customer.queries";
 import { memberQueries } from "@/modules/members/member.queries";
@@ -64,6 +65,7 @@ function AgentTable({ organizationId, projectId }: { organizationId: string; pro
 
   // State
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearchQuery = useDebounce(searchQuery);
   const [roleFilter, setRoleFilter] = useState("ALL");
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
 
@@ -72,7 +74,7 @@ function AgentTable({ organizationId, projectId }: { organizationId: string; pro
 
   // --- FILTER FIX APPLIED HERE ---
   const filteredMembers = members.filter((m) => {
-    const safeSearch = searchQuery.toLowerCase();
+    const safeSearch = debouncedSearchQuery.toLowerCase();
 
     // 1. Safe Search: Explicitly allow through if search is empty, otherwise safely check name/email
     const matchesSearch =

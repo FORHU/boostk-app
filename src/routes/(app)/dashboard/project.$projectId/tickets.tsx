@@ -10,6 +10,7 @@ import TicketChatMessageBubble from "@/components/chat-support/TicketChatMessage
 import { TicketPriorityBadge, TicketPrioritySelect, type TicketPriorityType } from "@/components/ui/ticket-priority";
 import { useToast } from "@/components/ui/toast";
 import { REDIRECT_REASON } from "@/enums/enums";
+import { useDebounce } from "@/hooks/use-debounce";
 import { useSocket } from "@/hooks/use-socket";
 import { useViewport } from "@/hooks/use-viewport";
 import { EventType } from "@/lib/notifier/core";
@@ -393,6 +394,21 @@ function ProjectTicketsPage() {
   const searchQuery = search.searchQuery ?? "";
   const sortConfig = search.sortBy && search.sortDir ? { key: search.sortBy, direction: search.sortDir } : null;
 
+  const [inputValue, setInputValue] = useState(searchQuery);
+  const debouncedSearchQuery = useDebounce(inputValue);
+
+  useEffect(() => {
+    setInputValue(searchQuery);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    if (debouncedSearchQuery === searchQuery) return;
+    navigate({
+      search: (prev) => ({ ...prev, searchQuery: debouncedSearchQuery || undefined }),
+      replace: true,
+    });
+  }, [debouncedSearchQuery, searchQuery, navigate]);
+
   const { data: tickets } = useSuspenseQuery(projectTicketQueries.allByProjectId(projectId));
 
   const getCount = (status: string) =>
@@ -477,16 +493,8 @@ function ProjectTicketsPage() {
                 type="text"
                 placeholder="Search..."
                 className="p-2 border rounded-md w-full"
-                value={searchQuery}
-                onChange={(e) =>
-                  navigate({
-                    search: (prev) => ({
-                      ...prev,
-                      searchQuery: e.target.value || undefined,
-                    }),
-                    replace: true,
-                  })
-                }
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
               />
 
               <div className="flex items-center gap-2 overflow-x-auto pb-2">
@@ -600,16 +608,8 @@ function ProjectTicketsPage() {
                 type="text"
                 placeholder="Search..."
                 className="p-2 border rounded-md min-w-64"
-                value={searchQuery}
-                onChange={(e) =>
-                  navigate({
-                    search: (prev) => ({
-                      ...prev,
-                      searchQuery: e.target.value || undefined,
-                    }),
-                    replace: true,
-                  })
-                }
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
               />
             </div>
 
