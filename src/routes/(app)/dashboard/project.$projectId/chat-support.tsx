@@ -6,6 +6,7 @@ import type { Customer, Project, Ticket, TicketMessage } from "prisma/generated/
 import { Suspense, useEffect, useRef, useState } from "react";
 import { ReplyInput } from "@/components/chat-support/reply-input";
 import TicketChatMessageBubble from "@/components/chat-support/TicketChatMessageBubble";
+import { EmptyState } from "@/components/ui/empty-state";
 import { REDIRECT_REASON } from "@/enums/enums";
 import { useSocket } from "@/hooks/use-socket";
 import { useViewport } from "@/hooks/use-viewport";
@@ -271,18 +272,17 @@ const AgentMessageList = ({ ticket }: { ticket: TicketWithCustomer }) => {
   return (
     <div className="flex-1 overflow-y-auto p-2 space-y-0.5 bg-slate-50 dark:bg-slate-900/50 scroll-smooth pb-4">
       {list.length === 0 ? (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="flex flex-col items-center justify-center h-full text-center p-6"
-        >
-          <div className="bg-blue-50 dark:bg-blue-500/10 p-4 rounded-full mb-3">
-            <Sparkles className="text-blue-500 dark:text-blue-400" size={32} />
-          </div>
-          <h3 className="font-semibold text-gray-900 dark:text-gray-100">Waiting for the customer</h3>
-          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1 max-w-[200px]">
-            Replies from the customer will appear here.
-          </p>
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
+          <EmptyState
+            icon={
+              <div className="bg-blue-50 dark:bg-blue-500/10 p-4 rounded-full">
+                <Sparkles className="text-blue-500 dark:text-blue-400" size={32} />
+              </div>
+            }
+            title="Waiting for the customer"
+            description="Replies from the customer will appear here."
+            className="h-full p-6"
+          />
         </motion.div>
       ) : (
         list.map((msg, index) => {

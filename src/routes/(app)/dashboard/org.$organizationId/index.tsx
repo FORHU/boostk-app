@@ -4,6 +4,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Plus, Search } from "lucide-react";
 import { Suspense, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { InviteModal } from "@/components/ui/invite-modals";
@@ -182,9 +183,7 @@ const OrgProjects = ({ organizationId, searchQuery }: { organizationId: string; 
 
       <div>
         {filteredProjects.length === 0 ? (
-          <div className="text-center">
-            <p className="text-muted-foreground">No projects match "{searchQuery}"</p>
-          </div>
+          <EmptyState title={`No projects match "${searchQuery}"`} size="sm" />
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
             {filteredProjects.map((project) => (
