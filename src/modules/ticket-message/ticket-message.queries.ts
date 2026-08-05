@@ -12,5 +12,8 @@ export const ticketMessageQueries = {
     queryOptions({
       queryKey: [...ticketMessageQueries.all, "ticket", ticketId],
       queryFn: () => getTicketMessagesByTicketFn({ data: { ticketId } }),
+      // Short window so switching between tickets (and back) renders the cached
+      // conversation instantly instead of flashing the loading spinner.
+      staleTime: 15_000,
     }),
 };
