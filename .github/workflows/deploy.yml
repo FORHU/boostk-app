@@ -6,6 +6,9 @@ on:
   #   branches: [master]   # <-- uncomment later for fully automatic deploys
 
 env:
+  # Dedicated repo:
+  # arn:aws:ecr:ap-southeast-1:617163942417:repository/boostk
+  # Only the NAME goes here — the registry host comes from the ecr-login step.
   ECR_REPOSITORY: boostk
 
 jobs:
@@ -37,6 +40,8 @@ jobs:
         env:
           REGISTRY: ${{ steps.ecr-login.outputs.registry }}
         run: |
+          # SHA tag is what the deploy actually pulls, so rollback can target any
+          # previous commit. `:latest` is a convenience pointer for humans.
           docker build \
             --build-arg VITE_SOCKET_URL="${{ secrets.VITE_SOCKET_URL }}" \
             --build-arg VITE_SUPPORT_PROJECT_ID="${{ secrets.VITE_SUPPORT_PROJECT_ID }}" \
