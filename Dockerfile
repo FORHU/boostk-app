@@ -2,6 +2,11 @@
 # Compiles the app. None of this tooling ships in the final image.
 FROM oven/bun:1-alpine AS build
 
+# Prisma's schema engine (used by `prisma generate` and `prisma migrate`) is a
+# native binary that links against OpenSSL. Alpine/musl does not ship it, so
+# without this the engine download or exec fails.
+RUN apk add --no-cache openssl ca-certificates
+
 WORKDIR /app
 
 # Lockfile first, so Docker can cache the install layer across builds.
@@ -28,6 +33,9 @@ RUN bun run build
 
 # ---------- runtime stage ----------
 FROM oven/bun:1-alpine AS runtime
+
+# Same OpenSSL requirement — this stage runs `prisma migrate deploy` on deploy.
+RUN apk add --no-cache openssl ca-certificates
 
 WORKDIR /app
 
