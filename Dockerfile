@@ -16,6 +16,13 @@ RUN bun install --frozen-lockfile
 
 COPY . .
 
+# prisma.config.ts resolves `env("DATABASE_URL")`, and that helper THROWS when
+# the variable is unset — even for `generate`, which never opens a connection.
+# .env is dockerignored, so the build needs a placeholder. ARG rather than ENV:
+# it is available to the RUN steps below but is NOT baked into the image, and
+# the runtime stage is a fresh FROM anyway. The real value comes from app.env.
+ARG DATABASE_URL=postgresql://placeholder:placeholder@localhost:5432/placeholder
+
 # REQUIRED: prisma/generated/ is gitignored, so it does not exist on a fresh
 # checkout. Every Prisma import breaks without this. (Same step as ci.yml.)
 RUN bun prisma generate
