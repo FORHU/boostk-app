@@ -3,7 +3,7 @@ name: CI
 # WHEN should this run?
 on:
   push:
-    branches: [main] # runs when commits land on main
+    branches: [master] # runs when commits land on master (this repo's default branch)
   pull_request: # runs on every PR, targeting any branch
 
 jobs:
