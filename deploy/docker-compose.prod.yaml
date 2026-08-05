@@ -1,0 +1,62 @@
+# Production/staging stack for the BOOSTK EC2 host.
+#
+# Lives at ~/boostk-app/docker-compose.prod.yaml on the instance.
+# ${IMAGE} is exported by .github/workflows/deploy.yml, so every service runs
+# the identical commit — app, socket relay, and the migration job.
+#
+# Copy up with:
+#   scp deploy/docker-compose.prod.yaml ec2-user@<host>:~/boostk-app/
+
+services:
+  app:
+    image: ${IMAGE}
+    restart: unless-stopped
+    env_file: app.env
+    ports:
+      # Loopback only — nginx is the sole way in from the internet.
+      - "127.0.0.1:5000:5000"
+    depends_on:
+      postgres:
+        condition: service_healthy # migrations must not race a cold DB
+      rabbitmq:
+        condition: service_started
+
+  socket:
+    image: ${IMAGE}
+    restart: unless-stopped
+    env_file: app.env
+    # Same image, different entrypoint. Bun runs the TypeScript directly.
+    command: ["bun", "run", "src/socket-server/index.ts"]
+    ports:
+      - "127.0.0.1:3001:3001"
+    depends_on:
+      rabbitmq:
+        condition: service_started
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    restart: unless-stopped
+    # No ports: reachable only on the internal Docker network.
+    # NEVER publish 15672 — the management UI ships with guest/guest.
+
+  # ---------------------------------------------------------------------------
+  # DELETE this whole service if you use RDS, and change app's depends_on to:
+  #   depends_on: [rabbitmq]
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    # Reads POSTGRES_USER / POSTGRES_PASSWORD / POSTGRES_DB from app.env, so the
+    # credentials live in exactly one place alongside DATABASE_URL.
+    env_file: app.env
+    volumes:
+      - boostk_data:/var/lib/postgresql/data
+    healthcheck:
+      # $$ escapes to a literal $ for the container's shell.
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  boostk_data:

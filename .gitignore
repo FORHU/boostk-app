@@ -1,5 +1,7 @@
 node_modules
 .DS_Store
+# Filled-in production secrets — only app.env.example belongs in git.
+app.env
 dist
 dist-ssr
 *.local
