@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { Suspense, useState } from "react";
 import { z } from "zod";
+import { EmptyState } from "@/components/ui/empty-state";
 import { TextSkeleton, UsageCardsSkeleton } from "@/components/ui/skeleton";
 import { useViewport } from "@/hooks/use-viewport";
 import { prisma } from "@/lib/prisma";
@@ -194,9 +195,7 @@ function OverviewContent({ projectId }: { projectId: string }) {
           </div>
           <div className="divide-y divide-border">
             {recentTickets.length === 0 ? (
-              <div className="p-6 text-center text-muted-foreground text-sm">
-                No tickets found for this project yet.
-              </div>
+              <EmptyState title="No tickets found for this project yet." size="sm" className="p-6" />
             ) : (
               recentTickets.map((ticket: TicketSummary) => (
                 <Link
