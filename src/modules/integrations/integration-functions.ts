@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { ORG_ROLE } from "@/modules/auth/roles";
 import { requireOrgRole } from "@/modules/organization/organization.middleware";
 
-export const INTEGRATION_PROVIDERS = ["openai", "whatsapp", "slack", "webhooks"] as const;
+export const INTEGRATION_PROVIDERS = ["whatsapp", "slack", "webhooks"] as const;
 const providerSchema = z.enum(INTEGRATION_PROVIDERS);
 
 export const getOrgIntegrationsFn = createServerFn({ method: "GET" })

@@ -197,6 +197,7 @@ model Ticket {
   updatedAt DateTime @updatedAt
 
   ticketMessages TicketMessage[]
+  attachments    Attachment[]
 
   @@map("tickets")
 }
@@ -221,10 +222,41 @@ model TicketMessage {
   customerId String?
   customer   Customer? @relation(fields: [customerId], references: [id])
 
+  // Set when contentType is IMAGE or FILE. `content` then holds the attachment URL
+  // (see attachment.service.ts) and this relation carries the filename/size/mime
+  // needed to render the bubble without parsing the URL.
+  attachmentId String?     @unique
+  attachment   Attachment? @relation(fields: [attachmentId], references: [id], onDelete: SetNull)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@map("ticket_messages")
+}
+
+// Uploaded chat file, stored as bytes in Postgres rather than on disk or S3 —
+// the database is the only stateful service this app deploys with, so blobs kept
+// here survive redeploys with no volume or bucket to configure. Sizes are capped
+// hard (see ATTACHMENT_MAX_BYTES) precisely because this row lives in the DB.
+//
+// Rows are created before the message that references them, so an upload that is
+// never sent leaves an orphan — `ticketId` scopes it for access checks and cleanup.
+model Attachment {
+  id       String @id @default(cuid())
+  filename String
+  mimeType String
+  size     Int
+  bytes    Bytes
+
+  ticketId String
+  ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  message TicketMessage?
+
+  createdAt DateTime @default(now())
+
+  @@index([ticketId])
+  @@map("attachments")
 }
 
 enum TicketStatus {

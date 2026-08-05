@@ -350,6 +350,7 @@ function TicketDetailPanel({
         {!isLoading && ticket && (
           <ReplyInput
             ticketId={ticketId}
+            projectId={projectId}
             customerName={ticket.customer?.name}
             customerLanguage={ticket.customer?.language}
             onSuccess={() => {

@@ -15,8 +15,10 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiTranslateRouteImport } from './routes/api/translate'
 import { Route as authSignupRouteImport } from './routes/(auth)/signup'
 import { Route as authSigninRouteImport } from './routes/(auth)/signin'
+import { Route as ApiAttachmentsIndexRouteImport } from './routes/api/attachments/index'
 import { Route as ApiNotificationSseRouteImport } from './routes/api/notification/sse'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as ApiAttachmentsIdRouteImport } from './routes/api/attachments/$id'
 import { Route as appDashboardOrganizationsRouteImport } from './routes/(app)/dashboard/organizations'
 import { Route as publicSupportProjectIdManifestRouteImport } from './routes/(public)/support.$projectId/manifest'
 import { Route as publicSupportProjectIdChatWidgetRouteImport } from './routes/(public)/support.$projectId/chat-widget'
@@ -63,6 +65,11 @@ const authSigninRoute = authSigninRouteImport.update({
   path: '/signin',
   getParentRoute: () => authRouteRoute,
 } as any)
+const ApiAttachmentsIndexRoute = ApiAttachmentsIndexRouteImport.update({
+  id: '/api/attachments/',
+  path: '/api/attachments/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiNotificationSseRoute = ApiNotificationSseRouteImport.update({
   id: '/api/notification/sse',
   path: '/api/notification/sse',
@@ -71,6 +78,11 @@ const ApiNotificationSseRoute = ApiNotificationSseRouteImport.update({
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAttachmentsIdRoute = ApiAttachmentsIdRouteImport.update({
+  id: '/api/attachments/$id',
+  path: '/api/attachments/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const appDashboardOrganizationsRoute =
@@ -182,8 +194,10 @@ export interface FileRoutesByFullPath {
   '/signup': typeof authSignupRoute
   '/api/translate': typeof ApiTranslateRoute
   '/dashboard/organizations': typeof appDashboardOrganizationsRoute
+  '/api/attachments/$id': typeof ApiAttachmentsIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/notification/sse': typeof ApiNotificationSseRoute
+  '/api/attachments/': typeof ApiAttachmentsIndexRoute
   '/dashboard/org/$organizationId': typeof appDashboardOrgOrganizationIdRouteRouteWithChildren
   '/dashboard/project/$projectId': typeof appDashboardProjectProjectIdRouteRouteWithChildren
   '/support/$projectId/chat-widget': typeof publicSupportProjectIdChatWidgetRoute
@@ -207,8 +221,10 @@ export interface FileRoutesByTo {
   '/signup': typeof authSignupRoute
   '/api/translate': typeof ApiTranslateRoute
   '/dashboard/organizations': typeof appDashboardOrganizationsRoute
+  '/api/attachments/$id': typeof ApiAttachmentsIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/notification/sse': typeof ApiNotificationSseRoute
+  '/api/attachments': typeof ApiAttachmentsIndexRoute
   '/support/$projectId/chat-widget': typeof publicSupportProjectIdChatWidgetRoute
   '/support/$projectId/manifest': typeof publicSupportProjectIdManifestRoute
   '/dashboard/org/$organizationId/billing': typeof appDashboardOrgOrganizationIdBillingRoute
@@ -233,8 +249,10 @@ export interface FileRoutesById {
   '/(auth)/signup': typeof authSignupRoute
   '/api/translate': typeof ApiTranslateRoute
   '/(app)/dashboard/organizations': typeof appDashboardOrganizationsRoute
+  '/api/attachments/$id': typeof ApiAttachmentsIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/notification/sse': typeof ApiNotificationSseRoute
+  '/api/attachments/': typeof ApiAttachmentsIndexRoute
   '/(app)/dashboard/org/$organizationId': typeof appDashboardOrgOrganizationIdRouteRouteWithChildren
   '/(app)/dashboard/project/$projectId': typeof appDashboardProjectProjectIdRouteRouteWithChildren
   '/(public)/support/$projectId/chat-widget': typeof publicSupportProjectIdChatWidgetRoute
@@ -260,8 +278,10 @@ export interface FileRouteTypes {
     | '/signup'
     | '/api/translate'
     | '/dashboard/organizations'
+    | '/api/attachments/$id'
     | '/api/auth/$'
     | '/api/notification/sse'
+    | '/api/attachments/'
     | '/dashboard/org/$organizationId'
     | '/dashboard/project/$projectId'
     | '/support/$projectId/chat-widget'
@@ -285,8 +305,10 @@ export interface FileRouteTypes {
     | '/signup'
     | '/api/translate'
     | '/dashboard/organizations'
+    | '/api/attachments/$id'
     | '/api/auth/$'
     | '/api/notification/sse'
+    | '/api/attachments'
     | '/support/$projectId/chat-widget'
     | '/support/$projectId/manifest'
     | '/dashboard/org/$organizationId/billing'
@@ -310,8 +332,10 @@ export interface FileRouteTypes {
     | '/(auth)/signup'
     | '/api/translate'
     | '/(app)/dashboard/organizations'
+    | '/api/attachments/$id'
     | '/api/auth/$'
     | '/api/notification/sse'
+    | '/api/attachments/'
     | '/(app)/dashboard/org/$organizationId'
     | '/(app)/dashboard/project/$projectId'
     | '/(public)/support/$projectId/chat-widget'
@@ -335,8 +359,10 @@ export interface RootRouteChildren {
   appRouteRoute: typeof appRouteRouteWithChildren
   authRouteRoute: typeof authRouteRouteWithChildren
   ApiTranslateRoute: typeof ApiTranslateRoute
+  ApiAttachmentsIdRoute: typeof ApiAttachmentsIdRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiNotificationSseRoute: typeof ApiNotificationSseRoute
+  ApiAttachmentsIndexRoute: typeof ApiAttachmentsIndexRoute
   publicSupportProjectIdChatWidgetRoute: typeof publicSupportProjectIdChatWidgetRoute
   publicSupportProjectIdManifestRoute: typeof publicSupportProjectIdManifestRoute
 }
@@ -385,6 +411,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof authSigninRouteImport
       parentRoute: typeof authRouteRoute
     }
+    '/api/attachments/': {
+      id: '/api/attachments/'
+      path: '/api/attachments'
+      fullPath: '/api/attachments/'
+      preLoaderRoute: typeof ApiAttachmentsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/notification/sse': {
       id: '/api/notification/sse'
       path: '/api/notification/sse'
@@ -397,6 +430,13 @@ declare module '@tanstack/react-router' {
       path: '/api/auth/$'
       fullPath: '/api/auth/$'
       preLoaderRoute: typeof ApiAuthSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/attachments/$id': {
+      id: '/api/attachments/$id'
+      path: '/api/attachments/$id'
+      fullPath: '/api/attachments/$id'
+      preLoaderRoute: typeof ApiAttachmentsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/(app)/dashboard/organizations': {
@@ -618,8 +658,10 @@ const rootRouteChildren: RootRouteChildren = {
   appRouteRoute: appRouteRouteWithChildren,
   authRouteRoute: authRouteRouteWithChildren,
   ApiTranslateRoute: ApiTranslateRoute,
+  ApiAttachmentsIdRoute: ApiAttachmentsIdRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiNotificationSseRoute: ApiNotificationSseRoute,
+  ApiAttachmentsIndexRoute: ApiAttachmentsIndexRoute,
   publicSupportProjectIdChatWidgetRoute: publicSupportProjectIdChatWidgetRoute,
   publicSupportProjectIdManifestRoute: publicSupportProjectIdManifestRoute,
 }
