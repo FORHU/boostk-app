@@ -1,7 +1,10 @@
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
+import { Users } from "lucide-react";
 import type { Member, User } from "prisma/generated/client";
 import { Suspense, useEffect, useRef, useState } from "react";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { EmptyState } from "@/components/ui/empty-state";
 import { InviteModal } from "@/components/ui/invite-modals";
 import { DataTableSkeleton, ToolbarSkeleton } from "@/components/ui/skeleton";
 import { REDIRECT_REASON } from "@/enums/enums";
@@ -66,7 +69,6 @@ function MemberRowActions({ member, organizationId }: { member: Member & { user:
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const roleModalRef = useRef<HTMLDivElement>(null);
-  const removeModalRef = useRef<HTMLDivElement>(null);
 
   const roleTriggerRef = useRef<HTMLButtonElement | null>(null);
   const removeTriggerRef = useRef<HTMLButtonElement | null>(null);
@@ -115,39 +117,6 @@ function MemberRowActions({ member, organizationId }: { member: Member & { user:
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isRoleModalOpen]);
-
-  // Handle Focus return and Keyboard interactions for Remove Modal
-  useEffect(() => {
-    if (!isRemoveModalOpen) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setIsRemoveModalOpen(false);
-        setServerError("");
-        removeTriggerRef.current?.focus();
-        return;
-      }
-      if (e.key === "Tab") {
-        const modal = removeModalRef.current;
-        if (!modal) return;
-        const focusable = modal.querySelectorAll(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-        );
-        const first = focusable[0] as HTMLElement;
-        const last = focusable[focusable.length - 1] as HTMLElement;
-        if (e.shiftKey && document.activeElement === first) {
-          last?.focus();
-          e.preventDefault();
-        } else if (!e.shiftKey && document.activeElement === last) {
-          first?.focus();
-          e.preventDefault();
-        }
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isRemoveModalOpen]);
 
   const updateRoleMutation = useMutation({
     mutationFn: () =>
@@ -291,52 +260,26 @@ function MemberRowActions({ member, organizationId }: { member: Member & { user:
         </div>
       )}
 
-      {/* Remove Member Confirmation Modal */}
-      {isRemoveModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div
-            ref={removeModalRef}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="remove-modal-title"
-            tabIndex={-1}
-            className="w-full max-w-sm rounded-[7px] bg-background p-6 shadow-lg border border-border focus:outline-none"
-          >
-            <h3 id="remove-modal-title" className="text-lg font-bold text-foreground">
-              Remove Member
-            </h3>
-            <p className="mt-2 text-sm text-red-500">
-              Are you sure you want to remove <strong>{member.user?.name || "this user"}</strong>
-            </p>
-            <p className="text-sm text-red-500">from the organization? They will lose all access.</p>
-
-            {serverError && <p className="mt-2 text-sm text-red-500">{serverError}</p>}
-
-            <div className="mt-6 flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsRemoveModalOpen(false);
-                  setServerError("");
-                  removeTriggerRef.current?.focus();
-                }}
-                disabled={removeMemberMutation.isPending}
-                className="rounded-[5px] px-4 py-2 text-sm font-medium text-foreground hover:bg-muted border border-border transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => removeMemberMutation.mutate()}
-                disabled={removeMemberMutation.isPending}
-                className="rounded-[5px] bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors disabled:opacity-50"
-              >
-                {removeMemberMutation.isPending ? "Removing..." : "Remove"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmDialog
+        isOpen={isRemoveModalOpen}
+        onClose={() => {
+          setIsRemoveModalOpen(false);
+          setServerError("");
+          removeTriggerRef.current?.focus();
+        }}
+        title="Remove Member"
+        message={
+          <>
+            Are you sure you want to remove <strong>{member.user?.name || "this user"}</strong> from the organization?
+            They will lose all access.
+          </>
+        }
+        confirmLabel="Remove"
+        variant="destructive"
+        isPending={removeMemberMutation.isPending}
+        onConfirm={() => removeMemberMutation.mutate()}
+        error={serverError}
+      />
     </div>
   );
 }
@@ -436,23 +379,7 @@ function TeamTable({ organizationId }: { organizationId: string }) {
 
       <div className="bg-background rounded-[7px] border border-border shadow-sm overflow-hidden w-full">
         {filteredMembers.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 bg-muted/50">
-            <svg
-              aria-hidden="true"
-              className="w-12 h-12 text-muted-foreground mb-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              strokeWidth="1"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-              />
-            </svg>
-            <h3 className="text-lg font-medium text-muted-foreground">No users found</h3>
-          </div>
+          <EmptyState icon={<Users className="w-12 h-12" />} title="No users found" className="py-20 bg-muted/50" />
         ) : (
           <div className="overflow-x-auto w-full">
             <table className="min-w-full divide-y divide-border">

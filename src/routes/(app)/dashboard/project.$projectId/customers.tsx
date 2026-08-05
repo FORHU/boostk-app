@@ -6,6 +6,7 @@ import type { TicketMessage } from "prisma/generated/client";
 import { useState } from "react";
 import { ReplyInput } from "@/components/chat-support/reply-input";
 import TicketChatMessageBubble from "@/components/chat-support/TicketChatMessageBubble";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TicketPriorityBadge } from "@/components/ui/ticket-priority";
 import { REDIRECT_REASON } from "@/enums/enums";
@@ -200,7 +201,7 @@ function ProjectCustomersPage() {
 
         <div className="flex-1 overflow-y-auto p-2 space-y-2">
           {filteredCustomers.length === 0 ? (
-            <div className="p-4 text-center text-sm text-muted-foreground">No customers found.</div>
+            <EmptyState title="No customers found." size="sm" className="p-4" />
           ) : (
             filteredCustomers.map((customer) => {
               const latestTicket = customer.tickets[0];
@@ -307,10 +308,11 @@ function ProjectCustomersPage() {
           {/* Message History */}
           <div className={`flex-1 overflow-y-auto ${isMd ? "p-6" : "p-4"} space-y-6 mt-3`}>
             {!activeTicket ? (
-              <div className="flex h-full flex-col items-center justify-center text-muted-foreground space-y-4 p-4 text-center">
-                <Briefcase className="w-12 h-12 opacity-20 shrink-0" />
-                <p>This customer does not have any support tickets.</p>
-              </div>
+              <EmptyState
+                icon={<Briefcase className="w-12 h-12 opacity-20 shrink-0" />}
+                title="This customer does not have any support tickets."
+                className="h-full p-4"
+              />
             ) : activeTicket.ticketMessages.length === 0 ? (
               <div className="flex h-full items-center justify-center text-muted-foreground p-4 text-center">
                 <p>No messages in this ticket yet.</p>

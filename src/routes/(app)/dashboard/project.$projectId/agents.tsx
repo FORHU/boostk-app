@@ -15,6 +15,7 @@ import {
 import type { Member, User } from "prisma/generated/client";
 import { Suspense, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
 import { DataTableSkeleton, TextSkeleton } from "@/components/ui/skeleton";
 import { REDIRECT_REASON } from "@/enums/enums";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -238,12 +239,12 @@ function AgentTable({ organizationId, projectId }: { organizationId: string; pro
 
                 {filteredMembers.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="py-12 text-center">
-                      <div className="flex flex-col items-center justify-center text-muted-foreground px-4">
-                        <Users className="w-10 h-10 opacity-20 mb-3" />
-                        <p className="text-sm font-medium">No agents found</p>
-                        <p className="text-xs mt-1">Try adjusting your search or filters.</p>
-                      </div>
+                    <td colSpan={5} className="text-center">
+                      <EmptyState
+                        icon={<Users className="w-10 h-10 opacity-20" />}
+                        title="No agents found"
+                        description="Try adjusting your search or filters."
+                      />
                     </td>
                   </tr>
                 )}

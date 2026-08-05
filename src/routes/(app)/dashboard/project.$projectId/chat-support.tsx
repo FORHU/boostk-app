@@ -1,13 +1,15 @@
 import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { Bot, Loader2, Sparkles } from "lucide-react";
+import { Bot, Info, Loader2, Sparkles, User } from "lucide-react";
 import type { Customer, Project, Ticket, TicketMessage } from "prisma/generated/client";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { ReplyInput } from "@/components/chat-support/reply-input";
 import TicketChatMessageBubble from "@/components/chat-support/TicketChatMessageBubble";
+import { EmptyState } from "@/components/ui/empty-state";
 import { REDIRECT_REASON } from "@/enums/enums";
 import { useSocket } from "@/hooks/use-socket";
+import { useViewport } from "@/hooks/use-viewport";
 import { EventType } from "@/lib/notifier/core";
 import { cn } from "@/lib/utils";
 import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
@@ -33,6 +35,15 @@ function ProjectChatSupportPage() {
   const { project, authSession } = Route.useRouteContext();
   const queryClient = useQueryClient();
   const [selectedTicket, setSelectedTicket] = useState<TicketWithCustomer | null>(null);
+  const [showTicketDetails, setShowTicketDetails] = useState(false);
+  const [showCustomerDetails, setShowCustomerDetails] = useState(false);
+  const { isMobile } = useViewport();
+  const isMobileView = isMobile ?? false;
+
+  // Latest message timestamp per ticket we've already processed, so a socket
+  // reconnect or duplicate event doesn't invalidate (and refetch) a conversation
+  // it already has current data for.
+  const lastSeenMessageAtRef = useRef<Record<string, number>>({});
 
   // Realtime: keep the open conversation and the ticket list fresh when new
   // events arrive over socket.io (agent dashboards do not send these messages).
@@ -46,7 +57,13 @@ function ProjectChatSupportPage() {
       selectedTicket &&
       lastMessage.data?.ticketId === selectedTicket.id
     ) {
-      queryClient.invalidateQueries({ queryKey: ticketMessageQueries.getByTicket(selectedTicket.id).queryKey });
+      const ticketId = selectedTicket.id;
+      const messageAt =
+        typeof lastMessage.data.createdAt === "string" ? new Date(lastMessage.data.createdAt).getTime() : NaN;
+      const lastSeen = lastSeenMessageAtRef.current[ticketId] ?? 0;
+      if (!Number.isNaN(messageAt) && messageAt <= lastSeen) return;
+      lastSeenMessageAtRef.current[ticketId] = messageAt;
+      queryClient.invalidateQueries({ queryKey: ticketMessageQueries.getByTicket(ticketId).queryKey });
     }
 
     if (lastMessage.event === EventType.TICKET_CREATED) {
@@ -59,10 +76,27 @@ function ProjectChatSupportPage() {
       <Suspense fallback={<div className="p-2 text-sm text-muted-foreground">Loading project tickets...</div>}>
         <TicketList project={project} selectedTicket={selectedTicket} onSelect={setSelectedTicket} />
       </Suspense>
-      <div className="flex-1 flex flex-row min-h-0 border-t">
-        <TicketDetails ticket={selectedTicket} />
-        <ChatWindow ticket={selectedTicket} />
-        <CustomerDetails ticket={selectedTicket} />
+      <div className="flex-none h-[87svh] flex flex-row min-h-0 border-t relative">
+        {showTicketDetails && <TicketDetails ticket={selectedTicket} isMobile={isMobileView} />}
+        <ChatWindow
+          ticket={selectedTicket}
+          showTicketDetails={showTicketDetails}
+          showCustomerDetails={showCustomerDetails}
+          onToggleTicketDetails={() => setShowTicketDetails((v) => !v)}
+          onToggleCustomerDetails={() => setShowCustomerDetails((v) => !v)}
+        />
+        {showCustomerDetails && <CustomerDetails ticket={selectedTicket} isMobile={isMobileView} />}
+        {isMobileView && (showTicketDetails || showCustomerDetails) && (
+          <button
+            type="button"
+            aria-label="Close details panels"
+            className="absolute inset-0 z-10 bg-black/20"
+            onClick={() => {
+              setShowTicketDetails(false);
+              setShowCustomerDetails(false);
+            }}
+          />
+        )}
       </div>
     </div>
   );
@@ -105,9 +139,14 @@ const TicketList = ({ project, selectedTicket, onSelect }: TicketListProps) => {
   );
 };
 
-const TicketDetails = ({ ticket }: { ticket: TicketWithCustomer | null }) => {
+const TicketDetails = ({ ticket, isMobile }: { ticket: TicketWithCustomer | null; isMobile: boolean }) => {
   return (
-    <div className="h-full w-1/4 p-3 text-sm border-r">
+    <div
+      className={cn(
+        "p-3 text-sm border-r bg-background overflow-y-auto",
+        isMobile ? "absolute left-0 top-0 bottom-0 z-20 w-72 max-w-[85vw] shadow-xl" : "h-full w-72 shrink-0",
+      )}
+    >
       {ticket ? (
         <>
           <div className="font-semibold">Ticket #{ticket.referenceNumber.slice(0, 8)}</div>
@@ -122,19 +161,33 @@ const TicketDetails = ({ ticket }: { ticket: TicketWithCustomer | null }) => {
   );
 };
 
-const ChatWindow = ({ ticket }: { ticket: TicketWithCustomer | null }) => {
+interface ChatWindowProps {
+  ticket: TicketWithCustomer | null;
+  showTicketDetails: boolean;
+  showCustomerDetails: boolean;
+  onToggleTicketDetails: () => void;
+  onToggleCustomerDetails: () => void;
+}
+
+const ChatWindow = ({
+  ticket,
+  showTicketDetails,
+  showCustomerDetails,
+  onToggleTicketDetails,
+  onToggleCustomerDetails,
+}: ChatWindowProps) => {
   const queryClient = useQueryClient();
 
   if (!ticket) {
     return (
-      <div className="h-full w-1/2 flex items-center justify-center text-sm text-muted-foreground">
+      <div className="h-full flex-1 min-w-0 flex items-center justify-center text-sm text-muted-foreground">
         Select a ticket to view the conversation
       </div>
     );
   }
 
   return (
-    <div className="h-full w-1/2 flex flex-col min-h-0">
+    <div className="h-full flex-1 min-w-0 flex flex-col min-h-0">
       <header className="flex-none bg-blue-600 dark:bg-blue-800 p-4 text-white flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-3">
           <div className="bg-blue-400/30 p-2 rounded-lg">
@@ -152,7 +205,32 @@ const ChatWindow = ({ ticket }: { ticket: TicketWithCustomer | null }) => {
             </span>
           </div>
         </div>
-        <Sparkles size={16} className="text-blue-300" />
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={onToggleTicketDetails}
+            className={cn(
+              "p-2 rounded-lg transition-colors",
+              showTicketDetails ? "bg-white/25 text-white" : "text-blue-200 hover:bg-white/10",
+            )}
+            title="Toggle ticket details"
+            aria-pressed={showTicketDetails}
+          >
+            <Info size={16} />
+          </button>
+          <button
+            type="button"
+            onClick={onToggleCustomerDetails}
+            className={cn(
+              "p-2 rounded-lg transition-colors",
+              showCustomerDetails ? "bg-white/25 text-white" : "text-blue-200 hover:bg-white/10",
+            )}
+            title="Toggle customer profile"
+            aria-pressed={showCustomerDetails}
+          >
+            <User size={16} />
+          </button>
+        </div>
       </header>
       <AgentMessageList ticket={ticket} />
       <ReplyInput
@@ -194,18 +272,17 @@ const AgentMessageList = ({ ticket }: { ticket: TicketWithCustomer }) => {
   return (
     <div className="flex-1 overflow-y-auto p-2 space-y-0.5 bg-slate-50 dark:bg-slate-900/50 scroll-smooth pb-4">
       {list.length === 0 ? (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="flex flex-col items-center justify-center h-full text-center p-6"
-        >
-          <div className="bg-blue-50 dark:bg-blue-500/10 p-4 rounded-full mb-3">
-            <Sparkles className="text-blue-500 dark:text-blue-400" size={32} />
-          </div>
-          <h3 className="font-semibold text-gray-900 dark:text-gray-100">Waiting for the customer</h3>
-          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1 max-w-[200px]">
-            Replies from the customer will appear here.
-          </p>
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
+          <EmptyState
+            icon={
+              <div className="bg-blue-50 dark:bg-blue-500/10 p-4 rounded-full">
+                <Sparkles className="text-blue-500 dark:text-blue-400" size={32} />
+              </div>
+            }
+            title="Waiting for the customer"
+            description="Replies from the customer will appear here."
+            className="h-full p-6"
+          />
         </motion.div>
       ) : (
         list.map((msg, index) => {
@@ -218,9 +295,14 @@ const AgentMessageList = ({ ticket }: { ticket: TicketWithCustomer }) => {
   );
 };
 
-const CustomerDetails = ({ ticket }: { ticket: TicketWithCustomer | null }) => {
+const CustomerDetails = ({ ticket, isMobile }: { ticket: TicketWithCustomer | null; isMobile: boolean }) => {
   return (
-    <div className="h-full w-1/4 p-3 text-sm border-l">
+    <div
+      className={cn(
+        "p-3 text-sm border-l bg-background overflow-y-auto",
+        isMobile ? "absolute right-0 top-0 bottom-0 z-20 w-72 max-w-[85vw] shadow-xl" : "h-full w-72 shrink-0",
+      )}
+    >
       {ticket ? (
         <>
           <div className="font-semibold">{ticket.customer.name}</div>

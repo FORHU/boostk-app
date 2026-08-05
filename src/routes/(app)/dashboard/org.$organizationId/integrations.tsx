@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useState } from "react";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { REDIRECT_REASON } from "@/enums/enums";
 import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
 import {
@@ -98,6 +99,10 @@ function OrganizationIntegrationsPage() {
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState("All");
   const [pendingProvider, setPendingProvider] = useState<IntegrationProvider | null>(null);
+  const [disconnectTarget, setDisconnectTarget] = useState<{ provider: IntegrationProvider; name: string } | null>(
+    null,
+  );
+  const [disconnectError, setDisconnectError] = useState<string | null>(null);
 
   const { data: activeIntegrations } = useSuspenseQuery(organizationIntegrationQueries.all(organizationId));
 
@@ -119,7 +124,10 @@ function OrganizationIntegrationsPage() {
       queryClient.invalidateQueries({
         queryKey: organizationIntegrationQueries.all(organizationId).queryKey,
       });
+      setDisconnectTarget(null);
+      setDisconnectError(null);
     },
+    onError: (error) => setDisconnectError(error.message),
     onSettled: () => setPendingProvider(null),
   });
 
@@ -129,94 +137,123 @@ function OrganizationIntegrationsPage() {
     filter === "All" ? AVAILABLE_INTEGRATIONS : AVAILABLE_INTEGRATIONS.filter((item) => item.category === filter);
 
   const toggleIntegration = (providerId: IntegrationProvider, isCurrentlyConnected: boolean) => {
-    setPendingProvider(providerId);
     if (isCurrentlyConnected) {
-      disconnectMutation.mutate({ data: { organizationId, provider: providerId } });
-    } else {
-      connectMutation.mutate({ data: { organizationId, provider: providerId } });
+      const target = AVAILABLE_INTEGRATIONS.find((i) => i.id === providerId);
+      setDisconnectTarget(target ? { provider: target.id, name: target.name } : null);
+      return;
     }
+    setPendingProvider(providerId);
+    connectMutation.mutate({ data: { organizationId, provider: providerId } });
   };
 
   return (
-    <div className="h-screen overflow-y-auto">
-      <div className="max-w-7xl mx-auto p-6 md:p-10 space-y-8 bg-background text-foreground pb-20">
-        <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 border-b border-border pb-6">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Integrations</h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Connect Boostk with your favorite tools to streamline your support workflow.
-            </p>
+    <>
+      <div className="h-screen overflow-y-auto">
+        <div className="max-w-7xl mx-auto p-6 md:p-10 space-y-8 bg-background text-foreground pb-20">
+          <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 border-b border-border pb-6">
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">Integrations</h1>
+              <p className="text-sm text-muted-foreground mt-1">
+                Connect Boostk with your favorite tools to streamline your support workflow.
+              </p>
+            </div>
           </div>
-        </div>
 
-        <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4">
-          <div className="flex items-center space-x-1 bg-muted p-1 rounded-[5px] w-full md:w-auto overflow-x-auto">
-            {categories.map((cat) => (
-              <button
-                type="button"
-                key={cat}
-                onClick={() => setFilter(cat)}
-                className={`px-4 py-1.5 text-xs font-bold rounded-[5px] transition-all whitespace-nowrap uppercase ${
-                  filter === cat
-                    ? "bg-background shadow-sm"
-                    : "text-muted-foreground hover:text-foreground hover:bg-background/50 transition-colors"
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredIntegrations.map((integration) => {
-            const isConnected = connectedProviders.has(integration.id);
-            const isPending = pendingProvider === integration.id;
-
-            return (
-              <div
-                key={integration.id}
-                className="bg-card border border-border rounded-[10px] p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between h-full"
-              >
-                <div>
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="p-3 bg-muted rounded-[8px] text-primary">{integration.icon}</div>
-
-                    <div
-                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
-                        isConnected
-                          ? "bg-green-500/10 text-green-600 border-green-500/20"
-                          : "bg-muted text-muted-foreground border-transparent"
-                      }`}
-                    >
-                      <span
-                        className={`w-1.5 h-1.5 rounded-full ${isConnected ? "bg-green-600" : "bg-muted-foreground"}`}
-                      ></span>
-                      {isConnected ? "Live" : "Disconnected"}
-                    </div>
-                  </div>
-
-                  <h3 className="font-semibold text-lg mb-1">{integration.name}</h3>
-                  <p className="text-sm text-muted-foreground mb-6 line-clamp-3">{integration.description}</p>
-                </div>
-
+          <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4">
+            <div className="flex items-center space-x-1 bg-muted p-1 rounded-[5px] w-full md:w-auto overflow-x-auto">
+              {categories.map((cat) => (
                 <button
                   type="button"
-                  disabled={isPending}
-                  onClick={() => toggleIntegration(integration.id, isConnected)}
-                  className={`w-full py-2 rounded-[4px] text-sm font-medium transition-colors disabled:opacity-50 border ${
-                    isConnected
-                      ? "bg-muted text-foreground hover:bg-muted/80 border-border"
-                      : "bg-primary text-primary-foreground hover:opacity-90 border-transparent"
+                  key={cat}
+                  onClick={() => setFilter(cat)}
+                  className={`px-4 py-1.5 text-xs font-bold rounded-[5px] transition-all whitespace-nowrap uppercase ${
+                    filter === cat
+                      ? "bg-background shadow-sm"
+                      : "text-muted-foreground hover:text-foreground hover:bg-background/50 transition-colors"
                   }`}
                 >
-                  {isConnected ? "Disconnect" : "Connect"}
+                  {cat}
                 </button>
-              </div>
-            );
-          })}
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredIntegrations.map((integration) => {
+              const isConnected = connectedProviders.has(integration.id);
+              const isPending = pendingProvider === integration.id;
+
+              return (
+                <div
+                  key={integration.id}
+                  className="bg-card border border-border rounded-[10px] p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between h-full"
+                >
+                  <div>
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="p-3 bg-muted rounded-[8px] text-primary">{integration.icon}</div>
+
+                      <div
+                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
+                          isConnected
+                            ? "bg-green-500/10 text-green-600 border-green-500/20"
+                            : "bg-muted text-muted-foreground border-transparent"
+                        }`}
+                      >
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full ${isConnected ? "bg-green-600" : "bg-muted-foreground"}`}
+                        ></span>
+                        {isConnected ? "Live" : "Disconnected"}
+                      </div>
+                    </div>
+
+                    <h3 className="font-semibold text-lg mb-1">{integration.name}</h3>
+                    <p className="text-sm text-muted-foreground mb-6 line-clamp-3">{integration.description}</p>
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled={isPending}
+                    onClick={() => toggleIntegration(integration.id, isConnected)}
+                    className={`w-full py-2 rounded-[4px] text-sm font-medium transition-colors disabled:opacity-50 border ${
+                      isConnected
+                        ? "bg-muted text-foreground hover:bg-muted/80 border-border"
+                        : "bg-primary text-primary-foreground hover:opacity-90 border-transparent"
+                    }`}
+                  >
+                    {isConnected ? "Disconnect" : "Connect"}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
-    </div>
+
+      <ConfirmDialog
+        isOpen={disconnectTarget !== null}
+        onClose={() => {
+          setDisconnectTarget(null);
+          setDisconnectError(null);
+        }}
+        title="Disconnect Integration"
+        message={
+          <>
+            Are you sure you want to disconnect <strong>{disconnectTarget?.name}</strong>? You can reconnect at any
+            time.
+          </>
+        }
+        confirmLabel="Disconnect"
+        variant="destructive"
+        isPending={disconnectMutation.isPending}
+        onConfirm={() => {
+          if (!disconnectTarget) return;
+          setPendingProvider(disconnectTarget.provider);
+          disconnectMutation.mutate({
+            data: { organizationId, provider: disconnectTarget.provider },
+          });
+        }}
+        error={disconnectError}
+      />
+    </>
   );
 }

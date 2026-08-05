@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { z } from "zod";
 import { ReplyInput } from "@/components/chat-support/reply-input";
 import TicketChatMessageBubble from "@/components/chat-support/TicketChatMessageBubble";
+import { EmptyState } from "@/components/ui/empty-state";
 import { TicketPriorityBadge, TicketPrioritySelect, type TicketPriorityType } from "@/components/ui/ticket-priority";
 import { useToast } from "@/components/ui/toast";
 import { REDIRECT_REASON } from "@/enums/enums";
@@ -321,18 +322,17 @@ function TicketDetailPanel({
               <Loader2 className="animate-spin text-blue-600 size-6" />
             </div>
           ) : !ticket?.ticketMessages || ticket.ticketMessages.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="flex flex-col items-center justify-center h-full text-center p-6"
-            >
-              <div className="bg-blue-50 dark:bg-blue-500/10 p-4 rounded-full mb-3">
-                <Sparkles className="text-blue-500 dark:text-blue-400" size={32} />
-              </div>
-              <h3 className="font-semibold text-gray-900 dark:text-gray-100">Waiting for the customer</h3>
-              <p className="text-gray-500 dark:text-gray-400 text-sm mt-1 max-w-[200px]">
-                Replies from the customer will appear here.
-              </p>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
+              <EmptyState
+                icon={
+                  <div className="bg-blue-50 dark:bg-blue-500/10 p-4 rounded-full">
+                    <Sparkles className="text-blue-500 dark:text-blue-400" size={32} />
+                  </div>
+                }
+                title="Waiting for the customer"
+                description="Replies from the customer will appear here."
+                className="h-full p-6"
+              />
             </motion.div>
           ) : (
             <div className="flex flex-col space-y-0.5">
@@ -527,19 +527,16 @@ function ProjectTicketsPage() {
             </div>
 
             {sortedTickets.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-20 border rounded-md bg-muted/10">
-                <div className="text-muted-foreground mb-2">
-                  <X className="size-10" strokeWidth={1} />
-                </div>
-                <h3 className="text-lg font-medium text-foreground">
-                  {searchQuery ? "Reference doesn't match" : `No ${statusFilter.toLowerCase()} tickets found`}
-                </h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {searchQuery
+              <EmptyState
+                icon={<X className="size-10" strokeWidth={1} />}
+                title={searchQuery ? "Reference doesn't match" : `No ${statusFilter.toLowerCase()} tickets found`}
+                description={
+                  searchQuery
                     ? "Try searching for a different reference number or name."
-                    : "There are currently no tickets matching this status."}
-                </p>
-              </div>
+                    : "There are currently no tickets matching this status."
+                }
+                className="py-20 border rounded-md bg-muted/10"
+              />
             ) : (
               <div className="border border-muted rounded-lg shadow-sm overflow-x-auto w-full">
                 <table className="min-w-full divide-y divide-muted">
@@ -643,19 +640,16 @@ function ProjectTicketsPage() {
           </div>
 
           {sortedTickets.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 border rounded-md bg-muted/10">
-              <div className="text-muted-foreground mb-2">
-                <X className="size-10" strokeWidth={1} />
-              </div>
-              <h3 className="text-lg font-medium text-foreground">
-                {searchQuery ? "Reference doesn't match" : `No ${statusFilter.toLowerCase()} tickets found`}
-              </h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                {searchQuery
+            <EmptyState
+              icon={<X className="size-10" strokeWidth={1} />}
+              title={searchQuery ? "Reference doesn't match" : `No ${statusFilter.toLowerCase()} tickets found`}
+              description={
+                searchQuery
                   ? "Try searching for a different reference number or name."
-                  : "There are currently no tickets matching this status."}
-              </p>
-            </div>
+                  : "There are currently no tickets matching this status."
+              }
+              className="py-20 border rounded-md bg-muted/10"
+            />
           ) : (
             <div className="border border-muted rounded-lg shadow-sm overflow-x-auto w-full">
               <table className="min-w-full divide-y divide-muted">
