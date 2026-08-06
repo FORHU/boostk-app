@@ -72,8 +72,8 @@ jobs:
           strip_components: 1
 
       # EC2 only logs in, pulls the prebuilt image, and swaps containers.
-      # app.env is written here from the EC2_APP_ENV secret, so nothing has to
-      # be created on the box by hand — see docs/DEPLOYMENT.md parts 2 and 3.
+      # app.env is written here from individual secrets, so nothing has to be
+      # created on the box by hand — same pattern as our other repos' deploy.yml.
       - name: Deploy over SSH
         uses: appleboy/ssh-action@v1
         with:
@@ -86,30 +86,21 @@ jobs:
             mkdir -p ~/boostk-app
             cd ~/boostk-app
 
-            # Runtime secrets, written from the EC2_APP_ENV secret. umask 077
-            # means the file is created 600 from the outset, never briefly
-            # world-readable. The quoted heredoc delimiter stops the shell
-            # expanding any $ inside the values.
             umask 077
-            cat > app.env <<'APPENV'
-            ${{ secrets.EC2_APP_ENV }}
-            APPENV
-
-            # A missing GitHub secret resolves to an empty string rather than
-            # failing, so check explicitly instead of deploying a broken app.
-            if [ ! -s app.env ]; then
-              echo "❌ EC2_APP_ENV secret is empty or unset — app.env not written"
-              exit 1
-            fi
-            if ! grep -q '^DATABASE_URL=' app.env; then
-              echo "❌ app.env has no DATABASE_URL — migrations would fail"
-              exit 1
-            fi
-            if grep -q 'CHANGE_ME' app.env; then
-              echo "❌ app.env still contains CHANGE_ME placeholders"
-              exit 1
-            fi
-            echo "✅ app.env written ($(wc -l < app.env) lines)"
+            cat > app.env << 'ENVEOF'
+            DATABASE_URL=postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@postgres:5432/${{ secrets.POSTGRES_DB }}
+            POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+            POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+            POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+            RABBITMQ_DEFAULT_USER=${{ secrets.RABBITMQ_DEFAULT_USER }}
+            RABBITMQ_DEFAULT_PASS=${{ secrets.RABBITMQ_DEFAULT_PASS }}
+            RABBITMQ_URL=amqp://${{ secrets.RABBITMQ_DEFAULT_USER }}:${{ secrets.RABBITMQ_DEFAULT_PASS }}@rabbitmq:5672
+            BETTER_AUTH_URL=${{ secrets.BETTER_AUTH_URL }}
+            BETTER_AUTH_SECRET=${{ secrets.BETTER_AUTH_SECRET }}
+            FORHU_CHAT_URL=${{ vars.FORHU_CHAT_URL }}
+            SUPPORT_LANGUAGE=${{ vars.SUPPORT_LANGUAGE }}
+            SOCKET_PORT=5001
+            ENVEOF
 
             echo "$ECR_PASSWORD" | docker login --username AWS --password-stdin "$REGISTRY"
             docker pull "$IMAGE"

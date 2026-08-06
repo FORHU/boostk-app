@@ -36,6 +36,11 @@ services:
   rabbitmq:
     image: rabbitmq:3-management
     restart: unless-stopped
+    # guest/guest only works over loopback by default, and app/socket reach
+    # this over the Docker network (not loopback) — so a real user is required.
+    # RABBITMQ_DEFAULT_USER / RABBITMQ_DEFAULT_PASS come from app.env, written
+    # by deploy.yml from the RABBITMQ_DEFAULT_USER/RABBITMQ_DEFAULT_PASS secrets.
+    env_file: app.env
     # No ports: reachable only on the internal Docker network.
     # NEVER publish 15672 — the management UI ships with guest/guest.
 
