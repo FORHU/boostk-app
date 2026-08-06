@@ -28,7 +28,7 @@ services:
     # Same image, different entrypoint. Bun runs the TypeScript directly.
     command: ["bun", "run", "src/socket-server/index.ts"]
     ports:
-      - "127.0.0.1:3001:3001"
+      - "127.0.0.1:5001:5001"
     depends_on:
       rabbitmq:
         condition: service_started
