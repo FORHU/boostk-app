@@ -58,9 +58,22 @@ jobs:
           echo "::add-mask::$PASSWORD"
           echo "password=$PASSWORD" >> "$GITHUB_OUTPUT"
 
+      # Ship the compose file straight from the repo checkout, so the box can
+      # never drift from what is committed. strip_components drops the leading
+      # "deploy/" path segment, landing it at ~/boostk-app/.
+      - name: Upload compose file to EC2
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: deploy/docker-compose.prod.yaml
+          target: ~/boostk-app/
+          strip_components: 1
+
       # EC2 only logs in, pulls the prebuilt image, and swaps containers.
-      # Requires ~/boostk-app/docker-compose.prod.yaml and ~/boostk-app/app.env
-      # to already exist on the box — see docs/DEPLOYMENT.md parts 2 and 3.
+      # app.env is written here from the EC2_APP_ENV secret, so nothing has to
+      # be created on the box by hand — see docs/DEPLOYMENT.md parts 2 and 3.
       - name: Deploy over SSH
         uses: appleboy/ssh-action@v1
         with:
@@ -70,7 +83,33 @@ jobs:
           envs: REGISTRY,IMAGE,ECR_PASSWORD
           script: |
             set -e
+            mkdir -p ~/boostk-app
             cd ~/boostk-app
+
+            # Runtime secrets, written from the EC2_APP_ENV secret. umask 077
+            # means the file is created 600 from the outset, never briefly
+            # world-readable. The quoted heredoc delimiter stops the shell
+            # expanding any $ inside the values.
+            umask 077
+            cat > app.env <<'APPENV'
+            ${{ secrets.EC2_APP_ENV }}
+            APPENV
+
+            # A missing GitHub secret resolves to an empty string rather than
+            # failing, so check explicitly instead of deploying a broken app.
+            if [ ! -s app.env ]; then
+              echo "❌ EC2_APP_ENV secret is empty or unset — app.env not written"
+              exit 1
+            fi
+            if ! grep -q '^DATABASE_URL=' app.env; then
+              echo "❌ app.env has no DATABASE_URL — migrations would fail"
+              exit 1
+            fi
+            if grep -q 'CHANGE_ME' app.env; then
+              echo "❌ app.env still contains CHANGE_ME placeholders"
+              exit 1
+            fi
+            echo "✅ app.env written ($(wc -l < app.env) lines)"
 
             echo "$ECR_PASSWORD" | docker login --username AWS --password-stdin "$REGISTRY"
             docker pull "$IMAGE"
