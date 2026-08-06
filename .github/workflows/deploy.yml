@@ -83,6 +83,18 @@ jobs:
           envs: REGISTRY,IMAGE,ECR_PASSWORD
           script: |
             set -e
+
+            # ── Bootstrap: Docker Compose v2 plugin ──────────────────────
+            # `docker compose` (no hyphen) requires this plugin; without it
+            # Docker's CLI can't parse "compose" as a subcommand and instead
+            # errors on "-f" as an unrecognized root flag.
+            if ! docker compose version &> /dev/null; then
+              mkdir -p ~/.docker/cli-plugins
+              curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 \
+                -o ~/.docker/cli-plugins/docker-compose
+              chmod +x ~/.docker/cli-plugins/docker-compose
+            fi
+
             mkdir -p ~/boostk-app
             cd ~/boostk-app
 
