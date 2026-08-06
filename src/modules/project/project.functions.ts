@@ -29,7 +29,7 @@ export const getProjectPublicFn = createServerFn({ method: "GET" })
     // Abort if the project ID is invalid or deleted.
     // This ensures `project` is defined before we check privacy settings.
     if (!project) {
-      throw new Error("Project Not Found");
+      return null;
     }
 
     // suggestion: If we have a concept of "private" projects
