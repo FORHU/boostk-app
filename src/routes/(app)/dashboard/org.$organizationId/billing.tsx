@@ -1,5 +1,7 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useState } from "react";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useToast } from "@/components/ui/toast";
 import { REDIRECT_REASON } from "@/enums/enums";
 import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
 
@@ -20,7 +22,6 @@ interface Plan {
   annualPrice: number;
   description: string;
   isPopular?: boolean;
-  isCurrent?: boolean;
   features: string[];
 }
 
@@ -32,7 +33,6 @@ const PLAN_CONFIG: Plan[] = [
     monthlyPrice: 0,
     annualPrice: 0,
     description: "Essential basic sharing tools.",
-    isCurrent: true,
     features: ["Image and document file uploads", "Message delivery status indicators"],
   },
   {
@@ -79,8 +79,25 @@ const PLAN_CONFIG: Plan[] = [
   },
 ];
 
+const DEFAULT_PLAN_ID = "free";
+
+function getCurrentPlanId(organization: { metadata?: string | null } | undefined): string {
+  if (!organization?.metadata) return DEFAULT_PLAN_ID;
+  try {
+    const parsed = JSON.parse(organization.metadata) as { plan?: string };
+    return parsed.plan && PLAN_CONFIG.some((p) => p.id === parsed.plan) ? parsed.plan : DEFAULT_PLAN_ID;
+  } catch {
+    return DEFAULT_PLAN_ID;
+  }
+}
+
 function OrganizationBillingPage() {
+  const { organization } = Route.useRouteContext();
+  const { toast } = useToast();
   const [isAnnual, setIsAnnual] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
+
+  const currentPlanId = getCurrentPlanId(organization);
 
   return (
     <div className="h-screen overflow-y-auto">
@@ -117,63 +134,95 @@ function OrganizationBillingPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            {PLAN_CONFIG.map((plan) => (
-              <div
-                key={plan.id}
-                className="bg-card border border-border rounded-xl p-6 shadow-sm hover:shadow-md flex flex-col relative"
-              >
-                <div className="flex justify-between items-center mb-2">
-                  <h3 className="font-semibold text-lg">{plan.name}</h3>
-                  {plan.isPopular && (
-                    <span className="bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                      Popular
+            {PLAN_CONFIG.map((plan) => {
+              const isCurrent = plan.id === currentPlanId;
+              return (
+                <div
+                  key={plan.id}
+                  className="bg-card border border-border rounded-xl p-6 shadow-sm hover:shadow-md flex flex-col relative"
+                >
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="font-semibold text-lg">{plan.name}</h3>
+                    {plan.isPopular && (
+                      <span className="bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                        Popular
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="mb-1">
+                    <span className="text-2xl font-bold">${isAnnual ? plan.annualPrice : plan.monthlyPrice}</span>
+                    <span className="text-muted-foreground text-sm">
+                      {plan.monthlyPrice === 0 ? " / forever" : isAnnual ? " / year" : " / month"}
                     </span>
+                  </div>
+
+                  <p className="text-xs text-muted-foreground mb-6">{plan.description}</p>
+
+                  {isCurrent ? (
+                    <button
+                      type="button"
+                      disabled
+                      aria-disabled="true"
+                      className="w-full bg-muted text-muted-foreground font-medium py-2 mb-6 cursor-not-allowed"
+                    >
+                      Current Plan
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedPlan(plan)}
+                      className="w-full bg-primary text-primary-foreground font-medium py-2 mb-6 transition-opacity"
+                    >
+                      Subscribe
+                    </button>
                   )}
+
+                  <ul className="space-y-3 text-sm text-foreground/80 flex-1">
+                    {plan.features.map((feature) => (
+                      <li key={feature} className="flex items-start gap-2">
+                        <svg
+                          aria-hidden="true"
+                          className="w-4 h-4 text-primary mt-0.5 shrink-0"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-
-                <div className="mb-1">
-                  <span className="text-2xl font-bold">${isAnnual ? plan.annualPrice : plan.monthlyPrice}</span>
-                  <span className="text-muted-foreground text-sm">
-                    {plan.monthlyPrice === 0 ? " / forever" : isAnnual ? " / year" : " / month"}
-                  </span>
-                </div>
-
-                <p className="text-xs text-muted-foreground mb-6">{plan.description}</p>
-
-                {plan.isCurrent ? (
-                  <button type="button" className="w-full bg-muted text-muted-foreground font-medium py-2 mb-6">
-                    Current Plan
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    className="w-full bg-primary text-primary-foreground font-medium py-2 mb-6 transition-opacity"
-                  >
-                    Subscribe
-                  </button>
-                )}
-
-                <ul className="space-y-3 text-sm text-foreground/80 flex-1">
-                  {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-start gap-2">
-                      <svg
-                        aria-hidden="true"
-                        className="w-4 h-4 text-primary mt-0.5 shrink-0"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                      </svg>
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
       </div>
+
+      {selectedPlan && (
+        <ConfirmDialog
+          isOpen
+          onClose={() => setSelectedPlan(null)}
+          title={`Subscribe to ${selectedPlan.name}`}
+          message={
+            <>
+              You're about to subscribe to the <strong>{selectedPlan.name}</strong> plan for{" "}
+              <strong>
+                {isAnnual ? `$${selectedPlan.annualPrice} / year` : `$${selectedPlan.monthlyPrice} / month`}
+              </strong>
+              . Self-serve checkout isn't available yet, so our sales team will reach out to finalize your subscription.
+            </>
+          }
+          confirmLabel="Contact Sales"
+          cancelLabel="Cancel"
+          onConfirm={() => {
+            setSelectedPlan(null);
+            toast("Our sales team will reach out to you soon.", "info");
+          }}
+        />
+      )}
     </div>
   );
 }
