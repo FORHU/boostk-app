@@ -6,7 +6,8 @@ import { createCustomer } from "../customer/customer.service";
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
-    ticket: { create: vi.fn(), findFirst: vi.fn() },
+    ticket: { create: vi.fn(), findFirst: vi.fn(), update: vi.fn() },
+    member: { findFirst: vi.fn() },
     project: { findUnique: vi.fn() },
   },
 }));
@@ -25,6 +26,7 @@ vi.mock("../customer/customer.service", () => ({
 }));
 
 import {
+  assignTicket,
   createTicket,
   createTicketSession,
   getTicketSession,
@@ -56,6 +58,7 @@ const ticket = {
   priority: TicketPriority.LOW,
   projectId: "project-1",
   customerId: "customer-1",
+  assignedAgentId: null,
   createdAt: new Date("2026-01-01T00:00:00.000Z"),
   updatedAt: new Date("2026-01-01T00:00:00.000Z"),
 };
@@ -226,5 +229,93 @@ describe("createTicketSession", () => {
       path: TICKET_COOKIE_PATH,
     });
     expect(result).toEqual({ customer, ticket });
+  });
+});
+
+describe("assignTicket", () => {
+  const memberFindFirstMock = vi.mocked(prisma.member.findFirst);
+  const updateMock = vi.mocked(prisma.ticket.update);
+
+  const agentMember = {
+    id: "member-agent-1",
+    organizationId: "org-1",
+    userId: "user-agent-1",
+    role: "agent",
+  };
+
+  const baseInput = {
+    projectId: "project-1",
+    ticketId: "ticket-1",
+    assignedAgentId: "member-agent-1",
+  };
+
+  const updatedTicket = {
+    id: "ticket-1",
+    referenceNumber: "TK-AAAAAA",
+    status: TicketStatus.OPEN,
+    priority: TicketPriority.LOW,
+    projectId: "project-1",
+    customerId: "customer-1",
+    assignedAgentId: "member-agent-1",
+    createdAt: new Date("2026-01-01T00:00:00.000Z"),
+    updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+  };
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+    memberFindFirstMock.mockResolvedValue(agentMember);
+    updateMock.mockResolvedValue(updatedTicket);
+  });
+
+  it("assigns the ticket when the assignee is an agent in the project's org", async () => {
+    const result = await assignTicket(baseInput);
+
+    expect(result).toEqual(updatedTicket);
+    expect(memberFindFirstMock).toHaveBeenCalledWith({
+      where: {
+        id: "member-agent-1",
+        organization: { projects: { some: { id: "project-1" } } },
+      },
+    });
+    expect(updateMock).toHaveBeenCalledWith({
+      where: { id: "ticket-1", projectId: "project-1" },
+      data: { assignedAgentId: "member-agent-1" },
+    });
+  });
+
+  it("rejects an assignee who is not a member of the project's org", async () => {
+    memberFindFirstMock.mockResolvedValue(null);
+
+    await expect(assignTicket(baseInput)).rejects.toThrow("Assignee is not a member of this project's organization.");
+    expect(updateMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects an assignee whose role is below agent (e.g. member)", async () => {
+    memberFindFirstMock.mockResolvedValue({ ...agentMember, role: "member" });
+
+    await expect(assignTicket(baseInput)).rejects.toThrow("Assignee must have the agent role or higher.");
+    expect(updateMock).not.toHaveBeenCalled();
+  });
+
+  it("accepts an admin assignee", async () => {
+    memberFindFirstMock.mockResolvedValue({ ...agentMember, role: "admin" });
+
+    const result = await assignTicket(baseInput);
+
+    expect(result).toEqual(updatedTicket);
+    expect(updateMock).toHaveBeenCalled();
+  });
+
+  it("unassigns the ticket when assignedAgentId is null without a membership check", async () => {
+    updateMock.mockResolvedValue({ ...updatedTicket, assignedAgentId: null });
+
+    const result = await assignTicket({ ...baseInput, assignedAgentId: null });
+
+    expect(result).toEqual({ ...updatedTicket, assignedAgentId: null });
+    expect(memberFindFirstMock).not.toHaveBeenCalled();
+    expect(updateMock).toHaveBeenCalledWith({
+      where: { id: "ticket-1", projectId: "project-1" },
+      data: { assignedAgentId: null },
+    });
   });
 });

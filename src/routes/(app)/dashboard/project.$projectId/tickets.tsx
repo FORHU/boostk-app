@@ -19,7 +19,10 @@ import { EventType } from "@/lib/notifier/core";
 import { prisma } from "@/lib/prisma";
 import { publishEvent } from "@/lib/rabbitmq";
 import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
+import { memberQueries } from "@/modules/members/member.queries";
+import { publishToProjectAgents } from "@/modules/notification/notification.publish";
 import { requireProjectRole } from "@/modules/project/project.middleware";
+import { assignTicket } from "@/modules/ticket/ticket.service";
 
 // 1. Fetching Function. Agent-only.
 export const getProjectTicketsFn = createServerFn({ method: "GET" })
@@ -28,7 +31,10 @@ export const getProjectTicketsFn = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     return prisma.ticket.findMany({
       where: { projectId: data.projectId },
-      include: { customer: true },
+      include: {
+        customer: true,
+        assignedAgent: { include: { user: true } },
+      },
       // `as const` pins the literal so Prisma's orderBy doesn't widen to `string`,
       // which otherwise collapses the `include` payload type and drops `customer`.
       orderBy: { createdAt: "desc" as const },
@@ -43,6 +49,7 @@ export const getTicketByIdFn = createServerFn({ method: "GET" })
       where: { id: data.ticketId, projectId: data.projectId },
       include: {
         customer: true,
+        assignedAgent: { include: { user: true } },
         ticketMessages: {
           orderBy: { createdAt: "asc" as const },
         },
@@ -94,6 +101,32 @@ export const updateTicketPriorityFn = createServerFn({ method: "POST" })
       },
       data: { priority: data.priority },
     });
+  });
+
+export const assignTicketFn = createServerFn({ method: "POST" })
+  .inputValidator(
+    z.object({
+      projectId: z.string(),
+      ticketId: z.string(),
+      // Member id of the agent taking the ticket, or null to unassign.
+      assignedAgentId: z.string().nullable(),
+    }),
+  )
+  .middleware([requireProjectRole(ORG_ROLE.AGENT)])
+  .handler(async ({ data }) => {
+    const updatedTicket = await assignTicket(data);
+
+    // Notify every agent of the project so their ticket lists refresh live.
+    await publishToProjectAgents({
+      projectId: data.projectId,
+      event: EventType.TICKET_ASSIGNED,
+      data: {
+        ticketId: data.ticketId,
+        assignedAgentId: data.assignedAgentId,
+      },
+    });
+
+    return updatedTicket;
   });
 
 // 2. Query Options
@@ -167,11 +200,13 @@ function getStatusBadgeClasses(status: string) {
 
 function TicketDetailPanel({
   projectId,
+  organizationId,
   ticketId,
   onClose,
   onBack,
 }: {
   projectId: string;
+  organizationId: string;
   ticketId: string | null;
   onClose: () => void;
   onBack?: () => void;
@@ -185,6 +220,25 @@ function TicketDetailPanel({
   });
 
   const queryClient = useQueryClient();
+
+  const agentsQuery = useQuery({
+    ...memberQueries.agentAllByOrgId(organizationId),
+    enabled: !!organizationId,
+  });
+  const agents = (agentsQuery.data ?? []).filter((member) => hasOrgRole(member.role, ORG_ROLE.AGENT));
+
+  const assignMutation = useMutation({
+    mutationFn: assignTicketFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: projectTicketQueries.detailById(projectId, ticketId || "").queryKey,
+      });
+      queryClient.invalidateQueries({
+        queryKey: projectTicketQueries.allByProjectId(projectId).queryKey,
+      });
+    },
+    onError: () => toast("Failed to update assignee."),
+  });
 
   const updateStatusMutation = useMutation({
     mutationFn: updateTicketStatusFn,
@@ -263,6 +317,35 @@ function TicketDetailPanel({
                     });
                   }}
                 />
+              )}
+              {!isLoading && ticket && (
+                <div className="flex items-center gap-2">
+                  <select
+                    value={ticket.assignedAgentId ?? ""}
+                    disabled={assignMutation.isPending}
+                    onChange={(e) => {
+                      assignMutation.mutate({
+                        data: {
+                          projectId,
+                          ticketId,
+                          assignedAgentId: e.target.value || null,
+                        },
+                      });
+                    }}
+                    className="text-xs bg-white/10 text-white rounded-[4px] px-2 py-1 outline-none border border-transparent focus:border-white/50 focus:ring-1 focus:ring-white/50 disabled:opacity-50 cursor-pointer"
+                    title="Assign this ticket to an agent"
+                  >
+                    <option value="" style={{ color: "black", backgroundColor: "white" }}>
+                      Unassigned
+                    </option>
+                    {agents.map((agent) => (
+                      <option key={agent.id} value={agent.id} style={{ color: "black", backgroundColor: "white" }}>
+                        {agent.user?.name || agent.user?.email}
+                      </option>
+                    ))}
+                  </select>
+                  {assignMutation.isPending && <Loader2 className="animate-spin text-indigo-200" size={14} />}
+                </div>
               )}
             </div>
           </div>
@@ -371,7 +454,8 @@ function ProjectTicketsPage() {
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
 
-  const { authSession } = Route.useRouteContext();
+  const { authSession, project } = Route.useRouteContext();
+  const organizationId = project.organizationId;
   const queryClient = useQueryClient();
   const selectedTicketId = search.selectedTicketId ?? null;
 
@@ -396,6 +480,18 @@ function ProjectTicketsPage() {
       queryClient.invalidateQueries({
         queryKey: projectTicketQueries.allByProjectId(projectId).queryKey,
       });
+    }
+
+    if (lastMessage.event === EventType.TICKET_ASSIGNED) {
+      const assignedTicketId = lastMessage.data?.ticketId;
+      queryClient.invalidateQueries({
+        queryKey: projectTicketQueries.allByProjectId(projectId).queryKey,
+      });
+      if (assignedTicketId && selectedTicketId === assignedTicketId) {
+        queryClient.invalidateQueries({
+          queryKey: projectTicketQueries.detailById(projectId, assignedTicketId).queryKey,
+        });
+      }
     }
   }, [lastMessage, selectedTicketId, projectId, queryClient]);
 
@@ -433,12 +529,16 @@ function ProjectTicketsPage() {
 
   const sortedTickets = [...filteredTickets].sort((a, b) => {
     if (!sortConfig) return 0;
-    let aValue = a[sortConfig.key as keyof typeof a];
-    let bValue = b[sortConfig.key as keyof typeof b];
+    let aValue = a[sortConfig.key as keyof typeof a] ?? "";
+    let bValue = b[sortConfig.key as keyof typeof b] ?? "";
 
     if (sortConfig.key === "customerName") {
       aValue = a.customer?.name ?? "";
       bValue = b.customer?.name ?? "";
+    }
+    if (sortConfig.key === "assignee") {
+      aValue = a.assignedAgent?.user?.name ?? "";
+      bValue = b.assignedAgent?.user?.name ?? "";
     }
     if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
     if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
@@ -483,6 +583,7 @@ function ProjectTicketsPage() {
           <div className="fixed inset-0 z-50 bg-background flex flex-col">
             <TicketDetailPanel
               projectId={projectId}
+              organizationId={organizationId}
               ticketId={selectedTicketId}
               onBack={clearSelection}
               onClose={clearSelection}
@@ -542,7 +643,7 @@ function ProjectTicketsPage() {
                 <table className="min-w-full divide-y divide-muted">
                   <thead className="bg-muted/50">
                     <tr>
-                      {["referenceNumber", "priority", "status", "customerName", "createdAt"].map((col) => (
+                      {["referenceNumber", "priority", "status", "customerName", "assignee", "createdAt"].map((col) => (
                         <th
                           key={col}
                           className="px-6 py-3 text-left text-xs font-medium uppercase cursor-pointer hover:bg-muted transition-colors"
@@ -586,6 +687,11 @@ function ProjectTicketsPage() {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">{ticket.customer?.name}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          {ticket.assignedAgent?.user?.name ?? (
+                            <span className="text-muted-foreground">Unassigned</span>
+                          )}
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                           {new Date(ticket.createdAt).toLocaleDateString()}
                         </td>
@@ -709,7 +815,12 @@ function ProjectTicketsPage() {
             </div>
           )}
 
-          <TicketDetailPanel projectId={projectId} ticketId={selectedTicketId} onClose={clearSelection} />
+          <TicketDetailPanel
+            projectId={projectId}
+            organizationId={organizationId}
+            ticketId={selectedTicketId}
+            onClose={clearSelection}
+          />
         </div>
       )}
     </div>
