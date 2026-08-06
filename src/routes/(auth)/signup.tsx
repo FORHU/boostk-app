@@ -4,7 +4,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel, FieldSeparator } from "@/components/ui/field";
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
 import { getFieldInvalid } from "@/lib/form-utils";
@@ -150,7 +150,6 @@ function SignupPage() {
                     </Field>
                   )}
                 </signUpForm.Subscribe>
-
 
                 <FieldDescription className="text-center">
                   Already have an account? <Link to="/signin">Log in</Link>
