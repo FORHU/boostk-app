@@ -1,9 +1,9 @@
-import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { ArrowLeft, Briefcase, Calendar, Hash, Info, Mail, Search, Tag, X } from "lucide-react";
+import { ArrowLeft, Briefcase, Calendar, Hash, Info, Loader2, Mail, Search, Tag, X } from "lucide-react";
 
 import type { TicketMessage } from "prisma/generated/client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ReplyInput } from "@/components/chat-support/reply-input";
 import TicketChatMessageBubble from "@/components/chat-support/TicketChatMessageBubble";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -17,7 +17,7 @@ import { projectCustomerQueries } from "@/modules/customer/customer.queries";
 
 function CustomersLoadingFallback() {
   return (
-    <div className="flex h-screen w-full bg-muted/20 text-foreground font-sans overflow-hidden">
+    <div className="flex h-full w-full bg-muted/20 text-foreground font-sans overflow-hidden">
       {/* CUSTOMER LIST SIDEBAR SKELETON */}
       <aside className="border-r border-border bg-background flex-col w-full md:w-80 flex">
         <div className="p-4 border-b border-border/50">
@@ -25,7 +25,7 @@ function CustomersLoadingFallback() {
           <Skeleton className="h-9 w-full rounded-md" />
         </div>
 
-        <div className="flex-1 overflow-y-auto p-2 space-y-2">
+        <div className="no-scrollbar flex-1 overflow-y-auto p-2 space-y-2">
           {[...Array(6)].map((id) => (
             <div key={id} className="p-3 border border-transparent rounded-md flex flex-col gap-2">
               <div className="flex justify-between items-start gap-2">
@@ -60,7 +60,7 @@ function CustomersLoadingFallback() {
         </header>
 
         {/* Message History */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 bg-muted/20">
+        <div className="no-scrollbar flex-1 overflow-y-auto p-4 md:p-6 space-y-6 bg-muted/20">
           <div className="flex flex-col gap-1 items-start">
             <Skeleton className="h-16 w-[80%] md:w-[60%] rounded-2xl rounded-tl-none" />
             <Skeleton className="h-3 w-16 mt-1 ml-1" />
@@ -92,7 +92,7 @@ function CustomersLoadingFallback() {
           <Skeleton className="h-4 w-28" />
         </div>
 
-        <div className="p-4 md:p-6 space-y-6 overflow-y-auto h-[calc(100vh-65px)]">
+        <div className="p-4 md:p-6 space-y-6 overflow-y-auto no-scrollbar h-[calc(100vh-65px)]">
           <div className="flex flex-col items-center text-center gap-3">
             <Skeleton className="w-20 h-20 rounded-full shrink-0" />
             <div className="w-full flex flex-col items-center gap-2">
@@ -154,22 +154,51 @@ function ProjectCustomersPage() {
   const [showMobileDetails, setShowMobileDetails] = useState(false);
   const [showDesktopDetails, setShowDesktopDetails] = useState(true);
 
-  const { data: customers } = useSuspenseQuery(projectCustomerQueries.allByProjectId(projectId));
+  // Paginated light list: customer + latest-ticket preview, one page at a time.
+  const customersQuery = useInfiniteQuery(projectCustomerQueries.list({ projectId, search: debouncedSearchQuery }));
+  const customers = customersQuery.data?.pages.flatMap((page) => page.customers) ?? [];
+
+  const selectedCustomerId = activeCustomerId ?? customers[0]?.id ?? null;
+
+  // Full thread (customer + tickets + messages) is fetched per selected customer.
+  const threadQuery = useQuery({
+    ...(selectedCustomerId
+      ? projectCustomerQueries.thread(projectId, selectedCustomerId)
+      : {
+          queryKey: [...projectCustomerQueries.listPrefix(projectId), "thread", "none"],
+          queryFn: () => null as never,
+          enabled: false,
+        }),
+  });
+  const activeCustomer = threadQuery.data && threadQuery.data.id === selectedCustomerId ? threadQuery.data : null;
+  const activeTicket = activeCustomer?.tickets?.[0] ?? null;
 
   const { isMd, isLg, isMounted } = useViewport();
+
+  // Infinite scroll: fetch the next cursor page when the sentinel enters view.
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const { fetchNextPage, hasNextPage, isFetchingNextPage } = customersQuery;
+
+  useEffect(() => {
+    const node = loadMoreRef.current;
+    if (!node || !hasNextPage || isFetchingNextPage) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) fetchNextPage();
+      },
+      { root: null, threshold: 0.1 },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   if (!isMounted) {
     return <CustomersLoadingFallback />;
   }
 
-  const activeCustomer = customers.find((c) => c.id === activeCustomerId) ?? customers[0] ?? null;
-  const activeTicket = activeCustomer?.tickets?.[0] ?? null;
-
-  const filteredCustomers = customers.filter(
-    (c) =>
-      c.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
-      c.email.toLowerCase().includes(debouncedSearchQuery.toLowerCase()),
-  );
+  if (customersQuery.isPending && customers.length === 0) {
+    return <CustomersLoadingFallback />;
+  }
 
   const getStatusIndicator = (status: string) => {
     return status === "OPEN" ? (
@@ -180,7 +209,7 @@ function ProjectCustomersPage() {
   };
 
   return (
-    <div className="flex min-h-screen w-full bg-muted/20 text-foreground font-sans">
+    <div className="flex h-full w-full bg-muted/20 text-foreground font-sans overflow-hidden">
       {/* CUSTOMER LIST SIDEBAR */}
       <aside
         className={`border-r border-border bg-background flex-col ${isMd ? "w-80 flex" : `w-full ${activeCustomerId ? "hidden" : "flex"}`}`}
@@ -199,13 +228,13 @@ function ProjectCustomersPage() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-2 space-y-2">
-          {filteredCustomers.length === 0 ? (
+        <div className="no-scrollbar flex-1 overflow-y-auto p-2 space-y-2">
+          {customers.length === 0 ? (
             <EmptyState title="No customers found." size="sm" className="p-4" />
           ) : (
-            filteredCustomers.map((customer) => {
-              const latestTicket = customer.tickets[0];
-              const latestMessage = latestTicket?.ticketMessages[latestTicket.ticketMessages.length - 1];
+            customers.map((customer) => {
+              const latestTicket = customer.latestTicket;
+              const latestMessage = latestTicket?.latestMessage ?? null;
 
               return (
                 <button
@@ -253,112 +282,137 @@ function ProjectCustomersPage() {
               );
             })
           )}
+
+          {hasNextPage && (
+            <div ref={loadMoreRef} className="flex items-center justify-center py-2">
+              {isFetchingNextPage && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
+            </div>
+          )}
         </div>
       </aside>
 
       {/* ACTIVE CHAT AREA*/}
-      {activeCustomer && (
+      {selectedCustomerId && (
         <main
           className={`flex-1 flex flex-col mb-8 bg-background relative transition-all duration-300 ease-in-out ${isMd || activeCustomerId || customers.length === 0 ? "flex" : "hidden"}`}
         >
-          <header className={`h-16 flex justify-between items-center ${isMd ? "px-6" : "px-3"} bg-muted/50 z-10 gap-2`}>
-            <div className={`flex items-center ${isMd ? "gap-3" : "gap-2"} flex-1 min-w-0`}>
-              {!isMd && (
-                <button
-                  type="button"
-                  className="flex items-center gap-1.5 p-1.5 -ml-1 text-muted-foreground shrink-0 hover:bg-muted rounded-md transition-colors"
-                  onClick={() => setActiveCustomerId(null)}
-                >
-                  <ArrowLeft className="w-5 h-5" />
-                  <span className="text-sm">Customers</span>
-                </button>
-              )}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <h1 className="font-bold text-foreground truncate">{activeCustomer.name}</h1>
-                  {activeTicket && (
-                    <div className="shrink-0">
-                      <TicketPriorityBadge priority={activeTicket.priority} />
-                    </div>
+          {activeCustomer ? (
+            <>
+              <header
+                className={`h-16 flex justify-between items-center ${isMd ? "px-6" : "px-3"} bg-muted/50 z-10 gap-2`}
+              >
+                <div className={`flex items-center ${isMd ? "gap-3" : "gap-2"} flex-1 min-w-0`}>
+                  {!isMd && (
+                    <button
+                      type="button"
+                      className="flex items-center gap-1.5 p-1.5 -ml-1 text-muted-foreground shrink-0 hover:bg-muted rounded-md transition-colors"
+                      onClick={() => setActiveCustomerId(null)}
+                    >
+                      <ArrowLeft className="w-5 h-5" />
+                      <span className="text-sm">Customers</span>
+                    </button>
                   )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h1 className="font-bold text-foreground truncate">{activeCustomer.name}</h1>
+                      {activeTicket && (
+                        <div className="shrink-0">
+                          <TicketPriorityBadge priority={activeTicket.priority} />
+                        </div>
+                      )}
+                    </div>
+                    {activeTicket ? (
+                      <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                        {getStatusIndicator(activeTicket.status)}
+                        <span className="truncate">
+                          {activeTicket.referenceNumber} • {activeTicket.status === "OPEN" ? "Active" : "Closed"}
+                        </span>
+                      </p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground truncate">No active tickets</p>
+                    )}
+                  </div>
                 </div>
-                {activeTicket ? (
-                  <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                    {getStatusIndicator(activeTicket.status)}
-                    <span className="truncate">
-                      {activeTicket.referenceNumber} • {activeTicket.status === "OPEN" ? "Active" : "Closed"}
-                    </span>
-                  </p>
+                {!isLg && (
+                  <button
+                    type="button"
+                    className="p-2 text-primary bg-primary/10 hover:bg-primary/20 rounded-sm shrink-0 transition-colors"
+                    onClick={() => setShowMobileDetails(true)}
+                  >
+                    <Info className="w-5 h-5" />
+                  </button>
+                )}
+              </header>
+
+              {/* Message History */}
+              <div className={`no-scrollbar flex-1 overflow-y-auto ${isMd ? "p-6" : "p-4"} space-y-6 mt-3`}>
+                {!activeTicket ? (
+                  <EmptyState
+                    icon={<Briefcase className="w-12 h-12 opacity-20 shrink-0" />}
+                    title="This customer does not have any support tickets."
+                    className="h-full p-4"
+                  />
+                ) : activeTicket.ticketMessages.length === 0 ? (
+                  <div className="flex h-full items-center justify-center text-muted-foreground p-4 text-center">
+                    <p>No messages in this ticket yet.</p>
+                  </div>
                 ) : (
-                  <p className="text-xs text-muted-foreground truncate">No active tickets</p>
+                  <div className="flex flex-col space-y-0.5">
+                    {activeTicket.ticketMessages.map((msg, index, list) => {
+                      const isStart = !isSameGroup(list[index - 1], msg);
+                      const isEnd = !isSameGroup(msg, list[index + 1]);
+
+                      return (
+                        <TicketChatMessageBubble
+                          key={msg.id}
+                          msg={msg}
+                          isStart={isStart}
+                          isEnd={isEnd}
+                          viewer="agent"
+                        />
+                      );
+                    })}
+                  </div>
                 )}
               </div>
+
+              {/* Chat Input */}
+              <div className="bg-background border-t border-border">
+                {activeTicket?.status === "CLOSED" ? (
+                  <div className="p-3">
+                    <div className="text-center p-3 text-sm text-muted-foreground bg-muted rounded-lg border border-border">
+                      This ticket is closed. Reopen it to continue the conversation.
+                    </div>
+                  </div>
+                ) : !activeTicket ? (
+                  <div className="p-3">
+                    <div className="text-center p-3 text-sm text-muted-foreground bg-muted/50 rounded-lg border border-dashed border-border">
+                      Select or create a ticket to send a message.
+                    </div>
+                  </div>
+                ) : (
+                  <ReplyInput
+                    ticketId={activeTicket.id}
+                    projectId={projectId}
+                    customerName={activeCustomer.name}
+                    customerLanguage={activeCustomer.language}
+                    onSuccess={() => {
+                      queryClient.invalidateQueries({
+                        queryKey: projectCustomerQueries.thread(projectId, activeCustomer.id).queryKey,
+                      });
+                      queryClient.invalidateQueries({
+                        queryKey: projectCustomerQueries.listPrefix(projectId),
+                      });
+                    }}
+                  />
+                )}
+              </div>
+            </>
+          ) : (
+            <div className="flex-1 flex items-center justify-center">
+              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
             </div>
-            {!isLg && (
-              <button
-                type="button"
-                className="p-2 text-primary bg-primary/10 hover:bg-primary/20 rounded-sm shrink-0 transition-colors"
-                onClick={() => setShowMobileDetails(true)}
-              >
-                <Info className="w-5 h-5" />
-              </button>
-            )}
-          </header>
-
-          {/* Message History */}
-          <div className={`flex-1 overflow-y-auto ${isMd ? "p-6" : "p-4"} space-y-6 mt-3`}>
-            {!activeTicket ? (
-              <EmptyState
-                icon={<Briefcase className="w-12 h-12 opacity-20 shrink-0" />}
-                title="This customer does not have any support tickets."
-                className="h-full p-4"
-              />
-            ) : activeTicket.ticketMessages.length === 0 ? (
-              <div className="flex h-full items-center justify-center text-muted-foreground p-4 text-center">
-                <p>No messages in this ticket yet.</p>
-              </div>
-            ) : (
-              <div className="flex flex-col space-y-0.5">
-                {activeTicket.ticketMessages.map((msg, index, list) => {
-                  const isStart = !isSameGroup(list[index - 1], msg);
-                  const isEnd = !isSameGroup(msg, list[index + 1]);
-
-                  return (
-                    <TicketChatMessageBubble key={msg.id} msg={msg} isStart={isStart} isEnd={isEnd} viewer="agent" />
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Chat Input */}
-          <div className="bg-background border-t border-border">
-            {activeTicket?.status === "CLOSED" ? (
-              <div className="p-3">
-                <div className="text-center p-3 text-sm text-muted-foreground bg-muted rounded-lg border border-border">
-                  This ticket is closed. Reopen it to continue the conversation.
-                </div>
-              </div>
-            ) : !activeTicket ? (
-              <div className="p-3">
-                <div className="text-center p-3 text-sm text-muted-foreground bg-muted/50 rounded-lg border border-dashed border-border">
-                  Select or create a ticket to send a message.
-                </div>
-              </div>
-            ) : (
-              <ReplyInput
-                ticketId={activeTicket.id}
-                projectId={projectId}
-                customerName={activeCustomer.name}
-                customerLanguage={activeCustomer.language}
-                onSuccess={() => {
-                  queryClient.invalidateQueries({
-                    queryKey: projectCustomerQueries.allByProjectId(projectId).queryKey,
-                  });
-                }}
-              />
-            )}
-          </div>
+          )}
         </main>
       )}
 
@@ -402,7 +456,7 @@ function ProjectCustomersPage() {
           </div>
 
           {activeCustomer && (
-            <div className={`${isMd ? "p-6" : "p-4"} space-y-6 overflow-y-auto h-[calc(100vh-65px)]`}>
+            <div className={`${isMd ? "p-6" : "p-4"} space-y-6 overflow-y-auto no-scrollbar h-[calc(100vh-65px)]`}>
               <div className="flex flex-col items-center text-center gap-3">
                 <div className="w-20 h-20 bg-muted text-muted-foreground rounded-full flex items-center justify-center text-2xl font-bold shadow-inner uppercase shrink-0">
                   {activeCustomer.name.charAt(0)}
