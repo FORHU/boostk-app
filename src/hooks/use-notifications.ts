@@ -20,6 +20,20 @@ export type NotificationItem = {
 // Only these business events surface in the notification bell (new ticket / new message).
 const NOTIFICATION_EVENTS = new Set<EventType>([EventType.TICKET_CREATED, EventType.CHAT_MESSAGE]);
 
+/**
+ * Chat messages are broadcast to every agent so dashboards refresh live, but the
+ * bell should only ring for the intended recipient (the assigned agent, tagged in
+ * `notifyUserId`). No `notifyUserId` means "everyone" (unassigned tickets), and
+ * the customer widget has no `userId` at all — both keep ringing.
+ */
+export function shouldRingBell(event: EventType, data: unknown, userId?: string): boolean {
+  if (event !== EventType.CHAT_MESSAGE) return true;
+  if (!userId) return true;
+  const notifyUserId = (data as { notifyUserId?: unknown } | null)?.notifyUserId;
+  if (typeof notifyUserId !== "string") return true;
+  return notifyUserId === userId;
+}
+
 export function useNotifications({
   userId,
   ticketId,
@@ -91,7 +105,7 @@ export function useNotifications({
         const message = { event: e.type as EventType, data: data };
         setLastMessage(message);
 
-        if (NOTIFICATION_EVENTS.has(message.event)) {
+        if (NOTIFICATION_EVENTS.has(message.event) && shouldRingBell(message.event, message.data, userId)) {
           const signature = JSON.stringify(message.data);
           setNotifications((prev) => {
             if (prev.some((n) => n.event === message.event && JSON.stringify(n.data) === signature)) {

@@ -123,6 +123,7 @@ export const createTicketMessageFn = createServerFn({ method: "POST" })
         sender: "customer",
         createdAt: message.createdAt.toISOString(),
       },
+      assignedAgentId: ticket.assignedAgentId ?? undefined,
     });
 
     return message;
@@ -237,6 +238,8 @@ export const createAgentTicketMessageFn = createServerFn({ method: "POST" })
     // Also broadcast the reply to every agent's `user.<id>` channel so their
     // dashboards (socket room user:<id> / SSE user.<id>.*) refresh the
     // conversation live — the ticket channel above only reaches the customer.
+    // The bell only rings for the assigned agent via `notifyUserId`; the sender
+    // is excluded so nobody notifies themselves.
     const project = await prisma.project.findUnique({
       where: { id: ticket.projectId },
       select: { name: true },
@@ -255,6 +258,8 @@ export const createAgentTicketMessageFn = createServerFn({ method: "POST" })
         sender: "agent",
         createdAt: message.createdAt.toISOString(),
       },
+      assignedAgentId: ticket.assignedAgentId ?? undefined,
+      excludeUserId: userId,
     });
 
     return message;

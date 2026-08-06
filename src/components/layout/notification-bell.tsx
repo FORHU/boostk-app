@@ -94,13 +94,16 @@ export function NotificationBell({ notifications, unreadCount, markAllRead }: No
                     key={item.localId}
                     onClick={() => {
                       const projectId = item.data?.projectId;
-                      if (typeof projectId === "string") {
-                        navigate({
-                          to: "/dashboard/project/$projectId/tickets",
-                          params: { projectId },
-                          search: { statusFilter: "ALL" },
-                        });
-                      }
+                      if (typeof projectId !== "string") return;
+                      const ticketId = item.data?.ticketId;
+                      navigate({
+                        to: "/dashboard/project/$projectId/tickets",
+                        params: { projectId },
+                        search: {
+                          statusFilter: "ALL",
+                          selectedTicketId: typeof ticketId === "string" ? ticketId : undefined,
+                        },
+                      });
                     }}
                     className="flex items-start gap-2 py-2"
                   >

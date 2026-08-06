@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { Socket } from "socket.io-client";
 import { io } from "socket.io-client";
 import { EventType, type Message } from "@/lib/notifier/core";
-import { type ConnectionStatus, type NotificationItem, useNotifications } from "./use-notifications";
+import { type ConnectionStatus, type NotificationItem, shouldRingBell, useNotifications } from "./use-notifications";
 
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:3001";
 
@@ -38,7 +38,7 @@ export function useSocket({ userId, ticketId, projectId }: { userId?: string; ti
       const message = { event: event as EventType, data };
       setLastMessage(message);
 
-      if (NOTIFICATION_EVENTS.has(message.event)) {
+      if (NOTIFICATION_EVENTS.has(message.event) && shouldRingBell(message.event, data, userId)) {
         const signature = JSON.stringify(data);
         setNotifications((prev) => {
           if (prev.some((n) => n.event === message.event && JSON.stringify(n.data) === signature)) {
