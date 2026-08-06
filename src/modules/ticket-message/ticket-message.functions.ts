@@ -18,7 +18,7 @@ import {
 // Attachment metadata travels with every message so a bubble can render a filename
 // and size without a second round trip. The bytes themselves are never selected —
 // they are streamed by GET /api/attachments/:id instead.
-const ATTACHMENT_SELECT = { select: { id: true, filename: true, mimeType: true, size: true } } as const;
+export const ATTACHMENT_SELECT = { select: { id: true, filename: true, mimeType: true, size: true } } as const;
 
 /**
  * Confirm an attachment exists and belongs to this ticket before a message points at
@@ -138,6 +138,48 @@ export const getTicketMessagesByTicketFn = createServerFn({ method: "GET" })
       include: { attachment: ATTACHMENT_SELECT },
       orderBy: { createdAt: "asc" as const },
     });
+  });
+
+// Agent-side: aggregate the conversations a single agent has participated in.
+// Computed in SQL-land so the Agents page never downloads the whole project's
+// chat history just to count one person's replies.
+export const getAgentConversationsFn = createServerFn({ method: "GET" })
+  .inputValidator(z.object({ projectId: z.string().min(1), userId: z.string().min(1) }))
+  .middleware([requireAuthMiddleware])
+  .handler(async ({ data }) => {
+    const messages = await prisma.ticketMessage.findMany({
+      where: { userId: data.userId, ticket: { projectId: data.projectId } },
+      select: {
+        content: true,
+        ticket: {
+          select: {
+            id: true,
+            status: true,
+            customer: { select: { name: true } },
+          },
+        },
+      },
+      orderBy: { createdAt: "asc" as const },
+    });
+
+    const chatsByTicket = new Map<string, { id: string; customerName: string; status: string; lastMessage: string }>();
+
+    for (const msg of messages) {
+      const ticket = msg.ticket;
+      const chat = chatsByTicket.get(ticket.id) ?? {
+        id: ticket.id,
+        customerName: ticket.customer.name,
+        status: ticket.status,
+        lastMessage: "",
+      };
+      chat.lastMessage = msg.content;
+      chatsByTicket.set(ticket.id, chat);
+    }
+
+    return {
+      messagesSentCount: messages.length,
+      handledChats: [...chatsByTicket.values()],
+    };
   });
 
 // Agent-side: send a reply (written in the support language), translated into the customer's language.

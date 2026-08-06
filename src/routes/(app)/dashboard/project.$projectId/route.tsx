@@ -23,7 +23,7 @@ function OrganizationLayout() {
   const { isMobile } = useViewport();
 
   return (
-    <div className="flex-1 min-h-0 relative">
+    <div className="flex flex-1 min-h-0 relative">
       {/* sets the custom properties for the sidebar */}
       <SidebarProvider
         style={
