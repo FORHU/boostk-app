@@ -234,5 +234,28 @@ export const createAgentTicketMessageFn = createServerFn({ method: "POST" })
       },
     });
 
+    // Also broadcast the reply to every agent's `user.<id>` channel so their
+    // dashboards (socket room user:<id> / SSE user.<id>.*) refresh the
+    // conversation live — the ticket channel above only reaches the customer.
+    const project = await prisma.project.findUnique({
+      where: { id: ticket.projectId },
+      select: { name: true },
+    });
+
+    await publishToProjectAgents({
+      projectId: ticket.projectId,
+      event: EventType.CHAT_MESSAGE,
+      data: {
+        ticketId: ticket.id,
+        referenceNumber: ticket.referenceNumber,
+        projectId: ticket.projectId,
+        projectName: project?.name ?? "",
+        customerName: ticket.customer.name,
+        content: notificationPreview(data.content, data.contentType, attachment),
+        sender: "agent",
+        createdAt: message.createdAt.toISOString(),
+      },
+    });
+
     return message;
   });

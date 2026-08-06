@@ -4,6 +4,7 @@ import { EventType } from "@/lib/notifier/core";
 import { prisma } from "@/lib/prisma";
 import type { CreateCustomerInput } from "@/modules/customer/customer.schema";
 import { publishToProjectAgents } from "@/modules/notification/notification.publish";
+import { hasOrgRole, ORG_ROLE } from "../auth/roles";
 import { createCustomer } from "../customer/customer.service";
 import { TICKET_COOKIE_MAX_AGE, TICKET_COOKIE_NAME, TICKET_COOKIE_PATH } from "./ticket.constants";
 import type { CreateTicketInput } from "./ticket.schema";
@@ -114,4 +115,39 @@ export const getTicketByReferenceNumber = async (referenceNumber: string, projec
   });
 
   return ticket;
+};
+
+export type AssignTicketInput = {
+  projectId: string;
+  ticketId: string;
+  /** Member id of the agent taking the ticket, or null to unassign. */
+  assignedAgentId: string | null;
+};
+
+/**
+ * Assigns (or unassigns) an org member to a ticket. The assignee must belong to
+ * the ticket's project's organization and hold at least the AGENT role; admins
+ * and owners pass the same check. A null `assignedAgentId` clears the assignee.
+ */
+export const assignTicket = async ({ projectId, ticketId, assignedAgentId }: AssignTicketInput) => {
+  if (assignedAgentId) {
+    const member = await prisma.member.findFirst({
+      where: {
+        id: assignedAgentId,
+        organization: { projects: { some: { id: projectId } } },
+      },
+    });
+
+    if (!member) {
+      throw new Error("Assignee is not a member of this project's organization.");
+    }
+    if (!hasOrgRole(member.role, ORG_ROLE.AGENT)) {
+      throw new Error("Assignee must have the agent role or higher.");
+    }
+  }
+
+  return prisma.ticket.update({
+    where: { id: ticketId, projectId },
+    data: { assignedAgentId },
+  });
 };

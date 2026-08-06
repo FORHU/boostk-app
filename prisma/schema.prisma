@@ -104,6 +104,8 @@ model Member {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
+  assignedTickets Ticket[]
+
   @@index([organizationId])
   @@index([userId])
   @@map("members")
@@ -193,12 +195,18 @@ model Ticket {
   customerId String
   customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
 
+  // The org member (role >= agent) responsible for this ticket. Nullable: a
+  // ticket starts unassigned and is claimed from the ticket detail panel.
+  assignedAgentId String?
+  assignedAgent   Member? @relation(fields: [assignedAgentId], references: [id], onDelete: SetNull)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   ticketMessages TicketMessage[]
   attachments    Attachment[]
 
+  @@index([assignedAgentId])
   @@map("tickets")
 }
 
