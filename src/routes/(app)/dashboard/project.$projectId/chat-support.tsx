@@ -112,7 +112,7 @@ const TicketList = ({ project, selectedTicket, onSelect }: TicketListProps) => {
   const { data: tickets } = useSuspenseQuery(ticketQueries.getProjectTickets(project.id));
 
   return (
-    <div className="px-2 h-12 flex flex-row gap-2 overflow-x-auto items-end">
+    <div className="px-2 min-h-12 flex flex-row gap-2 overflow-x-auto items-end">
       {tickets.map((ticket) => {
         const active = selectedTicket?.id === ticket.id;
         return (

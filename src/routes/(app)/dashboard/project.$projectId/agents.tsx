@@ -13,15 +13,15 @@ import {
   X,
 } from "lucide-react";
 import type { Member, User } from "prisma/generated/client";
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { DataTableSkeleton, TextSkeleton } from "@/components/ui/skeleton";
 import { REDIRECT_REASON } from "@/enums/enums";
 import { useDebounce } from "@/hooks/use-debounce";
 import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
-import { projectCustomerQueries } from "@/modules/customer/customer.queries";
 import { memberQueries } from "@/modules/members/member.queries";
+import { ticketMessageQueries } from "@/modules/ticket-message/ticket-message.queries";
 
 export const Route = createFileRoute("/(app)/dashboard/project/$projectId/agents")({
   beforeLoad: ({ context }) => {
@@ -61,9 +61,6 @@ function AgentTable({ organizationId, projectId }: { organizationId: string; pro
   const allMembers = (agentsQuery.data ?? []) as Array<Member & { user: User }>;
   const members = allMembers.filter((m) => hasOrgRole(m.role, ORG_ROLE.AGENT));
 
-  // Fetch Real Customers/Tickets for the Project
-  const customersQuery = useQuery(projectCustomerQueries.allByProjectId(projectId));
-
   // State
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery);
@@ -90,39 +87,13 @@ function AgentTable({ organizationId, projectId }: { organizationId: string; pro
     return matchesSearch && matchesRole;
   });
 
-  // Calculate Real Agent Metrics & Conversations
-  const agentStats = useMemo(() => {
-    if (!selectedAgent?.user?.id || !customersQuery.data) {
-      return { handledChats: [], messagesSentCount: 0 };
-    }
-
-    const targetUserId = selectedAgent.user.id;
-    let messagesSentCount = 0;
-    const handledChats: Array<{
-      id: string;
-      customerName: string;
-      status: string;
-      lastMessage: string;
-    }> = [];
-
-    customersQuery.data.forEach((customer) => {
-      customer.tickets.forEach((ticket) => {
-        const agentMessages = ticket.ticketMessages.filter((msg) => msg.userId === targetUserId);
-
-        if (agentMessages.length > 0) {
-          messagesSentCount += agentMessages.length;
-          handledChats.push({
-            id: ticket.id,
-            customerName: customer.name,
-            status: ticket.status,
-            lastMessage: ticket.ticketMessages[ticket.ticketMessages.length - 1]?.content || "No message content",
-          });
-        }
-      });
-    });
-
-    return { handledChats, messagesSentCount };
-  }, [selectedAgent, customersQuery.data]);
+  // Per-agent stats are computed server-side, only when an agent is selected —
+  // the page no longer downloads the project's entire chat history up front.
+  const agentConversationsQuery = useQuery({
+    ...ticketMessageQueries.getAgentConversations(projectId, selectedAgent?.user?.id ?? ""),
+    enabled: !!selectedAgent?.user?.id,
+  });
+  const agentStats = agentConversationsQuery.data ?? { handledChats: [], messagesSentCount: 0 };
 
   // Helper for specific Badge colors
   const getRoleBadgeColors = (role: string) => {
@@ -342,7 +313,7 @@ function AgentTable({ organizationId, projectId }: { organizationId: string; pro
                   Recent Conversations
                 </h3>
                 <div className="space-y-3">
-                  {customersQuery.isLoading ? (
+                  {agentConversationsQuery.isLoading ? (
                     <div className="flex justify-center p-6">
                       <span className="text-sm text-muted-foreground animate-pulse">Loading conversations...</span>
                     </div>
