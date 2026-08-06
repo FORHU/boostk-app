@@ -109,6 +109,7 @@ jobs:
             RABBITMQ_URL=amqp://${{ secrets.RABBITMQ_DEFAULT_USER }}:${{ secrets.RABBITMQ_DEFAULT_PASS }}@rabbitmq:5672
             BETTER_AUTH_URL=${{ secrets.BETTER_AUTH_URL }}
             BETTER_AUTH_SECRET=${{ secrets.BETTER_AUTH_SECRET }}
+            TRUSTED_ORIGINS=${{ secrets.TRUSTED_ORIGINS }}
             FORHU_CHAT_URL=${{ vars.FORHU_CHAT_URL }}
             SUPPORT_LANGUAGE=${{ vars.SUPPORT_LANGUAGE }}
             SOCKET_PORT=5001
