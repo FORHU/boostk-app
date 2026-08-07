@@ -1,7 +1,7 @@
 "use client";
 
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useMatch, useNavigate } from "@tanstack/react-router";
 import { BadgeCheckIcon, CreditCardIcon, LogOutIcon, SparklesIcon, ZapIcon } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -17,6 +17,7 @@ import {
 import type { NotificationItem } from "@/hooks/use-notifications";
 import { authClient } from "@/lib/auth-client";
 import { authQueries } from "@/modules/auth/auth.queries";
+import { organizationQueries } from "@/modules/organization/organization.queries";
 import { NotificationBell } from "./notification-bell";
 import { RouterBreadcrumb } from "./RouterBreadcrumb";
 
@@ -34,6 +35,12 @@ export default function AppTopbar({ connectionStatus, notifications, unreadCount
   // TODO: investigate why useSuspenseQuery is not working (return data can be nullable)
   const { data: authSession } = useSuspenseQuery(authQueries.authUser());
 
+  const orgMatch = useMatch({
+    from: "/(app)/dashboard/org/$organizationId",
+    shouldThrow: false,
+  });
+  const { data: organizations } = useSuspenseQuery(organizationQueries.getAuthOrganization());
+
   if (!authSession) {
     console.error("No auth session. Redirecting to login.");
     navigate({ to: "/signin" });
@@ -41,6 +48,7 @@ export default function AppTopbar({ connectionStatus, notifications, unreadCount
   }
 
   const { user } = authSession;
+  const organizationId = orgMatch?.params.organizationId ?? organizations[0]?.id;
 
   const handleLogout = async () => {
     queryClient.clear();
@@ -103,21 +111,39 @@ export default function AppTopbar({ connectionStatus, notifications, unreadCount
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
-                <DropdownMenuItem>
-                  <SparklesIcon />
-                  Upgrade to Pro
-                </DropdownMenuItem>
+                {organizationId ? (
+                  <DropdownMenuItem
+                    render={<Link to="/dashboard/org/$organizationId/billing" params={{ organizationId }} />}
+                  >
+                    <SparklesIcon />
+                    Upgrade to Pro
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem disabled>
+                    <SparklesIcon />
+                    Upgrade to Pro
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
-                <DropdownMenuItem>
+                <DropdownMenuItem disabled>
                   <BadgeCheckIcon />
                   Account
                 </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <CreditCardIcon />
-                  Billing
-                </DropdownMenuItem>
+                {organizationId ? (
+                  <DropdownMenuItem
+                    render={<Link to="/dashboard/org/$organizationId/billing" params={{ organizationId }} />}
+                  >
+                    <CreditCardIcon />
+                    Billing
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem disabled>
+                    <CreditCardIcon />
+                    Billing
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>
