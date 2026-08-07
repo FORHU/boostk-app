@@ -92,12 +92,21 @@ jobs:
       # Checks the process is still alive rather than requiring HTTP 200 —
       # there is no database here, so the app may legitimately error on a
       # request while still having started correctly.
+      #
+      # The image sets NODE_ENV=production (Dockerfile), so src/env.ts enforces
+      # its REQUIRED_IN_PRODUCTION list at import time and the container refuses
+      # to boot if any is missing. KEEP THESE IN SYNC with that list
+      # (src/env.ts) — adding a var there without adding it here fails CI with
+      # "✖ Invalid environment configuration". Values are throwaway: nothing
+      # here connects to a real broker or database.
       - name: Container starts and stays up
         run: |
           docker run -d --name boostk-ci \
             -e DATABASE_URL=postgresql://user:pass@localhost:5432/ci \
             -e BETTER_AUTH_SECRET=ci-dummy-secret-not-real \
             -e BETTER_AUTH_URL=http://localhost:5000/ \
+            -e TRUSTED_ORIGINS=http://localhost:5000 \
+            -e RABBITMQ_URL=amqp://user:pass@localhost:5672 \
             boostk:ci
           sleep 10
           if [ "$(docker inspect -f '{{.State.Running}}' boostk-ci)" != "true" ]; then
