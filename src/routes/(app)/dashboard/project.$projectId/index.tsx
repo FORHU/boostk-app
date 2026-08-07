@@ -18,6 +18,7 @@ import { z } from "zod";
 import { EmptyState } from "@/components/ui/empty-state";
 import { TextSkeleton, UsageCardsSkeleton } from "@/components/ui/skeleton";
 import { useViewport } from "@/hooks/use-viewport";
+import { formatRelative } from "@/lib/format-date";
 import { prisma } from "@/lib/prisma";
 import { ORG_ROLE } from "@/modules/auth/roles";
 import { requireProjectRole } from "@/modules/project/project.middleware";
@@ -209,9 +210,7 @@ function OverviewContent({ projectId }: { projectId: string }) {
                     <p className="font-medium text-sm text-foreground truncate group-hover:text-primary transition-colors">
                       #{ticket.id.slice(0, 8).toUpperCase()}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-1 truncate">
-                      {new Date(ticket.createdAt).toLocaleDateString()}
-                    </p>
+                    <p className="text-xs text-muted-foreground mt-1 truncate">{formatRelative(ticket.createdAt)}</p>
                   </div>
                   <div className="flex-shrink-0">
                     <span

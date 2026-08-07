@@ -15,6 +15,7 @@ import { REDIRECT_REASON } from "@/enums/enums";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useSocket } from "@/hooks/use-socket";
 import { useViewport } from "@/hooks/use-viewport";
+import { formatRelative } from "@/lib/format-date";
 import { EventType } from "@/lib/notifier/core";
 import { prisma } from "@/lib/prisma";
 import { publishEvent } from "@/lib/rabbitmq";
@@ -692,9 +693,7 @@ function ProjectTicketsPage() {
                             <span className="text-muted-foreground">Unassigned</span>
                           )}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          {new Date(ticket.createdAt).toLocaleDateString()}
-                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">{formatRelative(ticket.createdAt)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -805,9 +804,7 @@ function ProjectTicketsPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">{ticket.customer?.name}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        {new Date(ticket.createdAt).toLocaleDateString()}
-                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">{formatRelative(ticket.createdAt)}</td>
                     </tr>
                   ))}
                 </tbody>

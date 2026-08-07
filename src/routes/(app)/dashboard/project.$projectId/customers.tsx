@@ -12,6 +12,7 @@ import { TicketPriorityBadge } from "@/components/ui/ticket-priority";
 import { REDIRECT_REASON } from "@/enums/enums";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useViewport } from "@/hooks/use-viewport";
+import { formatDate, formatRelative } from "@/lib/format-date";
 import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
 import { projectCustomerQueries } from "@/modules/customer/customer.queries";
 
@@ -259,10 +260,7 @@ function ProjectCustomersPage() {
                     </div>
                     {latestTicket && (
                       <span className="text-xs text-muted-foreground shrink-0 pl-1">
-                        {new Date(latestTicket.updatedAt).toLocaleDateString(undefined, {
-                          month: "short",
-                          day: "numeric",
-                        })}
+                        {formatRelative(latestTicket.updatedAt)}
                       </span>
                     )}
                   </div>
@@ -519,9 +517,7 @@ function ProjectCustomersPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs uppercase font-bold text-muted-foreground truncate">Customer Since</p>
-                    <p className="font-medium text-foreground truncate">
-                      {new Date(activeCustomer.createdAt).toLocaleDateString()}
-                    </p>
+                    <p className="font-medium text-foreground truncate">{formatDate(activeCustomer.createdAt)}</p>
                   </div>
                 </li>
               </ul>
