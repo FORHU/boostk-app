@@ -6,6 +6,7 @@
 // in user_input). NOTE: we deliberately do NOT use the document_context system
 // prompt here -- that makes the agent ANSWER the message instead of translating it.
 
+import { env } from "@/env";
 import {
   DEFAULT_TRANSLATE_PROMPT,
   detectLanguage,
@@ -15,14 +16,14 @@ import {
 } from "@/modules/translation/forhu-chat";
 
 /** Language agents read in. Override per-deployment via SUPPORT_LANGUAGE. */
-export const SUPPORT_LANGUAGE = process.env.SUPPORT_LANGUAGE || "en";
+export const SUPPORT_LANGUAGE = env.SUPPORT_LANGUAGE;
 
 /**
  * The translation "system prompt" -- kept separate from the message and editable
  * via env, then merged into user_input at the API-call boundary. `{lang}` is the
  * target language name.
  */
-export const TRANSLATE_SYSTEM_PROMPT = process.env.TRANSLATE_SYSTEM_PROMPT || DEFAULT_TRANSLATE_PROMPT;
+export const TRANSLATE_SYSTEM_PROMPT = env.TRANSLATE_SYSTEM_PROMPT ?? DEFAULT_TRANSLATE_PROMPT;
 
 export interface MessageTranslation {
   /** Support-language version, or null when no translation was needed/possible. */

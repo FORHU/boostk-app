@@ -15,11 +15,10 @@
 // English reply via a second /chat call.
 
 import { z } from "zod";
-
-const DEFAULT_BASE_URL = "https://chat-dev.forhu.ai";
+import { env } from "@/env";
 
 /** Base URL for the forhu chat API; override per-environment via FORHU_CHAT_URL. */
-export const FORHU_CHAT_URL = (process.env.FORHU_CHAT_URL || DEFAULT_BASE_URL).replace(/\/+$/, "");
+export const FORHU_CHAT_URL = env.FORHU_CHAT_URL;
 
 /**
  * Languages we support steering replies into. Keyed by BCP-47-ish code, valued

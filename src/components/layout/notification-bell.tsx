@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { NotificationItem } from "@/hooks/use-notifications";
+import { formatRelative } from "@/lib/format-date";
 import { EventType } from "@/lib/notifier/core";
 import { cn } from "@/lib/utils";
 
@@ -20,17 +21,6 @@ interface NotificationBellProps {
   notifications: NotificationItem[];
   unreadCount: number;
   markAllRead: () => void;
-}
-
-function formatRelativeTime(timestamp: number): string {
-  const seconds = Math.round((Date.now() - timestamp) / 1000);
-  if (seconds < 60) return "just now";
-  const minutes = Math.round(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.round(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.round(hours / 24);
-  return `${days}d ago`;
 }
 
 function describeNotification(item: NotificationItem): { title: string; subtitle: string } {
@@ -111,7 +101,7 @@ export function NotificationBell({ notifications, unreadCount, markAllRead }: No
                     <span className="grid flex-1 gap-0.5">
                       <span className={cn("text-sm leading-snug", !item.read && "font-medium")}>{title}</span>
                       {subtitle && <span className="truncate text-xs text-muted-foreground">{subtitle}</span>}
-                      <span className="text-xs text-muted-foreground">{formatRelativeTime(item.timestamp)}</span>
+                      <span className="text-xs text-muted-foreground">{formatRelative(item.timestamp)}</span>
                     </span>
                   </DropdownMenuItem>
                 );
