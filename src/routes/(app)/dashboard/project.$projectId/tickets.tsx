@@ -522,9 +522,14 @@ function ProjectTicketsPage() {
 
   const filteredTickets = tickets.filter((ticket) => {
     const matchesStatus = statusFilter === "ALL" || ticket.status === statusFilter;
+    const searchLower = searchQuery.toLowerCase();
+    
+    if (!searchLower) return matchesStatus;
+    
     const matchesSearch =
-      ticket.referenceNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      ticket.customer?.name?.toLowerCase().includes(searchQuery.toLowerCase());
+      (ticket.referenceNumber?.toLowerCase() || "").includes(searchLower) ||
+      (ticket.customer?.name?.toLowerCase() || "").includes(searchLower);
+      
     return matchesStatus && matchesSearch;
   });
 
