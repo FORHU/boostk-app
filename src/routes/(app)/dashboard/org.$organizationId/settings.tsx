@@ -268,17 +268,10 @@ function OrganizationSettingsPage() {
           {/* ----- READ-ONLY MODE ----- */}
           <h1 className="mb-6 text-2xl font-bold ">Settings</h1>
           <div className="grid grid-cols-2">
-            <div
-              className="relative group size-50 mb-10 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-full"
+            <button
+              type="button"
+              className="relative group size-50 mb-10 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-full border-none bg-transparent p-0 block text-left"
               onClick={handleAvatarClick}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  handleAvatarClick();
-                }
-              }}
-              role="button"
-              tabIndex={0}
             >
               <Avatar className="size-full">
                 <AvatarImage
@@ -292,7 +285,7 @@ function OrganizationSettingsPage() {
                 <span className="text-white text-sm font-medium">Upload Image</span>
               </div>
               <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
-            </div>
+            </button>
 
             <div className="ml-auto mr-20">
               <button
