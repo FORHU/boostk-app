@@ -35,8 +35,8 @@ function SignupPage() {
       await queryClient.invalidateQueries();
       navigate({ to: "/dashboard/organizations" });
     },
-    onError: (error: unknown) => {
-      setServerError(error instanceof Error ? error.message : "Failed to sign up. Please try again.");
+    onError: (error: any) => {
+      setServerError(error?.message || "Failed to sign up. Please try again.");
     },
   });
 
