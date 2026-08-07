@@ -12,7 +12,7 @@ export function generateSlug(name: string) {
     .replace(/[^a-z0-9\s-]/g, "")
     .replace(/\s+/g, "-");
 
-  const suffix = Bun.randomUUIDv7().slice(0, 8);
+  const suffix = crypto.randomUUID().split("-")[0];
 
   return `${base}-${suffix}`;
 }
