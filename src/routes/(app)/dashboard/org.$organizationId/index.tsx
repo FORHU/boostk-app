@@ -87,7 +87,7 @@ const ProjectForm = ({ organizationId }: { organizationId: string }) => {
     },
     onError: (error) => {
       console.error(error);
-      toast("Failed to create project. Please try again.", "error");
+      toast(error.message || "Failed to create project. Please try again.", "error");
     },
   });
 
