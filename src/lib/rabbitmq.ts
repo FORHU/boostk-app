@@ -1,12 +1,12 @@
 import amqp from "amqp-connection-manager";
 import type { ConfirmChannel, ConsumeMessage } from "amqplib";
+import { env } from "@/env";
 
 const PERMANENT_QUEUES = ["test.queue"];
 export const EXCHANGE_NAME = "boostk.exchange";
-const RABBIT_URL = process.env.RABBITMQ_URL || "amqp://127.0.0.1:5672";
 const PUBLISH_TIMEOUT_MS = 5000;
 
-export const connection = amqp.connect([RABBIT_URL]);
+export const connection = amqp.connect([env.RABBITMQ_URL]);
 
 connection.on("connect", () => console.log("✅ RabbitMQ: Connected"));
 connection.on("disconnect", (err) => console.error("❌ RabbitMQ: Disconnected", err.err.message));

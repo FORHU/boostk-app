@@ -1,6 +1,7 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { organization } from "better-auth/plugins";
+import { env } from "@/env";
 import { ac, roles } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 
@@ -11,10 +12,7 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
-  baseURL: process.env.BETTER_AUTH_URL,
-  trustedOrigins:
-    process.env.TRUSTED_ORIGINS?.split(",")
-      .map((o) => o.trim())
-      .filter(Boolean) ?? [],
+  baseURL: env.BETTER_AUTH_URL,
+  trustedOrigins: env.trustedOrigins,
   plugins: [organization({ ac, roles })],
 });

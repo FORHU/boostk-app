@@ -2,9 +2,8 @@ import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { Server } from "socket.io";
 import { z } from "zod";
+import { env } from "@/env";
 import { startRealtimeRelay } from "./relay";
-
-const SOCKET_PORT = Number(process.env.SOCKET_PORT ?? 3001);
 
 const SocketQuerySchema = z.object({
   userId: z
@@ -25,7 +24,7 @@ const app = new Hono();
 
 app.get("/health", (c) => c.json({ status: "ok" }));
 
-const server = serve({ fetch: app.fetch, port: SOCKET_PORT });
+const server = serve({ fetch: app.fetch, port: env.SOCKET_PORT });
 const io = new Server(server, {
   cors: { origin: "*" },
 });
@@ -49,4 +48,4 @@ startRealtimeRelay(io).catch((err) => {
   console.error("[Socket.IO] Failed to start RabbitMQ relay:", err);
 });
 
-console.log(`🔌 Socket.io relay listening on http://localhost:${SOCKET_PORT}`);
+console.log(`🔌 Socket.io relay listening on http://localhost:${env.SOCKET_PORT}`);

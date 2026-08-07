@@ -16,7 +16,8 @@ export function SharedErrorComponent({ error }: { error: Error }) {
       <p className="text-muted-foreground text-sm max-w-md mb-6">
         We ran into an issue while loading this page. 
       </p>
-      {process.env.NODE_ENV === "development" && (
+      {/* Client component: use Vite's build-time flag, not the server `env` module. */}
+      {import.meta.env.DEV && (
         <div className="bg-muted p-3 rounded-[8px] border border-destructive/20 text-left w-full max-w-md overflow-auto mb-6">
           <code className="text-xs text-destructive whitespace-pre-wrap">
             {error.message}
