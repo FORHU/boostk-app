@@ -22,6 +22,13 @@ export const setTicketCookie = (referenceNumber: string) =>
     path: TICKET_COOKIE_PATH,
   });
 
+export const clearTicketCookie = () => {
+  setCookie(TICKET_COOKIE_NAME, "", {
+    maxAge: 0,
+    path: TICKET_COOKIE_PATH,
+  });
+};
+
 export const getTicketSession = async (projectId: string) => {
   const ticketReferenceNumber = getCookie(TICKET_COOKIE_NAME);
   if (!ticketReferenceNumber) return null;
