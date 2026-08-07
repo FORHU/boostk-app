@@ -98,7 +98,7 @@ const OrganizationForm = () => {
             const isInvalid = getFieldInvalid(field, createOrganizationForm);
             return (
               <Field data-invalid={isInvalid}>
-                <FieldLabel htmlFor={field.name}>Project Name</FieldLabel>
+                <FieldLabel htmlFor={field.name}>Organization Name</FieldLabel>
                 <Input
                   id={field.name}
                   name={field.name}
@@ -125,7 +125,7 @@ const OrganizationForm = () => {
                   name={field.name}
                   value={field.state.value}
                   onBlur={field.handleBlur}
-                  type="file"
+                  type="url"
                   onChange={(e) => field.handleChange(e.target.value)}
                   aria-invalid={isInvalid}
                   placeholder="https://example.com/logo.png"

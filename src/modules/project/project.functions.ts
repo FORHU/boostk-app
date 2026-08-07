@@ -8,9 +8,15 @@ export const createProjectFn = createServerFn({ method: "POST" })
   .middleware([requireOrganizationMiddleware])
   .inputValidator(createProjectSchema)
   .handler(async ({ data }) => {
-    const project = await createProject(data);
-
-    return project;
+    try {
+      const project = await createProject(data);
+      return project;
+    } catch (error) {
+      if (error && typeof error === "object" && "code" in error && error.code === "P2002") {
+        throw new Error("You already have a project with that name.");
+      }
+      throw new Error("Failed to create project.");
+    }
   });
 
 export const getProjectFn = createServerFn({ method: "GET" })
