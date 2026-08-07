@@ -35,8 +35,9 @@ function SignupPage() {
       await queryClient.invalidateQueries();
       navigate({ to: "/dashboard/organizations" });
     },
-    onError: (error: any) => {
-      setServerError(error?.message || "Failed to sign up. Please try again.");
+    onError: (error: unknown) => {
+      const err = error as { message?: string };
+      setServerError(err?.message || "Failed to sign up. Please try again.");
     },
   });
 

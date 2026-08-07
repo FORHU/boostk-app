@@ -108,12 +108,12 @@ function OrganizationSettingsPage() {
             logo: base64String,
           },
         });
-      } catch (error) {
+      } catch (_error) {
         // error handled in mutation onError
       }
     };
     reader.readAsDataURL(file);
-    
+
     // Reset file input so same file can be uploaded again if needed
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -268,21 +268,30 @@ function OrganizationSettingsPage() {
           {/* ----- READ-ONLY MODE ----- */}
           <h1 className="mb-6 text-2xl font-bold ">Settings</h1>
           <div className="grid grid-cols-2">
-            <div className="relative group size-50 mb-10 cursor-pointer" onClick={handleAvatarClick}>
+            <div
+              className="relative group size-50 mb-10 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-full"
+              onClick={handleAvatarClick}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  handleAvatarClick();
+                }
+              }}
+              role="button"
+              tabIndex={0}
+            >
               <Avatar className="size-full">
-                <AvatarImage src={organization?.logo || undefined} alt={`${organization?.name} logo`} className="object-cover" />
+                <AvatarImage
+                  src={organization?.logo || undefined}
+                  alt={`${organization?.name} logo`}
+                  className="object-cover"
+                />
                 <AvatarFallback className="text-lg">{fallbackInitials}</AvatarFallback>
               </Avatar>
               <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
                 <span className="text-white text-sm font-medium">Upload Image</span>
               </div>
-              <input
-                type="file"
-                ref={fileInputRef}
-                className="hidden"
-                accept="image/*"
-                onChange={handleFileChange}
-              />
+              <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
             </div>
 
             <div className="ml-auto mr-20">

@@ -2,7 +2,13 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { GetTicketByReferenceNumberSchema, UpsertTicketSessionInput } from "./ticket.schema";
-import { createTicketSession, getTicketByReferenceNumber, getTicketSession, setTicketCookie, clearTicketCookie } from "./ticket.service";
+import {
+  clearTicketCookie,
+  createTicketSession,
+  getTicketByReferenceNumber,
+  getTicketSession,
+  setTicketCookie,
+} from "./ticket.service";
 
 export const clearTicketCookieFn = createServerFn({ method: "POST" }).handler(async () => {
   clearTicketCookie();
