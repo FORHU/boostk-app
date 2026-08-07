@@ -106,7 +106,7 @@ const OrganizationForm = () => {
                   onBlur={field.handleBlur}
                   onChange={(e) => field.handleChange(e.target.value)}
                   aria-invalid={isInvalid}
-                  placeholder="Enter your project name"
+                  placeholder="Enter your organization name"
                   className="rounded"
                 />
                 {isInvalid && <FieldError errors={field.state.meta.errors} />}
