@@ -4,6 +4,7 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { z } from "zod";
+import { Copy, Check } from "lucide-react";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
@@ -76,6 +77,20 @@ function ProjectSettingsPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { data: project } = useSuspenseQuery(projectSettingQueries.allByProjectId(projectId));
+  const [copied, setCopied] = useState(false);
+
+  const embedCode = `<iframe 
+  src="${typeof window !== "undefined" ? window.location.origin : ""}/support/${projectId}/chat-widget" 
+  width="400" 
+  height="600" 
+  style="border: none; position: fixed; bottom: 20px; right: 20px; z-index: 9999; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);"
+></iframe>`;
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(embedCode);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const updateProjectMutation = useMutation({
     mutationKey: ["update-project", projectId],
@@ -242,6 +257,26 @@ function ProjectSettingsPage() {
                   {project?.description || "No description provided."}
                 </div>
               </div>
+            </div>
+          </div>
+
+          <div className="mt-10 border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+            <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+              <div>
+                <h2 className="text-lg font-semibold">Embed Widget</h2>
+                <p className="text-sm text-gray-500">Copy this code to install the chat widget on your website.</p>
+              </div>
+              <button
+                type="button"
+                onClick={handleCopy}
+                className="flex items-center gap-2 px-3 py-1.5 text-sm border bg-white rounded-md hover:bg-gray-50 transition-colors"
+              >
+                {copied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+                {copied ? "Copied!" : "Copy Code"}
+              </button>
+            </div>
+            <div className="p-6 bg-gray-900 text-gray-100 overflow-x-auto">
+              <pre className="text-sm font-mono whitespace-pre-wrap">{embedCode}</pre>
             </div>
           </div>
         </>
