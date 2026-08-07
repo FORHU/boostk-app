@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute, notFound } from "@tanstack/react-router";
+import { createFileRoute, notFound, useRouter } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { Bot, CheckCircle2, Loader2, Send, Sparkles } from "lucide-react";
 import type { Project, TicketMessage } from "prisma/generated/client";
@@ -13,7 +13,7 @@ import { useAttachmentUpload } from "@/hooks/use-attachment-upload";
 import { useSocket } from "@/hooks/use-socket";
 import { EventType, type Message } from "@/lib/notifier/core";
 import { getProjectPublicFn } from "@/modules/project/project.functions";
-import { getTicketCookieFn } from "@/modules/ticket/ticket.functions";
+import { clearTicketCookieFn, getTicketCookieFn } from "@/modules/ticket/ticket.functions";
 import { createTicketMessageFn } from "@/modules/ticket-message/ticket-message.functions";
 import { ticketMessageQueries } from "@/modules/ticket-message/ticket-message.queries";
 
@@ -221,6 +221,7 @@ interface ChatInputProps {
 
 const ChatInput = ({ ticketId, initialStatus, projectId, lastMessage }: ChatInputProps) => {
   const queryClient = useQueryClient();
+  const router = useRouter();
   const { toast } = useToast();
   const [message, setMessage] = useState<string>("");
   const [status, setStatus] = useState(initialStatus);
@@ -291,6 +292,16 @@ const ChatInput = ({ ticketId, initialStatus, projectId, lastMessage }: ChatInpu
         <p className="text-xs text-gray-500 mt-1 max-w-[250px]">
           The agent has marked this issue as resolved. Thank you for contacting support!
         </p>
+        <button
+          type="button"
+          onClick={async () => {
+            await clearTicketCookieFn();
+            router.invalidate();
+          }}
+          className="mt-4 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+        >
+          Start a new conversation
+        </button>
       </div>
     );
   }
