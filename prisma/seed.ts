@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import intakeSeeder from "./seeds/intake.seeder";
 import userSeeder from "./seeds/user.seeder";
 import organizationSeeder from "./seeds/organization.seeder";
 import projectSeeder from "./seeds/project.seeder";
@@ -40,6 +41,10 @@ async function main() {
 
   try {
     // TODO: Seed super admin
+
+    // Infrastructure, not sample data: the public /chat route cannot serve anyone until
+    // the intake org and project exist. Runs first so a failure here is unambiguous.
+    await intakeSeeder();
 
     await organizationSeeder(sampleDataForhu);
     await userSeeder(sampleDataForhu);

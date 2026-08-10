@@ -59,6 +59,11 @@ const ticket = {
   projectId: "project-1",
   customerId: "customer-1",
   assignedAgentId: null,
+  // Global-intake triage columns; null on an ordinary project ticket.
+  intakeTicketId: null,
+  routedAt: null,
+  triagedById: null,
+  triageNote: null,
   createdAt: new Date("2026-01-01T00:00:00.000Z"),
   updatedAt: new Date("2026-01-01T00:00:00.000Z"),
 };
@@ -257,6 +262,10 @@ describe("assignTicket", () => {
     projectId: "project-1",
     customerId: "customer-1",
     assignedAgentId: "member-agent-1",
+    intakeTicketId: null,
+    routedAt: null,
+    triagedById: null,
+    triageNote: null,
     createdAt: new Date("2026-01-01T00:00:00.000Z"),
     updatedAt: new Date("2026-01-01T00:00:00.000Z"),
   };

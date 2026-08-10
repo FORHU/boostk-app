@@ -13,12 +13,14 @@ import { Route as authRouteRouteImport } from './routes/(auth)/route'
 import { Route as appRouteRouteImport } from './routes/(app)/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiTranslateRouteImport } from './routes/api/translate'
+import { Route as publicChatRouteImport } from './routes/(public)/chat'
 import { Route as authSignupRouteImport } from './routes/(auth)/signup'
 import { Route as authSigninRouteImport } from './routes/(auth)/signin'
 import { Route as ApiAttachmentsIndexRouteImport } from './routes/api/attachments/index'
 import { Route as ApiNotificationSseRouteImport } from './routes/api/notification/sse'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiAttachmentsIdRouteImport } from './routes/api/attachments/$id'
+import { Route as appDashboardTriageRouteImport } from './routes/(app)/dashboard/triage'
 import { Route as appDashboardOrganizationsRouteImport } from './routes/(app)/dashboard/organizations'
 import { Route as publicSupportProjectIdManifestRouteImport } from './routes/(public)/support.$projectId/manifest'
 import { Route as publicSupportProjectIdChatWidgetRouteImport } from './routes/(public)/support.$projectId/chat-widget'
@@ -55,6 +57,11 @@ const ApiTranslateRoute = ApiTranslateRouteImport.update({
   path: '/api/translate',
   getParentRoute: () => rootRouteImport,
 } as any)
+const publicChatRoute = publicChatRouteImport.update({
+  id: '/(public)/chat',
+  path: '/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const authSignupRoute = authSignupRouteImport.update({
   id: '/signup',
   path: '/signup',
@@ -84,6 +91,11 @@ const ApiAttachmentsIdRoute = ApiAttachmentsIdRouteImport.update({
   id: '/api/attachments/$id',
   path: '/api/attachments/$id',
   getParentRoute: () => rootRouteImport,
+} as any)
+const appDashboardTriageRoute = appDashboardTriageRouteImport.update({
+  id: '/dashboard/triage',
+  path: '/dashboard/triage',
+  getParentRoute: () => appRouteRoute,
 } as any)
 const appDashboardOrganizationsRoute =
   appDashboardOrganizationsRouteImport.update({
@@ -192,8 +204,10 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/signin': typeof authSigninRoute
   '/signup': typeof authSignupRoute
+  '/chat': typeof publicChatRoute
   '/api/translate': typeof ApiTranslateRoute
   '/dashboard/organizations': typeof appDashboardOrganizationsRoute
+  '/dashboard/triage': typeof appDashboardTriageRoute
   '/api/attachments/$id': typeof ApiAttachmentsIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/notification/sse': typeof ApiNotificationSseRoute
@@ -219,8 +233,10 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/signin': typeof authSigninRoute
   '/signup': typeof authSignupRoute
+  '/chat': typeof publicChatRoute
   '/api/translate': typeof ApiTranslateRoute
   '/dashboard/organizations': typeof appDashboardOrganizationsRoute
+  '/dashboard/triage': typeof appDashboardTriageRoute
   '/api/attachments/$id': typeof ApiAttachmentsIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/notification/sse': typeof ApiNotificationSseRoute
@@ -247,8 +263,10 @@ export interface FileRoutesById {
   '/(auth)': typeof authRouteRouteWithChildren
   '/(auth)/signin': typeof authSigninRoute
   '/(auth)/signup': typeof authSignupRoute
+  '/(public)/chat': typeof publicChatRoute
   '/api/translate': typeof ApiTranslateRoute
   '/(app)/dashboard/organizations': typeof appDashboardOrganizationsRoute
+  '/(app)/dashboard/triage': typeof appDashboardTriageRoute
   '/api/attachments/$id': typeof ApiAttachmentsIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/notification/sse': typeof ApiNotificationSseRoute
@@ -276,8 +294,10 @@ export interface FileRouteTypes {
     | '/'
     | '/signin'
     | '/signup'
+    | '/chat'
     | '/api/translate'
     | '/dashboard/organizations'
+    | '/dashboard/triage'
     | '/api/attachments/$id'
     | '/api/auth/$'
     | '/api/notification/sse'
@@ -303,8 +323,10 @@ export interface FileRouteTypes {
     | '/'
     | '/signin'
     | '/signup'
+    | '/chat'
     | '/api/translate'
     | '/dashboard/organizations'
+    | '/dashboard/triage'
     | '/api/attachments/$id'
     | '/api/auth/$'
     | '/api/notification/sse'
@@ -330,8 +352,10 @@ export interface FileRouteTypes {
     | '/(auth)'
     | '/(auth)/signin'
     | '/(auth)/signup'
+    | '/(public)/chat'
     | '/api/translate'
     | '/(app)/dashboard/organizations'
+    | '/(app)/dashboard/triage'
     | '/api/attachments/$id'
     | '/api/auth/$'
     | '/api/notification/sse'
@@ -358,6 +382,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   appRouteRoute: typeof appRouteRouteWithChildren
   authRouteRoute: typeof authRouteRouteWithChildren
+  publicChatRoute: typeof publicChatRoute
   ApiTranslateRoute: typeof ApiTranslateRoute
   ApiAttachmentsIdRoute: typeof ApiAttachmentsIdRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
@@ -395,6 +420,13 @@ declare module '@tanstack/react-router' {
       path: '/api/translate'
       fullPath: '/api/translate'
       preLoaderRoute: typeof ApiTranslateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(public)/chat': {
+      id: '/(public)/chat'
+      path: '/chat'
+      fullPath: '/chat'
+      preLoaderRoute: typeof publicChatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/(auth)/signup': {
@@ -438,6 +470,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/attachments/$id'
       preLoaderRoute: typeof ApiAttachmentsIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/(app)/dashboard/triage': {
+      id: '/(app)/dashboard/triage'
+      path: '/dashboard/triage'
+      fullPath: '/dashboard/triage'
+      preLoaderRoute: typeof appDashboardTriageRouteImport
+      parentRoute: typeof appRouteRoute
     }
     '/(app)/dashboard/organizations': {
       id: '/(app)/dashboard/organizations'
@@ -623,12 +662,14 @@ const appDashboardProjectProjectIdRouteRouteWithChildren =
 
 interface appRouteRouteChildren {
   appDashboardOrganizationsRoute: typeof appDashboardOrganizationsRoute
+  appDashboardTriageRoute: typeof appDashboardTriageRoute
   appDashboardOrgOrganizationIdRouteRoute: typeof appDashboardOrgOrganizationIdRouteRouteWithChildren
   appDashboardProjectProjectIdRouteRoute: typeof appDashboardProjectProjectIdRouteRouteWithChildren
 }
 
 const appRouteRouteChildren: appRouteRouteChildren = {
   appDashboardOrganizationsRoute: appDashboardOrganizationsRoute,
+  appDashboardTriageRoute: appDashboardTriageRoute,
   appDashboardOrgOrganizationIdRouteRoute:
     appDashboardOrgOrganizationIdRouteRouteWithChildren,
   appDashboardProjectProjectIdRouteRoute:
@@ -657,6 +698,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   appRouteRoute: appRouteRouteWithChildren,
   authRouteRoute: authRouteRouteWithChildren,
+  publicChatRoute: publicChatRoute,
   ApiTranslateRoute: ApiTranslateRoute,
   ApiAttachmentsIdRoute: ApiAttachmentsIdRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,

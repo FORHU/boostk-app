@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getMemberRole, hasOrgRole, normalizeRole, ORG_ROLE } from "./roles";
+import { getMemberRole, hasOrgRole, hasPlatformRole, normalizeRole, ORG_ROLE, PLATFORM_ROLE } from "./roles";
 
 describe("normalizeRole", () => {
   it("passes known roles through unchanged", () => {
@@ -89,5 +89,39 @@ describe("hasOrgRole", () => {
     expect(hasOrgRole("user", ORG_ROLE.MEMBER)).toBe(true);
     expect(hasOrgRole("user", ORG_ROLE.AGENT)).toBe(false);
     expect(hasOrgRole("root", ORG_ROLE.MEMBER)).toBe(true);
+  });
+});
+
+describe("hasPlatformRole", () => {
+  it("grants only the exact staff value", () => {
+    expect(hasPlatformRole(PLATFORM_ROLE.STAFF)).toBe(true);
+  });
+
+  it("denies null and undefined, the value for every ordinary user", () => {
+    expect(hasPlatformRole(null)).toBe(false);
+    expect(hasPlatformRole(undefined)).toBe(false);
+    expect(hasPlatformRole("")).toBe(false);
+  });
+
+  // The inverse of normalizeRole's forgiving default, and deliberately so: an
+  // unrecognised value must never be read as cross-tenant access.
+  it("denies unknown values instead of coercing them", () => {
+    expect(hasPlatformRole("admin")).toBe(false);
+    expect(hasPlatformRole("owner")).toBe(false);
+    expect(hasPlatformRole("superadmin")).toBe(false);
+    expect(hasPlatformRole("STAFF")).toBe(false);
+  });
+
+  it("does not treat org roles as platform authority", () => {
+    expect(hasPlatformRole(ORG_ROLE.OWNER)).toBe(false);
+    expect(hasPlatformRole(ORG_ROLE.ADMIN)).toBe(false);
+    expect(hasPlatformRole(ORG_ROLE.AGENT)).toBe(false);
+    expect(hasPlatformRole(ORG_ROLE.MEMBER)).toBe(false);
+  });
+
+  it("does not let platform staff satisfy an org-role requirement", () => {
+    // The two ladders are separate: holding staff must grant nothing inside an org.
+    expect(hasOrgRole(PLATFORM_ROLE.STAFF, ORG_ROLE.AGENT)).toBe(false);
+    expect(hasOrgRole(PLATFORM_ROLE.STAFF, ORG_ROLE.ADMIN)).toBe(false);
   });
 });

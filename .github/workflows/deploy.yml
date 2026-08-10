@@ -112,6 +112,7 @@ jobs:
             TRUSTED_ORIGINS=${{ secrets.TRUSTED_ORIGINS }}
             FORHU_CHAT_URL=${{ vars.FORHU_CHAT_URL }}
             SUPPORT_LANGUAGE=${{ vars.SUPPORT_LANGUAGE }}
+            PLATFORM_STAFF_EMAILS=${{ vars.PLATFORM_STAFF_EMAILS }}
             SOCKET_PORT=5001
             ENVEOF
 
@@ -141,6 +142,20 @@ jobs:
               echo "migrations failed (attempt $i), retrying in 5s..."
               sleep 5
             done
+
+            # Seed the global-intake org/project. NOT `prisma db seed` — that runs
+            # prisma/seed.ts, which also creates demo tenants (Forhu, Organization 1,
+            # ten @example.com users) and must never touch production. seed-intake.ts
+            # is upsert-only infrastructure: the public /chat route throws without it.
+            #
+            # Non-fatal: a failure here leaves /chat broken but the rest of the app
+            # serving, which beats rolling back a good deploy. Check the log.
+            if docker compose -f docker-compose.prod.yaml run --rm app \
+                 bun run prisma/seed-intake.ts; then
+              echo "✅ intake project ready"
+            else
+              echo "⚠️  intake seeding FAILED — /chat will not work until this is fixed"
+            fi
 
             docker compose -f docker-compose.prod.yaml up -d
 
