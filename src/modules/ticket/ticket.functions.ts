@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { ORG_ROLE } from "@/modules/auth/roles";
+import { requireProjectRole } from "@/modules/project/project.middleware";
 import { GetTicketByReferenceNumberSchema, UpsertTicketSessionInput } from "./ticket.schema";
 import {
   clearTicketCookie,
@@ -49,8 +51,12 @@ export const getTicketCookieFn = createServerFn({ method: "GET" })
     return getTicketSession(data.projectId);
   });
 
+// Returns every ticket in a project along with the customer rows attached to them — names,
+// emails, phone numbers. This had NO middleware at all, so any unauthenticated caller who
+// knew (or guessed) a project id could read another tenant's customer list.
 export const getProjectTicketsFn = createServerFn({ method: "GET" })
   .inputValidator(z.object({ projectId: z.string().min(1) }))
+  .middleware([requireProjectRole(ORG_ROLE.AGENT)])
   .handler(async ({ data }) => {
     const tickets = await prisma.ticket.findMany({
       where: { projectId: data.projectId },

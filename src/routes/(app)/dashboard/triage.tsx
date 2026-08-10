@@ -1,11 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { AlertTriangle, Ban, Building2, Inbox, Loader2, Send, User } from "lucide-react";
+import { AlertTriangle, Ban, Building2, CheckCircle2, CircleSlash, Inbox, Loader2, Send, User } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useToast } from "@/components/ui/toast";
 import { useSocket } from "@/hooks/use-socket";
 import { EventType } from "@/lib/notifier/core";
-import { closeIntakeTicketFn, routeIntakeTicketFn } from "@/modules/intake/intake.functions";
+import { closeIntakeTicketFn, createTriageMessageFn, routeIntakeTicketFn } from "@/modules/intake/intake.functions";
 import { intakeQueries } from "@/modules/intake/intake.queries";
 
 /**
@@ -117,6 +117,53 @@ function RouteComponent() {
   );
 }
 
+function TriageComposer({ intakeTicketId, disabled }: { intakeTicketId: string; disabled: boolean }) {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [content, setContent] = useState("");
+
+  const sendMutation = useMutation({
+    mutationFn: createTriageMessageFn,
+    onSuccess: async () => {
+      setContent("");
+      await queryClient.invalidateQueries({ queryKey: intakeQueries.all });
+    },
+    onError: (error) => toast(error instanceof Error ? error.message : "Failed to send.", "error"),
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = content.trim();
+    if (!trimmed) return;
+    sendMutation.mutate({ data: { intakeTicketId, content: trimmed } });
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="flex-none bg-white border-t border-gray-100 px-4 py-3">
+      <div className="flex items-center gap-2">
+        <input
+          type="text"
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          placeholder="Reply to the visitor…"
+          disabled={disabled || sendMutation.isPending}
+          className="flex-1 min-w-0 bg-gray-100 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-60"
+        />
+        <button
+          type="submit"
+          disabled={!content.trim() || disabled || sendMutation.isPending}
+          className="bg-indigo-600 text-white p-2.5 rounded-xl active:scale-95 disabled:opacity-50 shrink-0"
+        >
+          {sendMutation.isPending ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
+        </button>
+      </div>
+      <p className="mt-1.5 text-[11px] text-gray-400">
+        Sent as BOOSTK support, translated into the visitor's language. Ask what they need before routing.
+      </p>
+    </form>
+  );
+}
+
 function TriageDetail({ intakeTicketId, onDone }: { intakeTicketId: string; onDone: () => void }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -223,6 +270,12 @@ function TriageDetail({ intakeTicketId, onDone }: { intakeTicketId: string; onDo
         )}
       </div>
 
+      {/* Reply composer. Triage usually cannot route on the opening message alone —
+          "help with my booking" names no project — so staff qualify here first. It also
+          covers conversations that fit no project and just need an answer. Hidden once
+          routed: from that point the receiving org's agents own the conversation. */}
+      {!thread.routedTicket && <TriageComposer intakeTicketId={intakeTicketId} disabled={isBusy} />}
+
       <footer className="flex-none bg-white border-t border-gray-200 p-4">
         {thread.routedTicket ? (
           <p className="text-sm text-emerald-700 bg-emerald-50 rounded-lg px-3 py-2 flex items-center gap-2">
@@ -282,12 +335,37 @@ function TriageDetail({ intakeTicketId, onDone }: { intakeTicketId: string; onDo
                 Route to project
               </button>
 
+              {/* Three distinct outcomes for a chat that is never routed. They are stored
+                  on `triageNote`, so the queue can later be reported on honestly — "no
+                  project for this" is very different from spam. */}
+              <button
+                type="button"
+                disabled={isBusy}
+                onClick={() => closeMutation.mutate({ data: { intakeTicketId, reason: "resolved" } })}
+                title="Answered here — no routing needed"
+                className="px-3 py-2.5 rounded-xl text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors disabled:opacity-50 flex items-center gap-1.5"
+              >
+                <CheckCircle2 size={16} />
+                Resolved
+              </button>
+
+              <button
+                type="button"
+                disabled={isBusy}
+                onClick={() => closeMutation.mutate({ data: { intakeTicketId, reason: "no_fit" } })}
+                title="Belongs to no organization we work with"
+                className="px-3 py-2.5 rounded-xl text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors disabled:opacity-50 flex items-center gap-1.5"
+              >
+                <CircleSlash size={16} />
+                No fit
+              </button>
+
               <button
                 type="button"
                 disabled={isBusy}
                 onClick={() => closeMutation.mutate({ data: { intakeTicketId, reason: "spam" } })}
-                title="Close without routing — spam or no fit"
-                className="px-4 py-2.5 rounded-xl text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors disabled:opacity-50 flex items-center gap-2"
+                title="Spam — close without routing"
+                className="px-3 py-2.5 rounded-xl text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 transition-colors disabled:opacity-50 flex items-center gap-1.5"
               >
                 <Ban size={16} />
                 Spam
