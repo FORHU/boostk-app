@@ -1,10 +1,11 @@
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, notFound, useRouter } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { Bot, CheckCircle2, Loader2, Send, Sparkles } from "lucide-react";
+import { CheckCircle2, Loader2, Send } from "lucide-react";
 import type { Project, TicketMessage } from "prisma/generated/client";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { z } from "zod";
+import { BoostkLogo } from "@/components/BoostkLogo";
 import { AttachmentButton, AttachmentPreview } from "@/components/chat-support/attachment-picker";
 import TicketChatMessageBubble from "@/components/chat-support/TicketChatMessageBubble";
 import TicketCustomerForm from "@/components/chat-support/TicketCustomerForm";
@@ -145,9 +146,13 @@ const ChatHeader = ({
   return (
     <header className="flex-none bg-indigo-600 p-4 text-white flex items-center justify-between shadow-sm">
       <div className="flex items-center gap-3">
-        <div className="bg-indigo-400/30 p-2 rounded-lg">
-          <Bot size={20} />
-        </div>
+        {/* The client's own logo when they have set one — this widget is embedded on their
+            site and should look like theirs. The BOOSTK mark is the fallback. */}
+        {project.logo ? (
+          <img src={project.logo} alt="" aria-hidden className="size-9 shrink-0 rounded-full object-contain" />
+        ) : (
+          <BoostkLogo className="size-9 shrink-0" />
+        )}
         <div>
           <h2 className="text-sm font-bold leading-none">{project.name} Support Chat</h2>
           <span className="text-[10px] text-indigo-200 flex items-center gap-1">
@@ -165,7 +170,6 @@ const ChatHeader = ({
           </span>
         </div>
       </div>
-      <Sparkles size={16} className="text-indigo-300" />
     </header>
   );
 };
@@ -183,10 +187,7 @@ const TicketMessageList = ({ projectId }: { projectId: string }) => {
           animate={{ opacity: 1, scale: 1 }}
           className="flex flex-col items-center justify-center h-full text-center p-6"
         >
-          {/* Decorative Icon for empty state */}
-          <div className="bg-indigo-50 p-4 rounded-full mb-3">
-            <Sparkles className="text-indigo-500" size={32} />
-          </div>
+          <BoostkLogo className="size-16 mb-3" />
           <h3 className="font-semibold text-gray-900">Waiting for an agent</h3>
           <p className="text-gray-500 text-sm mt-1 max-w-[200px]">Our support team will be with you shortly.</p>
         </motion.div>

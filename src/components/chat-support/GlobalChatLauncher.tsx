@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { MessageCircle, X } from "lucide-react";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import GlobalChat from "@/components/chat-support/GlobalChat";
+import { cn } from "@/lib/utils";
 
 /**
  * Side-docked global support chat for the marketing site.
@@ -136,11 +137,12 @@ function GlobalChatPanel() {
             transition={{ type: "tween", duration: 0.22, ease: "easeOut" }}
             style={isMobile ? undefined : { width }}
             aria-label="BOOSTK support chat"
-            className={
-              isMobile
-                ? "fixed inset-0 z-50 flex flex-col overflow-hidden bg-white"
-                : "fixed right-0 top-0 z-50 flex h-screen flex-col overflow-hidden border-l border-black/10 bg-white shadow-2xl"
-            }
+            // Mirrors the dashboard's detail panels (chat-support.tsx): a bordered,
+            // theme-token surface docked to the edge, becoming a full overlay on mobile.
+            className={cn(
+              "z-50 flex flex-col overflow-hidden bg-background",
+              isMobile ? "fixed inset-0" : "fixed right-0 top-0 h-screen border-l shadow-xl",
+            )}
           >
             {!isMobile && (
               <WidthGrip
@@ -174,20 +176,33 @@ function GlobalChatPanel() {
         )}
       </AnimatePresence>
 
-      {/* Edge tab. Hidden while the panel is open on mobile, where the panel covers the
-          whole screen and the tab would sit on top of it. */}
+      {/* Bookmark tab. Hidden while the panel is open on mobile, where the panel covers
+          the whole screen and the tab would sit on top of it. */}
       {!(isMobile && isOpen) && (
         <button
           type="button"
           onClick={toggle}
           aria-label={isOpen ? "Close support chat" : "Open support chat"}
           aria-expanded={isOpen}
-          style={isMobile || !isOpen ? undefined : { right: width }}
-          className={`fixed top-1/2 z-50 flex -translate-y-1/2 items-center gap-2 rounded-l-xl bg-indigo-600 py-4 pl-3 pr-2 text-white shadow-lg transition-colors hover:bg-indigo-700 ${
-            isOpen && !isMobile ? "" : "right-0"
-          }`}
+          // Rides the panel's edge when open so it never sits underneath it. `right` is
+          // animated rather than snapped, matching the panel's own slide.
+          style={{
+            right: isOpen && !isMobile ? width : 0,
+            // The notched tail that makes it read as a bookmark rather than a button:
+            // square across the top, with a V cut out of the bottom edge.
+            clipPath: "polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - 14px), 0 100%)",
+            // `drop-shadow`, not `box-shadow`: clip-path clips a box-shadow away, leaving
+            // the bookmark flat. A filter shadow follows the clipped silhouette instead,
+            // so the notch casts a shadow too.
+            filter: "drop-shadow(-2px 2px 4px rgb(0 0 0 / 0.25))",
+          }}
+          className={cn(
+            "group fixed top-32 z-50 flex flex-col items-center gap-2 rounded-l-lg pt-4 pb-7 pl-2.5 pr-2",
+            "bg-indigo-600 text-white transition-[background-color,right] duration-200",
+            "hover:bg-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400",
+          )}
         >
-          {isOpen ? <X size={18} /> : <MessageCircle size={18} />}
+          {isOpen ? <X size={16} /> : <MessageCircle size={16} />}
           <span className="text-xs font-semibold tracking-wide [writing-mode:vertical-rl]">
             {isOpen ? "Close" : "Chat with us"}
           </span>

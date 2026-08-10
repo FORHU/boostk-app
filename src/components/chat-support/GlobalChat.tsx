@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Bot, CheckCircle2, Loader2, Send, Sparkles } from "lucide-react";
+import { CheckCircle2, Loader2, Send } from "lucide-react";
 import type { TicketMessage } from "prisma/generated/client";
 import { useEffect, useState } from "react";
+import { BoostkLogo } from "@/components/BoostkLogo";
 import IntakeCustomerForm from "@/components/chat-support/IntakeCustomerForm";
 import TicketChatMessageBubble, {
   type TicketMessageWithAttachment,
@@ -84,9 +85,7 @@ const ChatHeader = ({
   return (
     <header className="flex-none bg-indigo-600 p-4 text-white flex items-center justify-between shadow-sm">
       <div className="flex items-center gap-3 min-w-0">
-        <div className="bg-indigo-400/30 p-2 rounded-lg shrink-0">
-          <Bot size={20} />
-        </div>
+        <BoostkLogo className="size-9 shrink-0" />
         <div className="min-w-0">
           {/* Never names the receiving project, before or after routing — which team picked
               the conversation up is not the visitor's concern. */}
@@ -106,7 +105,7 @@ const ChatHeader = ({
           </span>
         </div>
       </div>
-      {action ?? <Sparkles size={16} className="text-indigo-300" />}
+      {action}
     </header>
   );
 };
@@ -119,9 +118,7 @@ const MessageList = ({ messages, hasTicket }: { messages: TicketMessageWithAttac
         animate={{ opacity: 1, scale: 1 }}
         className="flex flex-col items-center justify-center h-full text-center p-6"
       >
-        <div className="bg-indigo-50 p-4 rounded-full mb-3">
-          <Sparkles className="text-indigo-500" size={28} />
-        </div>
+        <BoostkLogo className="size-14 mb-3" />
         <h3 className="font-semibold text-gray-900 text-sm">
           {hasTicket ? "Waiting for an agent" : "How can we help?"}
         </h3>

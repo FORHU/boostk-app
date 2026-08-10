@@ -2,7 +2,7 @@ import { queryOptions, useMutation, useQuery, useQueryClient, useSuspenseQuery }
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { motion } from "framer-motion";
-import { ArrowLeft, Bot, Loader2, Maximize, Minimize, Sparkles, X } from "lucide-react";
+import { ArrowLeft, Loader2, Maximize, MessageCircle, Minimize, User, X } from "lucide-react";
 import type { TicketMessage } from "prisma/generated/client";
 import { useEffect, useState } from "react";
 import { z } from "zod";
@@ -293,8 +293,9 @@ function TicketDetailPanel({
                 <ArrowLeft className="size-5" />
               </button>
             )}
+            {/* Identifies the customer on the other end, not BOOSTK — person icon. */}
             <div className="bg-blue-400/30 p-2 rounded-lg">
-              <Bot size={20} />
+              <User size={20} />
             </div>
             <div className="flex flex-col gap-1">
               <h2 className="text-sm font-bold leading-none">
@@ -396,7 +397,6 @@ function TicketDetailPanel({
                 </button>
               </>
             )}
-            <Sparkles size={16} className="text-blue-300 ml-1" />
           </div>
         </header>
 
@@ -410,7 +410,7 @@ function TicketDetailPanel({
               <EmptyState
                 icon={
                   <div className="bg-blue-50 dark:bg-blue-500/10 p-4 rounded-full">
-                    <Sparkles className="text-blue-500 dark:text-blue-400" size={32} />
+                    <MessageCircle className="text-blue-500 dark:text-blue-400" size={32} />
                   </div>
                 }
                 title="Waiting for the customer"
