@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { GlobalChatProvider, useGlobalChat } from "@/components/chat-support/GlobalChatLauncher";
 import { AuthGuard } from "@/components/guards/auth-guard";
 import { VisualPricing } from "@/components/landing/visual-pricing";
 import { Button } from "@/components/ui/button";
@@ -7,18 +8,22 @@ export const Route = createFileRoute("/")({
   component: LandingPage,
 });
 
-// Which project's support inbox receives chats started from the marketing site.
-//
-// The landing page itself can never be the installable customer form: a browser only
-// offers install when the current page falls inside the manifest's `scope`, and the widget
-// manifest is scoped to `/support/<projectId>/`. Making `/` installable would require
-// `scope: "/"`, which is what used to swallow the whole site. So we send visitors one hop
-// to the widget, where the manifest applies and the install prompt appears.
-//
-// Unset (the default) hides the link, since there is no sensible fallback project.
-const supportProjectId = import.meta.env.VITE_SUPPORT_PROJECT_ID as string | undefined;
-
+// Every "talk to us" affordance on this page opens the global chat panel in place. It used
+// to link out to `/support/<VITE_SUPPORT_PROJECT_ID>/chat-widget`, which meant the
+// marketing site had to nominate one client project to receive its enquiries — and sent
+// the visitor away from the pricing they were reading. Global intake removes that: chats
+// land in the BOOSTK queue with no project attached, and staff route them afterwards.
 function LandingPage() {
+  return (
+    <GlobalChatProvider>
+      <LandingPageContent />
+    </GlobalChatProvider>
+  );
+}
+
+function LandingPageContent() {
+  const { open: openChat } = useGlobalChat();
+
   return (
     <div className="min-h-screen bg-[#fafafa] text-[#1d1d1f] font-sans antialiased selection:bg-blue-100">
       <nav className="fixed top-0 z-50 w-full border-b border-gray-100 bg-white/70 backdrop-blur-xl">
@@ -29,15 +34,13 @@ function LandingPage() {
             </Link>
           </div>
           <div className="flex flex-row items-center gap-4">
-            {supportProjectId ? (
-              <Link
-                to="/support/$projectId/chat-widget"
-                params={{ projectId: supportProjectId }}
-                className="text-sm font-medium hover:text-blue-600 transition-colors"
-              >
-                Chat with us
-              </Link>
-            ) : null}
+            <button
+              type="button"
+              onClick={openChat}
+              className="text-sm font-medium hover:text-blue-600 transition-colors"
+            >
+              Chat with us
+            </button>
             <AuthGuard>
               <Link to="/dashboard/organizations" className="text-sm font-medium hover:text-blue-600 transition-colors">
                 <Button>Dashboard</Button>
@@ -89,54 +92,29 @@ function LandingPage() {
                     international opportunities. We bridge the gap for Korean SMEs.
                   </p>
 
-                  {supportProjectId ? (
-                    <Link
-                      to="/support/$projectId/chat-widget"
-                      params={{ projectId: supportProjectId }}
-                      className="group flex items-center gap-3 rounded-full bg-slate-900 px-2 py-2 pr-6 font-semibold text-white transition-all duration-300 hover:bg-blue-600 hover:shadow-xl hover:shadow-blue-200 active:scale-95"
-                    >
-                      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white transition-transform duration-300 group-hover:-rotate-45">
-                        <svg
-                          aria-hidden="true"
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="20"
-                          height="20"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M5 12h14m-7-7 7 7-7 7" />
-                        </svg>
-                      </span>
-                      <span className="text-lg tracking-tight">Request Free Consultation</span>
-                    </Link>
-                  ) : (
-                    <button
-                      type="button"
-                      className="group flex items-center gap-3 rounded-full bg-slate-900 px-2 py-2 pr-6 font-semibold text-white transition-all duration-300 hover:bg-blue-600 hover:shadow-xl hover:shadow-blue-200 active:scale-95"
-                    >
-                      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white transition-transform duration-300 group-hover:-rotate-45">
-                        <svg
-                          aria-hidden="true"
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="20"
-                          height="20"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M5 12h14m-7-7 7 7-7 7" />
-                        </svg>
-                      </span>
-                      <span className="text-lg tracking-tight">Request Free Consultation</span>
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    onClick={openChat}
+                    className="group flex items-center gap-3 rounded-full bg-slate-900 px-2 py-2 pr-6 font-semibold text-white transition-all duration-300 hover:bg-blue-600 hover:shadow-xl hover:shadow-blue-200 active:scale-95"
+                  >
+                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white transition-transform duration-300 group-hover:-rotate-45">
+                      <svg
+                        aria-hidden="true"
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M5 12h14m-7-7 7 7-7 7" />
+                      </svg>
+                    </span>
+                    <span className="text-lg tracking-tight">Request Free Consultation</span>
+                  </button>
                 </div>
               </div>
             </div>

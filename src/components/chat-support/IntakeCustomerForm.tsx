@@ -1,5 +1,5 @@
 import { useForm } from "@tanstack/react-form";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { ArrowRight, Mail, MessageSquare, User } from "lucide-react";
@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { getFieldInvalid } from "@/lib/form-utils";
 import { startIntakeChatFn } from "@/modules/intake/intake.functions";
+import { intakeQueries } from "@/modules/intake/intake.queries";
 import { type StartIntakeChatInput, StartIntakeChatSchema } from "@/modules/intake/intake.schema";
 
 /**
@@ -20,11 +21,16 @@ import { type StartIntakeChatInput, StartIntakeChatSchema } from "@/modules/inta
  */
 export default function IntakeCustomerForm() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { toast } = useToast();
 
   const startIntakeChatMutation = useMutation({
     mutationFn: startIntakeChatFn,
     onSuccess: async () => {
+      // Query invalidation, not just `router.invalidate()`: this form also renders inside
+      // the floating launcher on the landing page, where the conversation comes from
+      // `intakeQueries.session()` and no route owns it.
+      await queryClient.invalidateQueries({ queryKey: intakeQueries.all });
       await router.invalidate();
     },
     onError: (error) =>

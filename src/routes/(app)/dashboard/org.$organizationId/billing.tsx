@@ -1,9 +1,19 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useState } from "react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useToast } from "@/components/ui/toast";
+import { REDIRECT_REASON } from "@/enums/enums";
+import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
 
 export const Route = createFileRoute("/(app)/dashboard/org/$organizationId/billing")({
+  // Billing was the only org admin page without this guard — teams, settings, usage and
+  // integrations all had it. Any member, including an agent, could open it and act on
+  // plans. `role` is resolved once by the parent org route.
+  beforeLoad: ({ context }) => {
+    if (!hasOrgRole(context.role, ORG_ROLE.ADMIN)) {
+      throw redirect({ to: "/dashboard/organizations", search: { reason: REDIRECT_REASON.PERMISSION_DENIED } });
+    }
+  },
   component: OrganizationBillingPage,
 });
 

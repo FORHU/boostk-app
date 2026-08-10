@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { Bot, Info, Loader2, Sparkles, User } from "lucide-react";
+import { Info, Loader2, MessageCircle, User } from "lucide-react";
 import type { Customer, Project, Ticket, TicketMessage } from "prisma/generated/client";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { ReplyInput } from "@/components/chat-support/reply-input";
@@ -190,8 +190,10 @@ const ChatWindow = ({
     <div className="h-full flex-1 min-w-0 flex flex-col min-h-0">
       <header className="flex-none bg-blue-600 dark:bg-blue-800 p-4 text-white flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-3">
+          {/* This header identifies the CUSTOMER the agent is talking to, so it stays a
+              person icon — the BOOSTK mark belongs on the visitor's side of the chat. */}
           <div className="bg-blue-400/30 p-2 rounded-lg">
-            <Bot size={20} />
+            <User size={20} />
           </div>
           <div>
             <h2 className="text-sm font-bold leading-none">{ticket.customer.name}</h2>
@@ -276,7 +278,7 @@ const AgentMessageList = ({ ticket }: { ticket: TicketWithCustomer }) => {
           <EmptyState
             icon={
               <div className="bg-blue-50 dark:bg-blue-500/10 p-4 rounded-full">
-                <Sparkles className="text-blue-500 dark:text-blue-400" size={32} />
+                <MessageCircle className="text-blue-500 dark:text-blue-400" size={32} />
               </div>
             }
             title="Waiting for the customer"
