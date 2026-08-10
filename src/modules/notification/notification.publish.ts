@@ -1,7 +1,7 @@
 import type { EventType, Message } from "@/lib/notifier/core";
 import { prisma } from "@/lib/prisma";
 import { publishEvent } from "@/lib/rabbitmq";
-import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
+import { hasOrgRole, ORG_ROLE, PLATFORM_ROLE } from "@/modules/auth/roles";
 
 type NotificationData = Record<string, unknown>;
 
@@ -60,6 +60,41 @@ export async function publishToProjectAgents({
     await Promise.all(agentUserIds.map((userId) => publishEvent(`user.${userId}.${event}`, message)));
   } catch (err) {
     console.error("[notify] Failed to publish event to project agents:", err);
+  }
+}
+
+/**
+ * Notify the BOOSTK team about a global-intake conversation.
+ *
+ * `publishToProjectAgents` cannot be used for intake: it resolves recipients through org
+ * membership, and platform staff are flagged on `users.platformRole` instead — so it
+ * would find nobody and drop the event silently. Recipients still receive it on the same
+ * personal `user.<userId>.<event>` routing key their dashboard is already bound to, so
+ * no socket or SSE changes are needed.
+ */
+export async function publishToPlatformStaff({
+  event,
+  data,
+  excludeUserId,
+}: {
+  event: EventType;
+  data: NotificationData;
+  excludeUserId?: string;
+}): Promise<void> {
+  try {
+    const staff = await prisma.user.findMany({
+      where: { platformRole: PLATFORM_ROLE.STAFF },
+      select: { id: true },
+    });
+
+    let staffUserIds = staff.map(({ id }) => id);
+    if (excludeUserId) staffUserIds = staffUserIds.filter((userId) => userId !== excludeUserId);
+    if (staffUserIds.length === 0) return;
+
+    const message = buildMessage(event, data);
+    await Promise.all(staffUserIds.map((userId) => publishEvent(`user.${userId}.${event}`, message)));
+  } catch (err) {
+    console.error("[notify] Failed to publish event to platform staff:", err);
   }
 }
 

@@ -1,8 +1,8 @@
 "use client";
 
-import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
-import { BadgeCheckIcon, CreditCardIcon, LogOutIcon, SparklesIcon, ZapIcon } from "lucide-react";
+import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { BadgeCheckIcon, CreditCardIcon, InboxIcon, LogOutIcon, SparklesIcon, ZapIcon } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -17,8 +17,31 @@ import {
 import type { NotificationItem } from "@/hooks/use-notifications";
 import { authClient } from "@/lib/auth-client";
 import { authQueries } from "@/modules/auth/auth.queries";
+import { intakeQueries } from "@/modules/intake/intake.queries";
 import { NotificationBell } from "./notification-bell";
 import { RouterBreadcrumb } from "./RouterBreadcrumb";
+
+/**
+ * Entry point to the BOOSTK-wide triage inbox, shown only to platform staff.
+ *
+ * Purely an affordance: every triage server function re-checks `platformRole` through
+ * `requirePlatformStaffMiddleware`, so hiding the link is never what keeps a tenant out.
+ */
+function TriageNavLink() {
+  const { data: isStaff } = useQuery(intakeQueries.isPlatformStaff());
+  if (!isStaff) return null;
+
+  return (
+    <Link
+      to="/dashboard/triage"
+      className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+      activeProps={{ className: "text-foreground" }}
+    >
+      <InboxIcon className="size-4" />
+      Triage
+    </Link>
+  );
+}
 
 interface AppTopbarProps {
   connectionStatus?: "connecting" | "connected" | "reconnecting";
@@ -64,6 +87,7 @@ export default function AppTopbar({ connectionStatus, notifications, unreadCount
         </div>
 
         <div className="flex items-center gap-4">
+          <TriageNavLink />
           {connectionStatus && connectionStatus !== "connected" && (
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <span className="size-2 rounded-full bg-amber-500 animate-pulse" />

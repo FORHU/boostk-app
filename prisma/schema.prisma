@@ -20,9 +20,16 @@ model User {
   sessions      Session[]
   accounts      Account[]
 
+  // Platform-level role, a tier ABOVE organizations (see auth/roles.ts).
+  // Null for every ordinary user; "staff" grants the BOOSTK team access to the
+  // global triage inbox across all orgs. Deliberately NOT a Member role: it
+  // confers no authority inside any organization.
+  platformRole String?
+
   members        Member[]
   invitations    Invitation[]
   ticketMessages TicketMessage[]
+  triagedTickets Ticket[]        @relation("TicketTriagedBy")
 
   @@map("users")
 }
@@ -200,6 +207,27 @@ model Ticket {
   assignedAgentId String?
   assignedAgent   Member? @relation(fields: [assignedAgentId], references: [id], onDelete: SetNull)
 
+  // --- Global intake / triage (see docs/global-chat-triage.md) ---
+  //
+  // A chat started from the public /chat route lands in the seeded BOOSTK intake
+  // project with no organization behind it yet. Triage then creates a NEW ticket
+  // in the target project; these fields tie the two halves together.
+  //
+  // On the ROUTED ticket: points back at the intake conversation it came from.
+  intakeTicketId String? @unique
+  intakeTicket   Ticket? @relation("TicketIntake", fields: [intakeTicketId], references: [id], onDelete: SetNull)
+  // On the INTAKE ticket: the ticket triage created from it.
+  routedTicket   Ticket? @relation("TicketIntake")
+
+  // Set on the intake ticket when it is routed. The triage queue is
+  // `projectId = <intake> AND status = OPEN`, so no new TicketStatus is needed.
+  routedAt    DateTime?
+  triagedById String?
+  triagedBy   User?     @relation("TicketTriagedBy", fields: [triagedById], references: [id], onDelete: SetNull)
+  // Why an intake chat was closed without being routed ("spam" | "no_fit" | "resolved").
+  // Null on routed tickets, which record their outcome via `routedTicket` instead.
+  triageNote  String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -207,6 +235,8 @@ model Ticket {
   attachments    Attachment[]
 
   @@index([assignedAgentId])
+  @@index([projectId, status])
+  @@index([triagedById])
   @@map("tickets")
 }
 

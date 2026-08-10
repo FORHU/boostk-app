@@ -39,3 +39,33 @@ export function hasOrgRole(role: string | null | undefined, minRole: OrgRole): b
   if (role == null) return false;
   return ROLE_RANK[normalizeRole(role)] >= ROLE_RANK[minRole];
 }
+
+// ---------------------------------------------------------------------------
+// Platform roles — a tier ABOVE organizations.
+//
+// Deliberately kept separate from OrgRole rather than extended onto the ranking
+// above: org roles answer "what may this user do inside org X", platform roles
+// answer "may this user act across every org at once". Collapsing them into one
+// ladder would make `hasOrgRole(role, OWNER)` silently grant cross-tenant reach
+// the moment a platform value leaked into a `members.role` column.
+//
+// `platformRole` is stored as a nullable free string on `users`. Null — the
+// value for essentially every user — means no platform authority whatsoever.
+//   staff — BOOSTK team; works the global triage inbox, routes intake chats to
+//           an organization + project. Grants NO authority inside any org.
+// ---------------------------------------------------------------------------
+export const PLATFORM_ROLE = {
+  STAFF: "staff",
+} as const;
+
+export type PlatformRole = (typeof PLATFORM_ROLE)[keyof typeof PLATFORM_ROLE];
+
+/**
+ * True when the user holds platform staff authority. Unknown/legacy strings are
+ * rejected rather than coerced: an unrecognised value must never be read as
+ * cross-tenant access. This is the inverse of `normalizeRole`'s forgiving
+ * default, and intentionally so.
+ */
+export function hasPlatformRole(platformRole: string | null | undefined): boolean {
+  return platformRole === PLATFORM_ROLE.STAFF;
+}
