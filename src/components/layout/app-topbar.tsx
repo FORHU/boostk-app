@@ -57,6 +57,12 @@ export default function AppTopbar({ connectionStatus, notifications, unreadCount
   // TODO: investigate why useSuspenseQuery is not working (return data can be nullable)
   const { data: authSession } = useSuspenseQuery(authQueries.authUser());
 
+  const orgMatch = useMatch({
+    from: "/(app)/dashboard/org/$organizationId",
+    shouldThrow: false,
+  });
+  const { data: organizations } = useSuspenseQuery(organizationQueries.getAuthOrganization());
+
   if (!authSession) {
     console.error("No auth session. Redirecting to login.");
     navigate({ to: "/signin" });
@@ -64,6 +70,7 @@ export default function AppTopbar({ connectionStatus, notifications, unreadCount
   }
 
   const { user } = authSession;
+  const organizationId = orgMatch?.params.organizationId ?? organizations[0]?.id;
 
   const handleLogout = async () => {
     queryClient.clear();
@@ -127,21 +134,39 @@ export default function AppTopbar({ connectionStatus, notifications, unreadCount
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
-                <DropdownMenuItem>
-                  <SparklesIcon />
-                  Upgrade to Pro
-                </DropdownMenuItem>
+                {organizationId ? (
+                  <DropdownMenuItem
+                    render={<Link to="/dashboard/org/$organizationId/billing" params={{ organizationId }} />}
+                  >
+                    <SparklesIcon />
+                    Upgrade to Pro
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem disabled>
+                    <SparklesIcon />
+                    Upgrade to Pro
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
-                <DropdownMenuItem>
+                <DropdownMenuItem disabled>
                   <BadgeCheckIcon />
                   Account
                 </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <CreditCardIcon />
-                  Billing
-                </DropdownMenuItem>
+                {organizationId ? (
+                  <DropdownMenuItem
+                    render={<Link to="/dashboard/org/$organizationId/billing" params={{ organizationId }} />}
+                  >
+                    <CreditCardIcon />
+                    Billing
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem disabled>
+                    <CreditCardIcon />
+                    Billing
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>
