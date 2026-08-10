@@ -3,8 +3,10 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { REDIRECT_REASON } from "@/enums/enums";
 import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import { generateSlug } from "@/lib/utils";
 import { requireAuthMiddleware } from "@/modules/auth/auth.middleware";
+import { normalizeRole } from "@/modules/auth/roles";
 import { requireOrganizationMiddleware } from "@/modules/organization/organization.middleware";
 import { getProjectsByOrgId } from "@/modules/project/project.service";
 import { createOrganizationSchema } from "./organization.schema";
@@ -16,7 +18,20 @@ export const getAuthOrganizationsFn = createServerFn({ method: "GET" })
       headers: context.request.headers,
     });
 
-    return organizations;
+    // Better Auth's listOrganizations returns organization rows only — no membership
+    // role. The topbar needs the caller's role to decide whether to offer Billing, so
+    // attach it here rather than making every consumer issue a second request.
+    const memberships = await prisma.member.findMany({
+      where: {
+        userId: context.authSession.user.id,
+        organizationId: { in: organizations.map((org) => org.id) },
+      },
+      select: { organizationId: true, role: true },
+    });
+
+    const roleByOrgId = new Map(memberships.map((m) => [m.organizationId, normalizeRole(m.role)]));
+
+    return organizations.map((org) => ({ ...org, role: roleByOrgId.get(org.id) ?? null }));
   });
 
 // url based active organization

@@ -17,6 +17,7 @@ import {
 import type { NotificationItem } from "@/hooks/use-notifications";
 import { authClient } from "@/lib/auth-client";
 import { authQueries } from "@/modules/auth/auth.queries";
+import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
 import { intakeQueries } from "@/modules/intake/intake.queries";
 import { organizationQueries } from "@/modules/organization/organization.queries";
 import { NotificationBell } from "./notification-bell";
@@ -72,6 +73,12 @@ export default function AppTopbar({ connectionStatus, notifications, unreadCount
 
   const { user } = authSession;
   const organizationId = orgMatch?.params.organizationId ?? organizations[0]?.id;
+
+  // Billing is admin-and-above (same bar as Teams, Settings and Usage). Agents and
+  // members do not manage the plan, so offering them a link that only redirects to
+  // permission_denied is worse than not showing it. This mirrors the route guard in
+  // billing.tsx — it does not replace it.
+  const canManageBilling = hasOrgRole(organizations.find((org) => org.id === organizationId)?.role, ORG_ROLE.ADMIN);
 
   const handleLogout = async () => {
     queryClient.clear();
@@ -133,37 +140,32 @@ export default function AppTopbar({ connectionStatus, notifications, unreadCount
                   </div>
                 </DropdownMenuLabel>
               </DropdownMenuGroup>
-              <DropdownMenuSeparator />
-              <DropdownMenuGroup>
-                {organizationId ? (
-                  <DropdownMenuItem
-                    render={<Link to="/dashboard/org/$organizationId/billing" params={{ organizationId }} />}
-                  >
-                    <SparklesIcon />
-                    Upgrade to Pro
-                  </DropdownMenuItem>
-                ) : (
-                  <DropdownMenuItem disabled>
-                    <SparklesIcon />
-                    Upgrade to Pro
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuGroup>
+              {/* Both of these go to the same billing page, so both are admin-gated.
+                  The separator lives inside the condition — left outside, hiding the
+                  group would leave two dividers stacked against each other. */}
+              {canManageBilling && organizationId && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem
+                      render={<Link to="/dashboard/org/$organizationId/billing" params={{ organizationId }} />}
+                    >
+                      <SparklesIcon />
+                      Upgrade to Pro
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+                </>
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
                 <DropdownMenuItem disabled>
                   <BadgeCheckIcon />
                   Account
                 </DropdownMenuItem>
-                {organizationId ? (
+                {canManageBilling && organizationId && (
                   <DropdownMenuItem
                     render={<Link to="/dashboard/org/$organizationId/billing" params={{ organizationId }} />}
                   >
-                    <CreditCardIcon />
-                    Billing
-                  </DropdownMenuItem>
-                ) : (
-                  <DropdownMenuItem disabled>
                     <CreditCardIcon />
                     Billing
                   </DropdownMenuItem>
