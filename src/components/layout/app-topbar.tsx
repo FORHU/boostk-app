@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useMatch, useNavigate } from "@tanstack/react-router";
 import { BadgeCheckIcon, CreditCardIcon, InboxIcon, LogOutIcon, SparklesIcon, ZapIcon } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -18,6 +18,7 @@ import type { NotificationItem } from "@/hooks/use-notifications";
 import { authClient } from "@/lib/auth-client";
 import { authQueries } from "@/modules/auth/auth.queries";
 import { intakeQueries } from "@/modules/intake/intake.queries";
+import { organizationQueries } from "@/modules/organization/organization.queries";
 import { NotificationBell } from "./notification-bell";
 import { RouterBreadcrumb } from "./RouterBreadcrumb";
 
