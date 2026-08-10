@@ -2,9 +2,10 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { EventType } from "@/lib/notifier/core";
 import { prisma } from "@/lib/prisma";
-import { requireAuthMiddleware } from "@/modules/auth/auth.middleware";
+import { ORG_ROLE } from "@/modules/auth/roles";
 import { publishToProjectAgents, publishToTicketChannel } from "@/modules/notification/notification.publish";
-import { requireCustomerTicketMiddleware } from "../ticket/ticket.middleware";
+import { requireProjectRole } from "../project/project.middleware";
+import { requireCustomerTicketMiddleware, requireTicketAgentMiddleware } from "../ticket/ticket.middleware";
 import { CreateCustomerTicketMessageSchema, CreateTicketMessageSchema } from "./ticket-message.schema";
 import {
   detectMessageLanguage,
@@ -129,13 +130,14 @@ export const createTicketMessageFn = createServerFn({ method: "POST" })
     return message;
   });
 
-// Agent-side: read a specific ticket's messages (auth required).
+// Agent-side: read a specific ticket's messages. Guarded by ticket, not just by auth —
+// the caller must hold agent-or-above in the organization that owns this ticket.
 export const getTicketMessagesByTicketFn = createServerFn({ method: "GET" })
   .inputValidator(z.object({ ticketId: z.string().min(1) }))
-  .middleware([requireAuthMiddleware])
-  .handler(async ({ data }) => {
+  .middleware([requireTicketAgentMiddleware])
+  .handler(async ({ context }) => {
     return prisma.ticketMessage.findMany({
-      where: { ticketId: data.ticketId },
+      where: { ticketId: context.agentTicket.id },
       include: { attachment: ATTACHMENT_SELECT },
       orderBy: { createdAt: "asc" as const },
     });
@@ -146,7 +148,9 @@ export const getTicketMessagesByTicketFn = createServerFn({ method: "GET" })
 // chat history just to count one person's replies.
 export const getAgentConversationsFn = createServerFn({ method: "GET" })
   .inputValidator(z.object({ projectId: z.string().min(1), userId: z.string().min(1) }))
-  .middleware([requireAuthMiddleware])
+  // Agent-or-above in the project's own org. Previously any signed-in user could read
+  // any project's conversation history by supplying its id.
+  .middleware([requireProjectRole(ORG_ROLE.AGENT)])
   .handler(async ({ data }) => {
     const messages = await prisma.ticketMessage.findMany({
       where: { userId: data.userId, ticket: { projectId: data.projectId } },
@@ -186,15 +190,15 @@ export const getAgentConversationsFn = createServerFn({ method: "GET" })
 // Agent-side: send a reply (written in the support language), translated into the customer's language.
 export const createAgentTicketMessageFn = createServerFn({ method: "POST" })
   .inputValidator(CreateTicketMessageSchema)
-  .middleware([requireAuthMiddleware])
+  // Ticket-scoped, not merely authenticated: the caller must hold agent-or-above in the
+  // organization that owns this ticket. `requireAuthMiddleware` alone let any signed-in
+  // user post into any tenant's conversation given a ticket id.
+  .middleware([requireTicketAgentMiddleware])
   .handler(async ({ data, context }) => {
     const userId = context.authSession.user.id;
 
-    const ticket = await prisma.ticket.findUnique({
-      where: { id: data.ticketId },
-      include: { customer: true },
-    });
-    if (!ticket) return null;
+    // Already resolved and authorised by the middleware.
+    const ticket = context.agentTicket;
 
     const attachment = data.attachmentId ? await resolveMessageAttachment(data.attachmentId, ticket.id) : null;
     if (data.attachmentId && !attachment) return null;

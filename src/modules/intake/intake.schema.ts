@@ -44,6 +44,18 @@ export const StartIntakeChatSchema = z.object({
 });
 export type StartIntakeChatInput = z.infer<typeof StartIntakeChatSchema>;
 
+/**
+ * A BOOSTK staff reply sent from the triage panel, before the conversation belongs to any
+ * organization. Separate from the agent reply schema because the authority behind it is
+ * different — platform staff, not an org member — and because it can only ever target a
+ * ticket still sitting in the intake queue.
+ */
+export const CreateTriageMessageSchema = z.object({
+  intakeTicketId: z.string(),
+  content: z.string().trim().min(1, "Message cannot be empty").max(4000),
+});
+export type CreateTriageMessageInput = z.infer<typeof CreateTriageMessageSchema>;
+
 export const RouteIntakeTicketSchema = z.object({
   intakeTicketId: z.string(),
   organizationId: z.string(),

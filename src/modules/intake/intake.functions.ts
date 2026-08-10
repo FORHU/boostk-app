@@ -16,12 +16,14 @@ import {
   SUPPORT_LANGUAGE,
   shouldDetectLanguage,
   translateIncomingMessage,
+  translateOutgoingMessage,
 } from "@/modules/ticket-message/ticket-message.translation";
 import { intakeRequestMiddleware, requireIntakeTicketMiddleware } from "./intake.middleware";
 import { allowIntakeMessage, allowIntakeSession, clientKeyFromRequest } from "./intake.rate-limit";
 import {
   CloseIntakeTicketSchema,
   CreateIntakeMessageSchema,
+  CreateTriageMessageSchema,
   GetTriageQueueSchema,
   RouteIntakeTicketSchema,
   StartIntakeChatSchema,
@@ -187,6 +189,86 @@ export const getTriageThreadFn = createServerFn({ method: "GET" })
 export const getTriageTargetsFn = createServerFn({ method: "GET" })
   .middleware([requirePlatformStaffMiddleware])
   .handler(async () => getTriageTargets());
+
+/**
+ * Reply to a visitor from the triage queue, before the conversation has an organization.
+ *
+ * This is what makes triage workable at all: "I need help with my booking" does not say
+ * which project it belongs to, so staff have to ask before they can route. It also covers
+ * the case where no project fits — the person still gets an answer.
+ *
+ * Scoped to the intake project on purpose. Platform staff can read every tenant's intake,
+ * but this must not become a way to post into an arbitrary organization's ticket, so a
+ * ticket that has already been routed is rejected: from that point the receiving org's
+ * agents own the conversation.
+ */
+export const createTriageMessageFn = createServerFn({ method: "POST" })
+  .middleware([requirePlatformStaffMiddleware])
+  .inputValidator(CreateTriageMessageSchema)
+  .handler(async ({ data, context }) => {
+    const userId = context.authSession.user.id;
+    const intakeProjectId = await resolveIntakeProjectId();
+
+    const ticket = await prisma.ticket.findFirst({
+      where: { id: data.intakeTicketId, projectId: intakeProjectId, routedAt: null },
+      include: { customer: true },
+    });
+    if (!ticket) throw new Error("Conversation is not in the triage queue.");
+
+    // Staff write in the support language; the visitor may not read it.
+    const translation = await translateOutgoingMessage(data.content, {
+      ticketId: ticket.id,
+      customerLang: ticket.customer.language,
+    });
+
+    const message = await prisma.ticketMessage.create({
+      data: {
+        content: data.content,
+        contentType: "TEXT",
+        ticketId: ticket.id,
+        userId,
+        translatedContent: translation.translatedContent,
+        sourceLang: translation.sourceLang,
+        targetLang: translation.targetLang,
+      },
+      include: { attachment: ATTACHMENT_SELECT },
+    });
+
+    // Reaches the visitor's open /chat window.
+    await publishToTicketChannel({
+      ticketId: ticket.id,
+      event: EventType.CHAT_MESSAGE,
+      data: {
+        ticketId: ticket.id,
+        referenceNumber: ticket.referenceNumber,
+        projectId: ticket.projectId,
+        customerName: ticket.customer.name,
+        content: data.content,
+        sender: "agent",
+        createdAt: message.createdAt.toISOString(),
+      },
+    });
+
+    // Keeps every other staff member's queue live; the sender is excluded so nobody
+    // notifies themselves.
+    await publishToPlatformStaff({
+      event: EventType.CHAT_MESSAGE,
+      data: {
+        ticketId: ticket.id,
+        referenceNumber: ticket.referenceNumber,
+        projectId: ticket.projectId,
+        projectName: "Global intake",
+        customerName: ticket.customer.name,
+        content: data.content,
+        sender: "agent",
+        isIntake: true,
+        createdAt: message.createdAt.toISOString(),
+      },
+      excludeUserId: userId,
+    });
+
+    return message;
+  });
 
 export const routeIntakeTicketFn = createServerFn({ method: "POST" })
   .middleware([requirePlatformStaffMiddleware])
