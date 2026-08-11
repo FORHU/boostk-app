@@ -49,10 +49,10 @@ interface AppTopbarProps {
   connectionStatus?: "connecting" | "connected" | "reconnecting";
   notifications: NotificationItem[];
   unreadCount: number;
-  markAllRead: () => void;
+  markAsRead: (ticketId: string) => void;
 }
 
-export default function AppTopbar({ connectionStatus, notifications, unreadCount, markAllRead }: AppTopbarProps) {
+export default function AppTopbar({ connectionStatus, notifications, unreadCount, markAsRead }: AppTopbarProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -110,7 +110,7 @@ export default function AppTopbar({ connectionStatus, notifications, unreadCount
             </div>
           )}
           <ThemeToggle />
-          <NotificationBell notifications={notifications} unreadCount={unreadCount} markAllRead={markAllRead} />
+          <NotificationBell notifications={notifications} unreadCount={unreadCount} markAsRead={markAsRead} />
           <DropdownMenu>
             <DropdownMenuTrigger
               render={

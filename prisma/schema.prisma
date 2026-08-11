@@ -232,6 +232,7 @@ model Ticket {
   updatedAt DateTime @updatedAt
 
   ticketMessages TicketMessage[]
+  messageReads   MessageRead[]
   attachments    Attachment[]
 
   @@index([assignedAgentId])
@@ -269,7 +270,24 @@ model TicketMessage {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  messageReads MessageRead[]
+
   @@map("ticket_messages")
+}
+
+model MessageRead {
+  id        String   @id @default(cuid())
+  messageId String
+  ticketId  String
+  userId    String
+  readAt    DateTime @default(now())
+
+  message TicketMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  ticket  Ticket        @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@index([ticketId, userId])
+  @@map("message_reads")
 }
 
 // Uploaded chat file, stored as bytes in Postgres rather than on disk or S3 —
