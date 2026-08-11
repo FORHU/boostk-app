@@ -27,10 +27,14 @@ export const GetTicketByReferenceNumberSchema = z.object({
 });
 export type GetTicketByReferenceNumberInput = z.infer<typeof GetTicketByReferenceNumberSchema>;
 
+export const TICKET_SORT_OPTIONS = ["newest", "oldest", "priority"] as const;
+export type TicketSort = (typeof TICKET_SORT_OPTIONS)[number];
+
 export const GetProjectTicketsSchema = z.object({
   projectId: z.string().min(1),
   take: z.number().int().min(1).max(50).default(25),
   cursor: z.string().optional(),
+  sort: z.enum(TICKET_SORT_OPTIONS).default("newest"),
 });
 export type GetProjectTicketsInput = z.infer<typeof GetProjectTicketsSchema>;
 

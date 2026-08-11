@@ -91,6 +91,7 @@ export function NotificationBell({ notifications, unreadCount, markAllRead }: No
                         params: { projectId },
                         search: {
                           statusFilter: "ALL",
+                          sort: "newest",
                           selectedTicketId: typeof ticketId === "string" ? ticketId : undefined,
                         },
                       });
