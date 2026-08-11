@@ -1,12 +1,13 @@
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useLayoutEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
+import { useForceLightTheme } from "@/hooks/use-force-light-theme";
 import { authClient } from "@/lib/auth-client";
 import { getFieldInvalid } from "@/lib/form-utils";
 import { type SignInInput, signInSchema } from "@/modules/auth/auth.schema";
@@ -20,37 +21,7 @@ function SigninPage() {
   const queryClient = useQueryClient();
   const [serverError, setServerError] = useState<string | null>(null);
 
-  // Force Light Mode on mount and restore original theme on unmount
-  useLayoutEffect(() => {
-    const html = document.documentElement;
-
-    // Cache original theme states to restore later
-    const hasDark = html.classList.contains("dark");
-    const hasLight = html.classList.contains("light");
-    const originalTheme = html.getAttribute("data-theme");
-    const originalColorScheme = html.style.colorScheme;
-
-    // Apply forced light mode
-    html.classList.remove("dark");
-    html.classList.add("light");
-    html.setAttribute("data-theme", "light");
-    html.style.colorScheme = "light";
-
-    // Cleanup function runs when navigating away (e.g., successful login)
-    return () => {
-      html.classList.remove("light", "dark");
-      if (hasDark) html.classList.add("dark");
-      if (hasLight) html.classList.add("light");
-
-      if (originalTheme !== null) {
-        html.setAttribute("data-theme", originalTheme);
-      } else {
-        html.removeAttribute("data-theme");
-      }
-
-      html.style.colorScheme = originalColorScheme;
-    };
-  }, []);
+  useForceLightTheme();
 
   const { mutateAsync: signInMutation } = useMutation({
     mutationFn: async (value: SignInInput) => {
