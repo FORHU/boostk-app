@@ -35,6 +35,25 @@ export const Route = createFileRoute("/(app)/dashboard/triage")({
   component: RouteComponent,
 });
 
+/**
+ * One line summarising a conversation for the queue list.
+ *
+ * For an attachment `content` holds the /api/attachments/:id URL rather than text, so
+ * printing it directly showed staff a bare URL where the preview should be. Prefers the
+ * support-language translation, since the raw text is unreadable to staff when the
+ * visitor writes in a language they do not speak.
+ */
+const queuePreview = (item: {
+  latestMessage: { content: string; translatedContent: string | null; contentType: string } | null;
+  customer: { metadata: string | null };
+}) => {
+  const msg = item.latestMessage;
+  if (!msg) return item.customer.metadata ?? "No messages yet";
+  if (msg.contentType === "IMAGE") return "📷 Photo";
+  if (msg.contentType === "FILE") return "📎 File";
+  return msg.translatedContent ?? msg.content;
+};
+
 function RouteComponent() {
   const queryClient = useQueryClient();
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -104,12 +123,7 @@ function RouteComponent() {
                 <p className="text-xs text-gray-500 truncate">{item.customer.email}</p>
                 {/* Prefer the support-language version: the raw text is unreadable to
                     staff when the visitor writes in a language they do not speak. */}
-                <p className="text-xs text-gray-400 truncate mt-1">
-                  {item.latestMessage?.translatedContent ??
-                    item.latestMessage?.content ??
-                    item.customer.metadata ??
-                    "No messages yet"}
-                </p>
+                <p className="text-xs text-gray-400 truncate mt-1">{queuePreview(item)}</p>
               </button>
             ))
           )}

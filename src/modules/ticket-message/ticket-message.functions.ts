@@ -32,7 +32,7 @@ const resolveMessageAttachment = async (attachmentId: string, ticketId: string) 
  * What a notification shows for a message. For attachments `content` is a URL, which
  * is useless in a toast or a push — send the filename instead.
  */
-const notificationPreview = (content: string, contentType: string, attachment: { filename: string } | null) =>
+export const notificationPreview = (content: string, contentType: string, attachment: { filename: string } | null) =>
   attachment ? `${contentType === "IMAGE" ? "📷" : "📎"} ${attachment.filename}` : content;
 
 export const getTicketMessagesFn = createServerFn({ method: "GET" })
