@@ -53,6 +53,9 @@ WORKDIR /app
 COPY --from=build /app/.output          ./.output
 COPY --from=build /app/src              ./src
 COPY --from=build /app/prisma           ./prisma
+# scripts    one-off operator tasks run with `docker compose run --rm app`,
+#            e.g. creating the first platform staff account on a fresh database
+COPY --from=build /app/scripts          ./scripts
 COPY --from=build /app/node_modules     ./node_modules
 COPY --from=build /app/package.json     ./package.json
 COPY --from=build /app/tsconfig.json    ./tsconfig.json
