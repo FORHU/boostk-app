@@ -289,7 +289,7 @@ function AgentTable({ organizationId, projectId }: { organizationId: string; pro
                     </span>
                   </div>
                   <div className="p-3 md:p-4 rounded-[10px] bg-muted/40 border border-border flex flex-col items-center text-center">
-                    <Users className="w-4 h-4 md:w-5 md:h-5 text-indigo-500 mb-1.5 md:mb-2 opacity-80" />
+                    <Users className="w-4 h-4 md:w-5 md:h-5 text-blue-500 mb-1.5 md:mb-2 opacity-80" />
                     <span className="text-xl md:text-2xl font-bold text-foreground">
                       {agentStats.messagesSentCount}
                     </span>

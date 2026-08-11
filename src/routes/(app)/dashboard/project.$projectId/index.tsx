@@ -126,7 +126,7 @@ function ProjectOverviewPage() {
         <button
           type="button"
           onClick={() => setIsChatOpen(!isChatOpen)}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white p-4 rounded-full shadow-lg transition-transform hover:scale-105 active:scale-95 flex items-center justify-center h-14 w-14 flex-shrink-0"
+          className="bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-full shadow-lg transition-transform hover:scale-105 active:scale-95 flex items-center justify-center h-14 w-14 flex-shrink-0"
           aria-label="Toggle Chat"
         >
           {isChatOpen ? <X size={24} /> : <MessageCircle size={24} />}

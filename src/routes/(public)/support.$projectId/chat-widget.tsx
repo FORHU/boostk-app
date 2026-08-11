@@ -49,7 +49,7 @@ export const Route = createFileRoute("/(public)/support/$projectId/chat-widget")
   head: ({ params, loaderData }) => ({
     meta: [
       { title: loaderData?.projectName ? `${loaderData.projectName} Support` : "Support" },
-      { name: "theme-color", content: "#4f46e5" },
+      { name: "theme-color", content: "#155dfc" },
       { name: "mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "default" },
@@ -85,7 +85,7 @@ function RouteComponent() {
 
   const LoadingFallback = () => (
     <div className="flex items-center justify-center h-full">
-      <Loader2 className="animate-spin text-indigo-600" size={32} />
+      <Loader2 className="animate-spin text-blue-600" size={32} />
     </div>
   );
 
@@ -144,7 +144,7 @@ const ChatHeader = ({
   const isReconnecting = connectionStatus != null && connectionStatus !== "connected";
 
   return (
-    <header className="flex-none bg-indigo-600 p-4 text-white flex items-center justify-between shadow-sm">
+    <header className="flex-none bg-blue-600 p-4 text-white flex items-center justify-between shadow-sm">
       <div className="flex items-center gap-3">
         {/* The client's own logo when they have set one — this widget is embedded on their
             site and should look like theirs. The BOOSTK mark is the fallback. */}
@@ -155,7 +155,7 @@ const ChatHeader = ({
         )}
         <div>
           <h2 className="text-sm font-bold leading-none">{project.name} Support Chat</h2>
-          <span className="text-[10px] text-indigo-200 flex items-center gap-1">
+          <span className="text-[10px] text-blue-200 flex items-center gap-1">
             {isReconnecting ? (
               <>
                 <span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-pulse"></span>
@@ -299,7 +299,7 @@ const ChatInput = ({ ticketId, initialStatus, projectId, lastMessage }: ChatInpu
             await clearTicketCookieFn();
             router.invalidate();
           }}
-          className="mt-4 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          className="mt-4 bg-blue-50 text-blue-600 hover:bg-blue-100 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
         >
           Start a new conversation
         </button>
@@ -331,12 +331,12 @@ const ChatInput = ({ ticketId, initialStatus, projectId, lastMessage }: ChatInpu
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Type your message..."
             disabled={createTicketMessageMutation.isPending}
-            className="flex-1 min-w-0 bg-gray-100 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-60"
+            className="flex-1 min-w-0 bg-gray-100 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
           />
           <button
             type="submit"
             disabled={(!message.trim() && !attachment) || createTicketMessageMutation.isPending || isUploading}
-            className="bg-indigo-600 text-white p-2.5 rounded-xl active:scale-95 disabled:opacity-50 shrink-0"
+            className="bg-blue-600 text-white p-2.5 rounded-xl active:scale-95 disabled:opacity-50 shrink-0"
           >
             <Send size={18} />
           </button>

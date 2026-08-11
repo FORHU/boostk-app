@@ -57,7 +57,7 @@ export default function GlobalChat({ headerAction }: { headerAction?: React.Reac
       <div className="flex-1 min-h-0 overflow-y-auto p-2 bg-slate-50 scroll-smooth">
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
-            <Loader2 className="animate-spin text-indigo-600" size={28} />
+            <Loader2 className="animate-spin text-blue-600" size={28} />
           </div>
         ) : (
           <MessageList messages={messages ?? []} hasTicket={Boolean(ticket)} />
@@ -83,14 +83,14 @@ const ChatHeader = ({
   const isReconnecting = connectionStatus != null && connectionStatus !== "connected";
 
   return (
-    <header className="flex-none bg-indigo-600 p-4 text-white flex items-center justify-between shadow-sm">
+    <header className="flex-none bg-blue-600 p-4 text-white flex items-center justify-between shadow-sm">
       <div className="flex items-center gap-3 min-w-0">
         <BoostkLogo className="size-9 shrink-0" />
         <div className="min-w-0">
           {/* Never names the receiving project, before or after routing — which team picked
               the conversation up is not the visitor's concern. */}
           <h2 className="text-sm font-bold leading-none truncate">BOOSTK Support</h2>
-          <span className="text-[10px] text-indigo-200 flex items-center gap-1">
+          <span className="text-[10px] text-blue-200 flex items-center gap-1">
             {isReconnecting ? (
               <>
                 <span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-pulse" />
@@ -209,7 +209,7 @@ const ChatInput = ({
             await clearIntakeCookieFn();
             await queryClient.invalidateQueries({ queryKey: intakeQueries.all });
           }}
-          className="mt-3 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          className="mt-3 bg-blue-50 text-blue-600 hover:bg-blue-100 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
         >
           Start a new conversation
         </button>
@@ -227,12 +227,12 @@ const ChatInput = ({
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Type your message..."
             disabled={createMessageMutation.isPending}
-            className="flex-1 min-w-0 bg-gray-100 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-60"
+            className="flex-1 min-w-0 bg-gray-100 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
           />
           <button
             type="submit"
             disabled={!message.trim() || createMessageMutation.isPending}
-            className="bg-indigo-600 text-white p-2.5 rounded-xl active:scale-95 disabled:opacity-50 shrink-0"
+            className="bg-blue-600 text-white p-2.5 rounded-xl active:scale-95 disabled:opacity-50 shrink-0"
           >
             <Send size={18} />
           </button>

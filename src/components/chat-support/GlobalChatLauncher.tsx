@@ -165,7 +165,7 @@ function GlobalChatPanel() {
                     type="button"
                     onClick={close}
                     aria-label="Close chat"
-                    className="rounded-lg p-1.5 text-indigo-200 transition-colors hover:bg-indigo-500/40 hover:text-white"
+                    className="rounded-lg p-1.5 text-blue-200 transition-colors hover:bg-blue-500/40 hover:text-white"
                   >
                     <X size={18} />
                   </button>
@@ -198,8 +198,8 @@ function GlobalChatPanel() {
           }}
           className={cn(
             "group fixed top-32 z-50 flex flex-col items-center gap-2 rounded-l-lg pt-4 pb-7 pl-2.5 pr-2",
-            "bg-indigo-600 text-white transition-[background-color,right] duration-200",
-            "hover:bg-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400",
+            "bg-blue-600 text-white transition-[background-color,right] duration-200",
+            "hover:bg-blue-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400",
           )}
         >
           {isOpen ? <X size={16} /> : <MessageCircle size={16} />}
@@ -274,7 +274,7 @@ function WidthGrip({
       onPointerCancel={handlePointerUp}
       onKeyDown={handleKeyDown}
       aria-label="Resize chat panel. Use left and right arrow keys to adjust."
-      className="absolute left-0 top-0 z-10 h-full w-1.5 cursor-ew-resize touch-none border-0 bg-transparent p-0 transition-colors hover:bg-indigo-400/40 focus-visible:bg-indigo-400/60 focus-visible:outline-none"
+      className="absolute left-0 top-0 z-10 h-full w-1.5 cursor-ew-resize touch-none border-0 bg-transparent p-0 transition-colors hover:bg-blue-400/40 focus-visible:bg-blue-400/60 focus-visible:outline-none"
     />
   );
 }

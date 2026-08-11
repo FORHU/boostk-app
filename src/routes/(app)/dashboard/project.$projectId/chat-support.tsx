@@ -264,7 +264,7 @@ const AgentMessageList = ({ ticket }: { ticket: TicketWithCustomer }) => {
   if (isLoading) {
     return (
       <div className="flex-1 flex items-center justify-center bg-slate-50 dark:bg-slate-900/50">
-        <Loader2 className="animate-spin text-indigo-600" size={20} />
+        <Loader2 className="animate-spin text-blue-600" size={20} />
       </div>
     );
   }
