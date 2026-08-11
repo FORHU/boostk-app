@@ -9,6 +9,7 @@
 import { env } from "@/env";
 import { prisma } from "@/lib/prisma";
 import {
+  clearSession,
   DEFAULT_TRANSLATE_PROMPT,
   detectLanguage,
   getSessionId,
@@ -41,6 +42,52 @@ const NONE = (targetLang: string): MessageTranslation => ({
 });
 
 /**
+ * How many times to ask the engine before giving up and showing the original.
+ *
+ * The forhu agent ignores the translate instruction and echoes the input straight back
+ * roughly half the time -- measured at 5/10 on repeated identical calls, with no error
+ * and no empty response, which is why a plain try/catch never caught it.
+ *
+ * Crucially the failures CLUSTER: once a session has started echoing it keeps echoing,
+ * so retrying on the same session barely helps (measured 5/12 still failing). Each
+ * retry therefore drops the session and mints a fresh one, which is what actually
+ * recovers.
+ */
+const TRANSLATE_ATTEMPTS = 3;
+
+/**
+ * True when the engine handed back what we gave it -- i.e. it did not translate.
+ * Compared case- and whitespace-insensitively: a reply that only differs by
+ * capitalisation is still the untranslated original, and storing it as a
+ * "translation" would show the visitor the support language twice.
+ */
+const isEcho = (candidate: string, source: string) => candidate.trim().toLowerCase() === source.trim().toLowerCase();
+
+/**
+ * Translate, retrying on a fresh session while the engine echoes the input back.
+ * Returns null when every attempt failed, which callers render as "no translation
+ * available" and fall back to the original text. Never throws -- a failed attempt must
+ * not block the message being sent.
+ *
+ * Takes the session *key* rather than an id precisely so it can invalidate it.
+ */
+async function translateWithRetry(trimmed: string, targetLang: string, sessionKey: string): Promise<string | null> {
+  for (let attempt = 0; attempt < TRANSLATE_ATTEMPTS; attempt++) {
+    try {
+      const sessionId = await getSessionId(sessionKey);
+      const candidate = await translateText(trimmed, targetLang, sessionId, TRANSLATE_SYSTEM_PROMPT);
+      if (candidate && !isEcho(candidate, trimmed)) return candidate;
+    } catch {
+      // Swallow -- a transient failure on one attempt should not waste the rest.
+    }
+    // Either it echoed or it threw. Both mean this session is no longer translating
+    // reliably, so bin it and let the next attempt mint a new one.
+    clearSession(sessionKey);
+  }
+  return null;
+}
+
+/**
  * Translate an inbound customer message into the support language.
  * Never throws -- translation is best-effort and must not block message creation.
  */
@@ -58,10 +105,8 @@ export async function translateIncomingMessage(
 
   try {
     // One forhu session per ticket keeps the conversation coherent and cheap.
-    const sessionId = await getSessionId(`ticket:${ticketId}`);
-    const translatedContent = await translateText(trimmed, targetLang, sessionId, TRANSLATE_SYSTEM_PROMPT);
-    // If the engine echoed the input back, treat it as already-translated.
-    if (!translatedContent || translatedContent === trimmed) return NONE(targetLang);
+    const translatedContent = await translateWithRetry(trimmed, targetLang, `ticket:${ticketId}`);
+    if (!translatedContent) return NONE(targetLang);
     return { translatedContent, sourceLang: null, targetLang };
   } catch {
     return NONE(targetLang);
@@ -100,9 +145,8 @@ export async function translateOutgoingMessage(
   if (!trimmed || isSupportLanguage(targetLang)) return NONE(targetLang || SUPPORT_LANGUAGE);
 
   try {
-    const sessionId = await getSessionId(`ticket:${ticketId}`);
-    const translatedContent = await translateText(trimmed, targetLang, sessionId, TRANSLATE_SYSTEM_PROMPT);
-    if (!translatedContent || translatedContent === trimmed) return NONE(targetLang);
+    const translatedContent = await translateWithRetry(trimmed, targetLang, `ticket:${ticketId}`);
+    if (!translatedContent) return NONE(targetLang);
     return { translatedContent, sourceLang: SUPPORT_LANGUAGE, targetLang };
   } catch {
     return NONE(targetLang);
