@@ -1,10 +1,17 @@
-import { queryOptions, useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import {
+  queryOptions,
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { motion } from "framer-motion";
 import { ArrowLeft, Loader2, Maximize, MessageCircle, Minimize, User, X } from "lucide-react";
 import type { TicketMessage } from "prisma/generated/client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { ReplyInput } from "@/components/chat-support/reply-input";
 import TicketChatMessageBubble from "@/components/chat-support/TicketChatMessageBubble";
@@ -23,25 +30,11 @@ import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
 import { memberQueries } from "@/modules/members/member.queries";
 import { publishToProjectAgents } from "@/modules/notification/notification.publish";
 import { requireProjectRole } from "@/modules/project/project.middleware";
+import { getProjectTicketCountsFn, getProjectTicketsFn } from "@/modules/ticket/ticket.functions";
 import { assignTicket } from "@/modules/ticket/ticket.service";
 
-// 1. Fetching Function. Agent-only.
-export const getProjectTicketsFn = createServerFn({ method: "GET" })
-  .inputValidator(z.object({ projectId: z.string() }))
-  .middleware([requireProjectRole(ORG_ROLE.AGENT)])
-  .handler(async ({ data }) => {
-    return prisma.ticket.findMany({
-      where: { projectId: data.projectId },
-      include: {
-        customer: true,
-        assignedAgent: { include: { user: true } },
-      },
-      // `as const` pins the literal so Prisma's orderBy doesn't widen to `string`,
-      // which otherwise collapses the `include` payload type and drops `customer`.
-      orderBy: { createdAt: "desc" as const },
-    });
-  });
-
+// 1. Fetching Functions (Agent-only). The paginated ticket list lives in
+// ticket.functions.ts; the single-ticket detail and mutations stay local.
 export const getTicketByIdFn = createServerFn({ method: "GET" })
   .inputValidator(z.object({ projectId: z.string(), ticketId: z.string() }))
   .middleware([requireProjectRole(ORG_ROLE.AGENT)])
@@ -133,10 +126,20 @@ export const assignTicketFn = createServerFn({ method: "POST" })
 // 2. Query Options
 export const projectTicketQueries = {
   tickets: ["project-tickets"],
-  allByProjectId: (projectId: string) =>
+  listPrefix: (projectId: string) => [...projectTicketQueries.tickets, projectId],
+  // Not wrapped in queryOptions: `list` feeds `useInfiniteQuery`, and this version
+  // of queryOptions only models regular useQuery options.
+  list: (projectId: string) => ({
+    queryKey: [...projectTicketQueries.listPrefix(projectId), "list"],
+    queryFn: ({ pageParam }: { pageParam: string | undefined }) =>
+      getProjectTicketsFn({ data: { projectId, cursor: pageParam } }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage: Awaited<ReturnType<typeof getProjectTicketsFn>>) => lastPage.nextCursor,
+  }),
+  counts: (projectId: string) =>
     queryOptions({
-      queryKey: [...projectTicketQueries.tickets, "all", projectId],
-      queryFn: () => getProjectTicketsFn({ data: { projectId } }),
+      queryKey: [...projectTicketQueries.listPrefix(projectId), "counts"],
+      queryFn: () => getProjectTicketCountsFn({ data: { projectId } }),
     }),
   detailById: (projectId: string, ticketId: string) =>
     queryOptions({
@@ -235,7 +238,7 @@ function TicketDetailPanel({
         queryKey: projectTicketQueries.detailById(projectId, ticketId || "").queryKey,
       });
       queryClient.invalidateQueries({
-        queryKey: projectTicketQueries.allByProjectId(projectId).queryKey,
+        queryKey: projectTicketQueries.listPrefix(projectId),
       });
     },
     onError: () => toast("Failed to update assignee."),
@@ -248,7 +251,7 @@ function TicketDetailPanel({
         queryKey: projectTicketQueries.detailById(projectId, ticketId || "").queryKey,
       });
       queryClient.invalidateQueries({
-        queryKey: projectTicketQueries.allByProjectId(projectId).queryKey,
+        queryKey: projectTicketQueries.listPrefix(projectId),
       });
     },
     onError: () => toast("Failed to update status."),
@@ -261,7 +264,7 @@ function TicketDetailPanel({
         queryKey: projectTicketQueries.detailById(projectId, ticketId || "").queryKey,
       });
       queryClient.invalidateQueries({
-        queryKey: projectTicketQueries.allByProjectId(projectId).queryKey,
+        queryKey: projectTicketQueries.listPrefix(projectId),
       });
     },
     onError: () => toast("Failed to update priority."),
@@ -479,14 +482,14 @@ function ProjectTicketsPage() {
 
     if (lastMessage.event === EventType.TICKET_CREATED) {
       queryClient.invalidateQueries({
-        queryKey: projectTicketQueries.allByProjectId(projectId).queryKey,
+        queryKey: projectTicketQueries.listPrefix(projectId),
       });
     }
 
     if (lastMessage.event === EventType.TICKET_ASSIGNED) {
       const assignedTicketId = lastMessage.data?.ticketId;
       queryClient.invalidateQueries({
-        queryKey: projectTicketQueries.allByProjectId(projectId).queryKey,
+        queryKey: projectTicketQueries.listPrefix(projectId),
       });
       if (assignedTicketId && selectedTicketId === assignedTicketId) {
         queryClient.invalidateQueries({
@@ -515,10 +518,35 @@ function ProjectTicketsPage() {
     });
   }, [debouncedSearchQuery, searchQuery, navigate]);
 
-  const { data: tickets } = useSuspenseQuery(projectTicketQueries.allByProjectId(projectId));
+  const ticketsQuery = useInfiniteQuery(projectTicketQueries.list(projectId));
+  const tickets = ticketsQuery.data?.pages.flatMap((page) => page.tickets) ?? [];
+  const { fetchNextPage, hasNextPage, isFetchingNextPage } = ticketsQuery;
 
-  const getCount = (status: string) =>
-    status === "ALL" ? tickets.length : tickets.filter((t) => t.status === status).length;
+  const { data: counts } = useSuspenseQuery(projectTicketQueries.counts(projectId));
+
+  const getCount = (status: string) => {
+    if (!counts) return 0;
+    if (status === "ALL") return counts.total;
+    if (status === "OPEN") return counts.open;
+    if (status === "CLOSED") return counts.closed;
+    return 0;
+  };
+
+  // Infinite scroll: fetch the next cursor page when the sentinel enters view.
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const node = loadMoreRef.current;
+    if (!node || !hasNextPage || isFetchingNextPage) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) fetchNextPage();
+      },
+      { root: null, threshold: 0.1 },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   const filteredTickets = tickets.filter((ticket) => {
     const matchesStatus = statusFilter === "ALL" || ticket.status === statusFilter;
@@ -579,6 +607,10 @@ function ProjectTicketsPage() {
   const { isMobile, isMounted } = useViewport();
 
   if (!isMounted) {
+    return <TicketsLoadingFallback />;
+  }
+
+  if (ticketsQuery.isPending && tickets.length === 0) {
     return <TicketsLoadingFallback />;
   }
 
@@ -645,65 +677,74 @@ function ProjectTicketsPage() {
                 className="py-20 border rounded-md bg-muted/10"
               />
             ) : (
-              <div className="border border-muted rounded-lg shadow-sm overflow-x-auto w-full">
-                <table className="min-w-full divide-y divide-muted">
-                  <thead className="bg-muted/50">
-                    <tr>
-                      {["referenceNumber", "priority", "status", "customerName", "assignee", "createdAt"].map((col) => (
-                        <th
-                          key={col}
-                          className="px-6 py-3 text-left text-xs font-medium uppercase cursor-pointer hover:bg-muted transition-colors"
-                          onClick={() => handleSort(col)}
-                        >
-                          {col === "customerName" ? "Customer Name" : col.replace(/([A-Z])/g, " $1")}
-                          {sortConfig?.key === col ? (sortConfig.direction === "asc" ? " ↑" : " ↓") : ""}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-muted">
-                    {sortedTickets.map((ticket) => (
-                      <tr
-                        key={ticket.id}
-                        tabIndex={0}
-                        className="hover:bg-muted cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
-                        onClick={() =>
-                          navigate({
-                            search: (prev) => ({ ...prev, selectedTicketId: ticket.id }),
-                          })
-                        }
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
+              <>
+                <div className="border border-muted rounded-lg shadow-sm overflow-x-auto w-full">
+                  <table className="min-w-full divide-y divide-muted">
+                    <thead className="bg-muted/50">
+                      <tr>
+                        {["referenceNumber", "priority", "status", "customerName", "assignee", "createdAt"].map(
+                          (col) => (
+                            <th
+                              key={col}
+                              className="px-6 py-3 text-left text-xs font-medium uppercase cursor-pointer hover:bg-muted transition-colors"
+                              onClick={() => handleSort(col)}
+                            >
+                              {col === "customerName" ? "Customer Name" : col.replace(/([A-Z])/g, " $1")}
+                              {sortConfig?.key === col ? (sortConfig.direction === "asc" ? " ↑" : " ↓") : ""}
+                            </th>
+                          ),
+                        )}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-muted">
+                      {sortedTickets.map((ticket) => (
+                        <tr
+                          key={ticket.id}
+                          tabIndex={0}
+                          className="hover:bg-muted cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
+                          onClick={() =>
                             navigate({
                               search: (prev) => ({ ...prev, selectedTicketId: ticket.id }),
-                            });
+                            })
                           }
-                        }}
-                      >
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">{ticket.referenceNumber}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <TicketPriorityBadge priority={ticket.priority} />
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusBadgeClasses(ticket.status)}`}
-                          >
-                            {ticket.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">{ticket.customer?.name}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          {ticket.assignedAgent?.user?.name ?? (
-                            <span className="text-muted-foreground">Unassigned</span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">{formatRelative(ticket.createdAt)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              navigate({
+                                search: (prev) => ({ ...prev, selectedTicketId: ticket.id }),
+                              });
+                            }
+                          }}
+                        >
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">{ticket.referenceNumber}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <TicketPriorityBadge priority={ticket.priority} />
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusBadgeClasses(ticket.status)}`}
+                            >
+                              {ticket.status}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">{ticket.customer?.name}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            {ticket.assignedAgent?.user?.name ?? (
+                              <span className="text-muted-foreground">Unassigned</span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">{formatRelative(ticket.createdAt)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {hasNextPage && (
+                  <div ref={loadMoreRef} className="flex items-center justify-center py-2">
+                    {isFetchingNextPage && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
+                  </div>
+                )}
+              </>
             )}
           </div>
         )
@@ -761,60 +802,67 @@ function ProjectTicketsPage() {
               className="py-20 border rounded-md bg-muted/10"
             />
           ) : (
-            <div className="border border-muted rounded-lg shadow-sm overflow-x-auto w-full">
-              <table className="min-w-full divide-y divide-muted">
-                <thead className="bg-muted/50">
-                  <tr>
-                    {["referenceNumber", "priority", "status", "customerName", "createdAt"].map((col) => (
-                      <th
-                        key={col}
-                        className="px-6 py-3 text-left text-xs font-medium uppercase cursor-pointer hover:bg-muted transition-colors"
-                        onClick={() => handleSort(col)}
-                      >
-                        {col === "customerName" ? "Customer Name" : col.replace(/([A-Z])/g, " $1")}
-                        {sortConfig?.key === col ? (sortConfig.direction === "asc" ? " ↑" : " ↓") : ""}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-muted">
-                  {sortedTickets.map((ticket) => (
-                    <tr
-                      key={ticket.id}
-                      tabIndex={0}
-                      className="hover:bg-muted cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
-                      onClick={() =>
-                        navigate({
-                          search: (prev) => ({ ...prev, selectedTicketId: ticket.id }),
-                        })
-                      }
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
+            <>
+              <div className="border border-muted rounded-lg shadow-sm overflow-x-auto w-full">
+                <table className="min-w-full divide-y divide-muted">
+                  <thead className="bg-muted/50">
+                    <tr>
+                      {["referenceNumber", "priority", "status", "customerName", "createdAt"].map((col) => (
+                        <th
+                          key={col}
+                          className="px-6 py-3 text-left text-xs font-medium uppercase cursor-pointer hover:bg-muted transition-colors"
+                          onClick={() => handleSort(col)}
+                        >
+                          {col === "customerName" ? "Customer Name" : col.replace(/([A-Z])/g, " $1")}
+                          {sortConfig?.key === col ? (sortConfig.direction === "asc" ? " ↑" : " ↓") : ""}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-muted">
+                    {sortedTickets.map((ticket) => (
+                      <tr
+                        key={ticket.id}
+                        tabIndex={0}
+                        className="hover:bg-muted cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
+                        onClick={() =>
                           navigate({
                             search: (prev) => ({ ...prev, selectedTicketId: ticket.id }),
-                          });
+                          })
                         }
-                      }}
-                    >
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">{ticket.referenceNumber}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <TicketPriorityBadge priority={ticket.priority} />
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusBadgeClasses(ticket.status)}`}
-                        >
-                          {ticket.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">{ticket.customer?.name}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">{formatRelative(ticket.createdAt)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            navigate({
+                              search: (prev) => ({ ...prev, selectedTicketId: ticket.id }),
+                            });
+                          }
+                        }}
+                      >
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">{ticket.referenceNumber}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <TicketPriorityBadge priority={ticket.priority} />
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusBadgeClasses(ticket.status)}`}
+                          >
+                            {ticket.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">{ticket.customer?.name}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">{formatRelative(ticket.createdAt)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {hasNextPage && (
+                <div ref={loadMoreRef} className="flex items-center justify-center py-2">
+                  {isFetchingNextPage && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
+                </div>
+              )}
+            </>
           )}
 
           <TicketDetailPanel
