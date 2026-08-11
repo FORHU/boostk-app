@@ -1,10 +1,11 @@
 import { getCookie, setCookie } from "@tanstack/react-start/server";
-import { TicketPriority, TicketStatus } from "prisma/generated/enums";
+import { TicketMessageContentType, TicketPriority, TicketStatus } from "prisma/generated/enums";
 import { EventType } from "@/lib/notifier/core";
 import { prisma } from "@/lib/prisma";
 import { publishToPlatformStaff, publishToProjectAgents } from "@/modules/notification/notification.publish";
 import { createTicket } from "@/modules/ticket/ticket.service";
 import { generateTicketReferenceNumber } from "@/modules/ticket/ticket.utils";
+import { prepareIncomingCustomerText } from "@/modules/ticket-message/ticket-message.translation";
 import { INTAKE_COOKIE_MAX_AGE, INTAKE_COOKIE_NAME, INTAKE_COOKIE_PATH, INTAKE_PROJECT_SLUG } from "./intake.constants";
 import type {
   CloseIntakeTicketInput,
@@ -143,6 +144,33 @@ export const startIntakeSession = async (data: StartIntakeChatInput) => {
     customerId: customer.id,
   });
 
+  // The visitor already said what they need in the form, so record it as their opening
+  // message rather than leaving the thread empty with the text stranded on `metadata`.
+  // Going through the normal inbound path is what gets it translated for staff and what
+  // detects the visitor's language for reply translation — neither happened while this
+  // was metadata only.
+  const subject = data.subject?.trim();
+  if (subject) {
+    const translation = await prepareIncomingCustomerText({
+      content: subject,
+      ticketId: ticket.id,
+      customerId: customer.id,
+      customerLanguage: customer.language,
+    });
+
+    await prisma.ticketMessage.create({
+      data: {
+        content: subject,
+        contentType: TicketMessageContentType.TEXT,
+        ticketId: ticket.id,
+        customerId: customer.id,
+        translatedContent: translation.translatedContent,
+        sourceLang: translation.sourceLang,
+        targetLang: translation.targetLang,
+      },
+    });
+  }
+
   setIntakeCookie(ticket.referenceNumber);
 
   await publishToPlatformStaff({
@@ -204,6 +232,12 @@ export const routeIntakeTicket = async ({
   if (!intakeTicket) throw new Error("Intake conversation not found.");
   if (intakeTicket.routedAt) throw new Error("This conversation has already been routed.");
   if (!targetProject) throw new Error("Target project does not belong to the selected organization.");
+  // Routing into the intake project would drop the routed ticket straight back into the
+  // triage queue as a fresh untriaged chat. `getTriageTargets` already hides it, but the
+  // picker is not the trust boundary — a stale page or a hand-made request must fail here.
+  if (projectId === intakeProjectId) {
+    throw new Error("Cannot route a conversation into the intake project — pick a destination project.");
+  }
 
   const routed = await prisma.$transaction(async (tx) => {
     const customer = await tx.customer.create({
@@ -352,7 +386,9 @@ export const getTriageQueue = async ({ search, take, cursor }: GetTriageQueueInp
       ticketMessages: {
         orderBy: { createdAt: "desc" as const },
         take: 1,
-        select: { id: true, content: true, contentType: true, createdAt: true },
+        // `translatedContent` so the queue preview is readable to staff even when the
+        // visitor writes in a language they do not speak.
+        select: { id: true, content: true, translatedContent: true, contentType: true, createdAt: true },
       },
       _count: { select: { ticketMessages: true } },
     },
@@ -399,6 +435,11 @@ export const getTriageThread = async (intakeTicketId: string) => {
  * Every organization and its projects, for the routing picker. Platform staff route
  * across all tenants by definition, so this is deliberately unscoped — the
  * `requirePlatformStaffMiddleware` on the calling server fn is what makes it safe.
+ *
+ * The intake project is excluded: routing a conversation into it would create the
+ * routed ticket inside the triage queue itself, where it reappears as a brand new
+ * untriaged chat. `routeIntakeTicket` rejects it too — this only keeps the dead
+ * option out of the picker.
  */
 export const getTriageTargets = async () =>
   prisma.organization.findMany({
@@ -410,6 +451,7 @@ export const getTriageTargets = async () =>
       name: true,
       slug: true,
       projects: {
+        where: { slug: { not: INTAKE_PROJECT_SLUG } },
         orderBy: { name: "asc" as const },
         select: { id: true, name: true, slug: true },
       },

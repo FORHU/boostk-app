@@ -7,6 +7,7 @@
 // prompt here -- that makes the agent ANSWER the message instead of translating it.
 
 import { env } from "@/env";
+import { prisma } from "@/lib/prisma";
 import {
   DEFAULT_TRANSLATE_PROMPT,
   detectLanguage,
@@ -123,4 +124,37 @@ export async function detectMessageLanguage(content: string, ticketId: string): 
   } catch {
     return null;
   }
+}
+
+/**
+ * Everything that has to happen to a piece of inbound customer text before it is
+ * stored: translate it into the support language, and remember the customer's own
+ * language so replies can be translated back.
+ *
+ * Shared by the chat widget and by intake, so a visitor's opening line from the
+ * intake form gets exactly the same treatment as everything they type afterwards.
+ */
+export async function prepareIncomingCustomerText({
+  content,
+  ticketId,
+  customerId,
+  customerLanguage,
+}: {
+  content: string;
+  ticketId: string;
+  customerId: string;
+  customerLanguage: string | null | undefined;
+}): Promise<MessageTranslation> {
+  const translation = await translateIncomingMessage(content, { ticketId });
+
+  // Keep detecting while unknown/English so an initial "hello" doesn't lock English;
+  // only store an actual foreign language (English stays null, treated the same for replies).
+  if (shouldDetectLanguage(customerLanguage, content)) {
+    const lang = await detectMessageLanguage(content, ticketId);
+    if (lang && !isSupportLanguage(lang)) {
+      await prisma.customer.update({ where: { id: customerId }, data: { language: lang } });
+    }
+  }
+
+  return translation;
 }

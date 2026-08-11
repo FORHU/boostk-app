@@ -96,6 +96,8 @@ export type TriageQueueItem = {
   latestMessage: {
     id: string;
     content: string;
+    /** Support-language version, when the visitor did not write in it. */
+    translatedContent: string | null;
     contentType: TicketMessageContentType;
     createdAt: Date;
   } | null;

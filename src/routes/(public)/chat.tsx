@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import GlobalChat from "@/components/chat-support/GlobalChat";
+import { useForceLightTheme } from "@/hooks/use-force-light-theme";
 import { intakeQueries } from "@/modules/intake/intake.queries";
 
 /**
@@ -30,6 +31,10 @@ export const Route = createFileRoute("/(public)/chat")({
 });
 
 function RouteComponent() {
+  // Same light-only treatment as the landing page the widget is embedded in, so the
+  // standalone surface cannot look different from the hero version.
+  useForceLightTheme();
+
   return (
     <div className="h-screen max-h-screen overflow-hidden">
       <GlobalChat />

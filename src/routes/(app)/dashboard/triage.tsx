@@ -91,11 +91,13 @@ function RouteComponent() {
                   </span>
                 </div>
                 <p className="text-xs text-gray-500 truncate">{item.customer.email}</p>
-                {item.customer.metadata && (
-                  <p className="text-xs text-blue-600 truncate mt-1">{item.customer.metadata}</p>
-                )}
+                {/* Prefer the support-language version: the raw text is unreadable to
+                    staff when the visitor writes in a language they do not speak. */}
                 <p className="text-xs text-gray-400 truncate mt-1">
-                  {item.latestMessage?.content ?? "No messages yet"}
+                  {item.latestMessage?.translatedContent ??
+                    item.latestMessage?.content ??
+                    item.customer.metadata ??
+                    "No messages yet"}
                 </p>
               </button>
             ))
@@ -234,7 +236,11 @@ function TriageDetail({ intakeTicketId, onDone }: { intakeTicketId: string; onDo
           </div>
           <span className="ml-auto text-xs text-gray-400 font-mono">{thread.referenceNumber}</span>
         </div>
-        {thread.customer.metadata && (
+        {/* The intake form's subject is recorded as the visitor's first message, so it
+            appears in the thread below — translated — instead of being repeated here
+            untranslated. Only older conversations, created before that change, still
+            carry it solely on `metadata`. */}
+        {thread.customer.metadata && thread.ticketMessages.length === 0 && (
           <p className="mt-2 text-sm text-gray-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
             {thread.customer.metadata}
           </p>

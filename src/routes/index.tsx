@@ -5,6 +5,7 @@ import { HeroChat } from "@/components/landing/hero-chat";
 import { AnnouncementBar, SiteFooter, SiteHeader } from "@/components/landing/site-chrome";
 import { LogoStrip, StatsBand, Testimonials } from "@/components/landing/social-proof";
 import { VisualPricing } from "@/components/landing/visual-pricing";
+import { useForceLightTheme } from "@/hooks/use-force-light-theme";
 
 export const Route = createFileRoute("/")({
   component: LandingPage,
@@ -25,6 +26,11 @@ export const Route = createFileRoute("/")({
  * afterwards from triage.
  */
 function LandingPage() {
+  // Light-only by design: this page mixes hardcoded colours with theme tokens like
+  // `bg-background`, so under `.dark` the tokenised sections (pricing, feature
+  // comparison) turned black against their white neighbours.
+  useForceLightTheme();
+
   return (
     <div className="min-h-screen bg-white font-sans antialiased">
       <AnnouncementBar />
