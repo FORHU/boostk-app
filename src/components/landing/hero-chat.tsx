@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { BarChart3, Bell, Globe2, Image as ImageIcon } from "lucide-react";
-import GlobalChat from "@/components/chat-support/GlobalChat";
 import { ClientOnly } from "@/components/ClientOnly";
+import GlobalChat from "@/components/chat-support/GlobalChat";
 
 // A floating card wrapper that continuously bobs up and down
 function FloatingCard({
@@ -36,7 +36,7 @@ function FloatingCard({
 }
 
 /**
- * The landing hero, redesigned with a central chat and floating UI elements to feel 
+ * The landing hero, redesigned with a central chat and floating UI elements to feel
  * dynamic, airy, and deeply professional.
  */
 export function HeroChat() {
@@ -64,7 +64,8 @@ export function HeroChat() {
             transition={{ delay: 0.1 }}
             className="text-[40px] font-extrabold leading-[1.06] tracking-tight text-ink sm:text-[52px] lg:text-[68px]"
           >
-            Speak Local. <span className="text-transparent bg-clip-text bg-linear-to-r from-brand to-purple-600">Sell Global.</span>
+            Speak Local.{" "}
+            <span className="text-transparent bg-clip-text bg-linear-to-r from-brand to-purple-600">Sell Global.</span>
             <br />
             Grow Without Limits.
           </motion.h1>
@@ -75,13 +76,13 @@ export function HeroChat() {
             transition={{ delay: 0.2 }}
             className="max-w-[700px] text-[17px] leading-[1.6] text-ink-body lg:text-[19px]"
           >
-            The done for you growth team that turns SMEs into global brands content, commerce, and partnerships, handled end to end.
+            The done for you growth team that turns SMEs into global brands content, commerce, and partnerships, handled
+            end to end.
           </motion.p>
         </div>
 
         {/* Central UI with Floating Cards */}
         <div className="relative mx-auto w-full max-w-[1050px] mt-12 flex justify-center">
-
           {/* Card 1: Social Media (Top Left) */}
           <FloatingCard className="right-[50%] mr-[300px] top-10 rotate-[-4deg]" delay={0.2} duration={5}>
             <div className="flex items-center gap-3 min-w-[180px]">
@@ -101,7 +102,12 @@ export function HeroChat() {
           </FloatingCard>
 
           {/* Card 2: Translation (Bottom Left) */}
-          <FloatingCard className="right-[50%] mr-[290px] bottom-32 rotate-[3deg]" delay={0.4} duration={6} yOffset={20}>
+          <FloatingCard
+            className="right-[50%] mr-[290px] bottom-32 rotate-[3deg]"
+            delay={0.4}
+            duration={6}
+            yOffset={20}
+          >
             <div className="min-w-[200px]">
               <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-gray-400 flex items-center gap-1.5">
                 <Globe2 size={12} /> Auto-Translated
@@ -130,15 +136,20 @@ export function HeroChat() {
               </div>
             </div>
             {/* Fake mini chart */}
-            <div className="mt-4 flex items-end gap-1.5 h-10 w-full opacity-60">
-              {[40, 30, 60, 50, 80, 100].map((h, i) => (
-                <div key={i} className="flex-1 rounded-t-sm bg-brand" style={{ height: `${h}%` }} />
+            <div className="mt-4 flex h-10 w-full items-end gap-1.5 opacity-60">
+              {[40, 30, 60, 50, 80, 100].map((h) => (
+                <div key={h} className="flex-1 rounded-t-sm bg-brand" style={{ height: `${h}%` }} />
               ))}
             </div>
           </FloatingCard>
 
           {/* Card 4: Sales Notification (Bottom Right) */}
-          <FloatingCard className="left-[50%] ml-[320px] bottom-32 rotate-[-2deg]" delay={0.5} duration={5.5} yOffset={12}>
+          <FloatingCard
+            className="left-[50%] ml-[320px] bottom-32 rotate-[-2deg]"
+            delay={0.5}
+            duration={5.5}
+            yOffset={12}
+          >
             <div className="min-w-[240px] rounded-xl bg-white p-1 -m-4 text-gray-900 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.1)]">
               <div className="flex items-center gap-3 p-3">
                 <div className="relative flex size-10 items-center justify-center rounded-full bg-blue-50 text-blue-500">
@@ -174,9 +185,7 @@ export function HeroChat() {
               >
                 Start Your Free Consultation
               </a>
-              <p className="mt-3 text-[13px] text-gray-500">
-                Guests join free — no account needed
-              </p>
+              <p className="mt-3 text-[13px] text-gray-500">Guests join free — no account needed</p>
             </div>
           </motion.div>
         </div>

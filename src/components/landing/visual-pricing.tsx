@@ -1,6 +1,7 @@
 import type { VariantProps } from "class-variance-authority";
 import { motion } from "framer-motion";
 import {
+  ArrowRight,
   Briefcase,
   Check,
   FileText,
@@ -14,9 +15,8 @@ import {
   Shield,
   ShoppingCart,
   TrendingUp,
-  ArrowRight,
 } from "lucide-react";
-import React, { useEffect, useRef, Fragment } from "react";
+import React, { Fragment, useEffect, useRef } from "react";
 import { Button, type buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -315,7 +315,7 @@ const checklistCategories = [
       { name: "Email marketing campaigns", plans: { Content: true, Sales: true, Enterprise: true } },
       { name: "Video production & editing", plans: { Content: true, Sales: true, Enterprise: true } },
       { name: "Catalogue & ad design", plans: { Content: true, Sales: true, Enterprise: true } },
-    ]
+    ],
   },
   {
     name: "Sales & Analytics",
@@ -324,7 +324,7 @@ const checklistCategories = [
       { name: "Marketplace management", plans: { Content: false, Sales: true, Enterprise: true } },
       { name: "Product listing optimization", plans: { Content: false, Sales: true, Enterprise: true } },
       { name: "Market research & competitor analysis", plans: { Content: false, Sales: true, Enterprise: true } },
-    ]
+    ],
   },
   {
     name: "Support & Partnerships",
@@ -334,8 +334,8 @@ const checklistCategories = [
       { name: "Partnership negotiation support", plans: { Content: false, Sales: false, Enterprise: true } },
       { name: "2 dedicated BD specialists", plans: { Content: false, Sales: false, Enterprise: true } },
       { name: "Enterprise priority support", plans: { Content: false, Sales: false, Enterprise: true } },
-    ]
-  }
+    ],
+  },
 ];
 
 function FeatureComparisonTable() {
@@ -351,33 +351,57 @@ function FeatureComparisonTable() {
           <thead>
             <tr className="border-b border-gray-200 bg-gray-50">
               <th className="p-4 font-semibold text-gray-900 w-1/3 text-sm md:text-base">Functionality</th>
-              <th className="p-4 font-semibold text-gray-900 text-center w-[22%] text-sm md:text-base">Content & Presence</th>
+              <th className="p-4 font-semibold text-gray-900 text-center w-[22%] text-sm md:text-base">
+                Content & Presence
+              </th>
               <th className="p-4 font-semibold text-gray-900 text-center w-[22%] text-sm md:text-base">
                 Sales & Commerce
-                <div className="mt-1 block mx-auto w-fit rounded-full bg-brand/10 px-2 py-0.5 text-[10px] uppercase tracking-wider text-brand">Most Popular</div>
+                <div className="mt-1 block mx-auto w-fit rounded-full bg-brand/10 px-2 py-0.5 text-[10px] uppercase tracking-wider text-brand">
+                  Most Popular
+                </div>
               </th>
-              <th className="p-4 font-semibold text-gray-900 text-center w-[22%] text-sm md:text-base">Enterprise Growth</th>
+              <th className="p-4 font-semibold text-gray-900 text-center w-[22%] text-sm md:text-base">
+                Enterprise Growth
+              </th>
             </tr>
           </thead>
           <tbody>
             {checklistCategories.map((category) => (
               <Fragment key={category.name}>
                 <tr>
-                  <td colSpan={4} className="bg-gray-50 p-3 text-xs font-semibold text-gray-500 uppercase tracking-wider border-y border-gray-200">
+                  <td
+                    colSpan={4}
+                    className="bg-gray-50 p-3 text-xs font-semibold text-gray-500 uppercase tracking-wider border-y border-gray-200"
+                  >
                     {category.name}
                   </td>
                 </tr>
                 {category.features.map((feature, idx) => (
-                  <tr key={feature.name} className={cn("border-b border-gray-100", idx === category.features.length - 1 ? "border-b-0" : "")}>
+                  <tr
+                    key={feature.name}
+                    className={cn("border-b border-gray-100", idx === category.features.length - 1 ? "border-b-0" : "")}
+                  >
                     <td className="p-4 text-sm font-medium text-gray-900">{feature.name}</td>
                     <td className="p-4 text-center">
-                      {feature.plans.Content ? <Check className="mx-auto size-5 text-gray-900" /> : <Minus className="mx-auto size-5 text-gray-300" />}
+                      {feature.plans.Content ? (
+                        <Check className="mx-auto size-5 text-gray-900" />
+                      ) : (
+                        <Minus className="mx-auto size-5 text-gray-300" />
+                      )}
                     </td>
                     <td className="p-4 text-center border-x border-gray-100 bg-gray-50/50">
-                      {feature.plans.Sales ? <Check className="mx-auto size-5 text-brand" /> : <Minus className="mx-auto size-5 text-gray-300" />}
+                      {feature.plans.Sales ? (
+                        <Check className="mx-auto size-5 text-brand" />
+                      ) : (
+                        <Minus className="mx-auto size-5 text-gray-300" />
+                      )}
                     </td>
                     <td className="p-4 text-center">
-                      {feature.plans.Enterprise ? <Check className="mx-auto size-5 text-gray-900" /> : <Minus className="mx-auto size-5 text-gray-300" />}
+                      {feature.plans.Enterprise ? (
+                        <Check className="mx-auto size-5 text-gray-900" />
+                      ) : (
+                        <Minus className="mx-auto size-5 text-gray-300" />
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -410,9 +434,16 @@ export function VisualPricing() {
 
           {/* Billing Toggle */}
           <div className="mt-8 flex items-center justify-center gap-3">
-            <span className={cn("text-sm font-medium cursor-pointer transition-colors", !isAnnual ? "text-gray-900" : "text-gray-500")} onClick={() => setIsAnnual(false)}>
+            <button
+              type="button"
+              className={cn(
+                "cursor-pointer text-sm font-medium transition-colors",
+                !isAnnual ? "text-gray-900" : "text-gray-500",
+              )}
+              onClick={() => setIsAnnual(false)}
+            >
               Monthly
-            </span>
+            </button>
             <button
               type="button"
               className="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-brand transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2"
@@ -425,13 +456,23 @@ export function VisualPricing() {
                 aria-hidden="true"
                 className={cn(
                   "pointer-events-none inline-block size-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
-                  isAnnual ? "translate-x-5" : "translate-x-0"
+                  isAnnual ? "translate-x-5" : "translate-x-0",
                 )}
               />
             </button>
-            <span className={cn("text-sm font-medium cursor-pointer transition-colors", isAnnual ? "text-gray-900" : "text-gray-500")} onClick={() => setIsAnnual(true)}>
-              Annually <span className="ml-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700">Save 20%</span>
-            </span>
+            <button
+              type="button"
+              className={cn(
+                "cursor-pointer text-sm font-medium transition-colors",
+                isAnnual ? "text-gray-900" : "text-gray-500",
+              )}
+              onClick={() => setIsAnnual(true)}
+            >
+              Annually{" "}
+              <span className="ml-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700">
+                Save 20%
+              </span>
+            </button>
           </div>
         </div>
 
@@ -444,7 +485,12 @@ export function VisualPricing() {
               <div key={plan.name} className="relative h-full">
                 {/* Badge sits outside Card — Card clips its own overflow */}
                 {plan.badge && (
-                  <div className={cn("absolute -top-3 left-1/2 z-10 -translate-x-1/2 rounded-full px-4 py-1 text-xs font-bold uppercase tracking-wider text-white shadow-lg", plan.highlighted ? "bg-[#FF6A3D]" : "bg-brand")}>
+                  <div
+                    className={cn(
+                      "absolute -top-3 left-1/2 z-10 -translate-x-1/2 rounded-full px-4 py-1 text-xs font-bold uppercase tracking-wider text-white shadow-lg",
+                      plan.highlighted ? "bg-[#FF6A3D]" : "bg-brand",
+                    )}
+                  >
                     {plan.badge}
                   </div>
                 )}
@@ -457,10 +503,24 @@ export function VisualPricing() {
                     transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
                   >
                     <div className="relative">
-                      <span className="absolute -top-6 -right-2 whitespace-nowrap text-lg font-bold text-[#FF6A3D] rotate-[10deg]" style={{ fontFamily: "Caveat, 'Comic Sans MS', cursive" }}>
+                      <span
+                        className="absolute -top-6 -right-2 whitespace-nowrap text-lg font-bold text-[#FF6A3D] rotate-[10deg]"
+                        style={{ fontFamily: "Caveat, 'Comic Sans MS', cursive" }}
+                      >
                         Save 20%
                       </span>
-                      <svg width="60" height="60" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="text-[#FF6A3D]">
+                      <svg
+                        aria-hidden="true"
+                        width="60"
+                        height="60"
+                        viewBox="0 0 100 100"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="text-[#FF6A3D]"
+                      >
                         <path d="M 80 20 Q 50 20 20 70" />
                         <path d="M 40 65 L 20 70 L 15 45" />
                       </svg>
@@ -502,14 +562,19 @@ export function VisualPricing() {
                         <span className="text-sm font-medium text-gray-500">{plan.period}</span>
                       </div>
                       {isAnnual && (
-                        <div className="mt-1 text-sm text-green-600 font-medium">
-                          Billed ${(parseInt(plan.priceAnnual.replace(/[$,]/g, '')) * 12).toLocaleString()} yearly
+                        <div className="mt-1 font-medium text-sm text-green-600">
+                          Billed ${(parseInt(plan.priceAnnual.replace(/[$,]/g, ""), 10) * 12).toLocaleString()} yearly
                         </div>
                       )}
                     </div>
 
                     {/* Best for */}
-                    <div className={cn("mb-2 rounded-2xl border bg-transparent p-2 text-xs sm:mb-4 sm:p-3 sm:text-sm", plan.highlighted ? "border-orange-200 bg-orange-50/50" : "border-border/30")}>
+                    <div
+                      className={cn(
+                        "mb-2 rounded-2xl border bg-transparent p-2 text-xs sm:mb-4 sm:p-3 sm:text-sm",
+                        plan.highlighted ? "border-orange-200 bg-orange-50/50" : "border-border/30",
+                      )}
+                    >
                       <span className="text-xs text-muted-foreground">Best for: </span>
                       <span className="font-medium text-gray-900">{plan.bestFor}</span>
                     </div>
@@ -519,7 +584,13 @@ export function VisualPricing() {
                       <div className="mb-1 text-xs font-semibold text-gray-900 sm:mb-2 sm:text-sm">What you get</div>
 
                       {plan.visualShowcase.map((showcase) => (
-                        <div key={showcase.label} className={cn("overflow-hidden rounded-2xl border bg-transparent", plan.highlighted ? "border-orange-200" : "border-border/30")}>
+                        <div
+                          key={showcase.label}
+                          className={cn(
+                            "overflow-hidden rounded-2xl border bg-transparent",
+                            plan.highlighted ? "border-orange-200" : "border-border/30",
+                          )}
+                        >
                           {/* Gallery preview */}
                           {showcase.type === "gallery" && (
                             <div
@@ -590,8 +661,15 @@ export function VisualPricing() {
                           )}
 
                           {/* Label & description */}
-                          <div className={cn("border-t p-2 pt-1 sm:p-3 sm:pt-2", plan.highlighted ? "border-orange-200 bg-orange-50/30" : "border-border/30")}>
-                            <div className="mb-0.5 text-[10px] font-semibold text-gray-900 sm:mb-1 sm:text-xs">{showcase.label}</div>
+                          <div
+                            className={cn(
+                              "border-t p-2 pt-1 sm:p-3 sm:pt-2",
+                              plan.highlighted ? "border-orange-200 bg-orange-50/30" : "border-border/30",
+                            )}
+                          >
+                            <div className="mb-0.5 text-[10px] font-semibold text-gray-900 sm:mb-1 sm:text-xs">
+                              {showcase.label}
+                            </div>
                             <div className="text-[9px] text-muted-foreground sm:text-[11px]">
                               {showcase.description}
                             </div>
@@ -626,7 +704,12 @@ export function VisualPricing() {
                         const FeatureIconComponent = iconMap[feature.icon];
                         return (
                           <div key={feature.text} className="flex items-start gap-2">
-                            <FeatureIconComponent className={cn("mt-0.5 size-4 shrink-0", plan.highlighted ? "text-[#FF6A3D]" : "text-brand")} />
+                            <FeatureIconComponent
+                              className={cn(
+                                "mt-0.5 size-4 shrink-0",
+                                plan.highlighted ? "text-[#FF6A3D]" : "text-brand",
+                              )}
+                            />
                             <span className="text-xs text-muted-foreground">{feature.text}</span>
                           </div>
                         );
@@ -640,7 +723,8 @@ export function VisualPricing() {
                     size="lg"
                     className={cn(
                       "h-12 w-full rounded-full bg-brand text-[15px] font-semibold text-white transition-all hover:bg-brand-dark hover:scale-105",
-                      plan.highlighted && "bg-[#FF6A3D] hover:bg-[#E55A2D] shadow-[0_8px_20px_-6px_rgba(255,106,61,0.5)]",
+                      plan.highlighted &&
+                        "bg-[#FF6A3D] hover:bg-[#E55A2D] shadow-[0_8px_20px_-6px_rgba(255,106,61,0.5)]",
                     )}
                   >
                     {plan.ctaText}

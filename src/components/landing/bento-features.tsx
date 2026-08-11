@@ -59,15 +59,16 @@ export function BentoFeatures() {
                 className="group flex items-center gap-5 rounded-2xl bg-white p-7 ring-1 ring-gray-200/60 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.02)] transition-all duration-300 hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.06)] hover:ring-gray-200 hover:-translate-y-1"
               >
                 <div className="flex-1">
-                  <h3 className="text-[19px] font-bold text-gray-900">
-                    {feature.title}
-                  </h3>
-                  <p className="pt-2 text-[14px] text-gray-500">
-                    {feature.description}
-                  </p>
+                  <h3 className="text-[19px] font-bold text-gray-900">{feature.title}</h3>
+                  <p className="pt-2 text-[14px] text-gray-500">{feature.description}</p>
                 </div>
                 <div className="size-24 shrink-0 overflow-hidden rounded-[16px] bg-gray-50 ring-1 ring-gray-100">
-                  <img src={feature.image} alt="" className="size-full object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" />
+                  <img
+                    src={feature.image}
+                    alt=""
+                    className="size-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    loading="lazy"
+                  />
                 </div>
               </article>
             ))}
