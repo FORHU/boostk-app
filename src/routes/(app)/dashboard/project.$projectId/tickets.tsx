@@ -496,7 +496,7 @@ function ProjectTicketsPage() {
     }
   }, [lastMessage, selectedTicketId, projectId, queryClient]);
 
-  const statusFilter = search.statusFilter;
+  const statusFilter = search.statusFilter.toUpperCase();
   const searchQuery = search.searchQuery ?? "";
   const sortConfig = search.sortBy && search.sortDir ? { key: search.sortBy, direction: search.sortDir } : null;
 

@@ -187,7 +187,7 @@ function OverviewContent({ projectId }: { projectId: string }) {
             <h3 className="font-semibold text-foreground">Recent Tickets</h3>
             <Link
               to="/dashboard/project/$projectId/tickets"
-              search={{ statusFilter: "all" }}
+              search={{ statusFilter: "ALL" }}
               params={{ projectId }}
               className="text-sm text-primary hover:underline flex items-center"
             >
@@ -202,7 +202,7 @@ function OverviewContent({ projectId }: { projectId: string }) {
                 <Link
                   key={ticket.id}
                   to="/dashboard/project/$projectId/tickets"
-                  search={{ statusFilter: "all" }}
+                  search={{ statusFilter: "ALL" }}
                   params={{ projectId }}
                   className="flex items-center justify-between p-4 md:px-6 hover:bg-muted/50 transition-colors group"
                 >
@@ -238,7 +238,7 @@ function OverviewContent({ projectId }: { projectId: string }) {
             <Link
               to="/dashboard/project/$projectId/tickets"
               params={{ projectId }}
-              search={{ statusFilter: "all" }}
+              search={{ statusFilter: "ALL" }}
               className="flex items-center p-3 rounded-[8px] hover:bg-muted transition-colors text-sm font-medium text-foreground"
             >
               <MessageSquarePlus className="w-5 h-5 mr-3 flex-shrink-0 text-muted-foreground" />
