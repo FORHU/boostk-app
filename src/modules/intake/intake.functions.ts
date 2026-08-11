@@ -9,7 +9,7 @@ import {
   publishToProjectAgents,
   publishToTicketChannel,
 } from "@/modules/notification/notification.publish";
-import { ATTACHMENT_SELECT } from "@/modules/ticket-message/ticket-message.functions";
+import { ATTACHMENT_SELECT, notificationPreview } from "@/modules/ticket-message/ticket-message.functions";
 import {
   detectMessageLanguage,
   isSupportLanguage,
@@ -154,7 +154,9 @@ export const createIntakeMessageFn = createServerFn({ method: "POST" })
       projectId: ticket.projectId,
       customerName: ticket.customer.name,
       customerEmail: ticket.customer.email,
-      content: data.content,
+      // For an attachment `content` is a URL, which is useless in a toast or a push —
+      // send the filename instead, matching the widget's notifications.
+      content: notificationPreview(data.content, data.contentType, attachment),
       sender: "customer",
       createdAt: message.createdAt.toISOString(),
     };
