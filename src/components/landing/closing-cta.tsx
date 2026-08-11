@@ -10,7 +10,9 @@ export function ClosingCta() {
           Q3 COHORT — LIMITED SPOTS LEFT
         </span>
 
-        <h2 className="text-[32px] font-extrabold tracking-tight text-ink lg:text-[48px]">Your global customers are waiting.</h2>
+        <h2 className="text-[32px] font-extrabold tracking-tight text-ink lg:text-[48px]">
+          Your global customers are waiting.
+        </h2>
 
         <p className="max-w-[560px] text-[18px] text-ink-body">
           Book a free consultation and get a custom growth plan for your brand — no obligation, no pressure.

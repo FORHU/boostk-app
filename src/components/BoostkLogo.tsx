@@ -17,13 +17,14 @@ export function BoostkLogo({
 }) {
   return (
     <div
+      role="img"
       aria-label={alt}
       aria-hidden={alt ? undefined : true}
       className={cn(
         "flex items-center justify-center rounded-full font-extrabold tracking-tighter shrink-0 shadow-sm border border-white/20",
         variant === "default" ? "bg-brand text-white" : "bg-white text-brand",
         "aspect-square",
-        className
+        className,
       )}
       style={{
         // Use a relative font size so it automatically scales based on the container size

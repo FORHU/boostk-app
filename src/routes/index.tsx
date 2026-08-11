@@ -2,9 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { BentoFeatures } from "@/components/landing/bento-features";
 import { ClosingCta } from "@/components/landing/closing-cta";
 import { HeroChat } from "@/components/landing/hero-chat";
-import { VisualPricing } from "@/components/landing/visual-pricing";
 import { AnnouncementBar, SiteFooter, SiteHeader } from "@/components/landing/site-chrome";
 import { LogoStrip, StatsBand, Testimonials } from "@/components/landing/social-proof";
+import { VisualPricing } from "@/components/landing/visual-pricing";
 
 export const Route = createFileRoute("/")({
   component: LandingPage,
