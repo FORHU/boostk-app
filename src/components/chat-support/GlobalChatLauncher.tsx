@@ -23,6 +23,10 @@ const MAX_WIDTH = 720;
 const DEFAULT_WIDTH = 420;
 const WIDTH_STORAGE_KEY = "boostk:chat-panel-width";
 
+// Set the first time a visitor closes the panel. Its presence is what stops the chat
+// auto-opening on later visits — see GlobalChatProvider.
+const DISMISSED_STORAGE_KEY = "boostk:chat-dismissed";
+
 /** Below this the panel covers the screen: a draggable side panel is unusable on a phone. */
 const MOBILE_BREAKPOINT = 640;
 
@@ -47,16 +51,49 @@ export function useGlobalChat() {
 }
 
 export function GlobalChatProvider({ children }: { children: React.ReactNode }) {
+  // Starts closed and opens in an effect rather than initialising to `true`: this renders
+  // during SSR, where localStorage cannot be read. Initialising open would send an
+  // open panel down in the HTML and then rip it away on hydration for anyone who had
+  // dismissed it — a visible flash, and a hydration mismatch. Closed-then-open is the
+  // only order that is correct on both passes.
   const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(DISMISSED_STORAGE_KEY)) return;
+    } catch {
+      // Storage unavailable (private mode, quota). Opening is the intended default, so
+      // fall through and open rather than treating the failure as a dismissal.
+    }
+
+    setIsOpen(true);
+  }, []);
+
+  // Closing is the visitor saying "not now", and it is remembered — however they do it.
+  // Both the header × and the bookmark tab route through here, so a dismissal cannot be
+  // recorded by one and missed by the other.
+  //
+  // Reopening deliberately does NOT clear the flag: asking for the chat once is not the
+  // same as asking to be greeted by it on every future visit.
+  const close = useCallback(() => {
+    setIsOpen(false);
+    try {
+      localStorage.setItem(DISMISSED_STORAGE_KEY, "1");
+    } catch {
+      // Non-fatal: the panel closes, it just won't remember next time.
+    }
+  }, []);
+
+  const open = useCallback(() => setIsOpen(true), []);
 
   const value = useMemo<GlobalChatContextValue>(
     () => ({
       isOpen,
-      open: () => setIsOpen(true),
-      close: () => setIsOpen(false),
-      toggle: () => setIsOpen((v) => !v),
+      open,
+      close,
+      toggle: () => (isOpen ? close() : open()),
     }),
-    [isOpen],
+    [isOpen, open, close],
   );
 
   return (

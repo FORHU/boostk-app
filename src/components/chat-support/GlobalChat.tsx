@@ -32,6 +32,7 @@ export default function GlobalChat({ headerAction }: { headerAction?: React.Reac
   const { data: messages, isLoading: messagesLoading } = useQuery(intakeQueries.messages());
 
   const { lastMessage, status } = useSocket({ ticketId: ticket?.id, projectId: ticket?.projectId });
+  const [initialMessage, setInitialMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (lastMessage?.event === EventType.CHAT_MESSAGE) {
@@ -47,6 +48,13 @@ export default function GlobalChat({ headerAction }: { headerAction?: React.Reac
       queryClient.invalidateQueries({ queryKey: intakeQueries.all });
     }
   }, [lastMessage, queryClient]);
+
+  // If a ticket exists (intake complete), clear the initial message state
+  useEffect(() => {
+    if (ticket && initialMessage !== null) {
+      setInitialMessage(null);
+    }
+  }, [ticket, initialMessage]);
 
   const isLoading = sessionLoading || messagesLoading;
 
@@ -66,8 +74,10 @@ export default function GlobalChat({ headerAction }: { headerAction?: React.Reac
 
       {ticket ? (
         <ChatInput ticketId={ticket.id} initialStatus={ticket.status} statusEvent={lastMessage} />
+      ) : initialMessage !== null ? (
+        <IntakeCustomerForm initialSubject={initialMessage} onCancel={() => setInitialMessage(null)} />
       ) : (
-        <IntakeCustomerForm />
+        <FakeChatInput onSubmit={setInitialMessage} />
       )}
     </div>
   );
@@ -83,9 +93,9 @@ const ChatHeader = ({
   const isReconnecting = connectionStatus != null && connectionStatus !== "connected";
 
   return (
-    <header className="flex-none bg-blue-600 p-4 text-white flex items-center justify-between shadow-sm">
+    <header className="flex-none bg-brand p-4 text-white flex items-center justify-between shadow-sm">
       <div className="flex items-center gap-3 min-w-0">
-        <BoostkLogo className="size-9 shrink-0" />
+        <BoostkLogo className="size-9 shrink-0" variant="inverted" />
         <div className="min-w-0">
           {/* Never names the receiving project, before or after routing — which team picked
               the conversation up is not the visitor's concern. */}
@@ -118,7 +128,7 @@ const MessageList = ({ messages, hasTicket }: { messages: TicketMessageWithAttac
         animate={{ opacity: 1, scale: 1 }}
         className="flex flex-col items-center justify-center h-full text-center p-6"
       >
-        <BoostkLogo className="size-14 mb-3" />
+        <BoostkLogo className="size-14 mb-4 shadow-md" />
         <h3 className="font-semibold text-gray-900 text-sm">
           {hasTicket ? "Waiting for an agent" : "How can we help?"}
         </h3>
@@ -232,7 +242,41 @@ const ChatInput = ({
           <button
             type="submit"
             disabled={!message.trim() || createMessageMutation.isPending}
-            className="bg-blue-600 text-white p-2.5 rounded-xl active:scale-95 disabled:opacity-50 shrink-0"
+            className="bg-brand text-white p-2.5 rounded-xl active:scale-95 disabled:opacity-50 shrink-0"
+          >
+            <Send size={18} />
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+};
+
+const FakeChatInput = ({ onSubmit }: { onSubmit: (message: string) => void }) => {
+  const [message, setMessage] = useState("");
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = message.trim();
+    if (!trimmed) return;
+    onSubmit(trimmed);
+  };
+
+  return (
+    <div className="flex-none p-3 bg-white border-t border-gray-100">
+      <form onSubmit={handleSubmit}>
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="Type your message..."
+            className="flex-1 min-w-0 bg-gray-100 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <button
+            type="submit"
+            disabled={!message.trim()}
+            className="bg-brand text-white p-2.5 rounded-xl active:scale-95 disabled:opacity-50 shrink-0"
           >
             <Send size={18} />
           </button>

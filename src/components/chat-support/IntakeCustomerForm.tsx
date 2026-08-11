@@ -19,7 +19,13 @@ import { type StartIntakeChatInput, StartIntakeChatSchema } from "@/modules/inta
  * an intake chat happens through the cookie rather than a code the visitor keeps.
  * `subject` replaces them, giving triage something to route on without opening the thread.
  */
-export default function IntakeCustomerForm() {
+export default function IntakeCustomerForm({
+  initialSubject = "",
+  onCancel,
+}: {
+  initialSubject?: string;
+  onCancel?: () => void;
+}) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -44,7 +50,7 @@ export default function IntakeCustomerForm() {
       name: "",
       email: "",
       phone: "",
-      subject: "",
+      subject: initialSubject,
     } as StartIntakeChatInput,
     validators: {
       onChange: StartIntakeChatSchema,
@@ -126,47 +132,66 @@ export default function IntakeCustomerForm() {
           </form.Field>
         </div>
 
-        <div className="mb-3">
-          <form.Field name="subject">
-            {(field) => {
-              const isInvalid = getFieldInvalid(field, form);
+        {!initialSubject && (
+          <div className="mb-3">
+            <form.Field name="subject">
+              {(field) => {
+                const isInvalid = getFieldInvalid(field, form);
 
-              return (
-                <Field data-invalid={isInvalid}>
-                  <FieldLabel htmlFor={field.name}>What can we help with?</FieldLabel>
+                return (
+                  <Field data-invalid={isInvalid}>
+                    <FieldLabel htmlFor={field.name}>What can we help with?</FieldLabel>
 
-                  <div className="relative">
-                    <MessageSquare size={14} className="absolute left-3 top-3 text-gray-400" />
-                    <Input
-                      id={field.name}
-                      value={field.state.value ?? ""}
-                      onBlur={field.handleBlur}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                      aria-invalid={isInvalid}
-                      placeholder="Briefly, what is this about?"
-                      className="pl-9"
-                    />
-                  </div>
+                    <div className="relative">
+                      <MessageSquare size={14} className="absolute left-3 top-3 text-gray-400" />
+                      <Input
+                        id={field.name}
+                        value={field.state.value ?? ""}
+                        onBlur={field.handleBlur}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        aria-invalid={isInvalid}
+                        placeholder="Briefly, what is this about?"
+                        className="pl-9"
+                      />
+                    </div>
 
-                  {isInvalid && <FieldError errors={field.state.meta.errors} />}
-                </Field>
-              );
-            }}
-          </form.Field>
-        </div>
+                    {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                  </Field>
+                );
+              }}
+            </form.Field>
+          </div>
+        )}
+
+        {initialSubject && (
+          <p className="text-xs text-gray-500 mb-3 text-center">
+            Please provide your details so we can get back to you.
+          </p>
+        )}
 
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(isSubmitting) => (
-            <Field>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-sm font-semibold shadow-md shadow-blue-200"
-              >
-                {isSubmitting ? "Starting..." : "Start Conversation"}
-                <ArrowRight size={16} />
-              </button>
-            </Field>
+            <div className="flex gap-2">
+              {onCancel && (
+                <button
+                  type="button"
+                  onClick={onCancel}
+                  className="bg-gray-100 text-gray-700 py-3 px-4 rounded-xl hover:bg-gray-200 transition-all font-semibold text-sm shrink-0"
+                >
+                  Back
+                </button>
+              )}
+              <Field className="flex-1">
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full bg-brand text-white py-3 rounded-xl hover:bg-brand-dark active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-sm font-semibold shadow-md shadow-brand/20"
+                >
+                  {isSubmitting ? "Sending..." : "Send Message"}
+                  <ArrowRight size={16} />
+                </button>
+              </Field>
+            </div>
           )}
         </form.Subscribe>
       </form>
