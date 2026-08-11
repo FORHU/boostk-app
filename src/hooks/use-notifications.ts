@@ -1,10 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { EventType, type Message } from "@/lib/notifier/core";
+import {
+  getUnreadTicketSummaries,
+  markTicketReadFn,
+  type UnreadTicketSummary,
+} from "@/modules/notification/notification.functions";
 
 const HEARTBEAT_TIMEOUT_MS = 25000;
 const RECONNECTING_MIN_HOLD_MS = 1500;
 
 const MAX_NOTIFICATIONS = 20;
+
+export type { UnreadTicketSummary };
 
 export type ConnectionStatus = "connecting" | "connected" | "reconnecting";
 
@@ -17,21 +24,58 @@ export type NotificationItem = {
   read: boolean;
 };
 
-// Only these business events surface in the notification bell (new ticket / new message).
 const NOTIFICATION_EVENTS = new Set<EventType>([EventType.TICKET_CREATED, EventType.CHAT_MESSAGE]);
 
-/**
- * Chat messages are broadcast to every agent so dashboards refresh live, but the
- * bell should only ring for the intended recipient (the assigned agent, tagged in
- * `notifyUserId`). No `notifyUserId` means "everyone" (unassigned tickets), and
- * the customer widget has no `userId` at all — both keep ringing.
- */
 export function shouldRingBell(event: EventType, data: unknown, userId?: string): boolean {
   if (event !== EventType.CHAT_MESSAGE) return true;
   if (!userId) return true;
   const notifyUserId = (data as { notifyUserId?: unknown } | null)?.notifyUserId;
   if (typeof notifyUserId !== "string") return true;
   return notifyUserId === userId;
+}
+
+function upsertNotification(
+  prev: NotificationItem[],
+  event: EventType,
+  data: unknown,
+  localIdRef: React.MutableRefObject<number>,
+): NotificationItem[] {
+  const ticketId = (data as Record<string, unknown> | null)?.ticketId;
+
+  if (typeof ticketId === "string") {
+    const existingIndex = prev.findIndex((n) => n.event === event && n.data?.ticketId === ticketId);
+    if (existingIndex !== -1) {
+      const updated = [...prev];
+      updated[existingIndex] = {
+        ...prev[existingIndex],
+        data: {
+          ...prev[existingIndex].data,
+          content: (data as Record<string, unknown>)?.content ?? prev[existingIndex].data.content,
+          sender: (data as Record<string, unknown>)?.sender ?? prev[existingIndex].data.sender,
+          createdAt: (data as Record<string, unknown>)?.createdAt ?? prev[existingIndex].data.createdAt,
+          unreadCount: ((prev[existingIndex].data?.unreadCount as number) ?? 0) + 1,
+        },
+        timestamp: Date.now(),
+        read: false,
+      };
+      return updated;
+    }
+  }
+
+  const signature = JSON.stringify(data);
+  if (prev.some((n) => n.event === event && JSON.stringify(n.data) === signature)) {
+    return prev;
+  }
+
+  localIdRef.current += 1;
+  const item: NotificationItem = {
+    localId: localIdRef.current,
+    event,
+    data,
+    timestamp: Date.now(),
+    read: false,
+  };
+  return [item, ...prev].slice(0, MAX_NOTIFICATIONS);
 }
 
 export function useNotifications({
@@ -47,6 +91,50 @@ export function useNotifications({
   const [status, setStatus] = useState<ConnectionStatus>("connecting");
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const localIdRef = useRef(0);
+  const hydratedRef = useRef(false);
+
+  useEffect(() => {
+    if (!enabled) return;
+    if (!userId) return;
+    if (hydratedRef.current) return;
+    hydratedRef.current = true;
+
+    getUnreadTicketSummaries()
+      .then((summaries) => {
+        if (summaries.length === 0) return;
+        setNotifications((prev) => {
+          const existingTicketIds = new Set(
+            prev.map((n) => n.data?.ticketId).filter((id): id is string => typeof id === "string"),
+          );
+          const newItems: NotificationItem[] = [];
+          for (const s of summaries) {
+            if (existingTicketIds.has(s.ticketId)) continue;
+            localIdRef.current += 1;
+            newItems.push({
+              localId: localIdRef.current,
+              event: EventType.CHAT_MESSAGE,
+              data: {
+                ticketId: s.ticketId,
+                referenceNumber: s.referenceNumber,
+                projectId: s.projectId,
+                projectName: s.projectName,
+                customerName: s.customerName,
+                content: s.lastMessagePreview,
+                sender: s.sender,
+                createdAt: s.lastMessageAt,
+                unreadCount: s.unreadCount,
+              },
+              timestamp: Date.now(),
+              read: false,
+            });
+          }
+          return [...newItems, ...prev].slice(0, MAX_NOTIFICATIONS);
+        });
+      })
+      .catch((err) => {
+        console.error("[Notifications] Failed to hydrate unread summaries:", err);
+      });
+  }, [enabled, userId]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -71,7 +159,6 @@ export function useNotifications({
     };
 
     const markReconnecting = () => {
-      // Before the first successful connection, a failed attempt is just "connecting".
       if (!hasConnectedOnce) {
         setStatusSafely("connecting");
         return;
@@ -88,8 +175,6 @@ export function useNotifications({
         setStatusSafely("connected");
         return;
       }
-      // Hold the "reconnecting" state visible so an instant reconnect doesn't
-      // turn the indicator into an invisible flash.
       if (transitionTimer) clearTimeout(transitionTimer);
       transitionTimer = setTimeout(() => {
         reconnectingSince = null;
@@ -100,26 +185,20 @@ export function useNotifications({
     const handleMessage = (e: MessageEvent) => {
       try {
         const data = JSON.parse(e.data);
-        console.log(`[SSE] Received ${e.type} event:`, data);
+        console.log("[SSE] received event:", e.type, (data as Record<string, unknown>)?.ticketId);
 
         const message = { event: e.type as EventType, data: data };
         setLastMessage(message);
 
-        if (NOTIFICATION_EVENTS.has(message.event) && shouldRingBell(message.event, message.data, userId)) {
-          const signature = JSON.stringify(message.data);
+        const shouldRing =
+          NOTIFICATION_EVENTS.has(message.event) && shouldRingBell(message.event, message.data, userId);
+        console.log("[SSE] shouldRing?", shouldRing, { event: message.event, userId });
+
+        if (shouldRing) {
           setNotifications((prev) => {
-            if (prev.some((n) => n.event === message.event && JSON.stringify(n.data) === signature)) {
-              return prev;
-            }
-            localIdRef.current += 1;
-            const item: NotificationItem = {
-              localId: localIdRef.current,
-              event: message.event,
-              data: message.data,
-              timestamp: Date.now(),
-              read: false,
-            };
-            return [item, ...prev].slice(0, MAX_NOTIFICATIONS);
+            const next = upsertNotification(prev, message.event, message.data, localIdRef);
+            console.log("[SSE] upsert prev:", prev.length, "→ next:", next.length);
+            return next;
           });
         }
       } catch (err) {
@@ -133,7 +212,6 @@ export function useNotifications({
       const nextSource = new EventSource(url);
       eventSource = nextSource;
 
-      // Specific System Handlers
       nextSource.addEventListener(EventType.CONNECTED, (e) => {
         lastActivityAt = Date.now();
         markConnected();
@@ -145,27 +223,20 @@ export function useNotifications({
         console.log("[SSE] Heartbeat received");
       });
 
-      // Business Logic Handlers
-      // You MUST add listeners for specific event types if the server sends the "event:" field
       nextSource.addEventListener(EventType.TEST, handleMessage);
       nextSource.addEventListener(EventType.TICKET_CREATED, handleMessage);
       nextSource.addEventListener(EventType.CHAT_MESSAGE, handleMessage);
       nextSource.addEventListener(EventType.TICKET_STATUS_CHANGED, handleMessage);
 
-      // This handles messages WITHOUT an "event:" line in the SSE stream
-      // Should never happen if everything is configured correctly
       nextSource.onmessage = handleMessage;
 
       nextSource.onerror = (err) => {
         console.error("[SSE] Error:", err);
-        // Do NOT close the connection: EventSource auto-reconnects, and the server
-        // re-sends the "connected" event once the stream is re-established.
         markReconnecting();
       };
     };
 
     const markOffline = () => {
-      // Being offline is always "reconnecting", even before the first successful connection.
       if (reconnectingSince === null) reconnectingSince = Date.now();
       setStatusSafely("reconnecting");
       if (eventSource) eventSource.close();
@@ -176,23 +247,17 @@ export function useNotifications({
     };
 
     const handleOnline = () => {
-      // Deterministic recovery: open a fresh stream instead of relying on the
-      // browser's auto-reconnect, which can stall after a network restore.
       connect();
     };
 
     connect();
     if (!navigator.onLine) markOffline();
-    // Watchdog: surface silent drops (where onerror may fire late or not at all)
-    // by flagging "reconnecting" if no connected/heartbeat message has arrived recently.
     const watchdog = setInterval(() => {
       if (Date.now() - lastActivityAt > HEARTBEAT_TIMEOUT_MS) {
         markReconnecting();
       }
     }, 5000);
 
-    // When the tab returns to the foreground, re-check liveness immediately
-    // instead of waiting for the next watchdog tick.
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible" && Date.now() - lastActivityAt > HEARTBEAT_TIMEOUT_MS) {
         markReconnecting();
@@ -215,11 +280,19 @@ export function useNotifications({
     };
   }, [userId, ticketId, enabled]);
 
-  const markAllRead = useCallback(() => {
-    setNotifications((prev) => (prev.some((n) => !n.read) ? prev.map((n) => ({ ...n, read: true })) : prev));
+  const markAsRead = useCallback((ticketId: string) => {
+    setNotifications((prev) =>
+      prev.some((n) => n.data?.ticketId === ticketId && !n.read)
+        ? prev.map((n) => (n.data?.ticketId === ticketId ? { ...n, read: true } : n))
+        : prev,
+    );
+
+    markTicketReadFn({ data: { ticketId } }).catch((err) =>
+      console.error("[Notifications] markTicketReadFn failed:", err),
+    );
   }, []);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  return { lastMessage, status, notifications, unreadCount, markAllRead };
+  return { lastMessage, status, notifications, unreadCount, markAsRead };
 }
