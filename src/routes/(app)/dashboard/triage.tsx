@@ -1,6 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { AlertTriangle, Ban, Building2, CheckCircle2, CircleSlash, Inbox, Loader2, Send, User } from "lucide-react";
+import {
+  AlertTriangle,
+  Ban,
+  Building2,
+  CheckCircle2,
+  CircleSlash,
+  Inbox,
+  Loader2,
+  Paperclip,
+  Send,
+  User,
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useToast } from "@/components/ui/toast";
 import { useSocket } from "@/hooks/use-socket";
@@ -256,19 +267,44 @@ function TriageDetail({ intakeTicketId, onDone }: { intakeTicketId: string; onDo
           thread.ticketMessages.map((msg) => (
             <div key={msg.id} className={`flex ${msg.customerId ? "justify-start" : "justify-end"}`}>
               <div
-                className={`max-w-[70%] rounded-2xl px-4 py-2 text-sm ${
-                  msg.customerId ? "bg-white border border-gray-200 text-gray-800" : "bg-blue-600 text-white"
-                }`}
+                className={`max-w-[70%] rounded-2xl text-sm overflow-hidden ${
+                  msg.contentType === "IMAGE" ? "p-1" : "px-4 py-2"
+                } ${msg.customerId ? "bg-white border border-gray-200 text-gray-800" : "bg-blue-600 text-white"}`}
               >
-                <p className="whitespace-pre-wrap break-words">{msg.content}</p>
-                {msg.translatedContent && (
-                  <p
-                    className={`mt-1 pt-1 border-t text-xs ${
-                      msg.customerId ? "border-gray-100 text-gray-500" : "border-blue-400 text-blue-100"
-                    }`}
+                {/* For attachments `content` is the /api/attachments/:id URL, not text —
+                    rendering it raw showed staff a bare link instead of the screenshot a
+                    visitor sent. Translations never apply to these. */}
+                {msg.contentType === "IMAGE" ? (
+                  <a href={msg.content} target="_blank" rel="noreferrer">
+                    <img
+                      src={msg.content}
+                      alt={msg.attachment?.filename ?? "Attachment"}
+                      className="rounded-xl max-h-64 w-auto object-contain"
+                    />
+                  </a>
+                ) : msg.contentType === "FILE" ? (
+                  <a
+                    href={msg.content}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-2 underline underline-offset-2"
                   >
-                    {msg.translatedContent}
-                  </p>
+                    <Paperclip size={14} className="shrink-0" />
+                    <span className="truncate">{msg.attachment?.filename ?? "Attachment"}</span>
+                  </a>
+                ) : (
+                  <>
+                    <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                    {msg.translatedContent && (
+                      <p
+                        className={`mt-1 pt-1 border-t text-xs ${
+                          msg.customerId ? "border-gray-100 text-gray-500" : "border-blue-400 text-blue-100"
+                        }`}
+                      >
+                        {msg.translatedContent}
+                      </p>
+                    )}
+                  </>
                 )}
               </div>
             </div>

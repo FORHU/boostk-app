@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getMemberRole, hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
+import { getMemberRole, hasOrgRole, hasPlatformRole, ORG_ROLE } from "@/modules/auth/roles";
+import { INTAKE_COOKIE_NAME } from "@/modules/intake/intake.constants";
 import { TICKET_COOKIE_NAME } from "@/modules/ticket/ticket.constants";
 import { ATTACHMENT_MAX_BYTES, isAllowedMimeType, isImageMimeType, type UploadedAttachment } from "./attachment.schema";
 
@@ -30,13 +31,19 @@ const readCookie = (request: Request, name: string): string | null => {
 /**
  * Decide whether the caller may touch `ticketId`'s attachments, and as whom.
  *
- * Two independent paths, mirroring the two send paths in the app:
+ * Four independent paths, mirroring the send paths in the app:
  *  - customer — holds the ticket cookie, which is only honoured for the project the
  *    ticket actually belongs to (a stale cookie from another project proves nothing);
+ *  - intake visitor — holds the global-chat cookie. Deliberately NOT project-scoped:
+ *    an intake ticket starts in the intake project and moves to the receiving org's
+ *    project once triage routes it, and the visitor keeps the same conversation across
+ *    that hop. The reference number is the credential, exactly as it is for the widget;
+ *  - platform staff — answers global chat from triage, and is NOT a member of any org,
+ *    so the org-membership branch below can never authorise them;
  *  - agent — authenticated, and a member of the owning org at AGENT or above, matching
  *    the gate on the inbox routes.
  *
- * Returns null when neither holds. Callers must treat null as 403 and must never
+ * Returns null when none holds. Callers must treat null as 403 and must never
  * fall back to trusting the attachment id itself — ids are unguessable, not secret.
  */
 export const resolveAttachmentAccess = async (
@@ -58,8 +65,27 @@ export const resolveAttachmentAccess = async (
     return { kind: "customer", customerId: ticket.customerId };
   }
 
+  // Global-chat visitor. Matched against the ticket's own reference number, so this
+  // grants nothing anywhere else even after triage moves the conversation.
+  const intakeReferenceNumber = readCookie(request, INTAKE_COOKIE_NAME);
+  if (intakeReferenceNumber && intakeReferenceNumber === ticket.referenceNumber) {
+    return { kind: "customer", customerId: ticket.customerId };
+  }
+
   const authSession = await auth.api.getSession({ headers: request.headers });
   if (!authSession) return null;
+
+  // Platform staff, before the org check: they hold no membership anywhere, so
+  // `getMemberRole` would return nothing and they could never open an image a visitor
+  // sent them in triage. Read from the database rather than the session payload, so a
+  // revoked role takes effect on the next request.
+  const staff = await prisma.user.findUnique({
+    where: { id: authSession.user.id },
+    select: { platformRole: true },
+  });
+  if (hasPlatformRole(staff?.platformRole)) {
+    return { kind: "agent", userId: authSession.user.id };
+  }
 
   const members = await prisma.member.findMany({
     where: { organizationId: ticket.project.organizationId },

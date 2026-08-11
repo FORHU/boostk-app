@@ -2,13 +2,15 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { CheckCircle2, Loader2, Send } from "lucide-react";
 import type { TicketMessage } from "prisma/generated/client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { BoostkLogo } from "@/components/BoostkLogo";
+import { AttachmentButton, AttachmentPreview } from "@/components/chat-support/attachment-picker";
 import IntakeCustomerForm from "@/components/chat-support/IntakeCustomerForm";
 import TicketChatMessageBubble, {
   type TicketMessageWithAttachment,
 } from "@/components/chat-support/TicketChatMessageBubble";
 import { useToast } from "@/components/ui/toast";
+import { useAttachmentUpload } from "@/hooks/use-attachment-upload";
 import { useSocket } from "@/hooks/use-socket";
 import { EventType } from "@/lib/notifier/core";
 import { clearIntakeCookieFn, createIntakeMessageFn } from "@/modules/intake/intake.functions";
@@ -73,7 +75,12 @@ export default function GlobalChat({ headerAction }: { headerAction?: React.Reac
       </div>
 
       {ticket ? (
-        <ChatInput ticketId={ticket.id} initialStatus={ticket.status} statusEvent={lastMessage} />
+        <ChatInput
+          ticketId={ticket.id}
+          projectId={ticket.projectId}
+          initialStatus={ticket.status}
+          statusEvent={lastMessage}
+        />
       ) : initialMessage !== null ? (
         <IntakeCustomerForm initialSubject={initialMessage} onCancel={() => setInitialMessage(null)} />
       ) : (
@@ -164,10 +171,13 @@ const MessageList = ({ messages, hasTicket }: { messages: TicketMessageWithAttac
 
 const ChatInput = ({
   ticketId,
+  projectId,
   initialStatus,
   statusEvent,
 }: {
   ticketId: string;
+  /** The ticket's own project — the upload route rejects a mismatch. */
+  projectId: string;
   initialStatus: string;
   statusEvent: { event: EventType; data: { ticketId?: string; status?: string } } | null;
 }) => {
@@ -175,6 +185,13 @@ const ChatInput = ({
   const { toast } = useToast();
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState(initialStatus);
+
+  const onUploadError = useCallback((error: string) => toast(error, "error"), [toast]);
+  const { attachment, isUploading, upload, clear } = useAttachmentUpload({
+    ticketId,
+    projectId,
+    onError: onUploadError,
+  });
 
   useEffect(() => {
     if (statusEvent?.event === EventType.TICKET_STATUS_CHANGED && statusEvent.data.ticketId === ticketId) {
@@ -197,10 +214,27 @@ const ChatInput = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = message.trim();
-    if (!trimmed) return;
+    if (!trimmed && !attachment) return;
 
     try {
-      await createMessageMutation.mutateAsync({ data: { content: trimmed, contentType: "TEXT", ticketId } });
+      // A message carries one contentType, so a file sent with a caption goes as
+      // two messages — the attachment first. Mirrors the project widget's composer.
+      if (attachment) {
+        await createMessageMutation.mutateAsync({
+          data: {
+            content: attachment.url,
+            contentType: attachment.contentType,
+            attachmentId: attachment.id,
+            ticketId,
+          },
+        });
+        clear();
+      }
+
+      if (trimmed) {
+        await createMessageMutation.mutateAsync({ data: { content: trimmed, contentType: "TEXT", ticketId } });
+      }
+
       setMessage("");
     } catch {
       // onError already toasted; keep the draft so the visitor does not retype it.
@@ -230,7 +264,17 @@ const ChatInput = ({
   return (
     <div className="flex-none p-3 bg-white border-t border-gray-100">
       <form onSubmit={handleSubmit}>
+        {attachment && (
+          <AttachmentPreview attachment={attachment} onRemove={clear} disabled={createMessageMutation.isPending} />
+        )}
+
         <div className="flex items-center gap-2">
+          <AttachmentButton
+            onSelect={upload}
+            disabled={createMessageMutation.isPending}
+            isUploading={isUploading}
+            className="text-gray-400 hover:text-gray-700 hover:bg-gray-100"
+          />
           <input
             type="text"
             value={message}
@@ -244,7 +288,9 @@ const ChatInput = ({
           />
           <button
             type="submit"
-            disabled={!message.trim() || createMessageMutation.isPending}
+            // An attachment with no caption is a valid message, so the button must not
+            // stay disabled just because the text field is empty.
+            disabled={(!message.trim() && !attachment) || createMessageMutation.isPending}
             className="bg-brand text-white p-2.5 rounded-xl active:scale-95 disabled:opacity-50 shrink-0"
           >
             <Send size={18} />

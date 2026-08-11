@@ -39,6 +39,21 @@ import {
   startIntakeSession,
 } from "./intake.service";
 
+/**
+ * Confirm an attachment exists and belongs to this conversation before a message points
+ * at it. Mirrors `resolveMessageAttachment` on the widget side: the upload route already
+ * checked the caller may write to this ticket, but nothing stops them from then quoting
+ * some other ticket's attachment id in the message body.
+ */
+const resolveIntakeAttachment = async (attachmentId: string, ticketId: string) => {
+  const attachment = await prisma.attachment.findUnique({
+    where: { id: attachmentId },
+    select: { id: true, filename: true, ticketId: true },
+  });
+  if (!attachment || attachment.ticketId !== ticketId) return null;
+  return attachment;
+};
+
 // ---------------------------------------------------------------------------
 // Public — visitor side. No auth; guarded by rate limits and the cookie only.
 // ---------------------------------------------------------------------------
@@ -98,6 +113,11 @@ export const createIntakeMessageFn = createServerFn({ method: "POST" })
       throw new Error("You're sending messages too quickly. Please slow down.");
     }
 
+    // Confirm the attachment belongs to THIS conversation before the message points at
+    // it, so a visitor cannot graft a file from another ticket onto their own message.
+    const attachment = data.attachmentId ? await resolveIntakeAttachment(data.attachmentId, ticket.id) : null;
+    if (data.attachmentId && !attachment) return null;
+
     const translation =
       data.contentType === "TEXT"
         ? await translateIncomingMessage(data.content, { ticketId: ticket.id })
@@ -119,6 +139,7 @@ export const createIntakeMessageFn = createServerFn({ method: "POST" })
         contentType: data.contentType,
         ticketId: ticket.id,
         customerId: ticket.customerId,
+        attachmentId: attachment?.id ?? null,
         translatedContent: translation.translatedContent,
         sourceLang: translation.sourceLang,
         targetLang: translation.targetLang,
