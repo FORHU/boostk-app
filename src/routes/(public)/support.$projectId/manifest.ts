@@ -45,7 +45,7 @@ export const Route = createFileRoute("/(public)/support/$projectId/manifest")({
           start_url: `${scope}chat-widget`,
           display: "standalone",
           display_override: ["standalone", "minimal-ui"],
-          theme_color: "#4f46e5", // indigo-600, matching the widget's chrome
+          theme_color: "#155dfc", // blue-600, matching the widget's chrome
           background_color: "#ffffff",
           lang: "en",
           dir: "ltr",

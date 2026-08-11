@@ -3,22 +3,35 @@ import { cn } from "@/lib/utils";
 /**
  * The BOOSTK "BK" mark.
  *
- * Reuses the PWA icon rather than shipping a second copy of the logo — it is already in
- * `public/`, already the right artwork, and already cached by the service worker on any
- * installed surface. Defined once here so the path is not repeated across every chat
- * header and empty state.
- *
- * Decorative by default: chat headers put the product name in adjacent text, so an alt
- * string would only make screen readers announce "BOOSTK" twice. Pass `alt` where the
- * mark stands alone.
+ * Replaced the old PNG icon with a clean, CSS-based logo that perfectly
+ * matches the new typography and brand aesthetic without relying on an external image.
  */
-export function BoostkLogo({ className, alt }: { className?: string; alt?: string }) {
+export function BoostkLogo({
+  className,
+  alt,
+  variant = "default",
+}: {
+  className?: string;
+  alt?: string;
+  variant?: "default" | "inverted";
+}) {
   return (
-    <img
-      src="/icon-192.png"
-      alt={alt ?? ""}
+    <div
+      aria-label={alt}
       aria-hidden={alt ? undefined : true}
-      className={cn("rounded-full object-contain", className)}
-    />
+      className={cn(
+        "flex items-center justify-center rounded-full font-extrabold tracking-tighter shrink-0 shadow-sm border border-white/20",
+        variant === "default" ? "bg-brand text-white" : "bg-white text-brand",
+        "aspect-square",
+        className
+      )}
+      style={{
+        // Use a relative font size so it automatically scales based on the container size
+        // e.g. size-9 or size-14 passed via className
+        fontSize: "calc(max(40%, 14px))",
+      }}
+    >
+      BK
+    </div>
   );
 }

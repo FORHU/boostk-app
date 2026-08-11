@@ -6,7 +6,11 @@
 
 @import "shadcn/tailwind.css";
 
-@import "@fontsource-variable/geist";
+@import "@fontsource/poppins/400.css";
+@import "@fontsource/poppins/500.css";
+@import "@fontsource/poppins/600.css";
+@import "@fontsource/poppins/700.css";
+@import "@fontsource/poppins/800.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -202,13 +206,36 @@ code {
   --font-heading:
     var(--font-sans);
   --font-sans:
-    'Geist Variable', sans-serif;
+    'Poppins', sans-serif;
   --radius-2xl:
     calc(var(--radius) * 1.8);
   --radius-3xl:
     calc(var(--radius) * 2.2);
   --radius-4xl:
     calc(var(--radius) * 2.6);
+}
+
+/*
+ * BOOSTK marketing palette, from the Figma landing design.
+ *
+ * Deliberately separate from the shadcn tokens above: those are theme-aware (they flip
+ * under `.dark`) and drive the authenticated app. These are fixed brand colours the
+ * public marketing page paints with, and must NOT flip with the theme — the hero is
+ * brand-blue in both. Figma names them `brand/primary`, `neutral/ink` and so on.
+ */
+@theme {
+  --color-brand: #1447e6;
+  /* Derived, not in the Figma file: hover/active state for brand-filled buttons. */
+  --color-brand-dark: #0f37b8;
+  --color-gold: #f5b400;
+  --color-gold-dark: #d99e00;
+  --color-ink: #0f1424;
+  --color-ink-body: #4a5165;
+  --color-ink-muted: #8a90a3;
+  --color-surface-soft: #f5f7fd;
+  --color-hairline: #e4e7f2;
+  /* Backs every image frame, so a slow/broken photo leaves a brand-tinted block. */
+  --color-image-ph: #dee5fa;
 }
 
 @utility no-scrollbar {

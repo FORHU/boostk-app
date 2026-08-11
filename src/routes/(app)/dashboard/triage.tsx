@@ -50,10 +50,10 @@ function RouteComponent() {
       <aside className="w-80 shrink-0 border-r border-gray-200 flex flex-col bg-white">
         <div className="p-4 border-b border-gray-100">
           <h1 className="font-bold text-gray-900 flex items-center gap-2">
-            <Inbox size={18} className="text-indigo-600" />
+            <Inbox size={18} className="text-blue-600" />
             Global intake
             {items.length > 0 && (
-              <span className="ml-auto text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-semibold">
+              <span className="ml-auto text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-semibold">
                 {items.length}
               </span>
             )}
@@ -63,14 +63,14 @@ function RouteComponent() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search name or email…"
-            className="mt-3 w-full bg-gray-100 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+            className="mt-3 w-full bg-gray-100 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
         <div className="flex-1 overflow-y-auto">
           {isLoading ? (
             <div className="p-8 flex justify-center">
-              <Loader2 className="animate-spin text-indigo-600" size={20} />
+              <Loader2 className="animate-spin text-blue-600" size={20} />
             </div>
           ) : items.length === 0 ? (
             <p className="p-6 text-sm text-gray-500 text-center">Nothing waiting. New chats appear here instantly.</p>
@@ -81,7 +81,7 @@ function RouteComponent() {
                 type="button"
                 onClick={() => setSelectedId(item.id)}
                 className={`w-full text-left p-4 border-b border-gray-50 hover:bg-gray-50 transition-colors ${
-                  selectedId === item.id ? "bg-indigo-50 border-l-2 border-l-indigo-600" : ""
+                  selectedId === item.id ? "bg-blue-50 border-l-2 border-l-blue-600" : ""
                 }`}
               >
                 <div className="flex items-center justify-between gap-2">
@@ -92,7 +92,7 @@ function RouteComponent() {
                 </div>
                 <p className="text-xs text-gray-500 truncate">{item.customer.email}</p>
                 {item.customer.metadata && (
-                  <p className="text-xs text-indigo-600 truncate mt-1">{item.customer.metadata}</p>
+                  <p className="text-xs text-blue-600 truncate mt-1">{item.customer.metadata}</p>
                 )}
                 <p className="text-xs text-gray-400 truncate mt-1">
                   {item.latestMessage?.content ?? "No messages yet"}
@@ -147,12 +147,12 @@ function TriageComposer({ intakeTicketId, disabled }: { intakeTicketId: string; 
           onChange={(e) => setContent(e.target.value)}
           placeholder="Reply to the visitor…"
           disabled={disabled || sendMutation.isPending}
-          className="flex-1 min-w-0 bg-gray-100 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-60"
+          className="flex-1 min-w-0 bg-gray-100 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
         />
         <button
           type="submit"
           disabled={!content.trim() || disabled || sendMutation.isPending}
-          className="bg-indigo-600 text-white p-2.5 rounded-xl active:scale-95 disabled:opacity-50 shrink-0"
+          className="bg-blue-600 text-white p-2.5 rounded-xl active:scale-95 disabled:opacity-50 shrink-0"
         >
           {sendMutation.isPending ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
         </button>
@@ -208,7 +208,7 @@ function TriageDetail({ intakeTicketId, onDone }: { intakeTicketId: string; onDo
   if (isLoading) {
     return (
       <div className="h-full flex items-center justify-center">
-        <Loader2 className="animate-spin text-indigo-600" size={24} />
+        <Loader2 className="animate-spin text-blue-600" size={24} />
       </div>
     );
   }
@@ -221,8 +221,8 @@ function TriageDetail({ intakeTicketId, onDone }: { intakeTicketId: string; onDo
     <div className="h-full flex flex-col">
       <header className="flex-none bg-white border-b border-gray-200 p-4">
         <div className="flex items-center gap-3">
-          <div className="bg-indigo-50 p-2 rounded-lg">
-            <User size={18} className="text-indigo-600" />
+          <div className="bg-blue-50 p-2 rounded-lg">
+            <User size={18} className="text-blue-600" />
           </div>
           <div className="min-w-0">
             <h2 className="font-semibold text-gray-900 text-sm truncate">{thread.customer.name}</h2>
@@ -251,14 +251,14 @@ function TriageDetail({ intakeTicketId, onDone }: { intakeTicketId: string; onDo
             <div key={msg.id} className={`flex ${msg.customerId ? "justify-start" : "justify-end"}`}>
               <div
                 className={`max-w-[70%] rounded-2xl px-4 py-2 text-sm ${
-                  msg.customerId ? "bg-white border border-gray-200 text-gray-800" : "bg-indigo-600 text-white"
+                  msg.customerId ? "bg-white border border-gray-200 text-gray-800" : "bg-blue-600 text-white"
                 }`}
               >
                 <p className="whitespace-pre-wrap break-words">{msg.content}</p>
                 {msg.translatedContent && (
                   <p
                     className={`mt-1 pt-1 border-t text-xs ${
-                      msg.customerId ? "border-gray-100 text-gray-500" : "border-indigo-400 text-indigo-100"
+                      msg.customerId ? "border-gray-100 text-gray-500" : "border-blue-400 text-blue-100"
                     }`}
                   >
                     {msg.translatedContent}
@@ -292,7 +292,7 @@ function TriageDetail({ intakeTicketId, onDone }: { intakeTicketId: string; onDo
                   setProjectId(""); // the old project belongs to a different org
                 }}
                 disabled={isBusy}
-                className="bg-gray-100 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-60"
+                className="bg-gray-100 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
               >
                 <option value="">Select organization…</option>
                 {targets?.map((org) => (
@@ -306,7 +306,7 @@ function TriageDetail({ intakeTicketId, onDone }: { intakeTicketId: string; onDo
                 value={projectId}
                 onChange={(e) => setProjectId(e.target.value)}
                 disabled={isBusy || !organizationId}
-                className="bg-gray-100 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-60"
+                className="bg-gray-100 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
               >
                 <option value="">{organizationId ? "Select project…" : "Pick an organization first"}</option>
                 {projects.map((project) => (
@@ -329,7 +329,7 @@ function TriageDetail({ intakeTicketId, onDone }: { intakeTicketId: string; onDo
                 type="button"
                 disabled={!projectId || isBusy}
                 onClick={() => routeMutation.mutate({ data: { intakeTicketId, organizationId, projectId } })}
-                className="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-indigo-700 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-1 bg-blue-600 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-700 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {routeMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
                 Route to project

@@ -21,7 +21,8 @@ export const Route = createFileRoute("/(public)/chat")({
   head: () => ({
     meta: [
       { title: "BOOSTK Support" },
-      { name: "theme-color", content: "#4f46e5" },
+      // blue-600 — matches the chat header, and the "Sell Global." blue on the landing page.
+      { name: "theme-color", content: "#155dfc" },
       { name: "description", content: "Chat with the BOOSTK support team." },
     ],
   }),
