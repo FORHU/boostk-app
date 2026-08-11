@@ -86,6 +86,9 @@ const EnvSchema = z
      * it would make this module circular.
      */
     TRANSLATE_SYSTEM_PROMPT: optional(z.string().min(1).optional()),
+
+    /** Comma separated list of emails for platform staff who have access to the triage dashboard. */
+    PLATFORM_STAFF_EMAILS: optional(z.string().min(1).optional()),
   })
   .superRefine((value, ctx) => {
     if (value.NODE_ENV !== "production") return;
