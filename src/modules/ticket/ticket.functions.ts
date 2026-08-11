@@ -63,13 +63,24 @@ export const getProjectTicketsFn = createServerFn({ method: "GET" })
   .inputValidator(GetProjectTicketsSchema)
   .middleware([requireProjectRole(ORG_ROLE.AGENT)])
   .handler(async ({ data }) => {
+    const orderBy = (() => {
+      switch (data.sort) {
+        case "oldest":
+          return [{ createdAt: "asc" as const }, { id: "asc" as const }];
+        case "priority":
+          return [{ priority: "desc" as const }, { createdAt: "desc" as const }, { id: "desc" as const }];
+        default:
+          return [{ createdAt: "desc" as const }, { id: "desc" as const }];
+      }
+    })();
+
     const rows = await prisma.ticket.findMany({
       where: { projectId: data.projectId },
       include: {
         customer: true,
         assignedAgent: { include: { user: true } },
       },
-      orderBy: [{ createdAt: "desc" as const }, { id: "desc" as const }],
+      orderBy,
       take: data.take + 1,
       ...(data.cursor ? { cursor: { id: data.cursor }, skip: 1 } : {}),
     });

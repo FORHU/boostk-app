@@ -9,12 +9,18 @@ import {
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { motion } from "framer-motion";
-import { ArrowLeft, Loader2, Maximize, MessageCircle, Minimize, User, X } from "lucide-react";
+import { ArrowLeft, Check, ChevronDown, Loader2, Maximize, MessageCircle, Minimize, User, X } from "lucide-react";
 import type { TicketMessage } from "prisma/generated/client";
 import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { ReplyInput } from "@/components/chat-support/reply-input";
 import TicketChatMessageBubble from "@/components/chat-support/TicketChatMessageBubble";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { EmptyState } from "@/components/ui/empty-state";
 import { TicketPriorityBadge, TicketPrioritySelect, type TicketPriorityType } from "@/components/ui/ticket-priority";
 import { useToast } from "@/components/ui/toast";
@@ -31,6 +37,7 @@ import { memberQueries } from "@/modules/members/member.queries";
 import { publishToProjectAgents } from "@/modules/notification/notification.publish";
 import { requireProjectRole } from "@/modules/project/project.middleware";
 import { getProjectTicketCountsFn, getProjectTicketsFn } from "@/modules/ticket/ticket.functions";
+import { TICKET_SORT_OPTIONS, type TicketSort } from "@/modules/ticket/ticket.schema";
 import { assignTicket } from "@/modules/ticket/ticket.service";
 
 // 1. Fetching Functions (Agent-only). The paginated ticket list lives in
@@ -129,10 +136,10 @@ export const projectTicketQueries = {
   listPrefix: (projectId: string) => [...projectTicketQueries.tickets, projectId],
   // Not wrapped in queryOptions: `list` feeds `useInfiniteQuery`, and this version
   // of queryOptions only models regular useQuery options.
-  list: (projectId: string) => ({
-    queryKey: [...projectTicketQueries.listPrefix(projectId), "list"],
+  list: (projectId: string, sort: TicketSort) => ({
+    queryKey: [...projectTicketQueries.listPrefix(projectId), "list", sort],
     queryFn: ({ pageParam }: { pageParam: string | undefined }) =>
-      getProjectTicketsFn({ data: { projectId, cursor: pageParam } }),
+      getProjectTicketsFn({ data: { projectId, cursor: pageParam, sort } }),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage: Awaited<ReturnType<typeof getProjectTicketsFn>>) => lastPage.nextCursor,
   }),
@@ -165,8 +172,7 @@ const ticketSearchSchema = z.object({
   selectedTicketId: z.string().optional().catch(undefined),
   statusFilter: z.string().default("ALL").catch("ALL"),
   searchQuery: z.string().optional().catch(undefined),
-  sortBy: z.string().optional().catch(undefined),
-  sortDir: z.enum(["asc", "desc"]).optional().catch(undefined),
+  sort: z.enum(TICKET_SORT_OPTIONS).default("newest"),
 });
 
 export const Route = createFileRoute("/(app)/dashboard/project/$projectId/tickets")({
@@ -453,6 +459,36 @@ function TicketDetailPanel({
 }
 
 // Main Page Component
+function TicketSortSelect({ sort, onSortChange }: { sort: TicketSort; onSortChange: (sort: TicketSort) => void }) {
+  const sortOptions: { label: string; value: TicketSort }[] = [
+    { label: "Newest first", value: "newest" },
+    { label: "Oldest first", value: "oldest" },
+    { label: "Priority", value: "priority" },
+  ];
+
+  const activeLabel = sortOptions.find((o) => o.value === sort)?.label ?? "Newest first";
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        className="inline-flex shrink-0 items-center gap-2 px-4 py-2 text-sm font-medium bg-muted hover:bg-muted/80 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        title="Sort tickets"
+      >
+        {activeLabel}
+        <ChevronDown className="size-4" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        {sortOptions.map((option) => (
+          <DropdownMenuItem key={option.value} onClick={() => onSortChange(option.value)}>
+            {option.label}
+            {option.value === sort && <Check className="size-4 ml-auto" />}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 function ProjectTicketsPage() {
   const { projectId } = Route.useParams();
   const search = Route.useSearch();
@@ -501,7 +537,7 @@ function ProjectTicketsPage() {
 
   const statusFilter = search.statusFilter.toUpperCase();
   const searchQuery = search.searchQuery ?? "";
-  const sortConfig = search.sortBy && search.sortDir ? { key: search.sortBy, direction: search.sortDir } : null;
+  const sort = search.sort;
 
   const [inputValue, setInputValue] = useState(searchQuery);
   const debouncedSearchQuery = useDebounce(inputValue);
@@ -518,7 +554,10 @@ function ProjectTicketsPage() {
     });
   }, [debouncedSearchQuery, searchQuery, navigate]);
 
-  const ticketsQuery = useInfiniteQuery(projectTicketQueries.list(projectId));
+  const ticketsQuery = useInfiniteQuery({
+    ...projectTicketQueries.list(projectId, sort),
+    placeholderData: (prev) => prev,
+  });
   const tickets = ticketsQuery.data?.pages.flatMap((page) => page.tickets) ?? [];
   const { fetchNextPage, hasNextPage, isFetchingNextPage } = ticketsQuery;
 
@@ -560,38 +599,6 @@ function ProjectTicketsPage() {
 
     return matchesStatus && matchesSearch;
   });
-
-  const sortedTickets = [...filteredTickets].sort((a, b) => {
-    if (!sortConfig) return 0;
-    let aValue = a[sortConfig.key as keyof typeof a] ?? "";
-    let bValue = b[sortConfig.key as keyof typeof b] ?? "";
-
-    if (sortConfig.key === "customerName") {
-      aValue = a.customer?.name ?? "";
-      bValue = b.customer?.name ?? "";
-    }
-    if (sortConfig.key === "assignee") {
-      aValue = a.assignedAgent?.user?.name ?? "";
-      bValue = b.assignedAgent?.user?.name ?? "";
-    }
-    if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
-    if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
-    return 0;
-  });
-
-  const handleSort = (key: string) => {
-    navigate({
-      search: (prev) => {
-        const isCurrent = prev.sortBy === key;
-        const newDir = isCurrent && prev.sortDir === "desc" ? "asc" : "desc";
-        return {
-          ...prev,
-          sortBy: key,
-          sortDir: newDir,
-        };
-      },
-    });
-  };
 
   const filterTabs = [
     { label: "All", value: "ALL" },
@@ -662,10 +669,19 @@ function ProjectTicketsPage() {
                     {tab.label} ({getCount(tab.value)})
                   </button>
                 ))}
+                <TicketSortSelect
+                  sort={sort}
+                  onSortChange={(nextSort) =>
+                    navigate({
+                      search: (prev) => ({ ...prev, sort: nextSort }),
+                      replace: true,
+                    })
+                  }
+                />
               </div>
             </div>
 
-            {sortedTickets.length === 0 ? (
+            {filteredTickets.length === 0 ? (
               <EmptyState
                 icon={<X className="size-10" strokeWidth={1} />}
                 title={searchQuery ? "Reference doesn't match" : `No ${statusFilter.toLowerCase()} tickets found`}
@@ -684,20 +700,15 @@ function ProjectTicketsPage() {
                       <tr>
                         {["referenceNumber", "priority", "status", "customerName", "assignee", "createdAt"].map(
                           (col) => (
-                            <th
-                              key={col}
-                              className="px-6 py-3 text-left text-xs font-medium uppercase cursor-pointer hover:bg-muted transition-colors"
-                              onClick={() => handleSort(col)}
-                            >
+                            <th key={col} className="px-6 py-3 text-left text-xs font-medium uppercase">
                               {col === "customerName" ? "Customer Name" : col.replace(/([A-Z])/g, " $1")}
-                              {sortConfig?.key === col ? (sortConfig.direction === "asc" ? " ↑" : " ↓") : ""}
                             </th>
                           ),
                         )}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-muted">
-                      {sortedTickets.map((ticket) => (
+                      {filteredTickets.map((ticket) => (
                         <tr
                           key={ticket.id}
                           tabIndex={0}
@@ -787,10 +798,19 @@ function ProjectTicketsPage() {
                   {tab.label} ({getCount(tab.value)})
                 </button>
               ))}
+              <TicketSortSelect
+                sort={sort}
+                onSortChange={(nextSort) =>
+                  navigate({
+                    search: (prev) => ({ ...prev, sort: nextSort }),
+                    replace: true,
+                  })
+                }
+              />
             </div>
           </div>
 
-          {sortedTickets.length === 0 ? (
+          {filteredTickets.length === 0 ? (
             <EmptyState
               icon={<X className="size-10" strokeWidth={1} />}
               title={searchQuery ? "Reference doesn't match" : `No ${statusFilter.toLowerCase()} tickets found`}
@@ -808,19 +828,14 @@ function ProjectTicketsPage() {
                   <thead className="bg-muted/50">
                     <tr>
                       {["referenceNumber", "priority", "status", "customerName", "createdAt"].map((col) => (
-                        <th
-                          key={col}
-                          className="px-6 py-3 text-left text-xs font-medium uppercase cursor-pointer hover:bg-muted transition-colors"
-                          onClick={() => handleSort(col)}
-                        >
+                        <th key={col} className="px-6 py-3 text-left text-xs font-medium uppercase">
                           {col === "customerName" ? "Customer Name" : col.replace(/([A-Z])/g, " $1")}
-                          {sortConfig?.key === col ? (sortConfig.direction === "asc" ? " ↑" : " ↓") : ""}
                         </th>
                       ))}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-muted">
-                    {sortedTickets.map((ticket) => (
+                    {filteredTickets.map((ticket) => (
                       <tr
                         key={ticket.id}
                         tabIndex={0}
