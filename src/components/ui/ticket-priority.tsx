@@ -43,7 +43,7 @@ export function TicketPrioritySelect({ priority, isPending, onPriorityChange }: 
         <option value="MEDIUM" style={{ color: "black", backgroundColor: "white" }}>Medium Priority</option>
         <option value="HIGH" style={{ color: "black", backgroundColor: "white" }}>High Priority</option>
       </select>
-      {isPending && <Loader2 className="animate-spin text-indigo-200" size={14} />}
+      {isPending && <Loader2 className="animate-spin text-blue-200" size={14} />}
     </div>
   );
 }

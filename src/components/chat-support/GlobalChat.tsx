@@ -2,13 +2,15 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { CheckCircle2, Loader2, Send } from "lucide-react";
 import type { TicketMessage } from "prisma/generated/client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { BoostkLogo } from "@/components/BoostkLogo";
+import { AttachmentButton, AttachmentPreview } from "@/components/chat-support/attachment-picker";
 import IntakeCustomerForm from "@/components/chat-support/IntakeCustomerForm";
 import TicketChatMessageBubble, {
   type TicketMessageWithAttachment,
 } from "@/components/chat-support/TicketChatMessageBubble";
 import { useToast } from "@/components/ui/toast";
+import { useAttachmentUpload } from "@/hooks/use-attachment-upload";
 import { useSocket } from "@/hooks/use-socket";
 import { EventType } from "@/lib/notifier/core";
 import { clearIntakeCookieFn, createIntakeMessageFn } from "@/modules/intake/intake.functions";
@@ -32,6 +34,7 @@ export default function GlobalChat({ headerAction }: { headerAction?: React.Reac
   const { data: messages, isLoading: messagesLoading } = useQuery(intakeQueries.messages());
 
   const { lastMessage, status } = useSocket({ ticketId: ticket?.id, projectId: ticket?.projectId });
+  const [initialMessage, setInitialMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (lastMessage?.event === EventType.CHAT_MESSAGE) {
@@ -48,6 +51,13 @@ export default function GlobalChat({ headerAction }: { headerAction?: React.Reac
     }
   }, [lastMessage, queryClient]);
 
+  // If a ticket exists (intake complete), clear the initial message state
+  useEffect(() => {
+    if (ticket && initialMessage !== null) {
+      setInitialMessage(null);
+    }
+  }, [ticket, initialMessage]);
+
   const isLoading = sessionLoading || messagesLoading;
 
   return (
@@ -57,7 +67,7 @@ export default function GlobalChat({ headerAction }: { headerAction?: React.Reac
       <div className="flex-1 min-h-0 overflow-y-auto p-2 bg-slate-50 scroll-smooth">
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
-            <Loader2 className="animate-spin text-indigo-600" size={28} />
+            <Loader2 className="animate-spin text-blue-600" size={28} />
           </div>
         ) : (
           <MessageList messages={messages ?? []} hasTicket={Boolean(ticket)} />
@@ -65,9 +75,16 @@ export default function GlobalChat({ headerAction }: { headerAction?: React.Reac
       </div>
 
       {ticket ? (
-        <ChatInput ticketId={ticket.id} initialStatus={ticket.status} statusEvent={lastMessage} />
+        <ChatInput
+          ticketId={ticket.id}
+          projectId={ticket.projectId}
+          initialStatus={ticket.status}
+          statusEvent={lastMessage}
+        />
+      ) : initialMessage !== null ? (
+        <IntakeCustomerForm initialSubject={initialMessage} onCancel={() => setInitialMessage(null)} />
       ) : (
-        <IntakeCustomerForm />
+        <FakeChatInput onSubmit={setInitialMessage} />
       )}
     </div>
   );
@@ -83,14 +100,14 @@ const ChatHeader = ({
   const isReconnecting = connectionStatus != null && connectionStatus !== "connected";
 
   return (
-    <header className="flex-none bg-indigo-600 p-4 text-white flex items-center justify-between shadow-sm">
+    <header className="flex-none bg-brand p-4 text-white flex items-center justify-between shadow-sm">
       <div className="flex items-center gap-3 min-w-0">
-        <BoostkLogo className="size-9 shrink-0" />
+        <BoostkLogo className="size-9 shrink-0" variant="inverted" />
         <div className="min-w-0">
           {/* Never names the receiving project, before or after routing — which team picked
               the conversation up is not the visitor's concern. */}
           <h2 className="text-sm font-bold leading-none truncate">BOOSTK Support</h2>
-          <span className="text-[10px] text-indigo-200 flex items-center gap-1">
+          <span className="text-[10px] text-blue-200 flex items-center gap-1">
             {isReconnecting ? (
               <>
                 <span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-pulse" />
@@ -118,7 +135,7 @@ const MessageList = ({ messages, hasTicket }: { messages: TicketMessageWithAttac
         animate={{ opacity: 1, scale: 1 }}
         className="flex flex-col items-center justify-center h-full text-center p-6"
       >
-        <BoostkLogo className="size-14 mb-3" />
+        <BoostkLogo className="size-14 mb-4 shadow-md" />
         <h3 className="font-semibold text-gray-900 text-sm">
           {hasTicket ? "Waiting for an agent" : "How can we help?"}
         </h3>
@@ -154,10 +171,13 @@ const MessageList = ({ messages, hasTicket }: { messages: TicketMessageWithAttac
 
 const ChatInput = ({
   ticketId,
+  projectId,
   initialStatus,
   statusEvent,
 }: {
   ticketId: string;
+  /** The ticket's own project — the upload route rejects a mismatch. */
+  projectId: string;
   initialStatus: string;
   statusEvent: { event: EventType; data: { ticketId?: string; status?: string } } | null;
 }) => {
@@ -165,6 +185,13 @@ const ChatInput = ({
   const { toast } = useToast();
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState(initialStatus);
+
+  const onUploadError = useCallback((error: string) => toast(error, "error"), [toast]);
+  const { attachment, isUploading, upload, clear } = useAttachmentUpload({
+    ticketId,
+    projectId,
+    onError: onUploadError,
+  });
 
   useEffect(() => {
     if (statusEvent?.event === EventType.TICKET_STATUS_CHANGED && statusEvent.data.ticketId === ticketId) {
@@ -187,10 +214,27 @@ const ChatInput = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = message.trim();
-    if (!trimmed) return;
+    if (!trimmed && !attachment) return;
 
     try {
-      await createMessageMutation.mutateAsync({ data: { content: trimmed, contentType: "TEXT", ticketId } });
+      // A message carries one contentType, so a file sent with a caption goes as
+      // two messages — the attachment first. Mirrors the project widget's composer.
+      if (attachment) {
+        await createMessageMutation.mutateAsync({
+          data: {
+            content: attachment.url,
+            contentType: attachment.contentType,
+            attachmentId: attachment.id,
+            ticketId,
+          },
+        });
+        clear();
+      }
+
+      if (trimmed) {
+        await createMessageMutation.mutateAsync({ data: { content: trimmed, contentType: "TEXT", ticketId } });
+      }
+
       setMessage("");
     } catch {
       // onError already toasted; keep the draft so the visitor does not retype it.
@@ -209,7 +253,7 @@ const ChatInput = ({
             await clearIntakeCookieFn();
             await queryClient.invalidateQueries({ queryKey: intakeQueries.all });
           }}
-          className="mt-3 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          className="mt-3 bg-blue-50 text-blue-600 hover:bg-blue-100 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
         >
           Start a new conversation
         </button>
@@ -220,19 +264,68 @@ const ChatInput = ({
   return (
     <div className="flex-none p-3 bg-white border-t border-gray-100">
       <form onSubmit={handleSubmit}>
+        {attachment && (
+          <AttachmentPreview attachment={attachment} onRemove={clear} disabled={createMessageMutation.isPending} />
+        )}
+
         <div className="flex items-center gap-2">
+          <AttachmentButton
+            onSelect={upload}
+            disabled={createMessageMutation.isPending}
+            isUploading={isUploading}
+            className="text-gray-400 hover:text-gray-700 hover:bg-gray-100"
+          />
           <input
             type="text"
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Type your message..."
             disabled={createMessageMutation.isPending}
-            className="flex-1 min-w-0 bg-gray-100 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-60"
+            // Colours are pinned rather than tokenised: this widget is embedded on
+            // light-only surfaces, and inheriting `--foreground` put white text on
+            // this light grey field whenever the visitor's OS was in dark mode.
+            className="flex-1 min-w-0 bg-gray-100 text-gray-900 placeholder:text-gray-500 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
           />
           <button
             type="submit"
-            disabled={!message.trim() || createMessageMutation.isPending}
-            className="bg-indigo-600 text-white p-2.5 rounded-xl active:scale-95 disabled:opacity-50 shrink-0"
+            // An attachment with no caption is a valid message, so the button must not
+            // stay disabled just because the text field is empty.
+            disabled={(!message.trim() && !attachment) || createMessageMutation.isPending}
+            className="bg-brand text-white p-2.5 rounded-xl active:scale-95 disabled:opacity-50 shrink-0"
+          >
+            <Send size={18} />
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+};
+
+const FakeChatInput = ({ onSubmit }: { onSubmit: (message: string) => void }) => {
+  const [message, setMessage] = useState("");
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = message.trim();
+    if (!trimmed) return;
+    onSubmit(trimmed);
+  };
+
+  return (
+    <div className="flex-none p-3 bg-white border-t border-gray-100">
+      <form onSubmit={handleSubmit}>
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="Type your message..."
+            className="flex-1 min-w-0 bg-gray-100 text-gray-900 placeholder:text-gray-500 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <button
+            type="submit"
+            disabled={!message.trim()}
+            className="bg-brand text-white p-2.5 rounded-xl active:scale-95 disabled:opacity-50 shrink-0"
           >
             <Send size={18} />
           </button>

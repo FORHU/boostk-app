@@ -7,14 +7,7 @@ import { publishToProjectAgents, publishToTicketChannel } from "@/modules/notifi
 import { requireProjectRole } from "../project/project.middleware";
 import { requireCustomerTicketMiddleware, requireTicketAgentMiddleware } from "../ticket/ticket.middleware";
 import { CreateCustomerTicketMessageSchema, CreateTicketMessageSchema } from "./ticket-message.schema";
-import {
-  detectMessageLanguage,
-  isSupportLanguage,
-  SUPPORT_LANGUAGE,
-  shouldDetectLanguage,
-  translateIncomingMessage,
-  translateOutgoingMessage,
-} from "./ticket-message.translation";
+import { prepareIncomingCustomerText, SUPPORT_LANGUAGE, translateOutgoingMessage } from "./ticket-message.translation";
 
 // Attachment metadata travels with every message so a bubble can render a filename
 // and size without a second round trip. The bytes themselves are never selected —
@@ -39,7 +32,7 @@ const resolveMessageAttachment = async (attachmentId: string, ticketId: string) 
  * What a notification shows for a message. For attachments `content` is a URL, which
  * is useless in a toast or a push — send the filename instead.
  */
-const notificationPreview = (content: string, contentType: string, attachment: { filename: string } | null) =>
+export const notificationPreview = (content: string, contentType: string, attachment: { filename: string } | null) =>
   attachment ? `${contentType === "IMAGE" ? "📷" : "📎"} ${attachment.filename}` : content;
 
 export const getTicketMessagesFn = createServerFn({ method: "GET" })
@@ -75,21 +68,17 @@ export const createTicketMessageFn = createServerFn({ method: "POST" })
     const attachment = data.attachmentId ? await resolveMessageAttachment(data.attachmentId, ticket.id) : null;
     if (data.attachmentId && !attachment) return null;
 
-    // Translate inbound customer text into the support language so agents can read it.
+    // Translate inbound customer text into the support language so agents can read it,
+    // and remember the customer's own language for replies.
     const translation =
       data.contentType === "TEXT"
-        ? await translateIncomingMessage(data.content, { ticketId: ticket.id })
+        ? await prepareIncomingCustomerText({
+            content: data.content,
+            ticketId: ticket.id,
+            customerId: ticket.customerId,
+            customerLanguage: ticket.customer.language,
+          })
         : { translatedContent: null, sourceLang: null, targetLang: SUPPORT_LANGUAGE };
-
-    // Remember the customer's language so agent replies can be translated back into it.
-    // Keep detecting while unknown/English so an initial "hello" doesn't lock English;
-    // only store an actual foreign language (English stays null, treated the same for replies).
-    if (data.contentType === "TEXT" && shouldDetectLanguage(ticket.customer.language, data.content)) {
-      const lang = await detectMessageLanguage(data.content, ticket.id);
-      if (lang && !isSupportLanguage(lang)) {
-        await prisma.customer.update({ where: { id: ticket.customerId }, data: { language: lang } });
-      }
-    }
 
     const message = await prisma.ticketMessage.create({
       data: {

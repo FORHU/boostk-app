@@ -23,6 +23,10 @@ const MAX_WIDTH = 720;
 const DEFAULT_WIDTH = 420;
 const WIDTH_STORAGE_KEY = "boostk:chat-panel-width";
 
+// Set the first time a visitor closes the panel. Its presence is what stops the chat
+// auto-opening on later visits — see GlobalChatProvider.
+const DISMISSED_STORAGE_KEY = "boostk:chat-dismissed";
+
 /** Below this the panel covers the screen: a draggable side panel is unusable on a phone. */
 const MOBILE_BREAKPOINT = 640;
 
@@ -47,16 +51,49 @@ export function useGlobalChat() {
 }
 
 export function GlobalChatProvider({ children }: { children: React.ReactNode }) {
+  // Starts closed and opens in an effect rather than initialising to `true`: this renders
+  // during SSR, where localStorage cannot be read. Initialising open would send an
+  // open panel down in the HTML and then rip it away on hydration for anyone who had
+  // dismissed it — a visible flash, and a hydration mismatch. Closed-then-open is the
+  // only order that is correct on both passes.
   const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(DISMISSED_STORAGE_KEY)) return;
+    } catch {
+      // Storage unavailable (private mode, quota). Opening is the intended default, so
+      // fall through and open rather than treating the failure as a dismissal.
+    }
+
+    setIsOpen(true);
+  }, []);
+
+  // Closing is the visitor saying "not now", and it is remembered — however they do it.
+  // Both the header × and the bookmark tab route through here, so a dismissal cannot be
+  // recorded by one and missed by the other.
+  //
+  // Reopening deliberately does NOT clear the flag: asking for the chat once is not the
+  // same as asking to be greeted by it on every future visit.
+  const close = useCallback(() => {
+    setIsOpen(false);
+    try {
+      localStorage.setItem(DISMISSED_STORAGE_KEY, "1");
+    } catch {
+      // Non-fatal: the panel closes, it just won't remember next time.
+    }
+  }, []);
+
+  const open = useCallback(() => setIsOpen(true), []);
 
   const value = useMemo<GlobalChatContextValue>(
     () => ({
       isOpen,
-      open: () => setIsOpen(true),
-      close: () => setIsOpen(false),
-      toggle: () => setIsOpen((v) => !v),
+      open,
+      close,
+      toggle: () => (isOpen ? close() : open()),
     }),
-    [isOpen],
+    [isOpen, open, close],
   );
 
   return (
@@ -165,7 +202,7 @@ function GlobalChatPanel() {
                     type="button"
                     onClick={close}
                     aria-label="Close chat"
-                    className="rounded-lg p-1.5 text-indigo-200 transition-colors hover:bg-indigo-500/40 hover:text-white"
+                    className="rounded-lg p-1.5 text-blue-200 transition-colors hover:bg-blue-500/40 hover:text-white"
                   >
                     <X size={18} />
                   </button>
@@ -198,8 +235,8 @@ function GlobalChatPanel() {
           }}
           className={cn(
             "group fixed top-32 z-50 flex flex-col items-center gap-2 rounded-l-lg pt-4 pb-7 pl-2.5 pr-2",
-            "bg-indigo-600 text-white transition-[background-color,right] duration-200",
-            "hover:bg-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400",
+            "bg-blue-600 text-white transition-[background-color,right] duration-200",
+            "hover:bg-blue-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400",
           )}
         >
           {isOpen ? <X size={16} /> : <MessageCircle size={16} />}
@@ -274,7 +311,7 @@ function WidthGrip({
       onPointerCancel={handlePointerUp}
       onKeyDown={handleKeyDown}
       aria-label="Resize chat panel. Use left and right arrow keys to adjust."
-      className="absolute left-0 top-0 z-10 h-full w-1.5 cursor-ew-resize touch-none border-0 bg-transparent p-0 transition-colors hover:bg-indigo-400/40 focus-visible:bg-indigo-400/60 focus-visible:outline-none"
+      className="absolute left-0 top-0 z-10 h-full w-1.5 cursor-ew-resize touch-none border-0 bg-transparent p-0 transition-colors hover:bg-blue-400/40 focus-visible:bg-blue-400/60 focus-visible:outline-none"
     />
   );
 }

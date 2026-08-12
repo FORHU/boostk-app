@@ -1,19 +1,23 @@
 import type { VariantProps } from "class-variance-authority";
+import { motion } from "framer-motion";
 import {
+  ArrowRight,
   Briefcase,
+  Check,
   FileText,
   Heart,
   ImageIcon,
   type LucideIcon,
   Megaphone,
   MessageSquare,
+  Minus,
   Play,
   Shield,
   ShoppingCart,
   TrendingUp,
 } from "lucide-react";
-import { useEffect, useRef } from "react";
-import { Button, type buttonVariants } from "@/components/ui/button";
+import React, { Fragment, useEffect, useRef } from "react";
+import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
@@ -35,7 +39,8 @@ type ROI = { title: string; subtitle: string };
 
 type Plan = {
   name: string;
-  price: string;
+  priceMonthly: string;
+  priceAnnual: string;
   period: string;
   subtitle: string;
   bestFor: string;
@@ -58,7 +63,8 @@ type Plan = {
 const plans: Plan[] = [
   {
     name: "Content & Presence",
-    price: "$399",
+    priceMonthly: "$499",
+    priceAnnual: "$399",
     period: "/mo",
     subtitle: "Build your global brand visibility",
     bestFor: "Brands ready to speak English professionally",
@@ -99,7 +105,8 @@ const plans: Plan[] = [
   },
   {
     name: "Sales & Commerce",
-    price: "$999",
+    priceMonthly: "$1,249",
+    priceAnnual: "$999",
     period: "/mo",
     subtitle: "Sell globally with full support",
     bestFor: "Companies actively selling in international markets",
@@ -145,7 +152,8 @@ const plans: Plan[] = [
   },
   {
     name: "Enterprise Growth",
-    price: "$2,599",
+    priceMonthly: "$3,249",
+    priceAnnual: "$2,599",
     period: "/mo",
     subtitle: "Full partnership development team",
     bestFor: "Businesses expanding aggressively into global markets",
@@ -299,22 +307,173 @@ function ShowcaseMedia({ src, alt, fit = "contain" }: { src: string; alt: string
   );
 }
 
-export function VisualPricing() {
+const checklistCategories = [
+  {
+    name: "Marketing & Content",
+    features: [
+      { name: "Social media content (FB, IG, TikTok)", plans: { Content: true, Sales: true, Enterprise: true } },
+      { name: "Email marketing campaigns", plans: { Content: true, Sales: true, Enterprise: true } },
+      { name: "Video production & editing", plans: { Content: true, Sales: true, Enterprise: true } },
+      { name: "Catalogue & ad design", plans: { Content: true, Sales: true, Enterprise: true } },
+    ],
+  },
+  {
+    name: "Sales & Analytics",
+    features: [
+      { name: "Weekly performance reports", plans: { Content: true, Sales: true, Enterprise: true } },
+      { name: "Marketplace management", plans: { Content: false, Sales: true, Enterprise: true } },
+      { name: "Product listing optimization", plans: { Content: false, Sales: true, Enterprise: true } },
+      { name: "Market research & competitor analysis", plans: { Content: false, Sales: true, Enterprise: true } },
+    ],
+  },
+  {
+    name: "Support & Partnerships",
+    features: [
+      { name: "Live chat (Korean office hours)", plans: { Content: false, Sales: true, Enterprise: true } },
+      { name: "Active buyer prospecting", plans: { Content: false, Sales: false, Enterprise: true } },
+      { name: "Partnership negotiation support", plans: { Content: false, Sales: false, Enterprise: true } },
+      { name: "2 dedicated BD specialists", plans: { Content: false, Sales: false, Enterprise: true } },
+      { name: "Enterprise priority support", plans: { Content: false, Sales: false, Enterprise: true } },
+    ],
+  },
+];
+
+function FeatureComparisonTable() {
   return (
-    <section
-      id="pricing"
-      className="scroll-mt-28 bg-linear-to-b from-transparent to-muted/30 px-4 py-20 sm:px-6 lg:px-8"
-    >
-      <div className="mx-auto max-w-7xl">
-        {/* Header */}
-        <div className="mb-16 text-center">
-          <h2 className="mt-4 text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
-            Choose how far you want to go
+    <div className="mt-32">
+      <div className="mb-12 text-center">
+        <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">Feature Comparison</h2>
+        <p className="mt-4 text-lg text-gray-500">Compare what is included in each plan in detail.</p>
+      </div>
+
+      <div className="overflow-hidden border border-gray-200 rounded-2xl bg-white shadow-sm">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="border-b border-gray-200 bg-gray-50">
+              <th className="p-4 font-semibold text-gray-900 w-1/3 text-sm md:text-base">Functionality</th>
+              <th className="p-4 font-semibold text-gray-900 text-center w-[22%] text-sm md:text-base">
+                Content & Presence
+              </th>
+              <th className="p-4 font-semibold text-gray-900 text-center w-[22%] text-sm md:text-base">
+                Sales & Commerce
+                <div className="mt-1 block mx-auto w-fit rounded-full bg-brand/10 px-2 py-0.5 text-[10px] uppercase tracking-wider text-brand">
+                  Most Popular
+                </div>
+              </th>
+              <th className="p-4 font-semibold text-gray-900 text-center w-[22%] text-sm md:text-base">
+                Enterprise Growth
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {checklistCategories.map((category) => (
+              <Fragment key={category.name}>
+                <tr>
+                  <td
+                    colSpan={4}
+                    className="bg-gray-50 p-3 text-xs font-semibold text-gray-500 uppercase tracking-wider border-y border-gray-200"
+                  >
+                    {category.name}
+                  </td>
+                </tr>
+                {category.features.map((feature, idx) => (
+                  <tr
+                    key={feature.name}
+                    className={cn("border-b border-gray-100", idx === category.features.length - 1 ? "border-b-0" : "")}
+                  >
+                    <td className="p-4 text-sm font-medium text-gray-900">{feature.name}</td>
+                    <td className="p-4 text-center">
+                      {feature.plans.Content ? (
+                        <Check className="mx-auto size-5 text-gray-900" />
+                      ) : (
+                        <Minus className="mx-auto size-5 text-gray-300" />
+                      )}
+                    </td>
+                    <td className="p-4 text-center border-x border-gray-100 bg-gray-50/50">
+                      {feature.plans.Sales ? (
+                        <Check className="mx-auto size-5 text-brand" />
+                      ) : (
+                        <Minus className="mx-auto size-5 text-gray-300" />
+                      )}
+                    </td>
+                    <td className="p-4 text-center">
+                      {feature.plans.Enterprise ? (
+                        <Check className="mx-auto size-5 text-gray-900" />
+                      ) : (
+                        <Minus className="mx-auto size-5 text-gray-300" />
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </Fragment>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+export function VisualPricing() {
+  const [isAnnual, setIsAnnual] = React.useState(true);
+
+  return (
+    <section id="pricing" className="relative scroll-mt-28 overflow-hidden bg-background py-24 sm:py-32">
+      {/* Abstract background shapes */}
+      <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-brand/5 via-background to-background" />
+
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mb-16 text-center sm:mb-24">
+          <h2 className="mb-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-5xl">
+            Pricing that scales with you
           </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
+          <p className="mx-auto mt-4 max-w-2xl text-[16px] text-gray-500">
             Three levels of partnership, from building your English-language presence to running your global sales
             operation end to end.
           </p>
+
+          {/* Billing Toggle */}
+          <div className="mt-8 flex items-center justify-center gap-3">
+            <button
+              type="button"
+              className={cn(
+                "cursor-pointer text-sm font-medium transition-colors",
+                !isAnnual ? "text-gray-900" : "text-gray-500",
+              )}
+              onClick={() => setIsAnnual(false)}
+            >
+              Monthly
+            </button>
+            <button
+              type="button"
+              className="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-brand transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2"
+              role="switch"
+              aria-checked={isAnnual}
+              onClick={() => setIsAnnual(!isAnnual)}
+            >
+              <span className="sr-only">Use setting</span>
+              <span
+                aria-hidden="true"
+                className={cn(
+                  "pointer-events-none inline-block size-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
+                  isAnnual ? "translate-x-5" : "translate-x-0",
+                )}
+              />
+            </button>
+            <button
+              type="button"
+              className={cn(
+                "cursor-pointer text-sm font-medium transition-colors",
+                isAnnual ? "text-gray-900" : "text-gray-500",
+              )}
+              onClick={() => setIsAnnual(true)}
+            >
+              Annually{" "}
+              <span className="ml-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700">
+                Save 20%
+              </span>
+            </button>
+          </div>
         </div>
 
         {/* Pricing cards with visual previews */}
@@ -326,56 +485,112 @@ export function VisualPricing() {
               <div key={plan.name} className="relative h-full">
                 {/* Badge sits outside Card — Card clips its own overflow */}
                 {plan.badge && (
-                  <div className="absolute -top-3 left-1/2 z-10 -translate-x-1/2 rounded-full bg-primary px-4 py-1 text-xs font-medium text-primary-foreground shadow-lg">
+                  <div
+                    className={cn(
+                      "absolute -top-3 left-1/2 z-10 -translate-x-1/2 rounded-full px-4 py-1 text-xs font-bold uppercase tracking-wider text-white shadow-lg",
+                      plan.highlighted ? "bg-[#FF6A3D]" : "bg-brand",
+                    )}
+                  >
                     {plan.badge}
                   </div>
                 )}
 
+                {/* Hand-drawn animated arrow pointing to the highlighted card */}
+                {plan.highlighted && (
+                  <motion.div
+                    className="absolute -top-16 -right-4 z-20 hidden md:block pointer-events-none md:-right-12"
+                    animate={{ y: [0, -10, 0], rotate: [0, 5, 0] }}
+                    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                  >
+                    <div className="relative">
+                      <span
+                        className="absolute -top-6 -right-2 whitespace-nowrap text-lg font-bold text-[#FF6A3D] rotate-[10deg]"
+                        style={{ fontFamily: "Caveat, 'Comic Sans MS', cursive" }}
+                      >
+                        Save 20%
+                      </span>
+                      <svg
+                        aria-hidden="true"
+                        width="60"
+                        height="60"
+                        viewBox="0 0 100 100"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="text-[#FF6A3D]"
+                      >
+                        <path d="M 80 20 Q 50 20 20 70" />
+                        <path d="M 40 65 L 20 70 L 15 45" />
+                      </svg>
+                    </div>
+                  </motion.div>
+                )}
+
                 <Card
                   className={cn(
-                    "flex h-full flex-col gap-0 border p-3 py-3 transition-all duration-300 sm:p-6 sm:py-6",
+                    "flex h-full flex-col gap-0 border-0 p-3 py-3 transition-all duration-300 sm:p-6 sm:py-6 rounded-[2.5rem]",
                     plan.highlighted
-                      ? "ring-2 ring-primary/60 shadow-xl"
-                      : "ring-0 hover:ring-1 hover:ring-primary/30 hover:shadow-lg",
+                      ? "bg-white ring-2 ring-[#FF6A3D] shadow-[0_24px_48px_-12px_rgba(255,106,61,0.25)] hover:-translate-y-2 z-10"
+                      : "bg-white ring-1 ring-gray-200/60 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.02)] hover:shadow-[0_12px_30px_-4px_rgba(0,0,0,0.06)] hover:ring-gray-200 hover:-translate-y-1",
                   )}
                 >
                   {/* Main content fills available height */}
                   <div className="flex flex-1 flex-col">
                     {/* Header */}
-                    <div className="mb-1 flex items-center gap-2 sm:mb-2 sm:gap-3">
+                    <div className="mb-1 flex items-center gap-2 sm:mb-4 sm:gap-4">
                       <div
                         className={cn(
-                          "flex size-8 items-center justify-center rounded-full bg-linear-to-br shadow-sm sm:size-10",
+                          "flex size-10 items-center justify-center rounded-xl bg-linear-to-br shadow-sm sm:size-12",
                           plan.color,
                         )}
                       >
-                        <Icon className="size-4 text-white sm:size-5" />
+                        <Icon className="size-5 text-white sm:size-6" />
                       </div>
-                      <div className="text-sm font-semibold sm:text-lg">{plan.name}</div>
+                      <div className="text-[20px] font-bold text-gray-900">{plan.name}</div>
                     </div>
 
                     <div className="mb-2 text-xs text-muted-foreground sm:mb-4 sm:text-sm">{plan.subtitle}</div>
 
                     {/* Pricing */}
-                    <div className="mb-2 sm:mb-4">
+                    <div className="mb-2 sm:mb-6">
                       <div className="flex items-baseline gap-1 sm:gap-2">
-                        <span className="text-xl font-bold sm:text-3xl">{plan.price}</span>
-                        <span className="text-xs text-muted-foreground sm:text-base">{plan.period}</span>
+                        <span className="text-3xl font-black tracking-tight text-gray-900 sm:text-[44px]">
+                          {isAnnual ? plan.priceAnnual : plan.priceMonthly}
+                        </span>
+                        <span className="text-sm font-medium text-gray-500">{plan.period}</span>
                       </div>
+                      {isAnnual && (
+                        <div className="mt-1 font-medium text-sm text-green-600">
+                          Billed ${(parseInt(plan.priceAnnual.replace(/[$,]/g, ""), 10) * 12).toLocaleString()} yearly
+                        </div>
+                      )}
                     </div>
 
                     {/* Best for */}
-                    <div className="mb-2 rounded-lg border border-border/30 bg-transparent p-2 text-xs sm:mb-4 sm:p-3 sm:text-sm">
+                    <div
+                      className={cn(
+                        "mb-2 rounded-2xl border bg-transparent p-2 text-xs sm:mb-4 sm:p-3 sm:text-sm",
+                        plan.highlighted ? "border-orange-200 bg-orange-50/50" : "border-border/30",
+                      )}
+                    >
                       <span className="text-xs text-muted-foreground">Best for: </span>
-                      <span className="font-medium">{plan.bestFor}</span>
+                      <span className="font-medium text-gray-900">{plan.bestFor}</span>
                     </div>
 
                     {/* Visual showcase */}
                     <div className="mb-3 space-y-2 sm:mb-6 sm:space-y-3">
-                      <div className="mb-1 text-xs font-semibold sm:mb-2 sm:text-sm">What you get</div>
+                      <div className="mb-1 text-xs font-semibold text-gray-900 sm:mb-2 sm:text-sm">What you get</div>
 
                       {plan.visualShowcase.map((showcase) => (
-                        <div key={showcase.label} className="overflow-hidden rounded-lg border bg-transparent">
+                        <div
+                          key={showcase.label}
+                          className={cn(
+                            "overflow-hidden rounded-2xl border bg-transparent",
+                            plan.highlighted ? "border-orange-200" : "border-border/30",
+                          )}
+                        >
                           {/* Gallery preview */}
                           {showcase.type === "gallery" && (
                             <div
@@ -385,7 +600,7 @@ export function VisualPricing() {
                               )}
                             >
                               {showcase.media.map((item) => (
-                                <div key={item} className="relative h-16 overflow-hidden rounded sm:h-28 md:h-32">
+                                <div key={item} className="relative h-16 overflow-hidden rounded-xl sm:h-28 md:h-32">
                                   <ShowcaseMedia src={item} alt={showcase.label} fit="cover" />
                                 </div>
                               ))}
@@ -394,7 +609,7 @@ export function VisualPricing() {
 
                           {/* Video preview */}
                           {showcase.type === "video" && (
-                            <div className="relative m-1 h-20 overflow-hidden rounded sm:m-2 sm:h-32">
+                            <div className="relative m-1 h-20 overflow-hidden rounded-xl sm:m-2 sm:h-32">
                               <ShowcaseMedia src={showcase.media} alt={showcase.label} fit="cover" />
                               <div className="absolute right-1.5 bottom-1.5 rounded-full bg-black/55 p-1.5 backdrop-blur-sm">
                                 <Play aria-hidden="true" className="size-3 fill-white text-white" />
@@ -404,7 +619,7 @@ export function VisualPricing() {
 
                           {/* Mockup preview */}
                           {showcase.type === "mockup" && (
-                            <div className="relative m-1 h-20 overflow-hidden rounded sm:m-2 sm:h-32">
+                            <div className="relative m-1 h-20 overflow-hidden rounded-xl sm:m-2 sm:h-32">
                               <ShowcaseMedia src={showcase.media} alt={showcase.label} fit="cover" />
                             </div>
                           )}
@@ -414,12 +629,19 @@ export function VisualPricing() {
                             <div className="p-2 sm:p-4">
                               <div className="flex items-center justify-between gap-1 sm:gap-2">
                                 {showcase.steps.map((step, index) => (
-                                  <div key={step} className="flex flex-1 flex-col items-center">
-                                    <div className="mb-0.5 flex size-6 items-center justify-center rounded-full bg-primary/20 text-[10px] font-bold text-primary sm:mb-1 sm:size-8 sm:text-xs">
-                                      {index + 1}
+                                  <Fragment key={step}>
+                                    <div className="flex flex-1 flex-col items-center">
+                                      <div className="mb-0.5 flex size-6 items-center justify-center rounded-full bg-brand/10 text-[10px] font-bold text-brand sm:mb-1 sm:size-8 sm:text-xs">
+                                        {index + 1}
+                                      </div>
+                                      <div className="text-center text-[8px] sm:text-[10px]">{step}</div>
                                     </div>
-                                    <div className="text-center text-[8px] sm:text-[10px]">{step}</div>
-                                  </div>
+                                    {index < showcase.steps.length - 1 && (
+                                      <div className="flex items-center justify-center -mt-3">
+                                        <ArrowRight className="size-3 text-brand/40 animate-pulse" />
+                                      </div>
+                                    )}
+                                  </Fragment>
                                 ))}
                               </div>
                             </div>
@@ -439,8 +661,15 @@ export function VisualPricing() {
                           )}
 
                           {/* Label & description */}
-                          <div className="border-t p-2 pt-1 sm:p-3 sm:pt-2">
-                            <div className="mb-0.5 text-[10px] font-semibold sm:mb-1 sm:text-xs">{showcase.label}</div>
+                          <div
+                            className={cn(
+                              "border-t p-2 pt-1 sm:p-3 sm:pt-2",
+                              plan.highlighted ? "border-orange-200 bg-orange-50/30" : "border-border/30",
+                            )}
+                          >
+                            <div className="mb-0.5 text-[10px] font-semibold text-gray-900 sm:mb-1 sm:text-xs">
+                              {showcase.label}
+                            </div>
                             <div className="text-[9px] text-muted-foreground sm:text-[11px]">
                               {showcase.description}
                             </div>
@@ -470,12 +699,17 @@ export function VisualPricing() {
 
                     {/* Features list */}
                     <div className="mb-6 space-y-2">
-                      <div className="mb-2 text-sm font-semibold">{plan.featuresHeader}</div>
+                      <div className="mb-2 text-sm font-semibold text-gray-900">{plan.featuresHeader}</div>
                       {plan.features.map((feature) => {
                         const FeatureIconComponent = iconMap[feature.icon];
                         return (
                           <div key={feature.text} className="flex items-start gap-2">
-                            <FeatureIconComponent className="mt-0.5 size-4 shrink-0 text-primary" />
+                            <FeatureIconComponent
+                              className={cn(
+                                "mt-0.5 size-4 shrink-0",
+                                plan.highlighted ? "text-[#FF6A3D]" : "text-brand",
+                              )}
+                            />
                             <span className="text-xs text-muted-foreground">{feature.text}</span>
                           </div>
                         );
@@ -484,31 +718,39 @@ export function VisualPricing() {
                   </div>
 
                   {/* CTA */}
-                  <Button
-                    variant={plan.ctaVariant}
-                    size="lg"
+                  {/* An anchor rather than a Button: there is no checkout, so every plan
+                      CTA opens the global chat in the hero, where a visitor can ask about
+                      the tier they picked. `buttonVariants` keeps the styling identical. */}
+                  <a
+                    href="#talk-to-us"
                     className={cn(
-                      "h-11 w-full bg-linear-to-r text-sm text-white hover:from-sky-500 hover:to-blue-700",
-                      plan.ctaGradient,
-                      plan.highlighted && "shadow-lg",
+                      buttonVariants({ variant: plan.ctaVariant, size: "lg" }),
+                      "h-12 w-full rounded-full bg-brand text-[15px] font-semibold text-white transition-all hover:bg-brand-dark hover:scale-105",
+                      plan.highlighted &&
+                        "bg-[#FF6A3D] hover:bg-[#E55A2D] shadow-[0_8px_20px_-6px_rgba(255,106,61,0.5)]",
                     )}
                   >
                     {plan.ctaText}
-                  </Button>
+                  </a>
 
-                  <div className="mt-3 text-center text-xs text-muted-foreground">Month-to-month. Cancel anytime.</div>
+                  <div className="mt-3 text-center text-xs text-muted-foreground">
+                    {isAnnual ? "Annual commitment. Switch anytime." : "Month-to-month. Cancel anytime."}
+                  </div>
                 </Card>
               </div>
             );
           })}
         </div>
 
+        {/* Feature Comparison Table */}
+        <FeatureComparisonTable />
+
         {/* Inspiration block */}
         <div className="mt-24 px-4 py-16">
           <div className="mx-auto max-w-4xl text-center">
             <Heart className="mx-auto mb-8 size-24 animate-pulse text-pink-500" />
             <h2 className="mb-8 text-4xl font-bold text-foreground md:text-5xl">
-              Great Korean products deserve a global audience
+              Great products deserve a global audience
             </h2>
             <div className="rounded-2xl border border-border/50 bg-card/50 p-12 backdrop-blur-sm">
               <p className="text-2xl leading-relaxed text-muted-foreground">

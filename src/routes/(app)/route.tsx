@@ -13,7 +13,7 @@ export const Route = createFileRoute("/(app)")({
 
 function AppLayout() {
   const { authSession } = Route.useRouteContext();
-  const { status, notifications, unreadCount, markAllRead } = useSocket({
+  const { status, notifications, unreadCount, markAsRead } = useSocket({
     userId: authSession.user.id,
   });
 
@@ -23,7 +23,7 @@ function AppLayout() {
         connectionStatus={status}
         notifications={notifications}
         unreadCount={unreadCount}
-        markAllRead={markAllRead}
+        markAsRead={markAsRead}
       />
       <Outlet />
     </div>

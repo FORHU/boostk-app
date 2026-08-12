@@ -1,12 +1,24 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { AlertTriangle, Ban, Building2, CheckCircle2, CircleSlash, Inbox, Loader2, Send, User } from "lucide-react";
+import {
+  AlertTriangle,
+  Ban,
+  Building2,
+  CheckCircle2,
+  CircleSlash,
+  Inbox,
+  Loader2,
+  Paperclip,
+  Send,
+  User,
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useToast } from "@/components/ui/toast";
 import { useSocket } from "@/hooks/use-socket";
 import { EventType } from "@/lib/notifier/core";
 import { closeIntakeTicketFn, createTriageMessageFn, routeIntakeTicketFn } from "@/modules/intake/intake.functions";
 import { intakeQueries } from "@/modules/intake/intake.queries";
+import type { TriageFilter } from "@/modules/intake/intake.schema";
 
 /**
  * BOOSTK-wide triage inbox.
@@ -24,13 +36,46 @@ export const Route = createFileRoute("/(app)/dashboard/triage")({
   component: RouteComponent,
 });
 
+/**
+ * One line summarising a conversation for the queue list.
+ *
+ * For an attachment `content` holds the /api/attachments/:id URL rather than text, so
+ * printing it directly showed staff a bare URL where the preview should be. Prefers the
+ * support-language translation, since the raw text is unreadable to staff when the
+ * visitor writes in a language they do not speak.
+ */
+const queuePreview = (item: {
+  latestMessage: { content: string; translatedContent: string | null; contentType: string } | null;
+  customer: { metadata: string | null };
+}) => {
+  const msg = item.latestMessage;
+  if (!msg) return item.customer.metadata ?? "No messages yet";
+  if (msg.contentType === "IMAGE") return "📷 Photo";
+  if (msg.contentType === "FILE") return "📎 File";
+  return msg.translatedContent ?? msg.content;
+};
+
+const TABS: { value: TriageFilter; label: string }[] = [
+  { value: "waiting", label: "Waiting" },
+  { value: "forwarded", label: "Forwarded" },
+  { value: "closed", label: "Closed" },
+];
+
+/** Human label for a close reason, which is stored as a raw slug on `triageNote`. */
+const CLOSE_REASON: Record<string, string> = {
+  resolved: "Resolved",
+  no_fit: "No fit",
+  spam: "Spam",
+};
+
 function RouteComponent() {
   const queryClient = useQueryClient();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<TriageFilter>("waiting");
 
   const { authSession } = Route.useRouteContext();
-  const { data: queue, isLoading } = useQuery(intakeQueries.queue(search || undefined));
+  const { data: queue, isLoading } = useQuery(intakeQueries.queue(search || undefined, filter));
   // Intake events fan out to each staff member's personal `user:<id>` room — there is no
   // project room to join, since an untriaged chat belongs to no organization.
   const { lastMessage } = useSocket({ userId: authSession?.user.id });
@@ -50,10 +95,10 @@ function RouteComponent() {
       <aside className="w-80 shrink-0 border-r border-gray-200 flex flex-col bg-white">
         <div className="p-4 border-b border-gray-100">
           <h1 className="font-bold text-gray-900 flex items-center gap-2">
-            <Inbox size={18} className="text-indigo-600" />
+            <Inbox size={18} className="text-blue-600" />
             Global intake
             {items.length > 0 && (
-              <span className="ml-auto text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-semibold">
+              <span className="ml-auto text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-semibold">
                 {items.length}
               </span>
             )}
@@ -63,17 +108,42 @@ function RouteComponent() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search name or email…"
-            className="mt-3 w-full bg-gray-100 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+            className="mt-3 w-full bg-gray-100 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
           />
+
+          <div className="mt-3 flex items-center gap-1 rounded-lg bg-gray-100 p-0.5">
+            {TABS.map((tab) => (
+              <button
+                key={tab.value}
+                type="button"
+                onClick={() => {
+                  setFilter(tab.value);
+                  // The selected conversation almost certainly is not in the new list.
+                  setSelectedId(null);
+                }}
+                className={`flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
+                  filter === tab.value ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-800"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto">
           {isLoading ? (
             <div className="p-8 flex justify-center">
-              <Loader2 className="animate-spin text-indigo-600" size={20} />
+              <Loader2 className="animate-spin text-blue-600" size={20} />
             </div>
           ) : items.length === 0 ? (
-            <p className="p-6 text-sm text-gray-500 text-center">Nothing waiting. New chats appear here instantly.</p>
+            <p className="p-6 text-sm text-gray-500 text-center">
+              {filter === "waiting"
+                ? "Nothing waiting. New chats appear here instantly."
+                : filter === "forwarded"
+                  ? "Nothing forwarded yet. Conversations you route to a project appear here."
+                  : "Nothing closed yet. Conversations you resolve or dismiss appear here."}
+            </p>
           ) : (
             items.map((item) => (
               <button
@@ -81,7 +151,7 @@ function RouteComponent() {
                 type="button"
                 onClick={() => setSelectedId(item.id)}
                 className={`w-full text-left p-4 border-b border-gray-50 hover:bg-gray-50 transition-colors ${
-                  selectedId === item.id ? "bg-indigo-50 border-l-2 border-l-indigo-600" : ""
+                  selectedId === item.id ? "bg-blue-50 border-l-2 border-l-blue-600" : ""
                 }`}
               >
                 <div className="flex items-center justify-between gap-2">
@@ -91,12 +161,23 @@ function RouteComponent() {
                   </span>
                 </div>
                 <p className="text-xs text-gray-500 truncate">{item.customer.email}</p>
-                {item.customer.metadata && (
-                  <p className="text-xs text-indigo-600 truncate mt-1">{item.customer.metadata}</p>
-                )}
-                <p className="text-xs text-gray-400 truncate mt-1">
-                  {item.latestMessage?.content ?? "No messages yet"}
-                </p>
+                {/* Prefer the support-language version: the raw text is unreadable to
+                    staff when the visitor writes in a language they do not speak. */}
+                <p className="text-xs text-gray-400 truncate mt-1">{queuePreview(item)}</p>
+
+                {/* The outcome, so history is scannable without opening each row. */}
+                {item.routedTo ? (
+                  <p className="mt-1.5 flex items-center gap-1 text-[11px] text-emerald-700 truncate">
+                    <Building2 size={11} className="shrink-0" />
+                    <span className="truncate">
+                      {item.routedTo.organizationName} / {item.routedTo.projectName}
+                    </span>
+                  </p>
+                ) : item.triageNote ? (
+                  <span className="mt-1.5 inline-block rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-600">
+                    {CLOSE_REASON[item.triageNote] ?? item.triageNote}
+                  </span>
+                ) : null}
               </button>
             ))
           )}
@@ -147,12 +228,12 @@ function TriageComposer({ intakeTicketId, disabled }: { intakeTicketId: string; 
           onChange={(e) => setContent(e.target.value)}
           placeholder="Reply to the visitor…"
           disabled={disabled || sendMutation.isPending}
-          className="flex-1 min-w-0 bg-gray-100 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-60"
+          className="flex-1 min-w-0 bg-gray-100 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
         />
         <button
           type="submit"
           disabled={!content.trim() || disabled || sendMutation.isPending}
-          className="bg-indigo-600 text-white p-2.5 rounded-xl active:scale-95 disabled:opacity-50 shrink-0"
+          className="bg-blue-600 text-white p-2.5 rounded-xl active:scale-95 disabled:opacity-50 shrink-0"
         >
           {sendMutation.isPending ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
         </button>
@@ -208,7 +289,7 @@ function TriageDetail({ intakeTicketId, onDone }: { intakeTicketId: string; onDo
   if (isLoading) {
     return (
       <div className="h-full flex items-center justify-center">
-        <Loader2 className="animate-spin text-indigo-600" size={24} />
+        <Loader2 className="animate-spin text-blue-600" size={24} />
       </div>
     );
   }
@@ -221,8 +302,8 @@ function TriageDetail({ intakeTicketId, onDone }: { intakeTicketId: string; onDo
     <div className="h-full flex flex-col">
       <header className="flex-none bg-white border-b border-gray-200 p-4">
         <div className="flex items-center gap-3">
-          <div className="bg-indigo-50 p-2 rounded-lg">
-            <User size={18} className="text-indigo-600" />
+          <div className="bg-blue-50 p-2 rounded-lg">
+            <User size={18} className="text-blue-600" />
           </div>
           <div className="min-w-0">
             <h2 className="font-semibold text-gray-900 text-sm truncate">{thread.customer.name}</h2>
@@ -234,7 +315,11 @@ function TriageDetail({ intakeTicketId, onDone }: { intakeTicketId: string; onDo
           </div>
           <span className="ml-auto text-xs text-gray-400 font-mono">{thread.referenceNumber}</span>
         </div>
-        {thread.customer.metadata && (
+        {/* The intake form's subject is recorded as the visitor's first message, so it
+            appears in the thread below — translated — instead of being repeated here
+            untranslated. Only older conversations, created before that change, still
+            carry it solely on `metadata`. */}
+        {thread.customer.metadata && thread.ticketMessages.length === 0 && (
           <p className="mt-2 text-sm text-gray-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
             {thread.customer.metadata}
           </p>
@@ -250,19 +335,44 @@ function TriageDetail({ intakeTicketId, onDone }: { intakeTicketId: string; onDo
           thread.ticketMessages.map((msg) => (
             <div key={msg.id} className={`flex ${msg.customerId ? "justify-start" : "justify-end"}`}>
               <div
-                className={`max-w-[70%] rounded-2xl px-4 py-2 text-sm ${
-                  msg.customerId ? "bg-white border border-gray-200 text-gray-800" : "bg-indigo-600 text-white"
-                }`}
+                className={`max-w-[70%] rounded-2xl text-sm overflow-hidden ${
+                  msg.contentType === "IMAGE" ? "p-1" : "px-4 py-2"
+                } ${msg.customerId ? "bg-white border border-gray-200 text-gray-800" : "bg-blue-600 text-white"}`}
               >
-                <p className="whitespace-pre-wrap break-words">{msg.content}</p>
-                {msg.translatedContent && (
-                  <p
-                    className={`mt-1 pt-1 border-t text-xs ${
-                      msg.customerId ? "border-gray-100 text-gray-500" : "border-indigo-400 text-indigo-100"
-                    }`}
+                {/* For attachments `content` is the /api/attachments/:id URL, not text —
+                    rendering it raw showed staff a bare link instead of the screenshot a
+                    visitor sent. Translations never apply to these. */}
+                {msg.contentType === "IMAGE" ? (
+                  <a href={msg.content} target="_blank" rel="noreferrer">
+                    <img
+                      src={msg.content}
+                      alt={msg.attachment?.filename ?? "Attachment"}
+                      className="rounded-xl max-h-64 w-auto object-contain"
+                    />
+                  </a>
+                ) : msg.contentType === "FILE" ? (
+                  <a
+                    href={msg.content}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-2 underline underline-offset-2"
                   >
-                    {msg.translatedContent}
-                  </p>
+                    <Paperclip size={14} className="shrink-0" />
+                    <span className="truncate">{msg.attachment?.filename ?? "Attachment"}</span>
+                  </a>
+                ) : (
+                  <>
+                    <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                    {msg.translatedContent && (
+                      <p
+                        className={`mt-1 pt-1 border-t text-xs ${
+                          msg.customerId ? "border-gray-100 text-gray-500" : "border-blue-400 text-blue-100"
+                        }`}
+                      >
+                        {msg.translatedContent}
+                      </p>
+                    )}
+                  </>
                 )}
               </div>
             </div>
@@ -292,7 +402,7 @@ function TriageDetail({ intakeTicketId, onDone }: { intakeTicketId: string; onDo
                   setProjectId(""); // the old project belongs to a different org
                 }}
                 disabled={isBusy}
-                className="bg-gray-100 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-60"
+                className="bg-gray-100 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
               >
                 <option value="">Select organization…</option>
                 {targets?.map((org) => (
@@ -306,7 +416,7 @@ function TriageDetail({ intakeTicketId, onDone }: { intakeTicketId: string; onDo
                 value={projectId}
                 onChange={(e) => setProjectId(e.target.value)}
                 disabled={isBusy || !organizationId}
-                className="bg-gray-100 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-60"
+                className="bg-gray-100 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
               >
                 <option value="">{organizationId ? "Select project…" : "Pick an organization first"}</option>
                 {projects.map((project) => (
@@ -329,7 +439,7 @@ function TriageDetail({ intakeTicketId, onDone }: { intakeTicketId: string; onDo
                 type="button"
                 disabled={!projectId || isBusy}
                 onClick={() => routeMutation.mutate({ data: { intakeTicketId, organizationId, projectId } })}
-                className="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-indigo-700 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-1 bg-blue-600 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-700 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {routeMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
                 Route to project

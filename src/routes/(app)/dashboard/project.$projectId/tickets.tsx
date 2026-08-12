@@ -355,7 +355,7 @@ function TicketDetailPanel({
                       </option>
                     ))}
                   </select>
-                  {assignMutation.isPending && <Loader2 className="animate-spin text-indigo-200" size={14} />}
+                  {assignMutation.isPending && <Loader2 className="animate-spin text-blue-200" size={14} />}
                 </div>
               )}
             </div>

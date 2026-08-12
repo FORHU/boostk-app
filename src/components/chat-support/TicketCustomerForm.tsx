@@ -155,7 +155,7 @@ export default function TicketCustomerForm({
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-indigo-600 text-white py-3 rounded-xl hover:bg-indigo-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-sm font-semibold shadow-md shadow-indigo-200"
+                className="w-full bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-sm font-semibold shadow-md shadow-blue-200"
               >
                 {isSubmitting ? "Submitting..." : "Start Conversation"}
                 <ArrowRight size={16} />
