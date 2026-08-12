@@ -18,6 +18,7 @@ import { useSocket } from "@/hooks/use-socket";
 import { EventType } from "@/lib/notifier/core";
 import { closeIntakeTicketFn, createTriageMessageFn, routeIntakeTicketFn } from "@/modules/intake/intake.functions";
 import { intakeQueries } from "@/modules/intake/intake.queries";
+import type { TriageFilter } from "@/modules/intake/intake.schema";
 
 /**
  * BOOSTK-wide triage inbox.
@@ -54,13 +55,27 @@ const queuePreview = (item: {
   return msg.translatedContent ?? msg.content;
 };
 
+const TABS: { value: TriageFilter; label: string }[] = [
+  { value: "waiting", label: "Waiting" },
+  { value: "forwarded", label: "Forwarded" },
+  { value: "closed", label: "Closed" },
+];
+
+/** Human label for a close reason, which is stored as a raw slug on `triageNote`. */
+const CLOSE_REASON: Record<string, string> = {
+  resolved: "Resolved",
+  no_fit: "No fit",
+  spam: "Spam",
+};
+
 function RouteComponent() {
   const queryClient = useQueryClient();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<TriageFilter>("waiting");
 
   const { authSession } = Route.useRouteContext();
-  const { data: queue, isLoading } = useQuery(intakeQueries.queue(search || undefined));
+  const { data: queue, isLoading } = useQuery(intakeQueries.queue(search || undefined, filter));
   // Intake events fan out to each staff member's personal `user:<id>` room — there is no
   // project room to join, since an untriaged chat belongs to no organization.
   const { lastMessage } = useSocket({ userId: authSession?.user.id });
@@ -95,6 +110,25 @@ function RouteComponent() {
             placeholder="Search name or email…"
             className="mt-3 w-full bg-gray-100 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
           />
+
+          <div className="mt-3 flex items-center gap-1 rounded-lg bg-gray-100 p-0.5">
+            {TABS.map((tab) => (
+              <button
+                key={tab.value}
+                type="button"
+                onClick={() => {
+                  setFilter(tab.value);
+                  // The selected conversation almost certainly is not in the new list.
+                  setSelectedId(null);
+                }}
+                className={`flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
+                  filter === tab.value ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-800"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto">
@@ -103,7 +137,13 @@ function RouteComponent() {
               <Loader2 className="animate-spin text-blue-600" size={20} />
             </div>
           ) : items.length === 0 ? (
-            <p className="p-6 text-sm text-gray-500 text-center">Nothing waiting. New chats appear here instantly.</p>
+            <p className="p-6 text-sm text-gray-500 text-center">
+              {filter === "waiting"
+                ? "Nothing waiting. New chats appear here instantly."
+                : filter === "forwarded"
+                  ? "Nothing forwarded yet. Conversations you route to a project appear here."
+                  : "Nothing closed yet. Conversations you resolve or dismiss appear here."}
+            </p>
           ) : (
             items.map((item) => (
               <button
@@ -124,6 +164,20 @@ function RouteComponent() {
                 {/* Prefer the support-language version: the raw text is unreadable to
                     staff when the visitor writes in a language they do not speak. */}
                 <p className="text-xs text-gray-400 truncate mt-1">{queuePreview(item)}</p>
+
+                {/* The outcome, so history is scannable without opening each row. */}
+                {item.routedTo ? (
+                  <p className="mt-1.5 flex items-center gap-1 text-[11px] text-emerald-700 truncate">
+                    <Building2 size={11} className="shrink-0" />
+                    <span className="truncate">
+                      {item.routedTo.organizationName} / {item.routedTo.projectName}
+                    </span>
+                  </p>
+                ) : item.triageNote ? (
+                  <span className="mt-1.5 inline-block rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-600">
+                    {CLOSE_REASON[item.triageNote] ?? item.triageNote}
+                  </span>
+                ) : null}
               </button>
             ))
           )}
