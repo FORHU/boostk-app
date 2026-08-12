@@ -3,7 +3,12 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { ORG_ROLE } from "@/modules/auth/roles";
 import { requireProjectRole } from "@/modules/project/project.middleware";
-import { GetTicketByReferenceNumberSchema, UpsertTicketSessionInput } from "./ticket.schema";
+import {
+  GetProjectTicketCountsSchema,
+  GetProjectTicketsSchema,
+  GetTicketByReferenceNumberSchema,
+  UpsertTicketSessionInput,
+} from "./ticket.schema";
 import {
   clearTicketCookie,
   createTicketSession,
@@ -51,18 +56,52 @@ export const getTicketCookieFn = createServerFn({ method: "GET" })
     return getTicketSession(data.projectId);
   });
 
-// Returns every ticket in a project along with the customer rows attached to them — names,
-// emails, phone numbers. This had NO middleware at all, so any unauthenticated caller who
-// knew (or guessed) a project id could read another tenant's customer list.
+// Cursor-paginated ticket list. `take + 1` detects whether another page exists and
+// `nextCursor` is the last returned row's id; `id` breaks ties so a cursor never
+// skips or repeats a row. Newest tickets come first.
 export const getProjectTicketsFn = createServerFn({ method: "GET" })
-  .inputValidator(z.object({ projectId: z.string().min(1) }))
+  .inputValidator(GetProjectTicketsSchema)
   .middleware([requireProjectRole(ORG_ROLE.AGENT)])
   .handler(async ({ data }) => {
-    const tickets = await prisma.ticket.findMany({
+    const orderBy = (() => {
+      switch (data.sort) {
+        case "oldest":
+          return [{ createdAt: "asc" as const }, { id: "asc" as const }];
+        case "priority":
+          return [{ priority: "desc" as const }, { createdAt: "desc" as const }, { id: "desc" as const }];
+        default:
+          return [{ createdAt: "desc" as const }, { id: "desc" as const }];
+      }
+    })();
+
+    const rows = await prisma.ticket.findMany({
       where: { projectId: data.projectId },
       include: {
         customer: true,
+        assignedAgent: { include: { user: true } },
       },
+      orderBy,
+      take: data.take + 1,
+      ...(data.cursor ? { cursor: { id: data.cursor }, skip: 1 } : {}),
     });
-    return tickets;
+
+    const hasMore = rows.length > data.take;
+    const tickets = hasMore ? rows.slice(0, data.take) : rows;
+
+    return {
+      tickets,
+      nextCursor: hasMore ? tickets[tickets.length - 1].id : null,
+    };
+  });
+
+export const getProjectTicketCountsFn = createServerFn({ method: "GET" })
+  .inputValidator(GetProjectTicketCountsSchema)
+  .middleware([requireProjectRole(ORG_ROLE.AGENT)])
+  .handler(async ({ data }) => {
+    const [open, closed] = await prisma.$transaction([
+      prisma.ticket.count({ where: { projectId: data.projectId, status: "OPEN" } }),
+      prisma.ticket.count({ where: { projectId: data.projectId, status: "CLOSED" } }),
+    ]);
+
+    return { total: open + closed, open, closed };
   });

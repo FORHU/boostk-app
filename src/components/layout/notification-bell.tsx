@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils";
 interface NotificationBellProps {
   notifications: NotificationItem[];
   unreadCount: number;
-  markAllRead: () => void;
+  markAsRead: (ticketId: string) => void;
 }
 
 function describeNotification(item: NotificationItem): { title: string; subtitle: string } {
@@ -42,15 +42,11 @@ function describeNotification(item: NotificationItem): { title: string; subtitle
   };
 }
 
-export function NotificationBell({ notifications, unreadCount, markAllRead }: NotificationBellProps) {
+export function NotificationBell({ notifications, unreadCount, markAsRead }: NotificationBellProps) {
   const navigate = useNavigate();
 
-  const handleOpenChange = (open: boolean) => {
-    if (open) markAllRead();
-  };
-
   return (
-    <DropdownMenu onOpenChange={handleOpenChange}>
+    <DropdownMenu>
       <DropdownMenuTrigger
         render={
           <button
@@ -86,11 +82,15 @@ export function NotificationBell({ notifications, unreadCount, markAllRead }: No
                       const projectId = item.data?.projectId;
                       if (typeof projectId !== "string") return;
                       const ticketId = item.data?.ticketId;
+                      if (typeof ticketId === "string") {
+                        markAsRead(ticketId);
+                      }
                       navigate({
                         to: "/dashboard/project/$projectId/tickets",
                         params: { projectId },
                         search: {
                           statusFilter: "ALL",
+                          sort: "newest",
                           selectedTicketId: typeof ticketId === "string" ? ticketId : undefined,
                         },
                       });

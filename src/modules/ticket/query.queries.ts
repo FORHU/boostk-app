@@ -6,6 +6,6 @@ export const ticketQueries = {
   getProjectTickets: (projectId: string) =>
     queryOptions({
       queryKey: [...ticketQueries.all, "project", projectId],
-      queryFn: () => getProjectTicketsFn({ data: { projectId } }),
+      queryFn: () => getProjectTicketsFn({ data: { projectId, take: 50 } }).then((r) => r.tickets),
     }),
 };
