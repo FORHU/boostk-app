@@ -17,7 +17,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import React, { Fragment, useEffect, useRef } from "react";
-import { Button, type buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
@@ -718,17 +718,20 @@ export function VisualPricing() {
                   </div>
 
                   {/* CTA */}
-                  <Button
-                    variant={plan.ctaVariant}
-                    size="lg"
+                  {/* An anchor rather than a Button: there is no checkout, so every plan
+                      CTA opens the global chat in the hero, where a visitor can ask about
+                      the tier they picked. `buttonVariants` keeps the styling identical. */}
+                  <a
+                    href="#talk-to-us"
                     className={cn(
+                      buttonVariants({ variant: plan.ctaVariant, size: "lg" }),
                       "h-12 w-full rounded-full bg-brand text-[15px] font-semibold text-white transition-all hover:bg-brand-dark hover:scale-105",
                       plan.highlighted &&
                         "bg-[#FF6A3D] hover:bg-[#E55A2D] shadow-[0_8px_20px_-6px_rgba(255,106,61,0.5)]",
                     )}
                   >
                     {plan.ctaText}
-                  </Button>
+                  </a>
 
                   <div className="mt-3 text-center text-xs text-muted-foreground">
                     {isAnnual ? "Annual commitment. Switch anytime." : "Month-to-month. Cancel anytime."}

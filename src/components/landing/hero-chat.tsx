@@ -22,7 +22,9 @@ function FloatingCard({
       initial={{ y: 20 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.8, delay, ease: "easeOut" }}
-      className={`absolute hidden lg:block z-10 ${className}`}
+      // xl, not lg: the cards sit ~400px either side of centre, so below ~1280px they
+      // collide with the chat and get cropped by the section's overflow-hidden.
+      className={`absolute hidden xl:block z-10 ${className}`}
     >
       <motion.div
         animate={{ y: [0, -yOffset, 0] }}
@@ -82,9 +84,9 @@ export function HeroChat() {
         </div>
 
         {/* Central UI with Floating Cards */}
-        <div className="relative mx-auto w-full max-w-[1050px] mt-12 flex justify-center">
+        <div className="relative mx-auto w-full max-w-[1240px] mt-12 flex justify-center">
           {/* Card 1: Social Media (Top Left) */}
-          <FloatingCard className="right-[50%] mr-[300px] top-10 rotate-[-4deg]" delay={0.2} duration={5}>
+          <FloatingCard className="right-[50%] mr-[400px] top-10 rotate-[-4deg]" delay={0.2} duration={5}>
             <div className="flex items-center gap-3 min-w-[180px]">
               <div className="flex size-10 items-center justify-center rounded-full bg-pink-50 text-pink-500">
                 <ImageIcon size={18} />
@@ -103,7 +105,7 @@ export function HeroChat() {
 
           {/* Card 2: Translation (Bottom Left) */}
           <FloatingCard
-            className="right-[50%] mr-[290px] bottom-32 rotate-[3deg]"
+            className="right-[50%] mr-[395px] bottom-32 rotate-[3deg]"
             delay={0.4}
             duration={6}
             yOffset={20}
@@ -122,7 +124,7 @@ export function HeroChat() {
           </FloatingCard>
 
           {/* Card 3: Analytics (Top Right) */}
-          <FloatingCard className="left-[50%] ml-[300px] top-4 rotate-[5deg]" delay={0.3} duration={4.5}>
+          <FloatingCard className="left-[50%] ml-[400px] top-4 rotate-[5deg]" delay={0.3} duration={4.5}>
             <div className="flex items-start justify-between min-w-[220px]">
               <div>
                 <div className="text-[13px] font-medium text-gray-500">Global Reach</div>
@@ -145,7 +147,7 @@ export function HeroChat() {
 
           {/* Card 4: Sales Notification (Bottom Right) */}
           <FloatingCard
-            className="left-[50%] ml-[320px] bottom-32 rotate-[-2deg]"
+            className="left-[50%] ml-[415px] bottom-32 rotate-[-2deg]"
             delay={0.5}
             duration={5.5}
             yOffset={12}
@@ -170,22 +172,12 @@ export function HeroChat() {
             animate={{ scale: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             id="talk-to-us"
-            className="w-full max-w-[550px] scroll-mt-6 relative z-20"
+            className="w-full max-w-[760px] scroll-mt-6 relative z-20"
           >
-            <div className="h-[520px] overflow-hidden rounded-[24px] shadow-[0_32px_80px_rgba(20,71,229,0.15)] ring-1 ring-black/5 bg-white">
+            <div className="h-[560px] overflow-hidden rounded-[24px] shadow-[0_32px_80px_rgba(20,71,229,0.15)] ring-1 ring-black/5 bg-white lg:h-[660px]">
               <ClientOnly>
                 <GlobalChat />
               </ClientOnly>
-            </div>
-
-            <div className="mt-8 text-center flex flex-col items-center">
-              <a
-                href="#talk-to-us"
-                className="rounded-xl bg-brand px-8 py-4 text-[16px] font-bold text-white transition-transform hover:scale-105 shadow-lg shadow-brand/25"
-              >
-                Start Your Free Consultation
-              </a>
-              <p className="mt-3 text-[13px] text-gray-500">Guests join free — no account needed</p>
             </div>
           </motion.div>
         </div>
