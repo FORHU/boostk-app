@@ -177,16 +177,6 @@ export function HeroChat() {
                 <GlobalChat />
               </ClientOnly>
             </div>
-
-            <div className="mt-8 text-center flex flex-col items-center">
-              <a
-                href="#talk-to-us"
-                className="rounded-xl bg-brand px-8 py-4 text-[16px] font-bold text-white transition-transform hover:scale-105 shadow-lg shadow-brand/25"
-              >
-                Start Your Free Consultation
-              </a>
-              <p className="mt-3 text-[13px] text-gray-500">Guests join free — no account needed</p>
-            </div>
           </motion.div>
         </div>
       </div>
