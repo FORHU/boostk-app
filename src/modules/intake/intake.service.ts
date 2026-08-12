@@ -353,7 +353,7 @@ export const closeIntakeTicket = async ({
  * The untriaged queue: open conversations sitting in the intake project. Routed and
  * closed chats drop out because triage sets them to CLOSED.
  */
-export const getTriageQueue = async ({ search, take, cursor }: GetTriageQueueInput) => {
+export const getTriageQueue = async ({ search, filter, take, cursor }: GetTriageQueueInput) => {
   const intakeProjectId = await resolveIntakeProjectId();
 
   // Every argument is supplied unconditionally, passing `undefined` where a filter does
@@ -369,13 +369,24 @@ export const getTriageQueue = async ({ search, take, cursor }: GetTriageQueueInp
       }
     : undefined;
 
+  // The three outcomes, expressed against columns triage already writes. `routedAt` is
+  // what separates a forwarded conversation from one closed without routing — both are
+  // CLOSED, so status alone cannot tell them apart.
+  const outcomeFilter = {
+    waiting: { status: TicketStatus.OPEN, routedAt: null },
+    forwarded: { status: TicketStatus.CLOSED, routedAt: { not: null } },
+    closed: { status: TicketStatus.CLOSED, routedAt: null },
+  }[filter];
+
   const tickets = await prisma.ticket.findMany({
     where: {
       projectId: intakeProjectId,
-      status: TicketStatus.OPEN,
+      ...outcomeFilter,
       customer: customerFilter,
     },
-    orderBy: { createdAt: "asc" as const }, // oldest first — the queue is worked front to back
+    // Waiting is worked front to back, so oldest first. History is browsed newest first —
+    // what you handled most recently is what you are most likely looking for.
+    orderBy: filter === "waiting" ? { createdAt: "asc" as const } : { updatedAt: "desc" as const },
     take: take + 1,
     cursor: cursor ? { id: cursor } : undefined,
     skip: cursor ? 1 : 0,
@@ -389,6 +400,14 @@ export const getTriageQueue = async ({ search, take, cursor }: GetTriageQueueInp
         // `translatedContent` so the queue preview is readable to staff even when the
         // visitor writes in a language they do not speak.
         select: { id: true, content: true, translatedContent: true, contentType: true, createdAt: true },
+      },
+      // Where a forwarded conversation ended up, so the list can name the destination
+      // without opening each one.
+      routedTicket: {
+        select: {
+          referenceNumber: true,
+          project: { select: { name: true, organization: { select: { name: true } } } },
+        },
       },
       _count: { select: { ticketMessages: true } },
     },
@@ -407,6 +426,15 @@ export const getTriageQueue = async ({ search, take, cursor }: GetTriageQueueInp
       customer: ticket.customer,
       latestMessage: ticket.ticketMessages[0] ?? null,
       messageCount: ticket._count.ticketMessages,
+      routedAt: ticket.routedAt,
+      triageNote: ticket.triageNote,
+      routedTo: ticket.routedTicket
+        ? {
+            referenceNumber: ticket.routedTicket.referenceNumber,
+            projectName: ticket.routedTicket.project.name,
+            organizationName: ticket.routedTicket.project.organization.name,
+          }
+        : null,
     })),
     nextCursor: hasMore ? (page.at(-1)?.id ?? null) : null,
   };

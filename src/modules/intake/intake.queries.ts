@@ -7,15 +7,19 @@ import {
   getTriageTargetsFn,
   getTriageThreadFn,
 } from "./intake.functions";
+import type { TriageFilter } from "./intake.schema";
 
 export const intakeQueries = {
   all: ["intake"] as const,
 
-  /** The BOOSTK-wide queue of untriaged conversations. */
-  queue: (search?: string) =>
+  /**
+   * The BOOSTK-wide conversation list, per outcome. `filter` is part of the key so the
+   * three tabs cache independently instead of clobbering each other on every switch.
+   */
+  queue: (search?: string, filter: TriageFilter = "waiting") =>
     queryOptions({
-      queryKey: [...intakeQueries.all, "queue", search ?? ""] as const,
-      queryFn: () => getTriageQueueFn({ data: { search, take: 25 } }),
+      queryKey: [...intakeQueries.all, "queue", filter, search ?? ""] as const,
+      queryFn: () => getTriageQueueFn({ data: { search, filter, take: 25 } }),
     }),
 
   /** Full transcript of one intake conversation, for the triage detail panel. */

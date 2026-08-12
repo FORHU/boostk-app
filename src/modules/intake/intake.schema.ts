@@ -70,8 +70,20 @@ export const CloseIntakeTicketSchema = z.object({
 });
 export type CloseIntakeTicketInput = z.infer<typeof CloseIntakeTicketSchema>;
 
+/**
+ * Which outcome the queue is listing. The three are mutually exclusive and derived
+ * from columns that already exist, so this is purely a read filter:
+ *
+ *   waiting   — OPEN, untouched by triage
+ *   forwarded — routed to a client project (`routedAt` set)
+ *   closed    — handled without routing; `triageNote` says why
+ */
+export const TRIAGE_FILTERS = ["waiting", "forwarded", "closed"] as const;
+export type TriageFilter = (typeof TRIAGE_FILTERS)[number];
+
 export const GetTriageQueueSchema = z.object({
   search: z.string().max(200).optional(),
+  filter: z.enum(TRIAGE_FILTERS).default("waiting"),
   take: z.number().int().min(1).max(50).default(25),
   cursor: z.string().optional(),
 });
@@ -102,4 +114,14 @@ export type TriageQueueItem = {
     createdAt: Date;
   } | null;
   messageCount: number;
+  /** When this was triaged, for the forwarded/closed lists. Null while waiting. */
+  routedAt: Date | null;
+  /** Why it was closed without routing: "resolved" | "no_fit" | "spam". */
+  triageNote: string | null;
+  /** Where a forwarded conversation went. Null unless `routedAt` is set. */
+  routedTo: {
+    referenceNumber: string;
+    projectName: string;
+    organizationName: string;
+  } | null;
 };
