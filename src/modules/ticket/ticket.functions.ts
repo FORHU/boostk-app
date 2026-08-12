@@ -1,8 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { clientKeyFromRequest, rateLimitedResponse } from "@/lib/rate-limit";
+import { requestMiddleware } from "@/lib/request.middleware";
 import { ORG_ROLE } from "@/modules/auth/roles";
 import { requireProjectRole } from "@/modules/project/project.middleware";
+import { allowWidgetLookup, allowWidgetSession } from "./ticket.rate-limit";
 import {
   GetProjectTicketCountsSchema,
   GetProjectTicketsSchema,
@@ -22,15 +25,37 @@ export const clearTicketCookieFn = createServerFn({ method: "POST" }).handler(as
   return { success: true };
 });
 
+/**
+ * Open a widget conversation, or resume one from its reference number.
+ *
+ * Both halves are throttled, on separate budgets, because they are abused differently:
+ * creating pours junk tickets into a project's inbox, while resuming is a guessing game
+ * against other people's reference numbers. The lookup budget is checked BEFORE the
+ * database is touched so a wrong guess costs the attacker its slot either way —
+ * throttling only failed lookups would leave a valid-code oracle wide open.
+ */
 export const upsertTicketSessionFn = createServerFn({ method: "POST" })
+  .middleware([requestMiddleware])
   .inputValidator(UpsertTicketSessionInput)
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    const clientKey = clientKeyFromRequest(context.request);
+
     if (data.referenceNumber) {
+      const verdict = allowWidgetLookup(clientKey);
+      if (!verdict.allowed) {
+        throw rateLimitedResponse(verdict.retryAfterSeconds, "Too many reference numbers tried from this connection.");
+      }
+
       const ticket = await getTicketByReferenceNumber(data.referenceNumber, data.projectId);
       if (!ticket) throw new Error("Invalid ticket reference number");
 
       setTicketCookie(ticket.referenceNumber);
       return ticket;
+    }
+
+    const verdict = allowWidgetSession(clientKey);
+    if (!verdict.allowed) {
+      throw rateLimitedResponse(verdict.retryAfterSeconds, "Too many conversations started from this connection.");
     }
 
     return createTicketSession(data);

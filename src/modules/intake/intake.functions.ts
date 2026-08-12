@@ -2,6 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { EventType } from "@/lib/notifier/core";
 import { prisma } from "@/lib/prisma";
+import { rateLimitedResponse } from "@/lib/rate-limit";
+import { requestMiddleware } from "@/lib/request.middleware";
 import { requireAuthMiddleware, requirePlatformStaffMiddleware } from "@/modules/auth/auth.middleware";
 import { hasPlatformRole } from "@/modules/auth/roles";
 import {
@@ -18,7 +20,7 @@ import {
   translateIncomingMessage,
   translateOutgoingMessage,
 } from "@/modules/ticket-message/ticket-message.translation";
-import { intakeRequestMiddleware, requireIntakeTicketMiddleware } from "./intake.middleware";
+import { requireIntakeTicketMiddleware } from "./intake.middleware";
 import { allowIntakeMessage, allowIntakeSession, clientKeyFromRequest } from "./intake.rate-limit";
 import {
   CloseIntakeTicketSchema,
@@ -63,11 +65,12 @@ export const getIntakeSessionFn = createServerFn({ method: "GET" })
   .handler(async ({ context }) => context.intakeTicket);
 
 export const startIntakeChatFn = createServerFn({ method: "POST" })
-  .middleware([intakeRequestMiddleware])
+  .middleware([requestMiddleware])
   .inputValidator(StartIntakeChatSchema)
   .handler(async ({ data, context }) => {
-    if (!allowIntakeSession(clientKeyFromRequest(context.request))) {
-      throw new Error("Too many conversations started from this connection. Please try again later.");
+    const verdict = allowIntakeSession(clientKeyFromRequest(context.request));
+    if (!verdict.allowed) {
+      throw rateLimitedResponse(verdict.retryAfterSeconds, "Too many conversations started from this connection.");
     }
 
     return startIntakeSession(data);
@@ -109,8 +112,9 @@ export const createIntakeMessageFn = createServerFn({ method: "POST" })
     if (!ticket) return null;
     if (ticket.id !== data.ticketId) return null;
 
-    if (!allowIntakeMessage(ticket.referenceNumber)) {
-      throw new Error("You're sending messages too quickly. Please slow down.");
+    const verdict = allowIntakeMessage(ticket.referenceNumber);
+    if (!verdict.allowed) {
+      throw rateLimitedResponse(verdict.retryAfterSeconds, "You're sending messages too quickly.");
     }
 
     // Confirm the attachment belongs to THIS conversation before the message points at

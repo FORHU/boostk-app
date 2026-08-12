@@ -3,7 +3,14 @@ import { prisma } from "@/lib/prisma";
 import { getMemberRole, hasOrgRole, hasPlatformRole, ORG_ROLE } from "@/modules/auth/roles";
 import { INTAKE_COOKIE_NAME } from "@/modules/intake/intake.constants";
 import { TICKET_COOKIE_NAME } from "@/modules/ticket/ticket.constants";
-import { ATTACHMENT_MAX_BYTES, isAllowedMimeType, isImageMimeType, type UploadedAttachment } from "./attachment.schema";
+import {
+  ATTACHMENT_MAX_BYTES,
+  ATTACHMENT_MAX_PER_TICKET,
+  ATTACHMENT_MAX_TOTAL_BYTES,
+  isAllowedMimeType,
+  isImageMimeType,
+  type UploadedAttachment,
+} from "./attachment.schema";
 
 /** Public URL an attachment is served from. Stored verbatim in `TicketMessage.content`. */
 export const attachmentUrl = (id: string) => `/api/attachments/${id}`;
@@ -109,6 +116,44 @@ export const validateAttachment = (file: File): AttachmentValidationError | null
     return { error: `File is larger than ${Math.floor(ATTACHMENT_MAX_BYTES / (1024 * 1024))}MB`, status: 413 };
   }
   if (!isAllowedMimeType(file.type)) return { error: `Unsupported file type: ${file.type || "unknown"}`, status: 415 };
+  return null;
+};
+
+/**
+ * Whether this conversation has room for one more file of `incomingBytes`.
+ *
+ * The per-file check above is not a budget: nothing stopped a visitor from sending five
+ * hundred 5MB files one at a time. The burst limiter in `attachment.rate-limit.ts`
+ * shapes that traffic but resets with its window, so the real ceiling has to be counted
+ * from rows that are actually on disk — which also means it survives a restart and holds
+ * no matter which app instance serves the request.
+ *
+ * Counted per ticket, not per customer: a ticket is the unit an agent has to read, and
+ * it is what the attachment rows hang off.
+ */
+export const assertAttachmentQuota = async (
+  ticketId: string,
+  incomingBytes: number,
+): Promise<AttachmentValidationError | null> => {
+  const { _count, _sum } = await prisma.attachment.aggregate({
+    where: { ticketId },
+    _count: { _all: true },
+    _sum: { size: true },
+  });
+
+  if (_count._all >= ATTACHMENT_MAX_PER_TICKET) {
+    return {
+      error: `This conversation already has ${ATTACHMENT_MAX_PER_TICKET} attachments. Ask your agent before sending more.`,
+      status: 413,
+    };
+  }
+
+  const usedBytes = _sum.size ?? 0;
+  if (usedBytes + incomingBytes > ATTACHMENT_MAX_TOTAL_BYTES) {
+    const totalMb = Math.floor(ATTACHMENT_MAX_TOTAL_BYTES / (1024 * 1024));
+    return { error: `This conversation has reached its ${totalMb}MB attachment limit.`, status: 413 };
+  }
+
   return null;
 };
 

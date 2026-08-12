@@ -7,10 +7,12 @@ import { Suspense, useCallback, useEffect, useState } from "react";
 import { z } from "zod";
 import { BoostkLogo } from "@/components/BoostkLogo";
 import { AttachmentButton, AttachmentPreview } from "@/components/chat-support/attachment-picker";
+import { RateLimitBanner } from "@/components/chat-support/rate-limit-banner";
 import TicketChatMessageBubble from "@/components/chat-support/TicketChatMessageBubble";
 import TicketCustomerForm from "@/components/chat-support/TicketCustomerForm";
 import { useToast } from "@/components/ui/toast";
 import { useAttachmentUpload } from "@/hooks/use-attachment-upload";
+import { useRateLimitNotice } from "@/hooks/use-rate-limit-notice";
 import { useSocket } from "@/hooks/use-socket";
 import { EventType, type Message } from "@/lib/notifier/core";
 import { getProjectPublicFn } from "@/modules/project/project.functions";
@@ -227,7 +229,19 @@ const ChatInput = ({ ticketId, initialStatus, projectId, lastMessage }: ChatInpu
   const [message, setMessage] = useState<string>("");
   const [status, setStatus] = useState(initialStatus);
 
-  const onUploadError = useCallback((error: string) => toast(error, "error"), [toast]);
+  // One notice for the whole composer: uploads and sends share a cooldown strip, because
+  // to the visitor they are one control that has been asked to wait.
+  const rateLimit = useRateLimitNotice();
+
+  // Depends on `capture`, not on `rateLimit`: the notice object is rebuilt every tick of
+  // the countdown, and depending on it would rebuild `upload` a second at a time.
+  const captureRateLimit = rateLimit.capture;
+  const onUploadError = useCallback(
+    (error: string, detail?: unknown) => {
+      if (!captureRateLimit(detail)) toast(error, "error");
+    },
+    [toast, captureRateLimit],
+  );
   const { attachment, isUploading, upload, clear } = useAttachmentUpload({
     ticketId,
     projectId,
@@ -249,7 +263,11 @@ const ChatInput = ({ ticketId, initialStatus, projectId, lastMessage }: ChatInpu
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ticketMessageQueries.all });
     },
-    onError: () => toast("Failed to send message. Please try again."),
+    // A 429 becomes the cooldown strip instead of a toast; everything else still toasts,
+    // so no failure goes silent.
+    onError: (error) => {
+      if (!captureRateLimit(error)) toast("Failed to send message. Please try again.");
+    },
   });
 
   const handleSubmit = async (e: React.SubmitEvent) => {
@@ -310,6 +328,8 @@ const ChatInput = ({ ticketId, initialStatus, projectId, lastMessage }: ChatInpu
   return (
     <div className="p-3 bg-white border-t border-gray-100">
       <form onSubmit={handleSubmit}>
+        <RateLimitBanner notice={rateLimit} />
+
         {attachment && (
           <AttachmentPreview
             attachment={attachment}
@@ -321,10 +341,12 @@ const ChatInput = ({ ticketId, initialStatus, projectId, lastMessage }: ChatInpu
         <div className="flex items-center gap-2">
           <AttachmentButton
             onSelect={upload}
-            disabled={createTicketMessageMutation.isPending}
+            disabled={createTicketMessageMutation.isPending || rateLimit.isLimited}
             isUploading={isUploading}
             className="text-gray-400 hover:text-gray-700 hover:bg-gray-100"
           />
+          {/* The field itself stays enabled while cooling down — the draft is the one
+              thing the visitor should not lose to a rate limit. Only sending is held. */}
           <input
             type="text"
             value={message}
@@ -335,7 +357,12 @@ const ChatInput = ({ ticketId, initialStatus, projectId, lastMessage }: ChatInpu
           />
           <button
             type="submit"
-            disabled={(!message.trim() && !attachment) || createTicketMessageMutation.isPending || isUploading}
+            disabled={
+              (!message.trim() && !attachment) ||
+              createTicketMessageMutation.isPending ||
+              isUploading ||
+              rateLimit.isLimited
+            }
             className="bg-blue-600 text-white p-2.5 rounded-xl active:scale-95 disabled:opacity-50 shrink-0"
           >
             <Send size={18} />

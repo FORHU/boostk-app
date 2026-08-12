@@ -2,10 +2,12 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { EventType } from "@/lib/notifier/core";
 import { prisma } from "@/lib/prisma";
+import { rateLimitedResponse } from "@/lib/rate-limit";
 import { ORG_ROLE } from "@/modules/auth/roles";
 import { publishToProjectAgents, publishToTicketChannel } from "@/modules/notification/notification.publish";
 import { requireProjectRole } from "../project/project.middleware";
 import { requireCustomerTicketMiddleware, requireTicketAgentMiddleware } from "../ticket/ticket.middleware";
+import { allowWidgetMessage } from "../ticket/ticket.rate-limit";
 import { CreateCustomerTicketMessageSchema, CreateTicketMessageSchema } from "./ticket-message.schema";
 import { prepareIncomingCustomerText, SUPPORT_LANGUAGE, translateOutgoingMessage } from "./ticket-message.translation";
 
@@ -64,6 +66,14 @@ export const createTicketMessageFn = createServerFn({ method: "POST" })
     const ticket = context.ticket;
     if (!ticket) return null;
     if (ticket.id !== data.ticketId) return null;
+
+    // The cookie proves which conversation this is, not how fast it may move. Keyed on
+    // the reference number to match `allowIntakeMessage`, so a visitor behind a shared
+    // NAT is not throttled by a stranger's chatter.
+    const verdict = allowWidgetMessage(ticket.referenceNumber);
+    if (!verdict.allowed) {
+      throw rateLimitedResponse(verdict.retryAfterSeconds, "You're sending messages too quickly.");
+    }
 
     const attachment = data.attachmentId ? await resolveMessageAttachment(data.attachmentId, ticket.id) : null;
     if (data.attachmentId && !attachment) return null;

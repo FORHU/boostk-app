@@ -13,12 +13,3 @@ export const requireIntakeTicketMiddleware = createMiddleware({ type: "function"
   const ticket = await getIntakeSession();
   return next({ context: { intakeTicket: ticket } });
 });
-
-/**
- * Surfaces the raw request so rate limiting can derive a client key from proxy headers.
- * `@tanstack/react-start/server` exposes no ambient request accessor in this version, so
- * the request has to travel through middleware context the way `authMiddleware` does it.
- */
-export const intakeRequestMiddleware = createMiddleware().server(async ({ next, request }) => {
-  return next({ context: { request } });
-});

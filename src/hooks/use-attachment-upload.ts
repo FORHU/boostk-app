@@ -19,8 +19,15 @@ export type StagedAttachment = UploadedAttachment & { objectUrl: string | null }
 type UseAttachmentUploadOptions = {
   ticketId: string;
   projectId: string;
-  /** Surfaces a rejected file or a failed upload. */
-  onError?: (message: string) => void;
+  /**
+   * Surfaces a rejected file or a failed upload.
+   *
+   * `detail` carries the server's parsed response body when there was one, so a caller
+   * can recognise a structured rejection — a 429 from the upload limiter — and render it
+   * as a cooldown rather than one more toast. Callers that only want to say something
+   * can ignore it and show `message`.
+   */
+  onError?: (message: string, detail?: unknown) => void;
 };
 
 export function useAttachmentUpload({ ticketId, projectId, onError }: UseAttachmentUploadOptions) {
@@ -69,7 +76,7 @@ export function useAttachmentUpload({ ticketId, projectId, onError }: UseAttachm
 
         if (!response.ok || !body?.id) {
           revokePreview();
-          onError?.(body?.error ?? "Upload failed. Please try again.");
+          onError?.(body?.error ?? "Upload failed. Please try again.", body);
           return;
         }
 
