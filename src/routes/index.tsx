@@ -17,8 +17,7 @@ export const Route = createFileRoute("/")({
  *
  * The chat is the hero rather than a widget waiting to be discovered: a visitor arrives
  * already inside a conversation they can type into. `HeroChat` mounts `GlobalChat`
- * directly, which is why this page does not wrap itself in `GlobalChatProvider` the way
- * it used to — the docked panel and an embedded chat would be two live instances of the
+ * directly — an embedded chat and a docked launcher would be two live instances of the
  * same conversation, each holding its own socket subscription. Every "talk to us"
  * affordance on the page is an anchor to that hero chat.
  *

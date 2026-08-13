@@ -15,6 +15,7 @@ import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { ReplyInput } from "@/components/chat-support/reply-input";
 import TicketChatMessageBubble from "@/components/chat-support/TicketChatMessageBubble";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -222,6 +223,7 @@ function TicketDetailPanel({
   onBack?: () => void;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [statusAction, setStatusAction] = useState<"CLOSED" | "OPEN" | null>(null);
   const { toast } = useToast();
 
   const { data: ticket, isLoading } = useQuery({
@@ -367,14 +369,7 @@ function TicketDetailPanel({
               disabled={updateStatusMutation.isPending}
               onClick={() => {
                 if (!ticketId) return;
-                const newStatus = ticket?.status === "OPEN" ? "CLOSED" : "OPEN";
-                updateStatusMutation.mutate({
-                  data: {
-                    projectId,
-                    ticketId: ticketId,
-                    status: newStatus,
-                  },
-                });
+                setStatusAction(ticket?.status === "OPEN" ? "CLOSED" : "OPEN");
               }}
               className="px-3 py-1.5 text-xs font-medium rounded-sm bg-white/15 hover:bg-white/25 disabled:opacity-50"
             >
@@ -454,6 +449,32 @@ function TicketDetailPanel({
           />
         )}
       </div>
+
+      <ConfirmDialog
+        isOpen={statusAction !== null}
+        onClose={() => setStatusAction(null)}
+        title={statusAction === "CLOSED" ? "Close this ticket?" : "Reopen this ticket?"}
+        message={
+          statusAction === "CLOSED"
+            ? "The customer won't be able to send messages on this conversation once it's closed."
+            : "Reopening this ticket lets the customer send messages on this conversation again."
+        }
+        confirmLabel={statusAction === "CLOSED" ? "Close" : "Reopen"}
+        cancelLabel="Cancel"
+        variant="default"
+        isPending={updateStatusMutation.isPending}
+        onConfirm={() => {
+          if (!ticketId || !statusAction) return;
+          updateStatusMutation.mutate({
+            data: {
+              projectId,
+              ticketId,
+              status: statusAction,
+            },
+          });
+          setStatusAction(null);
+        }}
+      />
     </div>
   );
 }
@@ -530,6 +551,18 @@ function ProjectTicketsPage() {
       if (assignedTicketId && selectedTicketId === assignedTicketId) {
         queryClient.invalidateQueries({
           queryKey: projectTicketQueries.detailById(projectId, assignedTicketId).queryKey,
+        });
+      }
+    }
+
+    if (lastMessage.event === EventType.TICKET_STATUS_CHANGED) {
+      const changedTicketId = lastMessage.data?.ticketId;
+      queryClient.invalidateQueries({
+        queryKey: projectTicketQueries.listPrefix(projectId),
+      });
+      if (changedTicketId && selectedTicketId === changedTicketId) {
+        queryClient.invalidateQueries({
+          queryKey: projectTicketQueries.detailById(projectId, changedTicketId).queryKey,
         });
       }
     }

@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { Info, Loader2, MessageCircle, User } from "lucide-react";
@@ -6,7 +6,9 @@ import type { Customer, Project, Ticket, TicketMessage } from "prisma/generated/
 import { Suspense, useEffect, useRef, useState } from "react";
 import { ReplyInput } from "@/components/chat-support/reply-input";
 import TicketChatMessageBubble from "@/components/chat-support/TicketChatMessageBubble";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
+import { useToast } from "@/components/ui/toast";
 import { REDIRECT_REASON } from "@/enums/enums";
 import { useSocket } from "@/hooks/use-socket";
 import { useViewport } from "@/hooks/use-viewport";
@@ -15,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
 import { ticketQueries } from "@/modules/ticket/query.queries";
 import { ticketMessageQueries } from "@/modules/ticket-message/ticket-message.queries";
+import { updateTicketStatusFn } from "./tickets";
 
 type TicketWithCustomer = Ticket & { customer: Customer };
 
@@ -39,6 +42,19 @@ function ProjectChatSupportPage() {
   const [showCustomerDetails, setShowCustomerDetails] = useState(false);
   const { isMobile } = useViewport();
   const isMobileView = isMobile ?? false;
+
+  // The tab list is the source of truth for ticket rows; keep the open ticket in
+  // sync so the header (status, close/reopen button, locked input) reflects live
+  // status changes made here or elsewhere over realtime.
+  const { data: tickets } = useSuspenseQuery(ticketQueries.getProjectTickets(project.id));
+
+  useEffect(() => {
+    if (!selectedTicket) return;
+    const fresh = tickets.find((t) => t.id === selectedTicket.id);
+    if (fresh && fresh.status !== selectedTicket.status) {
+      setSelectedTicket(fresh);
+    }
+  }, [tickets, selectedTicket]);
 
   // Latest message timestamp per ticket we've already processed, so a socket
   // reconnect or duplicate event doesn't invalidate (and refetch) a conversation
@@ -69,10 +85,14 @@ function ProjectChatSupportPage() {
     if (lastMessage.event === EventType.TICKET_CREATED) {
       queryClient.invalidateQueries({ queryKey: ticketQueries.getProjectTickets(project.id).queryKey });
     }
+
+    if (lastMessage.event === EventType.TICKET_STATUS_CHANGED) {
+      queryClient.invalidateQueries({ queryKey: ticketQueries.getProjectTickets(project.id).queryKey });
+    }
   }, [lastMessage, selectedTicket, queryClient, project.id]);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full w-full min-w-0 overflow-hidden">
       <Suspense fallback={<div className="p-2 text-sm text-muted-foreground">Loading project tickets...</div>}>
         <TicketList project={project} selectedTicket={selectedTicket} onSelect={setSelectedTicket} />
       </Suspense>
@@ -112,7 +132,7 @@ const TicketList = ({ project, selectedTicket, onSelect }: TicketListProps) => {
   const { data: tickets } = useSuspenseQuery(ticketQueries.getProjectTickets(project.id));
 
   return (
-    <div className="px-2 min-h-12 flex flex-row gap-2 overflow-x-auto items-end">
+    <div className="px-2 min-h-12 flex flex-row gap-2 overflow-x-auto items-end w-full min-w-0">
       {tickets.map((ticket) => {
         const active = selectedTicket?.id === ticket.id;
         return (
@@ -121,7 +141,7 @@ const TicketList = ({ project, selectedTicket, onSelect }: TicketListProps) => {
             type="button"
             onClick={() => onSelect(ticket)}
             className={cn(
-              "px-2 py-1 min-w-[200px] max-w-[240px] flex items-center justify-between rounded-t-lg border border-b-0 cursor-pointer transition-colors text-left",
+              "px-2 py-1 min-w-[200px] max-w-[240px] shrink-0 flex items-center justify-between rounded-t-lg border border-b-0 cursor-pointer transition-colors text-left",
               active ? "bg-blue-600 dark:bg-blue-800 text-white" : "bg-muted hover:bg-muted/70",
             )}
           >
@@ -177,6 +197,18 @@ const ChatWindow = ({
   onToggleCustomerDetails,
 }: ChatWindowProps) => {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [statusAction, setStatusAction] = useState<"CLOSED" | "OPEN" | null>(null);
+
+  const updateStatusMutation = useMutation({
+    mutationFn: updateTicketStatusFn,
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ticketQueries.getProjectTickets(variables.data.projectId).queryKey,
+      });
+    },
+    onError: () => toast("Failed to update status."),
+  });
 
   if (!ticket) {
     return (
@@ -188,15 +220,15 @@ const ChatWindow = ({
 
   return (
     <div className="h-full flex-1 min-w-0 flex flex-col min-h-0">
-      <header className="flex-none bg-blue-600 dark:bg-blue-800 p-4 text-white flex items-center justify-between shadow-sm">
-        <div className="flex items-center gap-3">
+      <header className="flex-none bg-blue-600 dark:bg-blue-800 p-4 text-white flex items-center justify-between shadow-sm min-w-0">
+        <div className="flex items-center gap-3 min-w-0">
           {/* This header identifies the CUSTOMER the agent is talking to, so it stays a
               person icon — the BOOSTK mark belongs on the visitor's side of the chat. */}
-          <div className="bg-blue-400/30 p-2 rounded-lg">
+          <div className="bg-blue-400/30 p-2 rounded-lg shrink-0">
             <User size={20} />
           </div>
-          <div>
-            <h2 className="text-sm font-bold leading-none">{ticket.customer.name}</h2>
+          <div className="min-w-0">
+            <h2 className="text-sm font-bold leading-none truncate">{ticket.customer.name}</h2>
             <span className="text-[10px] text-blue-200 flex items-center gap-1">
               <span
                 className={`w-1.5 h-1.5 rounded-full animate-pulse ${
@@ -207,7 +239,16 @@ const ChatWindow = ({
             </span>
           </div>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 shrink-0">
+          <button
+            type="button"
+            onClick={() => setStatusAction(ticket.status === "OPEN" ? "CLOSED" : "OPEN")}
+            disabled={updateStatusMutation.isPending}
+            className="px-3 py-1.5 mr-2 text-xs font-medium rounded-sm bg-white/15 hover:bg-white/25 disabled:opacity-50 flex items-center gap-1.5"
+          >
+            {updateStatusMutation.isPending && <Loader2 className="animate-spin size-3.5" />}
+            {ticket.status === "OPEN" ? "Close Ticket" : "Reopen"}
+          </button>
           <button
             type="button"
             onClick={onToggleTicketDetails}
@@ -235,15 +276,48 @@ const ChatWindow = ({
         </div>
       </header>
       <AgentMessageList ticket={ticket} />
-      <ReplyInput
-        ticketId={ticket.id}
-        projectId={ticket.projectId}
-        customerName={ticket.customer.name}
-        customerLanguage={ticket.customer.language}
-        onSuccess={() => {
-          queryClient.invalidateQueries({
-            queryKey: ticketMessageQueries.getByTicket(ticket.id).queryKey,
+      {ticket.status === "OPEN" ? (
+        <ReplyInput
+          ticketId={ticket.id}
+          projectId={ticket.projectId}
+          customerName={ticket.customer.name}
+          customerLanguage={ticket.customer.language}
+          onSuccess={() => {
+            queryClient.invalidateQueries({
+              queryKey: ticketMessageQueries.getByTicket(ticket.id).queryKey,
+            });
+          }}
+        />
+      ) : (
+        <div className="p-4 bg-background border-t border-border flex flex-col items-center justify-center text-center gap-1">
+          <h4 className="font-semibold text-foreground text-sm">This ticket is closed</h4>
+          <p className="text-xs text-muted-foreground max-w-[280px]">Reopen the ticket to continue the conversation.</p>
+        </div>
+      )}
+
+      <ConfirmDialog
+        isOpen={statusAction !== null}
+        onClose={() => setStatusAction(null)}
+        title={statusAction === "CLOSED" ? "Close this ticket?" : "Reopen this ticket?"}
+        message={
+          statusAction === "CLOSED"
+            ? "The customer won't be able to send messages on this conversation once it's closed."
+            : "Reopening this ticket lets the customer send messages on this conversation again."
+        }
+        confirmLabel={statusAction === "CLOSED" ? "Close" : "Reopen"}
+        cancelLabel="Cancel"
+        variant="default"
+        isPending={updateStatusMutation.isPending}
+        onConfirm={() => {
+          if (!ticket || !statusAction) return;
+          updateStatusMutation.mutate({
+            data: {
+              projectId: ticket.projectId,
+              ticketId: ticket.id,
+              status: statusAction,
+            },
           });
+          setStatusAction(null);
         }}
       />
     </div>

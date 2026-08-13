@@ -1,8 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { EventType } from "@/lib/notifier/core";
 import { prisma } from "@/lib/prisma";
 import { ORG_ROLE } from "@/modules/auth/roles";
+import { publishToProjectAgents, publishToTicketChannel } from "@/modules/notification/notification.publish";
 import { requireProjectRole } from "@/modules/project/project.middleware";
+import { requireCustomerTicketMiddleware } from "./ticket.middleware";
 import {
   GetProjectTicketCountsSchema,
   GetProjectTicketsSchema,
@@ -54,6 +57,42 @@ export const getTicketCookieFn = createServerFn({ method: "GET" })
   .inputValidator(z.object({ projectId: z.string().min(1) }))
   .handler(async ({ data }) => {
     return getTicketSession(data.projectId);
+  });
+
+// A customer (identified by the ticket cookie scoped to `projectId`) closes their own
+// ticket. Customers can only close — reopening stays an agent action. The status change
+// is broadcast on the ticket channel (live-updates the customer's widget) and to the
+// project's agents (live-updates their dashboards).
+export const closeCustomerTicketFn = createServerFn({ method: "POST" })
+  .middleware([requireCustomerTicketMiddleware])
+  .inputValidator(z.object({ projectId: z.string().min(1), ticketId: z.string().min(1) }))
+  .handler(async ({ data, context }) => {
+    const ticket = context.ticket;
+    if (!ticket) return null;
+    if (ticket.id !== data.ticketId) return null;
+    if (ticket.status !== "OPEN") return ticket;
+
+    const updatedTicket = await prisma.ticket.update({
+      where: { id: ticket.id },
+      data: { status: "CLOSED" },
+    });
+
+    const statusData = { ticketId: ticket.id, status: updatedTicket.status };
+
+    await Promise.all([
+      publishToTicketChannel({
+        ticketId: ticket.id,
+        event: EventType.TICKET_STATUS_CHANGED,
+        data: statusData,
+      }),
+      publishToProjectAgents({
+        projectId: ticket.projectId,
+        event: EventType.TICKET_STATUS_CHANGED,
+        data: statusData,
+      }),
+    ]);
+
+    return updatedTicket;
   });
 
 // Cursor-paginated ticket list. `take + 1` detects whether another page exists and
