@@ -33,7 +33,7 @@ export async function startRealtimeRelay(io: Server): Promise<ChannelWrapper> {
           const event = payload && typeof payload.event === "string" ? payload.event : routingEvent;
 
           if (scope && id && event) {
-            console.log(`[Socket.IO] Relaying [${msg.fields.routingKey}] -> ${scope}:${id}`);
+            // Relay logging removed to avoid noisy per-message logs
             io.to(`${scope}:${id}`).emit(event, payload.data);
           }
 

@@ -185,19 +185,19 @@ export function useNotifications({
     const handleMessage = (e: MessageEvent) => {
       try {
         const data = JSON.parse(e.data);
-        console.log("[SSE] received event:", e.type, (data as Record<string, unknown>)?.ticketId);
+        // [SSE] debug log removed
 
         const message = { event: e.type as EventType, data: data };
         setLastMessage(message);
 
         const shouldRing =
           NOTIFICATION_EVENTS.has(message.event) && shouldRingBell(message.event, message.data, userId);
-        console.log("[SSE] shouldRing?", shouldRing, { event: message.event, userId });
+        // [SSE] debug log removed
 
         if (shouldRing) {
           setNotifications((prev) => {
             const next = upsertNotification(prev, message.event, message.data, localIdRef);
-            console.log("[SSE] upsert prev:", prev.length, "→ next:", next.length);
+            // [SSE] debug log removed
             return next;
           });
         }
@@ -220,7 +220,7 @@ export function useNotifications({
       nextSource.addEventListener(EventType.HEARTBEAT, () => {
         lastActivityAt = Date.now();
         markConnected();
-        console.log("[SSE] Heartbeat received");
+        // [SSE] heartbeat log removed
       });
 
       nextSource.addEventListener(EventType.TEST, handleMessage);
@@ -275,7 +275,7 @@ export function useNotifications({
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("offline", handleOffline);
       window.removeEventListener("online", handleOnline);
-      console.log("[SSE] Closing connection");
+      // [SSE] closing connection log removed
       if (eventSource) eventSource.close();
     };
   }, [userId, ticketId, enabled]);

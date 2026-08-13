@@ -102,7 +102,6 @@ const ProjectForm = ({ organizationId }: { organizationId: string }) => {
       onSubmit: createProjectSchema,
     },
     onSubmit: async ({ value }) => {
-      console.log(value);
       await createProjectMutation.mutateAsync({ data: value });
     },
   });

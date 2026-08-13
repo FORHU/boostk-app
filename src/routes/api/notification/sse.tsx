@@ -84,7 +84,7 @@ export const Route = createFileRoute("/api/notification/sse")({
 
                   try {
                     const payload = JSON.parse(msg.content.toString());
-                    console.log("[SSE] Received message from rabbitmq:", payload);
+                    // [SSE] received message log removed
 
                     sendSseMessage({
                       event: payload.event,
@@ -109,8 +109,8 @@ export const Route = createFileRoute("/api/notification/sse")({
               // the real-time connection degraded, so they know to refresh or rely on standard polling.
             });
 
-            request.signal.addEventListener("abort", () => {
-              console.log(`[SSE] Client ${userId} disconnected. Cleaning up...`);
+                request.signal.addEventListener("abort", () => {
+              // [SSE] client disconnect log removed
               clearInterval(timer);
 
               if (sseChannelWrapper) {
