@@ -7,7 +7,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
-import { useForceLightTheme } from "@/hooks/use-force-light-theme";
 import { authClient } from "@/lib/auth-client";
 import { getFieldInvalid } from "@/lib/form-utils";
 import { type SignInInput, signInSchema } from "@/modules/auth/auth.schema";
@@ -20,8 +19,6 @@ function SigninPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [serverError, setServerError] = useState<string | null>(null);
-
-  useForceLightTheme();
 
   const { mutateAsync: signInMutation } = useMutation({
     mutationFn: async (value: SignInInput) => {
