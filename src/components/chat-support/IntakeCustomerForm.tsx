@@ -3,9 +3,11 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { ArrowRight, Mail, MessageSquare, User } from "lucide-react";
+import { RateLimitBanner } from "@/components/chat-support/rate-limit-banner";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
+import { useRateLimitNotice } from "@/hooks/use-rate-limit-notice";
 import { getFieldInvalid } from "@/lib/form-utils";
 import { startIntakeChatFn } from "@/modules/intake/intake.functions";
 import { intakeQueries } from "@/modules/intake/intake.queries";
@@ -29,6 +31,7 @@ export default function IntakeCustomerForm({
   const router = useRouter();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const rateLimit = useRateLimitNotice();
 
   const startIntakeChatMutation = useMutation({
     mutationFn: startIntakeChatFn,
@@ -39,10 +42,11 @@ export default function IntakeCustomerForm({
       await queryClient.invalidateQueries({ queryKey: intakeQueries.all });
       await router.invalidate();
     },
-    onError: (error) =>
-      // Rate-limit rejections arrive here too, and their message is written for the
-      // visitor — surface it rather than a generic failure.
-      toast(error instanceof Error ? error.message : "Failed to start the conversation. Please try again.", "error"),
+    // A 429 becomes the cooldown strip, which says how long and holds the button until
+    // then — a toast telling someone to slow down disappears before it can stop them.
+    onError: (error) => {
+      if (!rateLimit.capture(error)) toast("Failed to start the conversation. Please try again.", "error");
+    },
   });
 
   const form = useForm({
@@ -75,6 +79,8 @@ export default function IntakeCustomerForm({
           await form.handleSubmit();
         }}
       >
+        <RateLimitBanner notice={rateLimit} />
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
           <form.Field name="name">
             {(field) => {
@@ -184,7 +190,7 @@ export default function IntakeCustomerForm({
               <Field className="flex-1">
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || rateLimit.isLimited}
                   className="w-full bg-brand text-white py-3 rounded-xl hover:bg-brand-dark active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-sm font-semibold shadow-md shadow-brand/20"
                 >
                   {isSubmitting ? "Sending..." : "Send Message"}

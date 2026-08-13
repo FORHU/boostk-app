@@ -1,6 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { rateLimitedResponse } from "@/lib/rate-limit";
+import { allowAttachmentUpload } from "@/modules/attachment/attachment.rate-limit";
 import { UploadAttachmentSchema } from "@/modules/attachment/attachment.schema";
-import { resolveAttachmentAccess, storeAttachment, validateAttachment } from "@/modules/attachment/attachment.service";
+import {
+  assertAttachmentQuota,
+  resolveAttachmentAccess,
+  storeAttachment,
+  validateAttachment,
+} from "@/modules/attachment/attachment.service";
 
 // Upload a chat attachment: multipart POST /api/attachments
 //   fields: file, ticketId, projectId
@@ -41,6 +48,25 @@ export const Route = createFileRoute("/api/attachments/")({
 
         const actor = await resolveAttachmentAccess(request, parsed.data.ticketId, parsed.data.projectId);
         if (!actor) return json({ error: "Not allowed to upload to this ticket" }, 403);
+
+        // Throttling comes AFTER authorisation, never before: keyed on the ticket, an
+        // unauthorised caller who could spend the budget first would be able to lock a
+        // stranger's conversation out of uploading by naming its id.
+        //
+        // Customers only. Agents reach this route from the inbox behind `requireAuth`,
+        // are accountable by name, and legitimately attach batches of files; the surface
+        // this task is closing is the anonymous one. Note that the per-ticket quota below
+        // still counts *every* attachment on the ticket, agent-sent included, because it
+        // bounds what the conversation costs rather than who sent it.
+        if (actor.kind === "customer") {
+          const verdict = allowAttachmentUpload(parsed.data.ticketId);
+          if (!verdict.allowed) {
+            return rateLimitedResponse(verdict.retryAfterSeconds, "You're uploading files too quickly.");
+          }
+
+          const overQuota = await assertAttachmentQuota(parsed.data.ticketId, file.size);
+          if (overQuota) return json({ error: overQuota.error }, overQuota.status);
+        }
 
         try {
           return json(await storeAttachment(file, parsed.data.ticketId), 201);

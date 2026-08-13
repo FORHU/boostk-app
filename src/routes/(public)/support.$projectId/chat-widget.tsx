@@ -13,6 +13,7 @@ import TicketCustomerForm from "@/components/chat-support/TicketCustomerForm";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useToast } from "@/components/ui/toast";
 import { useAttachmentUpload } from "@/hooks/use-attachment-upload";
+import { useRateLimitNotice } from "@/hooks/use-rate-limit-notice";
 import { useSocket } from "@/hooks/use-socket";
 import { EventType } from "@/lib/notifier/core";
 import { getProjectPublicFn } from "@/modules/project/project.functions";
@@ -313,7 +314,11 @@ const ChatInput = ({ ticketId, status, projectId, initialScore }: ChatInputProps
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ticketMessageQueries.all });
     },
-    onError: () => toast("Failed to send message. Please try again."),
+    // A 429 becomes the cooldown strip instead of a toast; everything else still toasts,
+    // so no failure goes silent.
+    onError: (error) => {
+      if (!captureRateLimit(error)) toast("Failed to send message. Please try again.");
+    },
   });
 
   const handleSubmit = async (e: React.SubmitEvent) => {
@@ -383,6 +388,8 @@ const ChatInput = ({ ticketId, status, projectId, initialScore }: ChatInputProps
   return (
     <div className="p-3 bg-white border-t border-gray-100">
       <form onSubmit={handleSubmit}>
+        <RateLimitBanner notice={rateLimit} />
+
         {attachment && (
           <AttachmentPreview
             attachment={attachment}
@@ -394,10 +401,12 @@ const ChatInput = ({ ticketId, status, projectId, initialScore }: ChatInputProps
         <div className="flex items-center gap-2">
           <AttachmentButton
             onSelect={upload}
-            disabled={createTicketMessageMutation.isPending}
+            disabled={createTicketMessageMutation.isPending || rateLimit.isLimited}
             isUploading={isUploading}
             className="text-gray-400 hover:text-gray-700 hover:bg-gray-100"
           />
+          {/* The field itself stays enabled while cooling down — the draft is the one
+              thing the visitor should not lose to a rate limit. Only sending is held. */}
           <input
             type="text"
             value={message}
@@ -408,7 +417,12 @@ const ChatInput = ({ ticketId, status, projectId, initialScore }: ChatInputProps
           />
           <button
             type="submit"
-            disabled={(!message.trim() && !attachment) || createTicketMessageMutation.isPending || isUploading}
+            disabled={
+              (!message.trim() && !attachment) ||
+              createTicketMessageMutation.isPending ||
+              isUploading ||
+              rateLimit.isLimited
+            }
             className="bg-blue-600 text-white p-2.5 rounded-xl active:scale-95 disabled:opacity-50 shrink-0"
           >
             <Send size={18} />

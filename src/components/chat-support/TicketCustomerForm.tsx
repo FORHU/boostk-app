@@ -3,9 +3,11 @@ import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { ArrowRight, Hash, Mail, User } from "lucide-react";
+import { RateLimitBanner } from "@/components/chat-support/rate-limit-banner";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
+import { useRateLimitNotice } from "@/hooks/use-rate-limit-notice";
 import { getFieldInvalid } from "@/lib/form-utils";
 import { upsertTicketSessionFn } from "@/modules/ticket/ticket.functions";
 import { UpsertTicketSessionInput } from "@/modules/ticket/ticket.schema";
@@ -22,13 +24,19 @@ export default function TicketCustomerForm({
 }) {
   const router = useRouter();
   const { toast } = useToast();
+  const rateLimit = useRateLimitNotice();
 
   const upsertTicketSessionMutation = useMutation({
     mutationFn: upsertTicketSessionFn,
     onSuccess: async () => {
       await router.invalidate();
     },
-    onError: () => toast("Failed to create ticket. Please try again."),
+    // Both halves of this form are throttled — starting a conversation and trying a
+    // reference number — so a 429 becomes the cooldown strip. Everything else, including
+    // a wrong reference number, still toasts.
+    onError: (error) => {
+      if (!rateLimit.capture(error)) toast("Failed to create ticket. Please try again.");
+    },
   });
 
   const form = useForm({
@@ -63,6 +71,8 @@ export default function TicketCustomerForm({
           await form.handleSubmit();
         }}
       >
+        <RateLimitBanner notice={rateLimit} />
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
           <form.Field name="name">
             {(field) => {
@@ -154,7 +164,7 @@ export default function TicketCustomerForm({
             <Field>
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || rateLimit.isLimited}
                 className="w-full bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-sm font-semibold shadow-md shadow-blue-200"
               >
                 {isSubmitting ? "Submitting..." : "Start Conversation"}

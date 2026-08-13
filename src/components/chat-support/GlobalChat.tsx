@@ -12,6 +12,7 @@ import TicketChatMessageBubble, {
 } from "@/components/chat-support/TicketChatMessageBubble";
 import { useToast } from "@/components/ui/toast";
 import { useAttachmentUpload } from "@/hooks/use-attachment-upload";
+import { useRateLimitNotice } from "@/hooks/use-rate-limit-notice";
 import { useSocket } from "@/hooks/use-socket";
 import { EventType } from "@/lib/notifier/core";
 import { clearIntakeCookieFn, createIntakeMessageFn, rateIntakeTicketFn } from "@/modules/intake/intake.functions";
@@ -236,7 +237,11 @@ const ChatInput = ({
   const createMessageMutation = useMutation({
     mutationFn: createIntakeMessageFn,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: intakeQueries.all }),
-    onError: (error) => toast(error instanceof Error ? error.message : "Failed to send message.", "error"),
+    // A 429 becomes the cooldown strip instead of a toast; everything else still toasts,
+    // so no failure goes silent.
+    onError: (error) => {
+      if (!captureRateLimit(error)) toast("Failed to send message.", "error");
+    },
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -296,6 +301,8 @@ const ChatInput = ({
   return (
     <div className="flex-none p-3 bg-white border-t border-gray-100">
       <form onSubmit={handleSubmit}>
+        <RateLimitBanner notice={rateLimit} />
+
         {attachment && (
           <AttachmentPreview attachment={attachment} onRemove={clear} disabled={createMessageMutation.isPending} />
         )}
@@ -303,7 +310,7 @@ const ChatInput = ({
         <div className="flex items-center gap-2">
           <AttachmentButton
             onSelect={upload}
-            disabled={createMessageMutation.isPending}
+            disabled={createMessageMutation.isPending || rateLimit.isLimited}
             isUploading={isUploading}
             className="text-gray-400 hover:text-gray-700 hover:bg-gray-100"
           />
@@ -321,8 +328,10 @@ const ChatInput = ({
           <button
             type="submit"
             // An attachment with no caption is a valid message, so the button must not
-            // stay disabled just because the text field is empty.
-            disabled={(!message.trim() && !attachment) || createMessageMutation.isPending}
+            // stay disabled just because the text field is empty. The text field itself
+            // stays enabled while cooling down — the draft is the one thing the visitor
+            // should not lose to a rate limit; only sending is held.
+            disabled={(!message.trim() && !attachment) || createMessageMutation.isPending || rateLimit.isLimited}
             className="bg-brand text-white p-2.5 rounded-xl active:scale-95 disabled:opacity-50 shrink-0"
           >
             <Send size={18} />
