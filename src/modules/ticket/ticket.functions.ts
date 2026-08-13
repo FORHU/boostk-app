@@ -9,6 +9,7 @@ import { ORG_ROLE } from "@/modules/auth/roles";
 import { publishToProjectAgents, publishToTicketChannel } from "@/modules/notification/notification.publish";
 import { requireProjectRole } from "@/modules/project/project.middleware";
 import { requireCustomerTicketMiddleware } from "./ticket.middleware";
+import { allowWidgetLookup, allowWidgetSession } from "./ticket.rate-limit";
 import {
   GetProjectTicketCountsSchema,
   GetProjectTicketsSchema,
