@@ -100,10 +100,12 @@ jobs:
 
             umask 077
             cat > app.env << 'ENVEOF'
-            DATABASE_URL=postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@postgres:5432/${{ secrets.POSTGRES_DB }}
-            POSTGRES_USER=${{ secrets.POSTGRES_USER }}
-            POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
-            POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+            # One whole secret rather than a URL assembled from parts. The database is
+            # managed (RDS) now, so the host, database name and connection parameters are
+            # not ours to hardcode — and a password containing @ / : / ? has to be
+            # percent-encoded exactly once, which is only safe to do by hand, once, when
+            # the secret is written. POSTGRES_USER/PASSWORD/DB are gone with the container.
+            DATABASE_URL=${{ secrets.DATABASE_URL }}
             RABBITMQ_DEFAULT_USER=${{ secrets.RABBITMQ_DEFAULT_USER }}
             RABBITMQ_DEFAULT_PASS=${{ secrets.RABBITMQ_DEFAULT_PASS }}
             RABBITMQ_URL=amqp://${{ secrets.RABBITMQ_DEFAULT_USER }}:${{ secrets.RABBITMQ_DEFAULT_PASS }}@rabbitmq:5672
@@ -125,10 +127,14 @@ jobs:
 
             # Migrations run BEFORE the new code starts, as a one-shot container
             # from the same image. `run` (not `run --no-deps`) brings up the
-            # depends_on services first, so the network and DB exist. Retried
-            # because Postgres may still be accepting-connections-soon on a
-            # cold start; if it never succeeds, the deploy aborts and the old
-            # containers keep serving traffic.
+            # depends_on services first, so the network exists. Retried because
+            # a managed database can be briefly unreachable (failover, a
+            # maintenance window); if it never succeeds, the deploy aborts and
+            # the old containers keep serving traffic.
+            #
+            # If all five attempts fail immediately rather than timing out, the
+            # cause is almost always the RDS security group not admitting this
+            # instance on 5432 — not the credentials.
             for i in 1 2 3 4 5; do
               if docker compose -f docker-compose.prod.yaml run --rm app \
                    bun prisma migrate deploy; then

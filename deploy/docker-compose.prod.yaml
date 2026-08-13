@@ -15,11 +15,10 @@ services:
     ports:
       # Loopback only — nginx is the sole way in from the internet.
       - "127.0.0.1:5000:5000"
-    depends_on:
-      postgres:
-        condition: service_healthy # migrations must not race a cold DB
-      rabbitmq:
-        condition: service_started
+    # Postgres is managed (RDS) and lives outside this stack, so there is nothing
+    # local to wait for. Reachability is a security-group question now, not a
+    # container-ordering one — see docs/DATABASE-SETUP.md.
+    depends_on: [rabbitmq]
 
   socket:
     image: ${IMAGE}
@@ -44,24 +43,12 @@ services:
     # No ports: reachable only on the internal Docker network.
     # NEVER publish 15672 — the management UI ships with guest/guest.
 
-  # ---------------------------------------------------------------------------
-  # DELETE this whole service if you use RDS, and change app's depends_on to:
-  #   depends_on: [rabbitmq]
-  # ---------------------------------------------------------------------------
-  postgres:
-    image: postgres:15-alpine
-    restart: unless-stopped
-    # Reads POSTGRES_USER / POSTGRES_PASSWORD / POSTGRES_DB from app.env, so the
-    # credentials live in exactly one place alongside DATABASE_URL.
-    env_file: app.env
-    volumes:
-      - boostk_data:/var/lib/postgresql/data
-    healthcheck:
-      # $$ escapes to a literal $ for the container's shell.
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
-volumes:
-  boostk_data:
+# Postgres was a container here until we moved to RDS. It is gone deliberately:
+# a database sharing a host with the app dies with the host, restores by hand, and
+# backs itself up never. DATABASE_URL now points at the managed instance and is
+# injected whole from the DATABASE_URL GitHub secret.
+#
+# The old `boostk_data` volume is intentionally NOT removed here — it still holds
+# whatever the container database had. `docker compose up` leaves an orphaned
+# volume alone, so it stays available for rollback until someone prunes it
+# deliberately with `docker volume rm boostk-app_boostk_data`.
