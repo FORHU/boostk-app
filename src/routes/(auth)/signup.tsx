@@ -76,11 +76,16 @@ function SignupPage() {
                   <p className="text-balance text-muted-foreground">Sign up to get started with Boostk</p>
                 </div>
 
-                {serverError && <p className="text-sm text-destructive text-center">{serverError}</p>}
+                {serverError && (
+                  <p role="alert" aria-live="assertive" className="text-sm text-destructive-text text-center">
+                    {serverError}
+                  </p>
+                )}
 
                 <signUpForm.Field name="name">
                   {(field) => {
                     const isInvalid = getFieldInvalid(field, signUpForm);
+                    const errorId = `${field.name}-error`;
                     return (
                       <Field data-invalid={isInvalid}>
                         <FieldLabel htmlFor={field.name}>Full Name</FieldLabel>
@@ -92,9 +97,10 @@ function SignupPage() {
                           onBlur={field.handleBlur}
                           onChange={(e) => field.handleChange(e.target.value)}
                           aria-invalid={isInvalid}
+                          aria-describedby={isInvalid ? errorId : undefined}
                           placeholder="John Doe"
                         />
-                        {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                        {isInvalid && <FieldError id={errorId} errors={field.state.meta.errors} />}
                       </Field>
                     );
                   }}
@@ -103,6 +109,7 @@ function SignupPage() {
                 <signUpForm.Field name="email">
                   {(field) => {
                     const isInvalid = getFieldInvalid(field, signUpForm);
+                    const errorId = `${field.name}-error`;
                     return (
                       <Field data-invalid={isInvalid}>
                         <FieldLabel htmlFor={field.name}>Email</FieldLabel>
@@ -114,9 +121,10 @@ function SignupPage() {
                           onBlur={field.handleBlur}
                           onChange={(e) => field.handleChange(e.target.value)}
                           aria-invalid={isInvalid}
+                          aria-describedby={isInvalid ? errorId : undefined}
                           placeholder="m@example.com"
                         />
-                        {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                        {isInvalid && <FieldError id={errorId} errors={field.state.meta.errors} />}
                       </Field>
                     );
                   }}
@@ -125,6 +133,7 @@ function SignupPage() {
                 <signUpForm.Field name="password">
                   {(field) => {
                     const isInvalid = getFieldInvalid(field, signUpForm);
+                    const errorId = `${field.name}-error`;
                     return (
                       <Field data-invalid={isInvalid}>
                         <FieldLabel htmlFor={field.name}>Password</FieldLabel>
@@ -135,8 +144,9 @@ function SignupPage() {
                           onBlur={field.handleBlur}
                           onChange={(e) => field.handleChange(e.target.value)}
                           aria-invalid={isInvalid}
+                          aria-describedby={isInvalid ? errorId : undefined}
                         />
-                        {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                        {isInvalid && <FieldError id={errorId} errors={field.state.meta.errors} />}
                       </Field>
                     );
                   }}
@@ -153,22 +163,32 @@ function SignupPage() {
                 </signUpForm.Subscribe>
 
                 <FieldDescription className="text-center">
-                  Already have an account? <Link to="/signin">Log in</Link>
+                  Already have an account?{" "}
+                  <Link to="/signin" className="inline-block px-1 py-2 underline-offset-2 hover:underline">
+                    Log in
+                  </Link>
                 </FieldDescription>
               </FieldGroup>
             </form>
             <div className="relative hidden bg-muted md:block">
               <img
                 src="/sign-in.webp"
-                alt="placeholder"
+                alt=""
                 className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
               />
             </div>
           </CardContent>
         </Card>
         <FieldDescription className="py-6 text-center text-xs">
-          By clicking continue, you agree to our <Link to="/">Terms of Service</Link> and{" "}
-          <Link to="/">Privacy Policy</Link>.
+          By clicking continue, you agree to our{" "}
+          <Link to="/" className="inline-block px-1 py-2 underline-offset-2 hover:underline">
+            Terms of Service
+          </Link>{" "}
+          and{" "}
+          <Link to="/" className="inline-block px-1 py-2 underline-offset-2 hover:underline">
+            Privacy Policy
+          </Link>
+          .
         </FieldDescription>
       </div>
     </div>

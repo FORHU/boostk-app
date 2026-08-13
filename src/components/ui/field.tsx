@@ -52,7 +52,7 @@ function FieldGroup({ className, ...props }: React.ComponentProps<"div">) {
 }
 
 const fieldVariants = cva(
-  "group/field flex w-full gap-2 data-[invalid=true]:text-destructive",
+  "group/field flex w-full gap-2 data-[invalid=true]:text-destructive-text",
   {
     variants: {
       orientation: {
@@ -173,10 +173,20 @@ function FieldSeparator({
   )
 }
 
+/**
+ * Renders the error message(s) for a field.
+ *
+ * Pass `id` and reference it from the corresponding input's `aria-describedby`
+ * (only while `aria-invalid` is true) so screen readers announce the error whenever
+ * the input receives focus — not just once, at the moment the error first appears.
+ * `role="alert"` on its own only announces on mount/update, which misses the case
+ * where a user tabs into an already-invalid field.
+ */
 function FieldError({
   className,
   children,
   errors,
+  id,
   ...props
 }: React.ComponentProps<"div"> & {
   errors?: Array<{ message?: string } | undefined>
@@ -215,8 +225,11 @@ function FieldError({
   return (
     <div
       role="alert"
+      id={id}
       data-slot="field-error"
-      className={cn("text-sm font-normal text-destructive", className)}
+      // text-destructive-text (not text-destructive): the raw --destructive token
+      // fails WCAG AA (3.76:1) at normal text size against --background. See styles.css.
+      className={cn("text-sm font-normal text-destructive-text", className)}
       {...props}
     >
       {content}

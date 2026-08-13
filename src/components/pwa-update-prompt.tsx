@@ -61,7 +61,11 @@ export function PwaUpdatePrompt() {
 
   return (
     <div className="fixed inset-x-0 bottom-4 z-[60] flex justify-center px-4">
-      <div className="pointer-events-auto flex items-center gap-3 rounded-xl border border-border bg-background/95 px-4 py-3 shadow-lg backdrop-blur-md">
+      <div
+        role="status"
+        aria-live="polite"
+        className="pointer-events-auto flex items-center gap-3 rounded-xl border border-border bg-background/95 px-4 py-3 shadow-lg backdrop-blur-md"
+      >
         <span className="text-sm font-medium text-foreground">A new version of Boostk is available.</span>
         <button
           type="button"

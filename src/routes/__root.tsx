@@ -54,6 +54,18 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body className="font-sans antialiased wrap-anywhere selection:bg-red-500" suppressHydrationWarning>
+        {/*
+          Skip link: first focusable element on every page. Lets keyboard/screen-reader
+          users jump past nav/header chrome straight to the page's main content.
+          Requires each layout to wrap its content in <main id="main-content">.
+        */}
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100] focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground"
+        >
+          Skip to main content
+        </a>
+
         <ToastProvider>
           <TooltipProvider>{children}</TooltipProvider>
         </ToastProvider>

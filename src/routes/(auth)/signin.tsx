@@ -73,11 +73,16 @@ function SigninPage() {
                   <p className="text-balance text-muted-foreground">Login to your Boostk account</p>
                 </div>
 
-                {serverError && <p className="text-sm text-center text-destructive">{serverError}</p>}
+                {serverError && (
+                  <p role="alert" aria-live="assertive" className="text-sm text-center text-destructive-text">
+                    {serverError}
+                  </p>
+                )}
 
                 <signInForm.Field name="email">
                   {(field) => {
                     const isInvalid = getFieldInvalid(field, signInForm);
+                    const errorId = `${field.name}-error`;
                     return (
                       <Field data-invalid={isInvalid}>
                         <FieldLabel htmlFor={field.name}>Email</FieldLabel>
@@ -89,9 +94,10 @@ function SigninPage() {
                           onBlur={field.handleBlur}
                           onChange={(e) => field.handleChange(e.target.value)}
                           aria-invalid={isInvalid}
+                          aria-describedby={isInvalid ? errorId : undefined}
                           placeholder="m@example.com"
                         />
-                        {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                        {isInvalid && <FieldError id={errorId} errors={field.state.meta.errors} />}
                       </Field>
                     );
                   }}
@@ -100,11 +106,15 @@ function SigninPage() {
                 <signInForm.Field name="password">
                   {(field) => {
                     const isInvalid = getFieldInvalid(field, signInForm);
+                    const errorId = `${field.name}-error`;
                     return (
                       <Field data-invalid={isInvalid}>
                         <div className="flex items-center">
                           <FieldLabel htmlFor={field.name}>Password</FieldLabel>
-                          <Link to="/forgot-password" className="ml-auto text-sm underline-offset-2 hover:underline">
+                          <Link
+                            to="/forgot-password"
+                            className="ml-auto -my-2 inline-block py-2 text-sm underline-offset-2 hover:underline"
+                          >
                             Forgot your password?
                           </Link>
                         </div>
@@ -115,8 +125,9 @@ function SigninPage() {
                           onBlur={field.handleBlur}
                           onChange={(e) => field.handleChange(e.target.value)}
                           aria-invalid={isInvalid}
+                          aria-describedby={isInvalid ? errorId : undefined}
                         />
-                        {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                        {isInvalid && <FieldError id={errorId} errors={field.state.meta.errors} />}
                       </Field>
                     );
                   }}
@@ -133,22 +144,32 @@ function SigninPage() {
                 </signInForm.Subscribe>
 
                 <FieldDescription className="text-center">
-                  Don&apos;t have an account? <Link to="/signup">Sign up</Link>
+                  Don&apos;t have an account?{" "}
+                  <Link to="/signup" className="inline-block px-1 py-2 underline-offset-2 hover:underline">
+                    Sign up
+                  </Link>
                 </FieldDescription>
               </FieldGroup>
             </form>
             <div className="relative hidden bg-muted md:block">
               <img
                 src="/sign-in.webp"
-                alt="placeholder"
+                alt=""
                 className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
               />
             </div>
           </CardContent>
         </Card>
         <FieldDescription className="py-6 text-center text-xs">
-          By clicking continue, you agree to our <Link to="/">Terms of Service</Link> and{" "}
-          <Link to="/">Privacy Policy</Link>.
+          By clicking continue, you agree to our{" "}
+          <Link to="/" className="inline-block px-1 py-2 underline-offset-2 hover:underline">
+            Terms of Service
+          </Link>{" "}
+          and{" "}
+          <Link to="/" className="inline-block px-1 py-2 underline-offset-2 hover:underline">
+            Privacy Policy
+          </Link>
+          .
         </FieldDescription>
       </div>
     </div>
