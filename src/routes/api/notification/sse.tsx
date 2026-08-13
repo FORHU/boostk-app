@@ -109,7 +109,7 @@ export const Route = createFileRoute("/api/notification/sse")({
               // the real-time connection degraded, so they know to refresh or rely on standard polling.
             });
 
-                request.signal.addEventListener("abort", () => {
+            request.signal.addEventListener("abort", () => {
               // [SSE] client disconnect log removed
               clearInterval(timer);
 
