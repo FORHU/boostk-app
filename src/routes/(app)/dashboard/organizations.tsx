@@ -78,7 +78,6 @@ const OrganizationForm = () => {
       onSubmit: createOrganizationSchema,
     },
     onSubmit: async ({ value }) => {
-      console.log(value);
       await createOrganizationMutation.mutateAsync({ data: value });
     },
   });
