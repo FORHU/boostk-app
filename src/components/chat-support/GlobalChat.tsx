@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { BoostkLogo } from "@/components/BoostkLogo";
 import { AttachmentButton, AttachmentPreview } from "@/components/chat-support/attachment-picker";
 import IntakeCustomerForm from "@/components/chat-support/IntakeCustomerForm";
+import { RateLimitBanner } from "@/components/chat-support/rate-limit-banner";
 import { SatisfactionRating } from "@/components/chat-support/SatisfactionRating";
 import TicketChatMessageBubble, {
   type TicketMessageWithAttachment,
@@ -215,6 +216,8 @@ const ChatInput = ({
   const [status, setStatus] = useState(initialStatus);
   const [rated, setRated] = useState(initialScore != null);
 
+  const rateLimit = useRateLimitNotice();
+
   const onUploadError = useCallback((error: string) => toast(error, "error"), [toast]);
   const { attachment, isUploading, upload, clear } = useAttachmentUpload({
     ticketId,
@@ -240,7 +243,7 @@ const ChatInput = ({
     // A 429 becomes the cooldown strip instead of a toast; everything else still toasts,
     // so no failure goes silent.
     onError: (error) => {
-      if (!captureRateLimit(error)) toast("Failed to send message.", "error");
+      if (!rateLimit.capture(error)) toast("Failed to send message.", "error");
     },
   });
 
