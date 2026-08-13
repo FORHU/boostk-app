@@ -10,6 +10,7 @@ import {
   Loader2,
   Paperclip,
   Send,
+  Star,
   User,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -178,6 +179,14 @@ function RouteComponent() {
                     {CLOSE_REASON[item.triageNote] ?? item.triageNote}
                   </span>
                 ) : null}
+
+                {/* CSAT: the visitor's own rating of a closed conversation. */}
+                {item.satisfactionScore != null && (
+                  <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700">
+                    <Star size={10} className="fill-amber-400 text-amber-400" />
+                    {item.satisfactionScore}/5
+                  </span>
+                )}
               </button>
             ))
           )}
@@ -313,7 +322,15 @@ function TriageDetail({ intakeTicketId, onDone }: { intakeTicketId: string; onDo
               {thread.customer.language ? ` · ${thread.customer.language}` : ""}
             </p>
           </div>
-          <span className="ml-auto text-xs text-gray-400 font-mono">{thread.referenceNumber}</span>
+          <div className="ml-auto flex items-center gap-2">
+            {thread.satisfactionScore != null && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700">
+                <Star size={10} className="fill-amber-400 text-amber-400" />
+                Rated {thread.satisfactionScore}/5
+              </span>
+            )}
+            <span className="text-xs text-gray-400 font-mono">{thread.referenceNumber}</span>
+          </div>
         </div>
         {/* The intake form's subject is recorded as the visitor's first message, so it
             appears in the thread below — translated — instead of being repeated here

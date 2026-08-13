@@ -2,7 +2,11 @@ import { getCookie, setCookie } from "@tanstack/react-start/server";
 import { TicketMessageContentType, TicketPriority, TicketStatus } from "prisma/generated/enums";
 import { EventType } from "@/lib/notifier/core";
 import { prisma } from "@/lib/prisma";
-import { publishToPlatformStaff, publishToProjectAgents } from "@/modules/notification/notification.publish";
+import {
+  publishToPlatformStaff,
+  publishToProjectAgents,
+  publishToTicketChannel,
+} from "@/modules/notification/notification.publish";
 import { createTicket } from "@/modules/ticket/ticket.service";
 import { generateTicketReferenceNumber } from "@/modules/ticket/ticket.utils";
 import { prepareIncomingCustomerText } from "@/modules/ticket-message/ticket-message.translation";
@@ -332,7 +336,7 @@ export const closeIntakeTicket = async ({
   if (!intakeTicket) throw new Error("Intake conversation not found.");
   if (intakeTicket.routedAt) throw new Error("This conversation has already been routed.");
 
-  return prisma.ticket.update({
+  const updated = await prisma.ticket.update({
     where: { id: intakeTicket.id },
     data: {
       status: TicketStatus.CLOSED,
@@ -343,6 +347,16 @@ export const closeIntakeTicket = async ({
     },
     select: { id: true, status: true, triageNote: true },
   });
+
+  // Live-update the visitor's open /chat window so the closed panel (and the CSAT
+  // rating that gates the next conversation) appears without waiting for a reload.
+  await publishToTicketChannel({
+    ticketId: intakeTicket.id,
+    event: EventType.TICKET_STATUS_CHANGED,
+    data: { ticketId: intakeTicket.id, status: updated.status },
+  });
+
+  return updated;
 };
 
 // ---------------------------------------------------------------------------
@@ -428,6 +442,7 @@ export const getTriageQueue = async ({ search, filter, take, cursor }: GetTriage
       messageCount: ticket._count.ticketMessages,
       routedAt: ticket.routedAt,
       triageNote: ticket.triageNote,
+      satisfactionScore: ticket.satisfactionScore,
       routedTo: ticket.routedTicket
         ? {
             referenceNumber: ticket.routedTicket.referenceNumber,

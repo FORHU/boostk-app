@@ -1,12 +1,17 @@
 import { createServerFn } from "@tanstack/react-start";
+import { TicketStatus } from "prisma/generated/enums";
 import { z } from "zod";
+import { EventType } from "@/lib/notifier/core";
 import { prisma } from "@/lib/prisma";
 import { ORG_ROLE } from "@/modules/auth/roles";
+import { publishToProjectAgents, publishToTicketChannel } from "@/modules/notification/notification.publish";
 import { requireProjectRole } from "@/modules/project/project.middleware";
+import { requireCustomerTicketMiddleware } from "./ticket.middleware";
 import {
   GetProjectTicketCountsSchema,
   GetProjectTicketsSchema,
   GetTicketByReferenceNumberSchema,
+  RateTicketSchema,
   UpsertTicketSessionInput,
 } from "./ticket.schema";
 import {
@@ -54,6 +59,65 @@ export const getTicketCookieFn = createServerFn({ method: "GET" })
   .inputValidator(z.object({ projectId: z.string().min(1) }))
   .handler(async ({ data }) => {
     return getTicketSession(data.projectId);
+  });
+
+// A customer (identified by the ticket cookie scoped to `projectId`) closes their own
+// ticket. Customers can only close — reopening stays an agent action. The status change
+// is broadcast on the ticket channel (live-updates the customer's widget) and to the
+// project's agents (live-updates their dashboards).
+export const closeCustomerTicketFn = createServerFn({ method: "POST" })
+  .middleware([requireCustomerTicketMiddleware])
+  .inputValidator(z.object({ projectId: z.string().min(1), ticketId: z.string().min(1) }))
+  .handler(async ({ data, context }) => {
+    const ticket = context.ticket;
+    if (!ticket) return null;
+    if (ticket.id !== data.ticketId) return null;
+    if (ticket.status !== "OPEN") return ticket;
+
+    const updatedTicket = await prisma.ticket.update({
+      where: { id: ticket.id },
+      data: { status: "CLOSED" },
+    });
+
+    const statusData = { ticketId: ticket.id, status: updatedTicket.status };
+
+    await Promise.all([
+      publishToTicketChannel({
+        ticketId: ticket.id,
+        event: EventType.TICKET_STATUS_CHANGED,
+        data: statusData,
+      }),
+      publishToProjectAgents({
+        projectId: ticket.projectId,
+        event: EventType.TICKET_STATUS_CHANGED,
+        data: statusData,
+      }),
+    ]);
+
+    return updatedTicket;
+  });
+
+/**
+ * Save the customer's CSAT rating for a closed project-widget conversation.
+ *
+ * Guarded by the ticket cookie — the customer can only ever rate their own ticket.
+ * Written once per conversation: an existing score is left untouched, so a reload or
+ * double-tap can never overwrite the first rating.
+ */
+export const rateTicketFn = createServerFn({ method: "POST" })
+  .middleware([requireCustomerTicketMiddleware])
+  .inputValidator(RateTicketSchema)
+  .handler(async ({ data, context }) => {
+    const ticket = context.ticket;
+    if (!ticket) return null;
+    if (ticket.id !== data.ticketId) return null;
+    if (ticket.status !== TicketStatus.CLOSED) return null;
+    if (ticket.satisfactionScore != null) return ticket;
+
+    return prisma.ticket.update({
+      where: { id: ticket.id },
+      data: { satisfactionScore: data.score },
+    });
   });
 
 // Cursor-paginated ticket list. `take + 1` detects whether another page exists and
