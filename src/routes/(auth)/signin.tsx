@@ -104,7 +104,7 @@ function SigninPage() {
                       <Field data-invalid={isInvalid}>
                         <div className="flex items-center">
                           <FieldLabel htmlFor={field.name}>Password</FieldLabel>
-                          <Link to="/" className="ml-auto text-sm underline-offset-2 hover:underline">
+                          <Link to="/forgot-password" className="ml-auto text-sm underline-offset-2 hover:underline">
                             Forgot your password?
                           </Link>
                         </div>

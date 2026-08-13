@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as authRouteRouteImport } from './routes/(auth)/route'
 import { Route as appRouteRouteImport } from './routes/(app)/route'
 import { Route as IndexRouteImport } from './routes/index'
@@ -16,6 +17,7 @@ import { Route as ApiTranslateRouteImport } from './routes/api/translate'
 import { Route as publicChatRouteImport } from './routes/(public)/chat'
 import { Route as authSignupRouteImport } from './routes/(auth)/signup'
 import { Route as authSigninRouteImport } from './routes/(auth)/signin'
+import { Route as authForgotPasswordRouteImport } from './routes/(auth)/forgot-password'
 import { Route as ApiAttachmentsIndexRouteImport } from './routes/api/attachments/index'
 import { Route as ApiNotificationSseRouteImport } from './routes/api/notification/sse'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
@@ -39,6 +41,11 @@ import { Route as appDashboardOrgOrganizationIdSettingsRouteImport } from './rou
 import { Route as appDashboardOrgOrganizationIdIntegrationsRouteImport } from './routes/(app)/dashboard/org.$organizationId/integrations'
 import { Route as appDashboardOrgOrganizationIdBillingRouteImport } from './routes/(app)/dashboard/org.$organizationId/billing'
 
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const authRouteRoute = authRouteRouteImport.update({
   id: '/(auth)',
   getParentRoute: () => rootRouteImport,
@@ -70,6 +77,11 @@ const authSignupRoute = authSignupRouteImport.update({
 const authSigninRoute = authSigninRouteImport.update({
   id: '/signin',
   path: '/signin',
+  getParentRoute: () => authRouteRoute,
+} as any)
+const authForgotPasswordRoute = authForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
   getParentRoute: () => authRouteRoute,
 } as any)
 const ApiAttachmentsIndexRoute = ApiAttachmentsIndexRouteImport.update({
@@ -202,6 +214,8 @@ const appDashboardOrgOrganizationIdBillingRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/forgot-password': typeof authForgotPasswordRoute
   '/signin': typeof authSigninRoute
   '/signup': typeof authSignupRoute
   '/chat': typeof publicChatRoute
@@ -231,6 +245,8 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/forgot-password': typeof authForgotPasswordRoute
   '/signin': typeof authSigninRoute
   '/signup': typeof authSignupRoute
   '/chat': typeof publicChatRoute
@@ -261,6 +277,8 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/(app)': typeof appRouteRouteWithChildren
   '/(auth)': typeof authRouteRouteWithChildren
+  '/reset-password': typeof ResetPasswordRoute
+  '/(auth)/forgot-password': typeof authForgotPasswordRoute
   '/(auth)/signin': typeof authSigninRoute
   '/(auth)/signup': typeof authSignupRoute
   '/(public)/chat': typeof publicChatRoute
@@ -292,6 +310,8 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/reset-password'
+    | '/forgot-password'
     | '/signin'
     | '/signup'
     | '/chat'
@@ -321,6 +341,8 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/reset-password'
+    | '/forgot-password'
     | '/signin'
     | '/signup'
     | '/chat'
@@ -350,6 +372,8 @@ export interface FileRouteTypes {
     | '/'
     | '/(app)'
     | '/(auth)'
+    | '/reset-password'
+    | '/(auth)/forgot-password'
     | '/(auth)/signin'
     | '/(auth)/signup'
     | '/(public)/chat'
@@ -382,6 +406,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   appRouteRoute: typeof appRouteRouteWithChildren
   authRouteRoute: typeof authRouteRouteWithChildren
+  ResetPasswordRoute: typeof ResetPasswordRoute
   publicChatRoute: typeof publicChatRoute
   ApiTranslateRoute: typeof ApiTranslateRoute
   ApiAttachmentsIdRoute: typeof ApiAttachmentsIdRoute
@@ -394,6 +419,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/(auth)': {
       id: '/(auth)'
       path: ''
@@ -441,6 +473,13 @@ declare module '@tanstack/react-router' {
       path: '/signin'
       fullPath: '/signin'
       preLoaderRoute: typeof authSigninRouteImport
+      parentRoute: typeof authRouteRoute
+    }
+    '/(auth)/forgot-password': {
+      id: '/(auth)/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof authForgotPasswordRouteImport
       parentRoute: typeof authRouteRoute
     }
     '/api/attachments/': {
@@ -681,11 +720,13 @@ const appRouteRouteWithChildren = appRouteRoute._addFileChildren(
 )
 
 interface authRouteRouteChildren {
+  authForgotPasswordRoute: typeof authForgotPasswordRoute
   authSigninRoute: typeof authSigninRoute
   authSignupRoute: typeof authSignupRoute
 }
 
 const authRouteRouteChildren: authRouteRouteChildren = {
+  authForgotPasswordRoute: authForgotPasswordRoute,
   authSigninRoute: authSigninRoute,
   authSignupRoute: authSignupRoute,
 }
@@ -698,6 +739,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   appRouteRoute: appRouteRouteWithChildren,
   authRouteRoute: authRouteRouteWithChildren,
+  ResetPasswordRoute: ResetPasswordRoute,
   publicChatRoute: publicChatRoute,
   ApiTranslateRoute: ApiTranslateRoute,
   ApiAttachmentsIdRoute: ApiAttachmentsIdRoute,
