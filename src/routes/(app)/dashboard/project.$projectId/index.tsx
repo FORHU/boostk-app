@@ -1,23 +1,11 @@
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import {
-  CheckCircle2,
-  CircleDot,
-  ExternalLink,
-  Maximize2,
-  MessageCircle,
-  MessageSquarePlus,
-  Minimize2,
-  Settings,
-  Users,
-  X,
-} from "lucide-react";
-import { Suspense, useState } from "react";
+import { CheckCircle2, CircleDot, ExternalLink, MessageSquarePlus, Settings, Users } from "lucide-react";
+import { Suspense } from "react";
 import { z } from "zod";
 import { EmptyState } from "@/components/ui/empty-state";
 import { TextSkeleton, UsageCardsSkeleton } from "@/components/ui/skeleton";
-import { useViewport } from "@/hooks/use-viewport";
 import { formatRelative } from "@/lib/format-date";
 import { prisma } from "@/lib/prisma";
 import { ORG_ROLE } from "@/modules/auth/roles";
@@ -68,10 +56,6 @@ export const Route = createFileRoute("/(app)/dashboard/project/$projectId/")({
 // 4. FRONTEND COMPONENTS
 function ProjectOverviewPage() {
   const { projectId } = Route.useParams();
-  const { isMobile } = useViewport();
-
-  const [isChatOpen, setIsChatOpen] = useState(false);
-  const [isChatLarge, setIsChatLarge] = useState(false);
 
   return (
     <div className="w-full h-[calc(100dvh-64px)] overflow-y-auto bg-background text-foreground">
@@ -91,46 +75,6 @@ function ProjectOverviewPage() {
         >
           <OverviewContent projectId={projectId} />
         </Suspense>
-      </div>
-
-      {/* ----- FLOATING CHAT WIDGET UI ----- */}
-      <div
-        className={`fixed right-4 z-50 flex flex-col items-end max-w-[calc(100vw-2rem)] ${isMobile ? "bottom-24" : "bottom-6"}`}
-      >
-        {isChatOpen && (
-          <div
-            className={`mb-4 rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-in slide-in-from-bottom-5 fade-in duration-200 relative transition-all border border-border
-              ${
-                isChatLarge
-                  ? "w-[calc(100vw-2rem)] md:w-[800px] h-[80vh]"
-                  : "w-[calc(100vw-2rem)] md:w-[380px] h-[60vh] max-h-[600px]"
-              } `}
-          >
-            <button
-              type="button"
-              onClick={() => setIsChatLarge(!isChatLarge)}
-              className="absolute top-3 right-3 z-10 p-2 backdrop-blur-sm text-slate-500 hover:text-slate-800 bg-white/50 rounded-md transition-all hidden md:block"
-              title={isChatLarge ? "Shrink chat" : "Expand chat"}
-            >
-              {isChatLarge ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
-            </button>
-
-            <iframe
-              src={`/support/${projectId}/chat-widget`}
-              className="w-full h-full border-none bg-slate-50 mt-0"
-              title="Customer Support Chat"
-            />
-          </div>
-        )}
-
-        <button
-          type="button"
-          onClick={() => setIsChatOpen(!isChatOpen)}
-          className="bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-full shadow-lg transition-transform hover:scale-105 active:scale-95 flex items-center justify-center h-14 w-14 flex-shrink-0"
-          aria-label="Toggle Chat"
-        >
-          {isChatOpen ? <X size={24} /> : <MessageCircle size={24} />}
-        </button>
       </div>
     </div>
   );

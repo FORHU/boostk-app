@@ -71,6 +71,17 @@ export const CloseIntakeTicketSchema = z.object({
 export type CloseIntakeTicketInput = z.infer<typeof CloseIntakeTicketSchema>;
 
 /**
+ * The visitor's CSAT rating of a closed conversation: 1-5 stars. Written once, guarded
+ * by the intake cookie — the same credential that authorizes messaging, so a visitor
+ * can only ever rate their own ticket.
+ */
+export const RateIntakeTicketSchema = z.object({
+  ticketId: z.string(),
+  score: z.number().int().min(1).max(5),
+});
+export type RateIntakeTicketInput = z.infer<typeof RateIntakeTicketSchema>;
+
+/**
  * Which outcome the queue is listing. The three are mutually exclusive and derived
  * from columns that already exist, so this is purely a read filter:
  *
@@ -118,6 +129,8 @@ export type TriageQueueItem = {
   routedAt: Date | null;
   /** Why it was closed without routing: "resolved" | "no_fit" | "spam". */
   triageNote: string | null;
+  /** 1-5 CSAT stars the visitor gave after the conversation closed. Null until rated. */
+  satisfactionScore: number | null;
   /** Where a forwarded conversation went. Null unless `routedAt` is set. */
   routedTo: {
     referenceNumber: string;

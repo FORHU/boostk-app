@@ -9,12 +9,13 @@ import {
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { motion } from "framer-motion";
-import { ArrowLeft, Check, ChevronDown, Loader2, Maximize, MessageCircle, Minimize, User, X } from "lucide-react";
+import { ArrowLeft, Check, ChevronDown, Loader2, Maximize, MessageCircle, Minimize, Star, User, X } from "lucide-react";
 import type { TicketMessage } from "prisma/generated/client";
 import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { ReplyInput } from "@/components/chat-support/reply-input";
 import TicketChatMessageBubble from "@/components/chat-support/TicketChatMessageBubble";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -222,6 +223,7 @@ function TicketDetailPanel({
   onBack?: () => void;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [statusAction, setStatusAction] = useState<"CLOSED" | "OPEN" | null>(null);
   const { toast } = useToast();
 
   const { data: ticket, isLoading } = useQuery({
@@ -329,6 +331,12 @@ function TicketDetailPanel({
                   }}
                 />
               )}
+              {!isLoading && ticket && ticket.satisfactionScore != null && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-medium text-amber-100">
+                  <Star size={10} className="fill-amber-400 text-amber-400" />
+                  Rated {ticket.satisfactionScore}/5
+                </span>
+              )}
               {!isLoading && ticket && (
                 <div className="flex items-center gap-2">
                   <select
@@ -367,14 +375,7 @@ function TicketDetailPanel({
               disabled={updateStatusMutation.isPending}
               onClick={() => {
                 if (!ticketId) return;
-                const newStatus = ticket?.status === "OPEN" ? "CLOSED" : "OPEN";
-                updateStatusMutation.mutate({
-                  data: {
-                    projectId,
-                    ticketId: ticketId,
-                    status: newStatus,
-                  },
-                });
+                setStatusAction(ticket?.status === "OPEN" ? "CLOSED" : "OPEN");
               }}
               className="px-3 py-1.5 text-xs font-medium rounded-sm bg-white/15 hover:bg-white/25 disabled:opacity-50"
             >
@@ -454,6 +455,32 @@ function TicketDetailPanel({
           />
         )}
       </div>
+
+      <ConfirmDialog
+        isOpen={statusAction !== null}
+        onClose={() => setStatusAction(null)}
+        title={statusAction === "CLOSED" ? "Close this ticket?" : "Reopen this ticket?"}
+        message={
+          statusAction === "CLOSED"
+            ? "The customer won't be able to send messages on this conversation once it's closed."
+            : "Reopening this ticket lets the customer send messages on this conversation again."
+        }
+        confirmLabel={statusAction === "CLOSED" ? "Close" : "Reopen"}
+        cancelLabel="Cancel"
+        variant="default"
+        isPending={updateStatusMutation.isPending}
+        onConfirm={() => {
+          if (!ticketId || !statusAction) return;
+          updateStatusMutation.mutate({
+            data: {
+              projectId,
+              ticketId,
+              status: statusAction,
+            },
+          });
+          setStatusAction(null);
+        }}
+      />
     </div>
   );
 }
@@ -530,6 +557,18 @@ function ProjectTicketsPage() {
       if (assignedTicketId && selectedTicketId === assignedTicketId) {
         queryClient.invalidateQueries({
           queryKey: projectTicketQueries.detailById(projectId, assignedTicketId).queryKey,
+        });
+      }
+    }
+
+    if (lastMessage.event === EventType.TICKET_STATUS_CHANGED) {
+      const changedTicketId = lastMessage.data?.ticketId;
+      queryClient.invalidateQueries({
+        queryKey: projectTicketQueries.listPrefix(projectId),
+      });
+      if (changedTicketId && selectedTicketId === changedTicketId) {
+        queryClient.invalidateQueries({
+          queryKey: projectTicketQueries.detailById(projectId, changedTicketId).queryKey,
         });
       }
     }
@@ -737,6 +776,15 @@ function ProjectTicketsPage() {
                             >
                               {ticket.status}
                             </span>
+                            {ticket.satisfactionScore != null && (
+                              <span
+                                className="ml-2 inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700"
+                                title={`Customer rating: ${ticket.satisfactionScore}/5`}
+                              >
+                                <Star size={12} className="fill-amber-400 text-amber-400" />
+                                {ticket.satisfactionScore}/5
+                              </span>
+                            )}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm">{ticket.customer?.name}</td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -864,6 +912,15 @@ function ProjectTicketsPage() {
                           >
                             {ticket.status}
                           </span>
+                          {ticket.satisfactionScore != null && (
+                            <span
+                              className="ml-2 inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700"
+                              title={`Customer rating: ${ticket.satisfactionScore}/5`}
+                            >
+                              <Star size={12} className="fill-amber-400 text-amber-400" />
+                              {ticket.satisfactionScore}/5
+                            </span>
+                          )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">{ticket.customer?.name}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">{formatRelative(ticket.createdAt)}</td>

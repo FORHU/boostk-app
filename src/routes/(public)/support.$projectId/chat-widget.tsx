@@ -7,16 +7,22 @@ import { Suspense, useCallback, useEffect, useState } from "react";
 import { z } from "zod";
 import { BoostkLogo } from "@/components/BoostkLogo";
 import { AttachmentButton, AttachmentPreview } from "@/components/chat-support/attachment-picker";
-import { RateLimitBanner } from "@/components/chat-support/rate-limit-banner";
+import { SatisfactionRating } from "@/components/chat-support/SatisfactionRating";
 import TicketChatMessageBubble from "@/components/chat-support/TicketChatMessageBubble";
 import TicketCustomerForm from "@/components/chat-support/TicketCustomerForm";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useToast } from "@/components/ui/toast";
 import { useAttachmentUpload } from "@/hooks/use-attachment-upload";
 import { useRateLimitNotice } from "@/hooks/use-rate-limit-notice";
 import { useSocket } from "@/hooks/use-socket";
-import { EventType, type Message } from "@/lib/notifier/core";
+import { EventType } from "@/lib/notifier/core";
 import { getProjectPublicFn } from "@/modules/project/project.functions";
-import { clearTicketCookieFn, getTicketCookieFn } from "@/modules/ticket/ticket.functions";
+import {
+  clearTicketCookieFn,
+  closeCustomerTicketFn,
+  getTicketCookieFn,
+  rateTicketFn,
+} from "@/modules/ticket/ticket.functions";
 import { createTicketMessageFn } from "@/modules/ticket-message/ticket-message.functions";
 import { ticketMessageQueries } from "@/modules/ticket-message/ticket-message.queries";
 
@@ -66,7 +72,10 @@ function RouteComponent() {
   const { project, ticket } = Route.useRouteContext();
   const { ref } = Route.useSearch();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [showSpinner, setShowSpinner] = useState(true);
+  const [ticketStatus, setTicketStatus] = useState<string | null>(ticket?.status ?? null);
+  const [isCloseConfirmOpen, setIsCloseConfirmOpen] = useState(false);
   const { lastMessage, status } = useSocket({ ticketId: ticket?.id, projectId: project.id });
 
   // Realtime: refetch the message list whenever a new message arrives over
@@ -76,6 +85,23 @@ function RouteComponent() {
       queryClient.invalidateQueries({ queryKey: ticketMessageQueries.all });
     }
   }, [lastMessage, queryClient]);
+
+  // Realtime: keep the ticket status in sync when the agent (or this customer)
+  // closes/reopens the ticket on another surface.
+  useEffect(() => {
+    if (lastMessage?.event === EventType.TICKET_STATUS_CHANGED && lastMessage.data?.ticketId === ticket?.id) {
+      setTicketStatus(lastMessage.data.status);
+    }
+  }, [lastMessage, ticket?.id]);
+
+  const closeTicketMutation = useMutation({
+    mutationFn: closeCustomerTicketFn,
+    onSuccess: (updatedTicket) => {
+      if (updatedTicket) setTicketStatus(updatedTicket.status);
+      setIsCloseConfirmOpen(false);
+    },
+    onError: () => toast("Failed to close the ticket. Please try again.", "error"),
+  });
 
   // This effect forces the spinner to stay for at least 500ms
   useEffect(() => {
@@ -93,7 +119,13 @@ function RouteComponent() {
 
   return (
     <div className="flex flex-col h-screen max-h-screen bg-white overflow-hidden">
-      <ChatHeader project={project} connectionStatus={ticket ? status : undefined} />
+      <ChatHeader
+        project={project}
+        connectionStatus={ticket ? status : undefined}
+        ticketStatus={ticketStatus}
+        isClosingTicket={closeTicketMutation.isPending}
+        onRequestClose={() => setIsCloseConfirmOpen(true)}
+      />
 
       <div className="flex-1 overflow-y-auto p-2 bg-slate-50 scroll-smooth pb-4">
         {/* If the timer is still running, show the spinner, otherwise let Suspense handle it */}
@@ -126,12 +158,27 @@ function RouteComponent() {
         >
           <ChatInput
             ticketId={ticket.id}
-            initialStatus={ticket.status}
+            status={ticketStatus}
             projectId={project.id}
-            lastMessage={lastMessage}
+            initialScore={ticket.satisfactionScore ?? null}
           />
         </motion.div>
       ) : null}
+
+      <ConfirmDialog
+        isOpen={isCloseConfirmOpen}
+        onClose={() => setIsCloseConfirmOpen(false)}
+        title="Close this ticket?"
+        message="The agent won't be able to reply on this conversation once it's closed."
+        confirmLabel="Close"
+        cancelLabel="Cancel"
+        variant="default"
+        isPending={closeTicketMutation.isPending}
+        onConfirm={() => {
+          if (!ticket) return;
+          closeTicketMutation.mutate({ data: { projectId: project.id, ticketId: ticket.id } });
+        }}
+      />
     </div>
   );
 }
@@ -139,9 +186,15 @@ function RouteComponent() {
 const ChatHeader = ({
   project,
   connectionStatus,
+  ticketStatus,
+  isClosingTicket,
+  onRequestClose,
 }: {
   project: Pick<Project, "id" | "name" | "logo" | "description">;
   connectionStatus?: "connecting" | "connected" | "reconnecting";
+  ticketStatus?: string | null;
+  isClosingTicket: boolean;
+  onRequestClose: () => void;
 }) => {
   const isReconnecting = connectionStatus != null && connectionStatus !== "connected";
 
@@ -172,6 +225,18 @@ const ChatHeader = ({
           </span>
         </div>
       </div>
+
+      {ticketStatus === "OPEN" && (
+        <button
+          type="button"
+          onClick={onRequestClose}
+          disabled={isClosingTicket}
+          className="px-3 py-1.5 text-xs font-medium rounded-sm bg-white/15 hover:bg-white/25 disabled:opacity-50 flex items-center gap-1.5"
+        >
+          {isClosingTicket && <Loader2 className="animate-spin size-3.5" />}
+          Close Ticket
+        </button>
+      )}
     </header>
   );
 };
@@ -217,45 +282,31 @@ const TicketMessageList = ({ projectId }: { projectId: string }) => {
 
 interface ChatInputProps {
   ticketId: string;
-  initialStatus: string;
+  status: string | null;
   projectId: string;
-  lastMessage: Message | null;
+  /** CSAT stars already on this ticket, so a reload doesn't ask twice. */
+  initialScore: number | null;
 }
 
-const ChatInput = ({ ticketId, initialStatus, projectId, lastMessage }: ChatInputProps) => {
+const ChatInput = ({ ticketId, status, projectId, initialScore }: ChatInputProps) => {
   const queryClient = useQueryClient();
   const router = useRouter();
   const { toast } = useToast();
   const [message, setMessage] = useState<string>("");
-  const [status, setStatus] = useState(initialStatus);
+  const [rated, setRated] = useState(initialScore != null);
 
-  // One notice for the whole composer: uploads and sends share a cooldown strip, because
-  // to the visitor they are one control that has been asked to wait.
-  const rateLimit = useRateLimitNotice();
+  const rateMutation = useMutation({
+    mutationFn: rateTicketFn,
+    onSuccess: () => setRated(true),
+    onError: (error) => toast(error instanceof Error ? error.message : "Failed to save your rating.", "error"),
+  });
 
-  // Depends on `capture`, not on `rateLimit`: the notice object is rebuilt every tick of
-  // the countdown, and depending on it would rebuild `upload` a second at a time.
-  const captureRateLimit = rateLimit.capture;
-  const onUploadError = useCallback(
-    (error: string, detail?: unknown) => {
-      if (!captureRateLimit(detail)) toast(error, "error");
-    },
-    [toast, captureRateLimit],
-  );
+  const onUploadError = useCallback((error: string) => toast(error, "error"), [toast]);
   const { attachment, isUploading, upload, clear } = useAttachmentUpload({
     ticketId,
     projectId,
     onError: onUploadError,
   });
-
-  // Listen for TICKET_STATUS_CHANGED events
-  useEffect(() => {
-    if (lastMessage?.event === EventType.TICKET_STATUS_CHANGED) {
-      if (lastMessage.data.ticketId === ticketId) {
-        setStatus(lastMessage.data.status);
-      }
-    }
-  }, [lastMessage, ticketId]);
 
   const createTicketMessageMutation = useMutation({
     mutationKey: ticketMessageQueries.all,
@@ -304,6 +355,15 @@ const ChatInput = ({ ticketId, initialStatus, projectId, lastMessage }: ChatInpu
   };
 
   if (status === "CLOSED") {
+    if (!rated) {
+      return (
+        <SatisfactionRating
+          isPending={rateMutation.isPending}
+          onSubmit={(score) => rateMutation.mutate({ data: { projectId, ticketId, score } })}
+        />
+      );
+    }
+
     return (
       <div className="p-4 bg-white border-t border-gray-100 flex flex-col items-center justify-center text-center">
         <CheckCircle2 className="text-emerald-500 mb-2" size={24} />
