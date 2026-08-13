@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { TicketStatus } from "prisma/generated/enums";
 import { z } from "zod";
 import { EventType } from "@/lib/notifier/core";
 import { prisma } from "@/lib/prisma";
@@ -10,6 +11,7 @@ import {
   GetProjectTicketCountsSchema,
   GetProjectTicketsSchema,
   GetTicketByReferenceNumberSchema,
+  RateTicketSchema,
   UpsertTicketSessionInput,
 } from "./ticket.schema";
 import {
@@ -93,6 +95,29 @@ export const closeCustomerTicketFn = createServerFn({ method: "POST" })
     ]);
 
     return updatedTicket;
+  });
+
+/**
+ * Save the customer's CSAT rating for a closed project-widget conversation.
+ *
+ * Guarded by the ticket cookie — the customer can only ever rate their own ticket.
+ * Written once per conversation: an existing score is left untouched, so a reload or
+ * double-tap can never overwrite the first rating.
+ */
+export const rateTicketFn = createServerFn({ method: "POST" })
+  .middleware([requireCustomerTicketMiddleware])
+  .inputValidator(RateTicketSchema)
+  .handler(async ({ data, context }) => {
+    const ticket = context.ticket;
+    if (!ticket) return null;
+    if (ticket.id !== data.ticketId) return null;
+    if (ticket.status !== TicketStatus.CLOSED) return null;
+    if (ticket.satisfactionScore != null) return ticket;
+
+    return prisma.ticket.update({
+      where: { id: ticket.id },
+      data: { satisfactionScore: data.score },
+    });
   });
 
 // Cursor-paginated ticket list. `take + 1` detects whether another page exists and

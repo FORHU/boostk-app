@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { BoostkLogo } from "@/components/BoostkLogo";
 import { AttachmentButton, AttachmentPreview } from "@/components/chat-support/attachment-picker";
 import IntakeCustomerForm from "@/components/chat-support/IntakeCustomerForm";
+import { SatisfactionRating } from "@/components/chat-support/SatisfactionRating";
 import TicketChatMessageBubble, {
   type TicketMessageWithAttachment,
 } from "@/components/chat-support/TicketChatMessageBubble";
@@ -13,7 +14,7 @@ import { useToast } from "@/components/ui/toast";
 import { useAttachmentUpload } from "@/hooks/use-attachment-upload";
 import { useSocket } from "@/hooks/use-socket";
 import { EventType } from "@/lib/notifier/core";
-import { clearIntakeCookieFn, createIntakeMessageFn } from "@/modules/intake/intake.functions";
+import { clearIntakeCookieFn, createIntakeMessageFn, rateIntakeTicketFn } from "@/modules/intake/intake.functions";
 import { intakeQueries } from "@/modules/intake/intake.queries";
 
 /**
@@ -79,6 +80,7 @@ export default function GlobalChat({ headerAction }: { headerAction?: React.Reac
           ticketId={ticket.id}
           projectId={ticket.projectId}
           initialStatus={ticket.status}
+          initialScore={ticket.satisfactionScore}
           statusEvent={lastMessage}
         />
       ) : initialMessage !== null ? (
@@ -169,22 +171,48 @@ const MessageList = ({ messages, hasTicket }: { messages: TicketMessageWithAttac
   );
 };
 
+/**
+ * The CSAT gate for a closed global conversation. Wraps the shared `SatisfactionRating`
+ * with the intake cookie-guarded mutation; the server writes the score once, and the
+ * parent flips `rated` on success so the closed panel (and new-conversation button) shows.
+ */
+const ClosedConversationRating = ({ ticketId, onRated }: { ticketId: string; onRated: () => void }) => {
+  const { toast } = useToast();
+
+  const rateMutation = useMutation({
+    mutationFn: rateIntakeTicketFn,
+    onSuccess: onRated,
+    onError: (error) => toast(error instanceof Error ? error.message : "Failed to save your rating.", "error"),
+  });
+
+  return (
+    <SatisfactionRating
+      isPending={rateMutation.isPending}
+      onSubmit={(score) => rateMutation.mutate({ data: { ticketId, score } })}
+    />
+  );
+};
+
 const ChatInput = ({
   ticketId,
   projectId,
   initialStatus,
+  initialScore,
   statusEvent,
 }: {
   ticketId: string;
   /** The ticket's own project — the upload route rejects a mismatch. */
   projectId: string;
   initialStatus: string;
+  /** CSAT stars already on this ticket, so a reload doesn't ask twice. */
+  initialScore: number | null;
   statusEvent: { event: EventType; data: { ticketId?: string; status?: string } } | null;
 }) => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState(initialStatus);
+  const [rated, setRated] = useState(initialScore != null);
 
   const onUploadError = useCallback((error: string) => toast(error, "error"), [toast]);
   const { attachment, isUploading, upload, clear } = useAttachmentUpload({
@@ -242,6 +270,10 @@ const ChatInput = ({
   };
 
   if (status === "CLOSED") {
+    if (!rated) {
+      return <ClosedConversationRating ticketId={ticketId} onRated={() => setRated(true)} />;
+    }
+
     return (
       <div className="flex-none p-4 bg-white border-t border-gray-100 flex flex-col items-center justify-center text-center">
         <CheckCircle2 className="text-emerald-500 mb-2" size={22} />

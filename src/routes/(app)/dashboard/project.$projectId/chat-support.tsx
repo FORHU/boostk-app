@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { Info, Loader2, MessageCircle, User } from "lucide-react";
+import { Info, Loader2, MessageCircle, Star, User } from "lucide-react";
 import type { Customer, Project, Ticket, TicketMessage } from "prisma/generated/client";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { ReplyInput } from "@/components/chat-support/reply-input";
@@ -173,6 +173,12 @@ const TicketDetails = ({ ticket, isMobile }: { ticket: TicketWithCustomer | null
           <div className="text-muted-foreground">
             {ticket.status} · {ticket.priority}
           </div>
+          {ticket.satisfactionScore != null && (
+            <div className="mt-2 inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
+              <Star size={12} className="fill-amber-400 text-amber-400" />
+              Rated {ticket.satisfactionScore}/5
+            </div>
+          )}
         </>
       ) : (
         <div className="text-muted-foreground">Ticket details</div>

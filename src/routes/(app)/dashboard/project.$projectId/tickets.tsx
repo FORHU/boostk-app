@@ -9,7 +9,7 @@ import {
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { motion } from "framer-motion";
-import { ArrowLeft, Check, ChevronDown, Loader2, Maximize, MessageCircle, Minimize, User, X } from "lucide-react";
+import { ArrowLeft, Check, ChevronDown, Loader2, Maximize, MessageCircle, Minimize, Star, User, X } from "lucide-react";
 import type { TicketMessage } from "prisma/generated/client";
 import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
@@ -330,6 +330,12 @@ function TicketDetailPanel({
                     });
                   }}
                 />
+              )}
+              {!isLoading && ticket && ticket.satisfactionScore != null && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-medium text-amber-100">
+                  <Star size={10} className="fill-amber-400 text-amber-400" />
+                  Rated {ticket.satisfactionScore}/5
+                </span>
               )}
               {!isLoading && ticket && (
                 <div className="flex items-center gap-2">
@@ -770,6 +776,15 @@ function ProjectTicketsPage() {
                             >
                               {ticket.status}
                             </span>
+                            {ticket.satisfactionScore != null && (
+                              <span
+                                className="ml-2 inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700"
+                                title={`Customer rating: ${ticket.satisfactionScore}/5`}
+                              >
+                                <Star size={12} className="fill-amber-400 text-amber-400" />
+                                {ticket.satisfactionScore}/5
+                              </span>
+                            )}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm">{ticket.customer?.name}</td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -897,6 +912,15 @@ function ProjectTicketsPage() {
                           >
                             {ticket.status}
                           </span>
+                          {ticket.satisfactionScore != null && (
+                            <span
+                              className="ml-2 inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700"
+                              title={`Customer rating: ${ticket.satisfactionScore}/5`}
+                            >
+                              <Star size={12} className="fill-amber-400 text-amber-400" />
+                              {ticket.satisfactionScore}/5
+                            </span>
+                          )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">{ticket.customer?.name}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">{formatRelative(ticket.createdAt)}</td>

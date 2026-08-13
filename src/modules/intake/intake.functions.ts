@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { TicketStatus } from "prisma/generated/enums";
 import { z } from "zod";
 import { EventType } from "@/lib/notifier/core";
 import { prisma } from "@/lib/prisma";
@@ -25,6 +26,7 @@ import {
   CreateIntakeMessageSchema,
   CreateTriageMessageSchema,
   GetTriageQueueSchema,
+  RateIntakeTicketSchema,
   RouteIntakeTicketSchema,
   StartIntakeChatSchema,
 } from "./intake.schema";
@@ -176,6 +178,29 @@ export const createIntakeMessageFn = createServerFn({ method: "POST" })
     }
 
     return message;
+  });
+
+/**
+ * Save the visitor's CSAT rating for a closed conversation.
+ *
+ * Guarded by the intake cookie — the visitor can only ever rate their own ticket,
+ * intake or routed. Written once per conversation: an existing score is left untouched,
+ * so a reload or double-tap can never overwrite the first rating.
+ */
+export const rateIntakeTicketFn = createServerFn({ method: "POST" })
+  .middleware([requireIntakeTicketMiddleware])
+  .inputValidator(RateIntakeTicketSchema)
+  .handler(async ({ data, context }) => {
+    const ticket = context.intakeTicket;
+    if (!ticket) return null;
+    if (ticket.id !== data.ticketId) return null;
+    if (ticket.status !== TicketStatus.CLOSED) return null;
+    if (ticket.satisfactionScore != null) return ticket;
+
+    return prisma.ticket.update({
+      where: { id: ticket.id },
+      data: { satisfactionScore: data.score },
+    });
   });
 
 // ---------------------------------------------------------------------------

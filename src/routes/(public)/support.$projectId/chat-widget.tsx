@@ -7,6 +7,7 @@ import { Suspense, useCallback, useEffect, useState } from "react";
 import { z } from "zod";
 import { BoostkLogo } from "@/components/BoostkLogo";
 import { AttachmentButton, AttachmentPreview } from "@/components/chat-support/attachment-picker";
+import { SatisfactionRating } from "@/components/chat-support/SatisfactionRating";
 import TicketChatMessageBubble from "@/components/chat-support/TicketChatMessageBubble";
 import TicketCustomerForm from "@/components/chat-support/TicketCustomerForm";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -15,7 +16,12 @@ import { useAttachmentUpload } from "@/hooks/use-attachment-upload";
 import { useSocket } from "@/hooks/use-socket";
 import { EventType } from "@/lib/notifier/core";
 import { getProjectPublicFn } from "@/modules/project/project.functions";
-import { clearTicketCookieFn, closeCustomerTicketFn, getTicketCookieFn } from "@/modules/ticket/ticket.functions";
+import {
+  clearTicketCookieFn,
+  closeCustomerTicketFn,
+  getTicketCookieFn,
+  rateTicketFn,
+} from "@/modules/ticket/ticket.functions";
 import { createTicketMessageFn } from "@/modules/ticket-message/ticket-message.functions";
 import { ticketMessageQueries } from "@/modules/ticket-message/ticket-message.queries";
 
@@ -149,7 +155,12 @@ function RouteComponent() {
           exit={{ opacity: 0, y: 8 }}
           transition={{ duration: 0.15, ease: "easeOut" }}
         >
-          <ChatInput ticketId={ticket.id} status={ticketStatus} projectId={project.id} />
+          <ChatInput
+            ticketId={ticket.id}
+            status={ticketStatus}
+            projectId={project.id}
+            initialScore={ticket.satisfactionScore ?? null}
+          />
         </motion.div>
       ) : null}
 
@@ -272,13 +283,22 @@ interface ChatInputProps {
   ticketId: string;
   status: string | null;
   projectId: string;
+  /** CSAT stars already on this ticket, so a reload doesn't ask twice. */
+  initialScore: number | null;
 }
 
-const ChatInput = ({ ticketId, status, projectId }: ChatInputProps) => {
+const ChatInput = ({ ticketId, status, projectId, initialScore }: ChatInputProps) => {
   const queryClient = useQueryClient();
   const router = useRouter();
   const { toast } = useToast();
   const [message, setMessage] = useState<string>("");
+  const [rated, setRated] = useState(initialScore != null);
+
+  const rateMutation = useMutation({
+    mutationFn: rateTicketFn,
+    onSuccess: () => setRated(true),
+    onError: (error) => toast(error instanceof Error ? error.message : "Failed to save your rating.", "error"),
+  });
 
   const onUploadError = useCallback((error: string) => toast(error, "error"), [toast]);
   const { attachment, isUploading, upload, clear } = useAttachmentUpload({
@@ -330,6 +350,15 @@ const ChatInput = ({ ticketId, status, projectId }: ChatInputProps) => {
   };
 
   if (status === "CLOSED") {
+    if (!rated) {
+      return (
+        <SatisfactionRating
+          isPending={rateMutation.isPending}
+          onSubmit={(score) => rateMutation.mutate({ data: { projectId, ticketId, score } })}
+        />
+      );
+    }
+
     return (
       <div className="p-4 bg-white border-t border-gray-100 flex flex-col items-center justify-center text-center">
         <CheckCircle2 className="text-emerald-500 mb-2" size={24} />

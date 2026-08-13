@@ -64,6 +64,7 @@ const ticket = {
   routedAt: null,
   triagedById: null,
   triageNote: null,
+  satisfactionScore: null,
   createdAt: new Date("2026-01-01T00:00:00.000Z"),
   updatedAt: new Date("2026-01-01T00:00:00.000Z"),
 };
@@ -266,6 +267,7 @@ describe("assignTicket", () => {
     routedAt: null,
     triagedById: null,
     triageNote: null,
+    satisfactionScore: null,
     createdAt: new Date("2026-01-01T00:00:00.000Z"),
     updatedAt: new Date("2026-01-01T00:00:00.000Z"),
   };

@@ -228,6 +228,10 @@ model Ticket {
   // Null on routed tickets, which record their outcome via `routedTicket` instead.
   triageNote  String?
 
+  // 1-5 CSAT stars the visitor gave after the conversation closed (see GlobalChat).
+  // Null until rated; written once and never overwritten.
+  satisfactionScore Int?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

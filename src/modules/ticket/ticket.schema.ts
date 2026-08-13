@@ -42,3 +42,15 @@ export const GetProjectTicketCountsSchema = z.object({
   projectId: z.string().min(1),
 });
 export type GetProjectTicketCountsInput = z.infer<typeof GetProjectTicketCountsSchema>;
+
+/**
+ * A customer's CSAT rating of a closed project-widget conversation: 1-5 stars. Written
+ * once, guarded by the ticket cookie — the same credential that authorizes messaging,
+ * scoped to `projectId` so a visitor can only ever rate their own ticket.
+ */
+export const RateTicketSchema = z.object({
+  projectId: z.string().min(1),
+  ticketId: z.string().min(1),
+  score: z.number().int().min(1).max(5),
+});
+export type RateTicketInput = z.infer<typeof RateTicketSchema>;
