@@ -6,13 +6,14 @@ import { EventType } from "@/lib/notifier/core";
 import { prisma } from "@/lib/prisma";
 import { clientKeyFromRequest, rateLimitedResponse } from "@/lib/rate-limit";
 import { requestMiddleware } from "@/lib/request.middleware";
-import { ORG_ROLE } from "@/modules/auth/roles";
+import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
 import { publishToProjectAgents, publishToTicketChannel } from "@/modules/notification/notification.publish";
 import { requireProjectRole } from "@/modules/project/project.middleware";
 import { requireCustomerTicketMiddleware } from "./ticket.middleware";
 import { allowWidgetLookup, allowWidgetSession } from "./ticket.rate-limit";
 import {
   GetProjectTicketCountsSchema,
+  GetProjectTicketInboxSchema,
   GetProjectTicketsSchema,
   GetTicketByReferenceNumberSchema,
   RateTicketSchema,
@@ -209,4 +210,97 @@ export const getProjectTicketCountsFn = createServerFn({ method: "GET" })
     ]);
 
     return { total: open + closed, open, closed };
+  });
+
+// Cursor-paginated ticket list for the Chat Support inbox. `statusFilter` and `search`
+// are applied in SQL so pagination reflects exactly the rows shown. Fetches one extra
+// row to detect whether another page exists; `id` breaks ties so a cursor never skips.
+export const getProjectTicketInboxFn = createServerFn({ method: "GET" })
+  .inputValidator(GetProjectTicketInboxSchema)
+  .middleware([requireProjectRole(ORG_ROLE.AGENT)])
+  .handler(async ({ data, context }) => {
+    const search = data.search?.trim();
+
+    // Admins/owners choose a scope freely; agents may only fetch their own tickets
+    // or the unassigned pool. Anything else (e.g. "ALL") coerces to MINE — never
+    // trust the client here, so agents can't see other agents' tickets.
+    const isAdmin = hasOrgRole(context.role, ORG_ROLE.ADMIN);
+    const scope = isAdmin ? data.scope : data.scope === "UNASSIGNED" ? "UNASSIGNED" : "MINE";
+
+    const where: Prisma.TicketWhereInput = {
+      projectId: data.projectId,
+      ...(data.statusFilter !== "ALL" ? { status: data.statusFilter } : {}),
+      ...(scope === "MINE"
+        ? { assignedAgentId: context.memberId }
+        : scope === "UNASSIGNED"
+          ? { assignedAgentId: null }
+          : {}),
+      ...(search
+        ? {
+            OR: [
+              { referenceNumber: { contains: search, mode: "insensitive" as const } },
+              { customer: { is: { name: { contains: search, mode: "insensitive" as const } } } },
+              { customer: { is: { email: { contains: search, mode: "insensitive" as const } } } },
+            ],
+          }
+        : {}),
+    };
+
+    const rows = await prisma.ticket.findMany({
+      where,
+      select: {
+        id: true,
+        referenceNumber: true,
+        status: true,
+        priority: true,
+        satisfactionScore: true,
+        assignedAgentId: true,
+        createdAt: true,
+        updatedAt: true,
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            language: true,
+            metadata: true,
+            createdAt: true,
+          },
+        },
+        ticketMessages: {
+          take: 1,
+          orderBy: { createdAt: "desc" as const },
+          select: {
+            id: true,
+            content: true,
+            contentType: true,
+            createdAt: true,
+          },
+        },
+      },
+      orderBy: [{ updatedAt: "desc" as const }, { id: "desc" as const }],
+      take: data.take + 1,
+      ...(data.cursor ? { cursor: { id: data.cursor }, skip: 1 } : {}),
+    });
+
+    const hasMore = rows.length > data.take;
+    const page = hasMore ? rows.slice(0, data.take) : rows;
+
+    const tickets = page.map((row) => ({
+      id: row.id,
+      referenceNumber: row.referenceNumber,
+      status: row.status,
+      priority: row.priority,
+      satisfactionScore: row.satisfactionScore,
+      assignedAgentId: row.assignedAgentId,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      customer: row.customer,
+      latestMessage: row.ticketMessages[0] ?? null,
+    }));
+
+    return {
+      tickets,
+      nextCursor: hasMore ? page[page.length - 1].id : null,
+    };
   });
