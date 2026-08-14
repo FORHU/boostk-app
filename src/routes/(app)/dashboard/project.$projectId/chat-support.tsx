@@ -14,7 +14,7 @@ import { useSocket } from "@/hooks/use-socket";
 import { useViewport } from "@/hooks/use-viewport";
 import { EventType } from "@/lib/notifier/core";
 import { cn } from "@/lib/utils";
-import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
+import { hasOrgRole, ORG_ROLE, type OrgRole } from "@/modules/auth/roles";
 import { ticketQueries } from "@/modules/ticket/query.queries";
 import { ticketMessageQueries } from "@/modules/ticket-message/ticket-message.queries";
 import { updateTicketStatusFn } from "./tickets";
@@ -35,7 +35,7 @@ export const Route = createFileRoute("/(app)/dashboard/project/$projectId/chat-s
 });
 
 function ProjectChatSupportPage() {
-  const { project, authSession } = Route.useRouteContext();
+  const { project, authSession, role, memberId } = Route.useRouteContext();
   const queryClient = useQueryClient();
   const [selectedTicket, setSelectedTicket] = useState<TicketWithCustomer | null>(null);
   const [showTicketDetails, setShowTicketDetails] = useState(false);
@@ -100,6 +100,8 @@ function ProjectChatSupportPage() {
         {showTicketDetails && <TicketDetails ticket={selectedTicket} isMobile={isMobileView} />}
         <ChatWindow
           ticket={selectedTicket}
+          role={role}
+          memberId={memberId}
           showTicketDetails={showTicketDetails}
           showCustomerDetails={showCustomerDetails}
           onToggleTicketDetails={() => setShowTicketDetails((v) => !v)}
@@ -189,6 +191,8 @@ const TicketDetails = ({ ticket, isMobile }: { ticket: TicketWithCustomer | null
 
 interface ChatWindowProps {
   ticket: TicketWithCustomer | null;
+  role: OrgRole | null;
+  memberId: string | null;
   showTicketDetails: boolean;
   showCustomerDetails: boolean;
   onToggleTicketDetails: () => void;
@@ -197,6 +201,8 @@ interface ChatWindowProps {
 
 const ChatWindow = ({
   ticket,
+  role,
+  memberId,
   showTicketDetails,
   showCustomerDetails,
   onToggleTicketDetails,
@@ -224,6 +230,8 @@ const ChatWindow = ({
     );
   }
 
+  const canEditStatus = hasOrgRole(role, ORG_ROLE.ADMIN) || ticket.assignedAgentId === memberId;
+
   return (
     <div className="h-full flex-1 min-w-0 flex flex-col min-h-0">
       <header className="flex-none bg-blue-600 dark:bg-blue-800 p-4 text-white flex items-center justify-between shadow-sm min-w-0">
@@ -246,15 +254,17 @@ const ChatWindow = ({
           </div>
         </div>
         <div className="flex items-center gap-1 shrink-0">
-          <button
-            type="button"
-            onClick={() => setStatusAction(ticket.status === "OPEN" ? "CLOSED" : "OPEN")}
-            disabled={updateStatusMutation.isPending}
-            className="px-3 py-1.5 mr-2 text-xs font-medium rounded-sm bg-white/15 hover:bg-white/25 disabled:opacity-50 flex items-center gap-1.5"
-          >
-            {updateStatusMutation.isPending && <Loader2 className="animate-spin size-3.5" />}
-            {ticket.status === "OPEN" ? "Close Ticket" : "Reopen"}
-          </button>
+          {canEditStatus && (
+            <button
+              type="button"
+              onClick={() => setStatusAction(ticket.status === "OPEN" ? "CLOSED" : "OPEN")}
+              disabled={updateStatusMutation.isPending}
+              className="px-3 py-1.5 mr-2 text-xs font-medium rounded-sm bg-white/15 hover:bg-white/25 disabled:opacity-50 flex items-center gap-1.5"
+            >
+              {updateStatusMutation.isPending && <Loader2 className="animate-spin size-3.5" />}
+              {ticket.status === "OPEN" ? "Close Ticket" : "Reopen"}
+            </button>
+          )}
           <button
             type="button"
             onClick={onToggleTicketDetails}

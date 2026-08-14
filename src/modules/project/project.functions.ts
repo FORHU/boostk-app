@@ -24,8 +24,9 @@ export const getProjectFn = createServerFn({ method: "GET" })
   .inputValidator(getProjectSchema)
   .handler(async ({ context }) => {
     // `requireProjectMiddleware` already validated access and resolved the
-    // caller's role; surface both so routes can role-gate in `beforeLoad`.
-    return { project: context.project, role: context.role };
+    // caller's role and member record; surface both so routes can role-gate
+    // in `beforeLoad`.
+    return { project: context.project, role: context.role, memberId: context.memberId };
   });
 
 export const getProjectPublicFn = createServerFn({ method: "GET" })
