@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import type { Prisma } from "prisma/generated/client";
 import { TicketStatus } from "prisma/generated/enums";
 import { z } from "zod";
 import { EventType } from "@/lib/notifier/core";
@@ -145,9 +146,8 @@ export const rateTicketFn = createServerFn({ method: "POST" })
     });
   });
 
-// Cursor-paginated ticket list. `take + 1` detects whether another page exists and
-// `nextCursor` is the last returned row's id; `id` breaks ties so a cursor never
-// skips or repeats a row. Newest tickets come first.
+// Offset-paginated ticket list. `statusFilter` and `searchQuery` are applied in SQL so
+// pagination counts reflect exactly the rows the table shows. Newest tickets come first.
 export const getProjectTicketsFn = createServerFn({ method: "GET" })
   .inputValidator(GetProjectTicketsSchema)
   .middleware([requireProjectRole(ORG_ROLE.AGENT)])
@@ -163,23 +163,39 @@ export const getProjectTicketsFn = createServerFn({ method: "GET" })
       }
     })();
 
-    const rows = await prisma.ticket.findMany({
-      where: { projectId: data.projectId },
-      include: {
-        customer: true,
-        assignedAgent: { include: { user: true } },
-      },
-      orderBy,
-      take: data.take + 1,
-      ...(data.cursor ? { cursor: { id: data.cursor }, skip: 1 } : {}),
-    });
+    const where: Prisma.TicketWhereInput = {
+      projectId: data.projectId,
+      ...(data.statusFilter !== "ALL" ? { status: data.statusFilter } : {}),
+      ...(data.searchQuery
+        ? {
+            OR: [
+              { referenceNumber: { contains: data.searchQuery, mode: "insensitive" } },
+              { customer: { is: { name: { contains: data.searchQuery, mode: "insensitive" } } } },
+            ],
+          }
+        : {}),
+    };
 
-    const hasMore = rows.length > data.take;
-    const tickets = hasMore ? rows.slice(0, data.take) : rows;
+    const [total, tickets] = await prisma.$transaction([
+      prisma.ticket.count({ where }),
+      prisma.ticket.findMany({
+        where,
+        include: {
+          customer: true,
+          assignedAgent: { include: { user: true } },
+        },
+        orderBy,
+        skip: (data.page - 1) * data.pageSize,
+        take: data.pageSize,
+      }),
+    ]);
 
     return {
       tickets,
-      nextCursor: hasMore ? tickets[tickets.length - 1].id : null,
+      total,
+      page: data.page,
+      pageSize: data.pageSize,
+      totalPages: Math.max(1, Math.ceil(total / data.pageSize)),
     };
   });
 

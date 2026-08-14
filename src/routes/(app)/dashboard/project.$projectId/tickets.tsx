@@ -1,17 +1,23 @@
-import {
-  queryOptions,
-  useInfiniteQuery,
-  useMutation,
-  useQuery,
-  useQueryClient,
-  useSuspenseQuery,
-} from "@tanstack/react-query";
+import { queryOptions, useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import { motion } from "framer-motion";
-import { ArrowLeft, Check, ChevronDown, Loader2, Maximize, MessageCircle, Minimize, Star, User, X } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import {
+  ArrowLeft,
+  Check,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  Maximize,
+  MessageCircle,
+  Minimize,
+  Star,
+  User,
+  X,
+} from "lucide-react";
 import type { TicketMessage } from "prisma/generated/client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 import { ReplyInput } from "@/components/chat-support/reply-input";
 import TicketChatMessageBubble from "@/components/chat-support/TicketChatMessageBubble";
@@ -68,7 +74,19 @@ export const updateTicketStatusFn = createServerFn({ method: "POST" })
     }),
   )
   .middleware([requireProjectRole(ORG_ROLE.AGENT)])
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    // Admins (and the org owner) may change the status of any ticket in the
+    // project; regular agents may only change tickets assigned to them.
+    if (!hasOrgRole(context.role, ORG_ROLE.ADMIN)) {
+      const ticket = await prisma.ticket.findUnique({
+        where: { id: data.ticketId, projectId: data.projectId },
+        select: { assignedAgentId: true },
+      });
+      if (!ticket || ticket.assignedAgentId !== context.memberId) {
+        throw new Error("You can only change the status of tickets assigned to you.");
+      }
+    }
+
     const updatedTicket = await prisma.ticket.update({
       where: {
         id: data.ticketId,
@@ -95,7 +113,19 @@ export const updateTicketPriorityFn = createServerFn({ method: "POST" })
     }),
   )
   .middleware([requireProjectRole(ORG_ROLE.AGENT)])
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    // Admins (and the org owner) may set the priority of any ticket in the
+    // project; regular agents may only change tickets assigned to them.
+    if (!hasOrgRole(context.role, ORG_ROLE.ADMIN)) {
+      const ticket = await prisma.ticket.findUnique({
+        where: { id: data.ticketId, projectId: data.projectId },
+        select: { assignedAgentId: true },
+      });
+      if (!ticket || ticket.assignedAgentId !== context.memberId) {
+        throw new Error("You can only change the priority of tickets assigned to you.");
+      }
+    }
+
     return prisma.ticket.update({
       where: {
         id: data.ticketId,
@@ -115,7 +145,27 @@ export const assignTicketFn = createServerFn({ method: "POST" })
     }),
   )
   .middleware([requireProjectRole(ORG_ROLE.AGENT)])
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    const isAdmin = hasOrgRole(context.role, ORG_ROLE.ADMIN);
+
+    // Admins (and the org owner) may assign any agent. Regular agents may only
+    // assign tickets to themselves.
+    if (!isAdmin && data.assignedAgentId !== null && data.assignedAgentId !== context.memberId) {
+      throw new Error("Agents can only assign tickets to themselves.");
+    }
+
+    // Regular agents may only unassign tickets that are currently unassigned or
+    // assigned to them.
+    if (!isAdmin && data.assignedAgentId === null) {
+      const ticket = await prisma.ticket.findUnique({
+        where: { id: data.ticketId, projectId: data.projectId },
+        select: { assignedAgentId: true },
+      });
+      if (!ticket || (ticket.assignedAgentId !== null && ticket.assignedAgentId !== context.memberId)) {
+        throw new Error("You can only unassign tickets assigned to you.");
+      }
+    }
+
     const updatedTicket = await assignTicket(data);
 
     // Notify every agent of the project so their ticket lists refresh live.
@@ -135,14 +185,26 @@ export const assignTicketFn = createServerFn({ method: "POST" })
 export const projectTicketQueries = {
   tickets: ["project-tickets"],
   listPrefix: (projectId: string) => [...projectTicketQueries.tickets, projectId],
-  // Not wrapped in queryOptions: `list` feeds `useInfiniteQuery`, and this version
-  // of queryOptions only models regular useQuery options.
-  list: (projectId: string, sort: TicketSort) => ({
-    queryKey: [...projectTicketQueries.listPrefix(projectId), "list", sort],
-    queryFn: ({ pageParam }: { pageParam: string | undefined }) =>
-      getProjectTicketsFn({ data: { projectId, cursor: pageParam, sort } }),
-    initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage: Awaited<ReturnType<typeof getProjectTicketsFn>>) => lastPage.nextCursor,
+  list: (projectId: string, params: { page: number; sort: TicketSort; statusFilter: string; searchQuery: string }) => ({
+    queryKey: [
+      ...projectTicketQueries.listPrefix(projectId),
+      "list",
+      params.page,
+      params.sort,
+      params.statusFilter,
+      params.searchQuery,
+    ],
+    queryFn: () =>
+      getProjectTicketsFn({
+        data: {
+          projectId,
+          page: params.page,
+          pageSize: 10,
+          sort: params.sort,
+          statusFilter: params.statusFilter as "ALL" | "OPEN" | "CLOSED",
+          searchQuery: params.searchQuery || undefined,
+        },
+      }),
   }),
   counts: (projectId: string) =>
     queryOptions({
@@ -174,6 +236,7 @@ const ticketSearchSchema = z.object({
   statusFilter: z.string().default("ALL").catch("ALL"),
   searchQuery: z.string().optional().catch(undefined),
   sort: z.enum(TICKET_SORT_OPTIONS).default("newest"),
+  page: z.number().int().min(1).optional().catch(1),
 });
 
 export const Route = createFileRoute("/(app)/dashboard/project/$projectId/tickets")({
@@ -209,18 +272,32 @@ function getStatusBadgeClasses(status: string) {
   }
 }
 
+const TICKET_TABLE_COLUMNS = [
+  { key: "referenceNumber", label: "Reference Number", width: "12%" },
+  { key: "priority", label: "Priority", width: "10%" },
+  { key: "status", label: "Status", width: "10%" },
+  { key: "rating", label: "Rating", width: "9%" },
+  { key: "customerName", label: "Customer Name", width: "24%" },
+  { key: "assignee", label: "Assigned Agent", width: "20%" },
+  { key: "createdAt", label: "Created", width: "15%" },
+] as const;
+
 function TicketDetailPanel({
   projectId,
   organizationId,
   ticketId,
   onClose,
   onBack,
+  memberId,
+  canEditAnyTicket,
 }: {
   projectId: string;
   organizationId: string;
   ticketId: string | null;
   onClose: () => void;
   onBack?: () => void;
+  memberId: string | null;
+  canEditAnyTicket: boolean;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [statusAction, setStatusAction] = useState<"CLOSED" | "OPEN" | null>(null);
@@ -238,6 +315,7 @@ function TicketDetailPanel({
     enabled: !!organizationId,
   });
   const agents = (agentsQuery.data ?? []).filter((member) => hasOrgRole(member.role, ORG_ROLE.AGENT));
+  const assignableAgents = canEditAnyTicket ? agents : agents.filter((member) => member.id === memberId);
 
   const assignMutation = useMutation({
     mutationFn: assignTicketFn,
@@ -280,6 +358,8 @@ function TicketDetailPanel({
 
   if (!ticketId) return null;
 
+  const canEditPriority = canEditAnyTicket || ticket?.assignedAgentId === memberId;
+
   return (
     <div
       className={
@@ -320,7 +400,7 @@ function TicketDetailPanel({
                 ></span>
                 {ticket?.status === "OPEN" ? "Open" : "Closed"}
               </span>
-              {!isLoading && ticket && (
+              {!isLoading && ticket && canEditPriority && (
                 <TicketPrioritySelect
                   priority={ticket.priority}
                   isPending={updatePriorityMutation.isPending}
@@ -354,10 +434,12 @@ function TicketDetailPanel({
                     className="text-xs bg-white/10 text-white rounded-[4px] px-2 py-1 outline-none border border-transparent focus:border-white/50 focus:ring-1 focus:ring-white/50 disabled:opacity-50 cursor-pointer"
                     title="Assign this ticket to an agent"
                   >
-                    <option value="" style={{ color: "black", backgroundColor: "white" }}>
-                      Unassigned
-                    </option>
-                    {agents.map((agent) => (
+                    {canEditAnyTicket || ticket.assignedAgentId === null || ticket.assignedAgentId === memberId ? (
+                      <option value="" style={{ color: "black", backgroundColor: "white" }}>
+                        Unassigned
+                      </option>
+                    ) : null}
+                    {assignableAgents.map((agent) => (
                       <option key={agent.id} value={agent.id} style={{ color: "black", backgroundColor: "white" }}>
                         {agent.user?.name || agent.user?.email}
                       </option>
@@ -370,23 +452,25 @@ function TicketDetailPanel({
           </div>
 
           <div className="flex items-center gap-1">
-            <button
-              type="button"
-              disabled={updateStatusMutation.isPending}
-              onClick={() => {
-                if (!ticketId) return;
-                setStatusAction(ticket?.status === "OPEN" ? "CLOSED" : "OPEN");
-              }}
-              className="px-3 py-1.5 text-xs font-medium rounded-sm bg-white/15 hover:bg-white/25 disabled:opacity-50"
-            >
-              {updateStatusMutation.isPending ? (
-                <Loader2 className="animate-spin size-3.5" />
-              ) : ticket?.status === "OPEN" ? (
-                "Close Ticket"
-              ) : (
-                "Reopen Ticket"
-              )}
-            </button>
+            {canEditPriority && (
+              <button
+                type="button"
+                disabled={updateStatusMutation.isPending}
+                onClick={() => {
+                  if (!ticketId) return;
+                  setStatusAction(ticket?.status === "OPEN" ? "CLOSED" : "OPEN");
+                }}
+                className="px-3 py-1.5 text-xs font-medium rounded-sm bg-white/15 hover:bg-white/25 disabled:opacity-50"
+              >
+                {updateStatusMutation.isPending ? (
+                  <Loader2 className="animate-spin size-3.5" />
+                ) : ticket?.status === "OPEN" ? (
+                  "Close Ticket"
+                ) : (
+                  "Reopen Ticket"
+                )}
+              </button>
+            )}
             {!onBack && (
               <>
                 <button
@@ -516,15 +600,296 @@ function TicketSortSelect({ sort, onSortChange }: { sort: TicketSort; onSortChan
   );
 }
 
+function TicketPagination({
+  page,
+  totalPages,
+  onPageChange,
+}: {
+  page: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}) {
+  if (totalPages <= 1) return null;
+
+  return (
+    <div className="flex items-center justify-center gap-3 py-2">
+      <button
+        type="button"
+        onClick={() => onPageChange(page - 1)}
+        disabled={page <= 1}
+        className="inline-flex size-8 items-center justify-center rounded-sm border border-muted bg-background text-muted-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
+        title="Previous page"
+      >
+        <ChevronLeft className="size-4" />
+      </button>
+      <span className="text-sm font-medium tabular-nums">
+        {page} / {totalPages}
+      </span>
+      <button
+        type="button"
+        onClick={() => onPageChange(page + 1)}
+        disabled={page >= totalPages}
+        className="inline-flex size-8 items-center justify-center rounded-sm border border-muted bg-background text-muted-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
+        title="Next page"
+      >
+        <ChevronRight className="size-4" />
+      </button>
+    </div>
+  );
+}
+
+type TicketRow = Awaited<ReturnType<typeof getProjectTicketsFn>>["tickets"][number];
+
+function InlineTicketPriority({
+  priority,
+  canEdit,
+  isPending,
+  onPriorityChange,
+}: {
+  priority: TicketPriorityType;
+  canEdit: boolean;
+  isPending: boolean;
+  onPriorityChange: (priority: TicketPriorityType) => void;
+}) {
+  const options: TicketPriorityType[] = ["LOW", "MEDIUM", "HIGH"];
+
+  if (!canEdit) {
+    return <TicketPriorityBadge priority={priority} />;
+  }
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        title="Change priority"
+        className="cursor-pointer rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      >
+        {isPending ? <Loader2 className="size-3.5 animate-spin" /> : <TicketPriorityBadge priority={priority} />}
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start">
+        {options.map((option) => (
+          <DropdownMenuItem key={option} onClick={() => onPriorityChange(option)}>
+            <TicketPriorityBadge priority={option} />
+            {option === priority && <Check className="size-4 ml-auto" />}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+function InlineAssigneeEditor({
+  assignedAgentId,
+  assignedAgentName,
+  agents,
+  canUnassign,
+  isPending,
+  onAssign,
+}: {
+  assignedAgentId: string | null;
+  assignedAgentName?: string | null;
+  agents: { id: string; name?: string | null }[];
+  canUnassign: boolean;
+  isPending: boolean;
+  onAssign: (assignedAgentId: string | null) => void;
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        title="Assign this ticket to an agent"
+        className="flex w-full max-w-full items-center gap-1 truncate cursor-pointer rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      >
+        {isPending ? (
+          <Loader2 className="size-3.5 animate-spin shrink-0" />
+        ) : assignedAgentName ? (
+          <span className="truncate">{assignedAgentName}</span>
+        ) : (
+          <span className="text-muted-foreground">Unassigned</span>
+        )}
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-56">
+        {canUnassign && (
+          <DropdownMenuItem onClick={() => onAssign(null)}>
+            <span className="text-muted-foreground">Unassigned</span>
+            {assignedAgentId === null && <Check className="size-4 ml-auto" />}
+          </DropdownMenuItem>
+        )}
+        {agents.map((agent) => (
+          <DropdownMenuItem key={agent.id} onClick={() => onAssign(agent.id)}>
+            <span className="truncate">{agent.name ?? "Unknown agent"}</span>
+            {assignedAgentId === agent.id && <Check className="size-4 ml-auto" />}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+function TicketsTableRow({
+  ticket,
+  projectId,
+  agents,
+  canEditAnyTicket,
+  memberId,
+  onOpenTicket,
+}: {
+  ticket: TicketRow;
+  projectId: string;
+  agents: { id: string; name?: string | null }[];
+  canEditAnyTicket: boolean;
+  memberId: string | null;
+  onOpenTicket: () => void;
+}) {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  const invalidateTicket = () => {
+    queryClient.invalidateQueries({ queryKey: projectTicketQueries.listPrefix(projectId) });
+    queryClient.invalidateQueries({ queryKey: projectTicketQueries.detailById(projectId, ticket.id).queryKey });
+  };
+
+  const updatePriorityMutation = useMutation({
+    mutationFn: updateTicketPriorityFn,
+    onSuccess: invalidateTicket,
+    onError: () => toast("Failed to update priority."),
+  });
+
+  const updateStatusMutation = useMutation({
+    mutationFn: updateTicketStatusFn,
+    onSuccess: invalidateTicket,
+    onError: () => {
+      toast("Failed to update status.");
+      invalidateTicket();
+    },
+  });
+
+  const assignMutation = useMutation({
+    mutationFn: assignTicketFn,
+    onSuccess: invalidateTicket,
+    onError: () => toast("Failed to update assignee."),
+  });
+
+  const canEditPriority = canEditAnyTicket || ticket.assignedAgentId === memberId;
+  const canEditStatus = canEditPriority;
+
+  const assignableAgents = canEditAnyTicket ? agents : agents.filter((agent) => agent.id === memberId);
+  const canUnassign = canEditAnyTicket || ticket.assignedAgentId === null || ticket.assignedAgentId === memberId;
+
+  const [displayStatus, setDisplayStatus] = useState(ticket.status);
+
+  useEffect(() => {
+    setDisplayStatus(ticket.status);
+  }, [ticket.status]);
+
+  return (
+    <tr className="h-14 hover:bg-muted transition-colors">
+      <td className="px-6 py-4 text-sm">
+        <button
+          type="button"
+          onClick={onOpenTicket}
+          title={`Open ticket ${ticket.referenceNumber}`}
+          className="max-w-full truncate rounded-sm text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        >
+          {ticket.referenceNumber}
+        </button>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <InlineTicketPriority
+          priority={ticket.priority}
+          canEdit={canEditPriority}
+          isPending={updatePriorityMutation.isPending}
+          onPriorityChange={(priority) =>
+            updatePriorityMutation.mutate({ data: { projectId, ticketId: ticket.id, priority } })
+          }
+        />
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        {canEditStatus ? (
+          <button
+            type="button"
+            title={displayStatus === "OPEN" ? "Mark as closed" : "Reopen ticket"}
+            disabled={updateStatusMutation.isPending}
+            onClick={() => {
+              const next = displayStatus === "OPEN" ? "CLOSED" : "OPEN";
+              setDisplayStatus(next);
+              updateStatusMutation.mutate({
+                data: { projectId, ticketId: ticket.id, status: next },
+              });
+            }}
+            className={`cursor-pointer rounded-full px-2 py-1 text-xs font-semibold transition-colors duration-300 hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-60 ${getStatusBadgeClasses(displayStatus)}`}
+          >
+            <AnimatePresence mode="popLayout" initial={false}>
+              <motion.span
+                key={displayStatus}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ duration: 0.15 }}
+                className="inline-block"
+              >
+                {displayStatus}
+              </motion.span>
+            </AnimatePresence>
+          </button>
+        ) : (
+          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusBadgeClasses(ticket.status)}`}>
+            {ticket.status}
+          </span>
+        )}
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap text-sm">
+        {ticket.satisfactionScore != null ? (
+          <span
+            className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700"
+            title={`Customer rating: ${ticket.satisfactionScore}/5`}
+          >
+            <Star size={12} className="fill-amber-400 text-amber-400" />
+            {ticket.satisfactionScore}/5
+          </span>
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        )}
+      </td>
+      <td className="px-6 py-4 truncate text-sm" title={ticket.customer?.name}>
+        {ticket.customer?.name}
+      </td>
+      <td className="px-6 py-4 overflow-hidden">
+        <InlineAssigneeEditor
+          assignedAgentId={ticket.assignedAgentId}
+          assignedAgentName={ticket.assignedAgent?.user?.name}
+          agents={assignableAgents}
+          canUnassign={canUnassign}
+          isPending={assignMutation.isPending}
+          onAssign={(assignedAgentId) =>
+            assignMutation.mutate({ data: { projectId, ticketId: ticket.id, assignedAgentId } })
+          }
+        />
+      </td>
+      <td className="px-6 py-4 truncate text-sm" title={formatRelative(ticket.createdAt)}>
+        {formatRelative(ticket.createdAt)}
+      </td>
+    </tr>
+  );
+}
+
 function ProjectTicketsPage() {
   const { projectId } = Route.useParams();
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
 
-  const { authSession, project } = Route.useRouteContext();
+  const { authSession, project, role, memberId } = Route.useRouteContext();
   const organizationId = project.organizationId;
   const queryClient = useQueryClient();
   const selectedTicketId = search.selectedTicketId ?? null;
+
+  const canEditAnyTicket = hasOrgRole(role, ORG_ROLE.ADMIN);
+
+  const agentsQuery = useQuery({
+    ...memberQueries.agentAllByOrgId(organizationId),
+    enabled: !!organizationId,
+  });
+  const agents = (agentsQuery.data ?? [])
+    .filter((member) => hasOrgRole(member.role, ORG_ROLE.AGENT))
+    .map((member) => ({ id: member.id, name: member.user?.name ?? member.user?.email ?? "Unknown agent" }));
 
   // Realtime: keep the open conversation and the ticket list fresh when new
   // events arrive over socket.io (agent dashboards do not send these messages).
@@ -577,6 +942,7 @@ function ProjectTicketsPage() {
   const statusFilter = search.statusFilter.toUpperCase();
   const searchQuery = search.searchQuery ?? "";
   const sort = search.sort;
+  const page = search.page ?? 1;
 
   const [inputValue, setInputValue] = useState(searchQuery);
   const debouncedSearchQuery = useDebounce(inputValue);
@@ -588,17 +954,25 @@ function ProjectTicketsPage() {
   useEffect(() => {
     if (debouncedSearchQuery === searchQuery) return;
     navigate({
-      search: (prev) => ({ ...prev, searchQuery: debouncedSearchQuery || undefined }),
+      search: (prev) => ({ ...prev, searchQuery: debouncedSearchQuery || undefined, page: 1 }),
       replace: true,
     });
   }, [debouncedSearchQuery, searchQuery, navigate]);
 
-  const ticketsQuery = useInfiniteQuery({
-    ...projectTicketQueries.list(projectId, sort),
+  const ticketsQuery = useQuery({
+    ...projectTicketQueries.list(projectId, { page, sort, statusFilter, searchQuery }),
     placeholderData: (prev) => prev,
   });
-  const tickets = ticketsQuery.data?.pages.flatMap((page) => page.tickets) ?? [];
-  const { fetchNextPage, hasNextPage, isFetchingNextPage } = ticketsQuery;
+  const tickets = ticketsQuery.data?.tickets ?? [];
+  const total = ticketsQuery.data?.total ?? 0;
+  const totalPages = ticketsQuery.data?.totalPages ?? 1;
+
+  // Clamp the page when the dataset shrinks (e.g. tickets closed on the last page).
+  useEffect(() => {
+    if (ticketsQuery.isSuccess && page > totalPages) {
+      navigate({ search: (prev) => ({ ...prev, page: totalPages }), replace: true });
+    }
+  }, [ticketsQuery.isSuccess, page, totalPages, navigate]);
 
   const { data: counts } = useSuspenseQuery(projectTicketQueries.counts(projectId));
 
@@ -610,35 +984,6 @@ function ProjectTicketsPage() {
     return 0;
   };
 
-  // Infinite scroll: fetch the next cursor page when the sentinel enters view.
-  const loadMoreRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    const node = loadMoreRef.current;
-    if (!node || !hasNextPage || isFetchingNextPage) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting) fetchNextPage();
-      },
-      { root: null, threshold: 0.1 },
-    );
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
-
-  const filteredTickets = tickets.filter((ticket) => {
-    const matchesStatus = statusFilter === "ALL" || ticket.status === statusFilter;
-    const searchLower = searchQuery.toLowerCase();
-
-    if (!searchLower) return matchesStatus;
-
-    const matchesSearch =
-      (ticket.referenceNumber?.toLowerCase() || "").includes(searchLower) ||
-      (ticket.customer?.name?.toLowerCase() || "").includes(searchLower);
-
-    return matchesStatus && matchesSearch;
-  });
-
   const filterTabs = [
     { label: "All", value: "ALL" },
     { label: "Open", value: "OPEN" },
@@ -648,6 +993,12 @@ function ProjectTicketsPage() {
   const clearSelection = () =>
     navigate({
       search: (prev) => ({ ...prev, selectedTicketId: undefined }),
+    });
+
+  const goToPage = (nextPage: number) =>
+    navigate({
+      search: (prev) => ({ ...prev, page: nextPage }),
+      replace: true,
     });
 
   const { isMobile, isMounted } = useViewport();
@@ -671,6 +1022,8 @@ function ProjectTicketsPage() {
               ticketId={selectedTicketId}
               onBack={clearSelection}
               onClose={clearSelection}
+              memberId={memberId}
+              canEditAnyTicket={canEditAnyTicket}
             />
           </div>
         ) : (
@@ -698,7 +1051,7 @@ function ProjectTicketsPage() {
                     key={tab.value}
                     onClick={() =>
                       navigate({
-                        search: (prev) => ({ ...prev, statusFilter: tab.value }),
+                        search: (prev) => ({ ...prev, statusFilter: tab.value, page: 1 }),
                       })
                     }
                     className={`px-4 py-2 text-sm font-medium rounded-sm whitespace-nowrap ${
@@ -712,7 +1065,7 @@ function ProjectTicketsPage() {
                   sort={sort}
                   onSortChange={(nextSort) =>
                     navigate({
-                      search: (prev) => ({ ...prev, sort: nextSort }),
+                      search: (prev) => ({ ...prev, sort: nextSort, page: 1 }),
                       replace: true,
                     })
                   }
@@ -720,7 +1073,7 @@ function ProjectTicketsPage() {
               </div>
             </div>
 
-            {filteredTickets.length === 0 ? (
+            {total === 0 ? (
               <EmptyState
                 icon={<X className="size-10" strokeWidth={1} />}
                 title={searchQuery ? "Reference doesn't match" : `No ${statusFilter.toLowerCase()} tickets found`}
@@ -733,76 +1086,42 @@ function ProjectTicketsPage() {
               />
             ) : (
               <>
-                <div className="border border-muted rounded-lg shadow-sm overflow-x-auto w-full">
-                  <table className="min-w-full divide-y divide-muted">
+                <div className="border border-muted rounded-lg shadow-sm overflow-x-auto w-full min-h-[620px]">
+                  <table className="table-fixed w-full min-w-[820px] divide-y divide-muted">
+                    <colgroup>
+                      {TICKET_TABLE_COLUMNS.map(({ key, width }) => (
+                        <col key={key} style={{ width }} />
+                      ))}
+                    </colgroup>
                     <thead className="bg-muted/50">
                       <tr>
-                        {["referenceNumber", "priority", "status", "customerName", "assignee", "createdAt"].map(
-                          (col) => (
-                            <th key={col} className="px-6 py-3 text-left text-xs font-medium uppercase">
-                              {col === "customerName" ? "Customer Name" : col.replace(/([A-Z])/g, " $1")}
-                            </th>
-                          ),
-                        )}
+                        {TICKET_TABLE_COLUMNS.map(({ key, label }) => (
+                          <th key={key} className="h-11 px-6 py-3 text-left text-xs font-medium uppercase">
+                            {label}
+                          </th>
+                        ))}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-muted">
-                      {filteredTickets.map((ticket) => (
-                        <tr
+                      {tickets.map((ticket) => (
+                        <TicketsTableRow
                           key={ticket.id}
-                          tabIndex={0}
-                          className="hover:bg-muted cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
-                          onClick={() =>
+                          ticket={ticket}
+                          projectId={projectId}
+                          agents={agents}
+                          canEditAnyTicket={canEditAnyTicket}
+                          memberId={memberId}
+                          onOpenTicket={() =>
                             navigate({
                               search: (prev) => ({ ...prev, selectedTicketId: ticket.id }),
                             })
                           }
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" || e.key === " ") {
-                              e.preventDefault();
-                              navigate({
-                                search: (prev) => ({ ...prev, selectedTicketId: ticket.id }),
-                              });
-                            }
-                          }}
-                        >
-                          <td className="px-6 py-4 whitespace-nowrap text-sm">{ticket.referenceNumber}</td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <TicketPriorityBadge priority={ticket.priority} />
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span
-                              className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusBadgeClasses(ticket.status)}`}
-                            >
-                              {ticket.status}
-                            </span>
-                            {ticket.satisfactionScore != null && (
-                              <span
-                                className="ml-2 inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700"
-                                title={`Customer rating: ${ticket.satisfactionScore}/5`}
-                              >
-                                <Star size={12} className="fill-amber-400 text-amber-400" />
-                                {ticket.satisfactionScore}/5
-                              </span>
-                            )}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm">{ticket.customer?.name}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm">
-                            {ticket.assignedAgent?.user?.name ?? (
-                              <span className="text-muted-foreground">Unassigned</span>
-                            )}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm">{formatRelative(ticket.createdAt)}</td>
-                        </tr>
+                        />
                       ))}
                     </tbody>
                   </table>
                 </div>
-                {hasNextPage && (
-                  <div ref={loadMoreRef} className="flex items-center justify-center py-2">
-                    {isFetchingNextPage && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
-                  </div>
-                )}
+                <TicketPagination page={page} totalPages={totalPages} onPageChange={goToPage} />
               </>
             )}
           </div>
@@ -858,7 +1177,7 @@ function ProjectTicketsPage() {
             </div>
           </div>
 
-          {filteredTickets.length === 0 ? (
+          {total === 0 ? (
             <EmptyState
               icon={<X className="size-10" strokeWidth={1} />}
               title={searchQuery ? "Reference doesn't match" : `No ${statusFilter.toLowerCase()} tickets found`}
@@ -871,69 +1190,42 @@ function ProjectTicketsPage() {
             />
           ) : (
             <>
-              <div className="border border-muted rounded-lg shadow-sm overflow-x-auto w-full">
-                <table className="min-w-full divide-y divide-muted">
+              <div className="border border-muted rounded-lg shadow-sm overflow-x-auto w-full min-h-[620px]">
+                <table className="table-fixed w-full divide-y divide-muted">
+                  <colgroup>
+                    {TICKET_TABLE_COLUMNS.map(({ key, width }) => (
+                      <col key={key} style={{ width }} />
+                    ))}
+                  </colgroup>
                   <thead className="bg-muted/50">
                     <tr>
-                      {["referenceNumber", "priority", "status", "customerName", "createdAt"].map((col) => (
-                        <th key={col} className="px-6 py-3 text-left text-xs font-medium uppercase">
-                          {col === "customerName" ? "Customer Name" : col.replace(/([A-Z])/g, " $1")}
+                      {TICKET_TABLE_COLUMNS.map(({ key, label }) => (
+                        <th key={key} className="h-11 px-6 py-3 text-left text-xs font-medium uppercase">
+                          {label}
                         </th>
                       ))}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-muted">
-                    {filteredTickets.map((ticket) => (
-                      <tr
+                    {tickets.map((ticket) => (
+                      <TicketsTableRow
                         key={ticket.id}
-                        tabIndex={0}
-                        className="hover:bg-muted cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
-                        onClick={() =>
+                        ticket={ticket}
+                        projectId={projectId}
+                        agents={agents}
+                        canEditAnyTicket={canEditAnyTicket}
+                        memberId={memberId}
+                        onOpenTicket={() =>
                           navigate({
                             search: (prev) => ({ ...prev, selectedTicketId: ticket.id }),
                           })
                         }
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            navigate({
-                              search: (prev) => ({ ...prev, selectedTicketId: ticket.id }),
-                            });
-                          }
-                        }}
-                      >
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">{ticket.referenceNumber}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <TicketPriorityBadge priority={ticket.priority} />
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusBadgeClasses(ticket.status)}`}
-                          >
-                            {ticket.status}
-                          </span>
-                          {ticket.satisfactionScore != null && (
-                            <span
-                              className="ml-2 inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700"
-                              title={`Customer rating: ${ticket.satisfactionScore}/5`}
-                            >
-                              <Star size={12} className="fill-amber-400 text-amber-400" />
-                              {ticket.satisfactionScore}/5
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">{ticket.customer?.name}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">{formatRelative(ticket.createdAt)}</td>
-                      </tr>
+                      />
                     ))}
                   </tbody>
                 </table>
               </div>
-              {hasNextPage && (
-                <div ref={loadMoreRef} className="flex items-center justify-center py-2">
-                  {isFetchingNextPage && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
-                </div>
-              )}
+              <TicketPagination page={page} totalPages={totalPages} onPageChange={goToPage} />
             </>
           )}
 
@@ -942,6 +1234,8 @@ function ProjectTicketsPage() {
             organizationId={organizationId}
             ticketId={selectedTicketId}
             onClose={clearSelection}
+            memberId={memberId}
+            canEditAnyTicket={canEditAnyTicket}
           />
         </div>
       )}
