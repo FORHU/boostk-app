@@ -30,9 +30,10 @@ export const requireProjectMiddleware = createMiddleware({ type: "function" })
 
     // Strip the joined organization back off so `project` stays a plain row.
     const { organization, ...project } = found;
+    const member = organization.members.find((m) => m.userId === context.authSession.user.id);
     const role = getMemberRole(organization.members, context.authSession.user.id);
 
-    return next({ context: { project, role } });
+    return next({ context: { project, role, memberId: member?.id ?? null } });
   });
 
 /**

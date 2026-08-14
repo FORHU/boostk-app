@@ -32,8 +32,10 @@ export type TicketSort = (typeof TICKET_SORT_OPTIONS)[number];
 
 export const GetProjectTicketsSchema = z.object({
   projectId: z.string().min(1),
-  take: z.number().int().min(1).max(50).default(25),
-  cursor: z.string().optional(),
+  page: z.number().int().min(1).default(1),
+  pageSize: z.number().int().min(1).max(50).default(10),
+  statusFilter: z.enum(["ALL", "OPEN", "CLOSED"]).default("ALL"),
+  searchQuery: z.string().optional(),
   sort: z.enum(TICKET_SORT_OPTIONS).default("newest"),
 });
 export type GetProjectTicketsInput = z.infer<typeof GetProjectTicketsSchema>;
