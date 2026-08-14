@@ -6,7 +6,13 @@ import { ORG_ROLE } from "@/modules/auth/roles";
 import { requireOrgRole } from "@/modules/organization/organization.middleware";
 
 export const INTEGRATION_PROVIDERS = ["whatsapp", "slack", "webhooks"] as const;
-const providerSchema = z.enum(INTEGRATION_PROVIDERS);
+
+/**
+ * Exported so the allowlist can be asserted in tests. `provider` is written straight to
+ * the `Integration` row and forms half of the `organizationId_provider` unique key, so an
+ * unvalidated value would create rows the UI can never surface or disconnect.
+ */
+export const providerSchema = z.enum(INTEGRATION_PROVIDERS);
 
 export const getOrgIntegrationsFn = createServerFn({ method: "GET" })
   .inputValidator(z.object({ organizationId: z.string() }))

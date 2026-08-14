@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { ORG_ROLE } from "@/modules/auth/roles";
 import { requireOrgRole } from "@/modules/organization/organization.middleware";
+import { assertMemberMutable, assignableRoleSchema } from "./member.service";
 
 const fetchMembers = async (organizationId: string) => {
   return prisma.member.findMany({
@@ -33,7 +34,7 @@ export const updateMemberRoleFn = createServerFn({ method: "POST" })
       memberId: z.string(),
       // Only these roles are assignable via the UI. `owner` is intentionally
       // excluded — it stays a protected role reserved for the org creator.
-      role: z.enum([ORG_ROLE.MEMBER, ORG_ROLE.AGENT, ORG_ROLE.ADMIN]),
+      role: assignableRoleSchema,
     }),
   )
   .middleware([requireOrgRole(ORG_ROLE.ADMIN)])
@@ -42,14 +43,7 @@ export const updateMemberRoleFn = createServerFn({ method: "POST" })
       where: { id: data.memberId },
     });
 
-    if (!member || member.organizationId !== context.organization.id) {
-      throw new Error("Member not found or does not belong to this organization.");
-    }
-
-    // The organization owner is protected: admins cannot change its role.
-    if (member.role === ORG_ROLE.OWNER) {
-      throw new Error("The organization owner's role cannot be changed.");
-    }
+    assertMemberMutable(member, context.organization.id, "update");
 
     const updatedMember = await prisma.member.update({
       where: { id: data.memberId },
@@ -68,19 +62,12 @@ export const removeMemberFn = createServerFn({ method: "POST" })
   )
   .middleware([requireOrgRole(ORG_ROLE.ADMIN)])
   .handler(async ({ data, context }) => {
-    // 1. Verify the member belongs to the organization context
+    // 1. Verify the member belongs to the organization context and is not the owner
     const member = await prisma.member.findUnique({
       where: { id: data.memberId },
     });
 
-    if (!member || member.organizationId !== context.organization.id) {
-      throw new Error("Member not found or does not belong to this organization.");
-    }
-
-    // The organization owner is protected: admins cannot remove it.
-    if (member.role === ORG_ROLE.OWNER) {
-      throw new Error("The organization owner cannot be removed.");
-    }
+    assertMemberMutable(member, context.organization.id, "remove");
 
     // 2. Remove the member
     await prisma.member.delete({
