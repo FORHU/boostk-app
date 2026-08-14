@@ -145,7 +145,27 @@ export const assignTicketFn = createServerFn({ method: "POST" })
     }),
   )
   .middleware([requireProjectRole(ORG_ROLE.AGENT)])
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    const isAdmin = hasOrgRole(context.role, ORG_ROLE.ADMIN);
+
+    // Admins (and the org owner) may assign any agent. Regular agents may only
+    // assign tickets to themselves.
+    if (!isAdmin && data.assignedAgentId !== null && data.assignedAgentId !== context.memberId) {
+      throw new Error("Agents can only assign tickets to themselves.");
+    }
+
+    // Regular agents may only unassign tickets that are currently unassigned or
+    // assigned to them.
+    if (!isAdmin && data.assignedAgentId === null) {
+      const ticket = await prisma.ticket.findUnique({
+        where: { id: data.ticketId, projectId: data.projectId },
+        select: { assignedAgentId: true },
+      });
+      if (!ticket || (ticket.assignedAgentId !== null && ticket.assignedAgentId !== context.memberId)) {
+        throw new Error("You can only unassign tickets assigned to you.");
+      }
+    }
+
     const updatedTicket = await assignTicket(data);
 
     // Notify every agent of the project so their ticket lists refresh live.
@@ -295,6 +315,7 @@ function TicketDetailPanel({
     enabled: !!organizationId,
   });
   const agents = (agentsQuery.data ?? []).filter((member) => hasOrgRole(member.role, ORG_ROLE.AGENT));
+  const assignableAgents = canEditAnyTicket ? agents : agents.filter((member) => member.id === memberId);
 
   const assignMutation = useMutation({
     mutationFn: assignTicketFn,
@@ -413,10 +434,12 @@ function TicketDetailPanel({
                     className="text-xs bg-white/10 text-white rounded-[4px] px-2 py-1 outline-none border border-transparent focus:border-white/50 focus:ring-1 focus:ring-white/50 disabled:opacity-50 cursor-pointer"
                     title="Assign this ticket to an agent"
                   >
-                    <option value="" style={{ color: "black", backgroundColor: "white" }}>
-                      Unassigned
-                    </option>
-                    {agents.map((agent) => (
+                    {canEditAnyTicket || ticket.assignedAgentId === null || ticket.assignedAgentId === memberId ? (
+                      <option value="" style={{ color: "black", backgroundColor: "white" }}>
+                        Unassigned
+                      </option>
+                    ) : null}
+                    {assignableAgents.map((agent) => (
                       <option key={agent.id} value={agent.id} style={{ color: "black", backgroundColor: "white" }}>
                         {agent.user?.name || agent.user?.email}
                       </option>
@@ -658,12 +681,14 @@ function InlineAssigneeEditor({
   assignedAgentId,
   assignedAgentName,
   agents,
+  canUnassign,
   isPending,
   onAssign,
 }: {
   assignedAgentId: string | null;
   assignedAgentName?: string | null;
   agents: { id: string; name?: string | null }[];
+  canUnassign: boolean;
   isPending: boolean;
   onAssign: (assignedAgentId: string | null) => void;
 }) {
@@ -682,10 +707,12 @@ function InlineAssigneeEditor({
         )}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-56">
-        <DropdownMenuItem onClick={() => onAssign(null)}>
-          <span className="text-muted-foreground">Unassigned</span>
-          {assignedAgentId === null && <Check className="size-4 ml-auto" />}
-        </DropdownMenuItem>
+        {canUnassign && (
+          <DropdownMenuItem onClick={() => onAssign(null)}>
+            <span className="text-muted-foreground">Unassigned</span>
+            {assignedAgentId === null && <Check className="size-4 ml-auto" />}
+          </DropdownMenuItem>
+        )}
         {agents.map((agent) => (
           <DropdownMenuItem key={agent.id} onClick={() => onAssign(agent.id)}>
             <span className="truncate">{agent.name ?? "Unknown agent"}</span>
@@ -743,6 +770,9 @@ function TicketsTableRow({
 
   const canEditPriority = canEditAnyTicket || ticket.assignedAgentId === memberId;
   const canEditStatus = canEditPriority;
+
+  const assignableAgents = canEditAnyTicket ? agents : agents.filter((agent) => agent.id === memberId);
+  const canUnassign = canEditAnyTicket || ticket.assignedAgentId === null || ticket.assignedAgentId === memberId;
 
   const [displayStatus, setDisplayStatus] = useState(ticket.status);
 
@@ -826,7 +856,8 @@ function TicketsTableRow({
         <InlineAssigneeEditor
           assignedAgentId={ticket.assignedAgentId}
           assignedAgentName={ticket.assignedAgent?.user?.name}
-          agents={agents}
+          agents={assignableAgents}
+          canUnassign={canUnassign}
           isPending={assignMutation.isPending}
           onAssign={(assignedAgentId) =>
             assignMutation.mutate({ data: { projectId, ticketId: ticket.id, assignedAgentId } })
