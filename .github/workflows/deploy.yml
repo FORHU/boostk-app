@@ -112,6 +112,11 @@ jobs:
             BETTER_AUTH_URL=${{ secrets.BETTER_AUTH_URL }}
             BETTER_AUTH_SECRET=${{ secrets.BETTER_AUTH_SECRET }}
             TRUSTED_ORIGINS=${{ secrets.TRUSTED_ORIGINS }}
+            # Google sign-in. Both or neither — src/lib/auth.ts only registers the
+            # provider when it has a complete pair, so a half-configured deploy falls
+            # back to email/password instead of a broken button.
+            GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+            GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
             FORHU_CHAT_URL=${{ vars.FORHU_CHAT_URL }}
             SUPPORT_LANGUAGE=${{ vars.SUPPORT_LANGUAGE }}
             PLATFORM_STAFF_EMAILS=${{ vars.PLATFORM_STAFF_EMAILS }}

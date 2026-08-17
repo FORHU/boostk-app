@@ -57,6 +57,16 @@ const EnvSchema = z
     /** Comma-separated origin allowlist; see `env.trustedOrigins` for the parsed form. */
     TRUSTED_ORIGINS: optional(z.string().optional()),
 
+    /**
+     * Google OAuth credentials. Optional as a pair: without them the provider is simply
+     * not registered (see `lib/auth.ts`), so a developer with no Google project can still
+     * run the app on email and password. Deliberately NOT in REQUIRED_IN_PRODUCTION —
+     * refusing to boot the whole app because a *secondary* sign-in method is unconfigured
+     * would take email/password down with it.
+     */
+    GOOGLE_CLIENT_ID: optional(z.string().min(1).optional()),
+    GOOGLE_CLIENT_SECRET: optional(z.string().min(1).optional()),
+
     RABBITMQ_URL: optional(z.string().min(1).default(DEFAULT_RABBITMQ_URL)),
 
     SOCKET_PORT: optional(
@@ -146,6 +156,13 @@ export const env = {
     data.TRUSTED_ORIGINS?.split(",")
       .map((origin) => origin.trim())
       .filter(Boolean) ?? [],
+
+  /**
+   * Whether Google sign-in can be offered. Both halves or neither: registering the
+   * provider with one of them missing produces an OAuth round trip that fails at
+   * Google rather than a clear error here.
+   */
+  googleAuthEnabled: Boolean(data.GOOGLE_CLIENT_ID && data.GOOGLE_CLIENT_SECRET),
 
   isProduction: data.NODE_ENV === "production",
   isDevelopment: data.NODE_ENV === "development",

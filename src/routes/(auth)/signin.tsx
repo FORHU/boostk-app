@@ -2,6 +2,7 @@ import { useForm } from "@tanstack/react-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { AuthDivider, GoogleAuthButton } from "@/components/auth/google-auth-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
@@ -135,11 +136,19 @@ function SigninPage() {
 
                 <signInForm.Subscribe selector={(state) => state.isSubmitting}>
                   {(isSubmitting) => (
-                    <Field>
-                      <Button type="submit" disabled={isSubmitting} className="w-full">
-                        {isSubmitting ? "Signing in..." : "Login"}
-                      </Button>
-                    </Field>
+                    <>
+                      <Field>
+                        <Button type="submit" disabled={isSubmitting} className="w-full">
+                          {isSubmitting ? "Signing in..." : "Login"}
+                        </Button>
+                      </Field>
+
+                      <AuthDivider>or continue with</AuthDivider>
+
+                      <Field>
+                        <GoogleAuthButton disabled={isSubmitting} onError={setServerError} />
+                      </Field>
+                    </>
                   )}
                 </signInForm.Subscribe>
 
