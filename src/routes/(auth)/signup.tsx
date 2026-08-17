@@ -2,6 +2,7 @@ import { useForm } from "@tanstack/react-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { AuthDivider, GoogleAuthButton } from "@/components/auth/google-auth-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
@@ -154,11 +155,26 @@ function SignupPage() {
 
                 <signUpForm.Subscribe selector={(state) => state.isSubmitting}>
                   {(isSubmitting) => (
-                    <Field>
-                      <Button type="submit" disabled={isSubmitting} className="w-full">
-                        {isSubmitting ? "Signing up..." : "Sign up"}
-                      </Button>
-                    </Field>
+                    <>
+                      <Field>
+                        <Button type="submit" disabled={isSubmitting} className="w-full">
+                          {isSubmitting ? "Signing up..." : "Sign up"}
+                        </Button>
+                      </Field>
+
+                      <AuthDivider>or sign up with</AuthDivider>
+
+                      <Field>
+                        {/* Google reports emails as verified, and `trustedProviders`
+                            in auth.ts links this onto an existing password account
+                            rather than creating a duplicate for the same person. */}
+                        <GoogleAuthButton
+                          label="Continue with Google"
+                          disabled={isSubmitting}
+                          onError={setServerError}
+                        />
+                      </Field>
+                    </>
                   )}
                 </signUpForm.Subscribe>
 
