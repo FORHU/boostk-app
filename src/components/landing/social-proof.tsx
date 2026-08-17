@@ -169,7 +169,7 @@ export function Testimonials() {
           </div>
 
           {/* Card 4 (Bottom Left-ish) */}
-          <div className="absolute left-[15%] bottom-[80px] z-10 w-full max-w-[320px] rounded-2xl bg-white/40 p-5 shadow-lg backdrop-blur-sm transition-transform hover:scale-105 hover:z-50 hover:bg-white">
+          <div className="w-full max-w-[360px] rounded-2xl bg-white p-5 shadow-2xl transition-transform hover:scale-105 hover:z-50 lg:absolute lg:left-[15%] lg:bottom-[80px] lg:z-10">
             <div className="flex items-center gap-3">
               <div className="size-10 rounded-full bg-gray-300" />
               <div>
@@ -192,7 +192,7 @@ export function Testimonials() {
           </div>
 
           {/* Card 5 (Bottom Center) */}
-          <div className="absolute left-[45%] bottom-0 z-40 w-full max-w-[340px] -translate-x-1/2 rounded-2xl bg-white p-5 shadow-2xl transition-transform hover:scale-105 hover:z-50">
+          <div className="w-full max-w-[360px] rounded-2xl bg-white p-5 shadow-2xl transition-transform hover:scale-105 hover:z-50 lg:absolute lg:left-[45%] lg:bottom-0 lg:z-40 lg:-translate-x-1/2">
             <div className="flex items-center gap-3">
               <div className="size-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
                 R
