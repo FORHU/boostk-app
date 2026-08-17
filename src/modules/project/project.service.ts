@@ -2,12 +2,33 @@ import { prisma } from "@/lib/prisma";
 import { generateSlug } from "@/lib/utils";
 import type { CreateProjectInput } from "./project.schema";
 
-export const getProjectsByOrgId = async (organizationId: string) => {
+export interface OrgProjectListItem {
+  id: string;
+  name: string;
+  description: string | null;
+  logo: string | null;
+  slug: string;
+  organizationId: string;
+  createdAt: Date;
+  updatedAt: Date;
+  _count: { customers: number; tickets: number };
+}
+
+export const getProjectsByOrgId = async (organizationId: string): Promise<OrgProjectListItem[]> => {
   const projects = await prisma.project.findMany({
     where: { organizationId },
+    orderBy: { createdAt: "desc" },
+    include: {
+      _count: {
+        select: {
+          customers: true,
+          tickets: { where: { status: "OPEN" } },
+        },
+      },
+    },
   });
 
-  return projects;
+  return projects as unknown as OrgProjectListItem[];
 };
 
 export const getProjectById = async (projectId: string) => {

@@ -19,7 +19,7 @@ export const Route = createFileRoute("/(app)/dashboard/project/$projectId")({
 });
 
 function OrganizationLayout() {
-  const { project } = Route.useRouteContext();
+  const { project, role } = Route.useRouteContext();
   const { isMobile } = useViewport();
 
   return (
@@ -34,14 +34,14 @@ function OrganizationLayout() {
           } as React.CSSProperties
         }
       >
-        <ProjectSidebar projectId={project.id} />
+        <ProjectSidebar projectId={project.id} project={project} />
         <SidebarInset>
           <div className={`flex-1 overflow-auto ${isMobile ? "pb-24" : ""}`}>
             <Outlet />
           </div>
         </SidebarInset>
       </SidebarProvider>
-      <OrganizationBottomNav organizationId={project.organizationId} />
+      <OrganizationBottomNav organizationId={project.organizationId} role={role} />
     </div>
   );
 }
