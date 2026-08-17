@@ -73,9 +73,22 @@ export function Testimonials() {
           </span>
         </p>
 
-        <div className="relative mt-20 h-[600px] w-full max-w-[900px] mx-auto">
+        {/*
+          Two layouts, not one that stretches.
+
+          Above lg the three cards are an overlapping collage, absolutely placed inside a
+          fixed-height stage. That only works while there is room either side of centre:
+          below lg the cards are each wider than a third of the viewport, so they landed
+          on top of one another at top-0/120px/200px and the section's `overflow-hidden`
+          clipped whatever stuck out. It read as one broken card.
+
+          So the stage's height and positioning are lg-only, and the cards fall back to
+          ordinary stacked flow on phones — where a vertical list of testimonials is what
+          you would have designed anyway.
+        */}
+        <div className="relative mt-12 flex flex-col items-center gap-6 lg:mt-20 lg:block lg:h-[600px] lg:w-full lg:max-w-[900px] lg:mx-auto">
           {/* Card 1 (Center Top) */}
-          <div className="absolute left-1/2 top-0 z-10 w-full max-w-[360px] -translate-x-1/2 rounded-2xl bg-white p-5 shadow-2xl transition-transform hover:scale-105 hover:z-50">
+          <div className="w-full max-w-[360px] rounded-2xl bg-white p-5 shadow-2xl transition-transform hover:scale-105 lg:absolute lg:left-1/2 lg:top-0 lg:z-10 lg:-translate-x-1/2 lg:hover:z-50">
             <div className="flex items-center gap-3">
               <img
                 src="/landing/avatar-minjun.webp"
@@ -102,7 +115,7 @@ export function Testimonials() {
           </div>
 
           {/* Card 2 (Left Middle) */}
-          <div className="absolute left-[5%] top-[120px] z-20 w-full max-w-[340px] rounded-2xl bg-white p-5 shadow-2xl transition-transform hover:scale-105 hover:z-50">
+          <div className="w-full max-w-[360px] rounded-2xl bg-white p-5 shadow-2xl transition-transform hover:scale-105 lg:absolute lg:left-[5%] lg:top-[120px] lg:z-20 lg:max-w-[340px] lg:hover:z-50">
             <div className="flex items-center gap-3">
               <img
                 src="/landing/avatar-jiwoo.webp"
@@ -129,7 +142,7 @@ export function Testimonials() {
           </div>
 
           {/* Card 3 (Right Middle) */}
-          <div className="absolute right-[2%] top-[200px] z-30 w-full max-w-[380px] rounded-2xl bg-white p-6 shadow-2xl transition-transform hover:scale-105 hover:z-50">
+          <div className="w-full max-w-[360px] rounded-2xl bg-white p-5 shadow-2xl transition-transform hover:scale-105 lg:absolute lg:right-[2%] lg:top-[200px] lg:z-30 lg:max-w-[380px] lg:p-6 lg:hover:z-50">
             <div className="flex items-center gap-3">
               <img
                 src="/landing/avatar-sooah.webp"

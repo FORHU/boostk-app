@@ -117,17 +117,10 @@ export function useSocket({ userId, ticketId, projectId }: { userId?: string; ti
       const message = { event: event as EventType, data };
       setLastMessage(message);
 
-      console.log("[Socket] received event:", event, (data as Record<string, unknown>)?.ticketId);
-
       const shouldRing = NOTIFICATION_EVENTS.has(message.event) && shouldRingBell(message.event, data, userId);
-      console.log("[Socket] shouldRing?", shouldRing, { event: message.event, userId });
 
       if (shouldRing) {
-        setNotifications((prev) => {
-          const next = upsertNotification(prev, message.event, data, localIdRef);
-          console.log("[Socket] upsert prev:", prev.length, "→ next:", next.length);
-          return next;
-        });
+        setNotifications((prev) => upsertNotification(prev, message.event, data, localIdRef));
       }
     };
 

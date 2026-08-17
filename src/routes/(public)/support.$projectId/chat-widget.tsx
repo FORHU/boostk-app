@@ -6,7 +6,7 @@ import type { Project, TicketMessage } from "prisma/generated/client";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { z } from "zod";
 import { BoostkLogo } from "@/components/BoostkLogo";
-import { AttachmentButton, AttachmentPreview } from "@/components/chat-support/attachment-picker";
+import { AttachmentButton, AttachmentHint, AttachmentPreview } from "@/components/chat-support/attachment-picker";
 import { RateLimitBanner } from "@/components/chat-support/rate-limit-banner";
 import { SatisfactionRating } from "@/components/chat-support/SatisfactionRating";
 import TicketChatMessageBubble from "@/components/chat-support/TicketChatMessageBubble";
@@ -431,6 +431,8 @@ const ChatInput = ({ ticketId, status, projectId, initialScore }: ChatInputProps
             <Send size={18} />
           </button>
         </div>
+
+        {!attachment && <AttachmentHint />}
       </form>
     </div>
   );

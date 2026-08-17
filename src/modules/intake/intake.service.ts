@@ -9,6 +9,7 @@ import {
 } from "@/modules/notification/notification.publish";
 import { createTicket } from "@/modules/ticket/ticket.service";
 import { generateTicketReferenceNumber } from "@/modules/ticket/ticket.utils";
+import { ATTACHMENT_SELECT } from "@/modules/ticket-message/ticket-message.functions";
 import { prepareIncomingCustomerText } from "@/modules/ticket-message/ticket-message.translation";
 import { INTAKE_COOKIE_MAX_AGE, INTAKE_COOKIE_NAME, INTAKE_COOKIE_PATH, INTAKE_PROJECT_SLUG } from "./intake.constants";
 import type {
@@ -465,7 +466,14 @@ export const getTriageThread = async (intakeTicketId: string) => {
       customer: true,
       ticketMessages: {
         orderBy: { createdAt: "asc" as const },
-        include: { attachment: true },
+        // ATTACHMENT_SELECT, never `attachment: true`. `true` selects every scalar on
+        // the row -- including `bytes`, the file itself -- which Prisma then hands to
+        // the server function serializer. One 5MB photo turned this query's response
+        // into a multi-megabyte payload, the call failed, and the panel rendered
+        // "Conversation not found." on every load until the ticket was abandoned.
+        // The bytes are streamed by GET /api/attachments/:id; they must never ride
+        // along in a list query.
+        include: { attachment: ATTACHMENT_SELECT },
       },
       routedTicket: {
         select: { id: true, referenceNumber: true, project: { select: { id: true, name: true } } },
