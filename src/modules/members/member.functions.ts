@@ -1,30 +1,78 @@
 import { createServerFn } from "@tanstack/react-start";
+import type { Prisma } from "prisma/generated/client";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { ORG_ROLE } from "@/modules/auth/roles";
 import { requireOrgRole } from "@/modules/organization/organization.middleware";
+import { GetOrgMembersSchema } from "./member.schema";
 import { assertMemberMutable, assignableRoleSchema } from "./member.service";
 
-const fetchMembers = async (organizationId: string) => {
-  return prisma.member.findMany({
-    where: { organizationId },
-    include: { user: true },
-    orderBy: { createdAt: "asc" as const },
-  });
+const fetchMembersPaginated = async (
+  organizationId: string,
+  data: { page: number; pageSize: number; role?: string; search?: string },
+) => {
+  const search = data.search?.trim();
+
+  const where: Prisma.MemberWhereInput = {
+    organizationId,
+    ...(data.role ? { role: data.role } : {}),
+    ...(search
+      ? {
+          user: {
+            is: {
+              OR: [
+                { name: { contains: search, mode: "insensitive" as const } },
+                { email: { contains: search, mode: "insensitive" as const } },
+              ],
+            },
+          },
+        }
+      : {}),
+  };
+
+  const [total, members] = await prisma.$transaction([
+    prisma.member.count({ where }),
+    prisma.member.findMany({
+      where,
+      include: { user: true },
+      orderBy: [{ createdAt: "desc" as const }, { id: "desc" as const }],
+      skip: (data.page - 1) * data.pageSize,
+      take: data.pageSize,
+    }),
+  ]);
+
+  return {
+    members,
+    total,
+    page: data.page,
+    pageSize: data.pageSize,
+    totalPages: Math.max(1, Math.ceil(total / data.pageSize)),
+  };
 };
 
 export const getAdminOrgMembersFn = createServerFn({ method: "GET" })
-  .inputValidator(z.object({ organizationId: z.string() }))
+  .inputValidator(GetOrgMembersSchema)
   .middleware([requireOrgRole(ORG_ROLE.ADMIN)])
-  .handler(async ({ context }) => {
-    return fetchMembers(context.organization.id);
+  .handler(async ({ data, context }) => {
+    return fetchMembersPaginated(context.organization.id, data);
   });
 
 export const getAgentProjectMembersFn = createServerFn({ method: "GET" })
-  .inputValidator(z.object({ organizationId: z.string() }))
+  .inputValidator(GetOrgMembersSchema)
   .middleware([requireOrgRole(ORG_ROLE.AGENT)])
-  .handler(async ({ context }) => {
-    return fetchMembers(context.organization.id);
+  .handler(async ({ data, context }) => {
+    return fetchMembersPaginated(context.organization.id, data);
+  });
+
+export const getOrgAgentsFn = createServerFn({ method: "GET" })
+  .inputValidator(GetOrgMembersSchema.pick({ organizationId: true }))
+  .middleware([requireOrgRole(ORG_ROLE.AGENT)])
+  .handler(async ({ data }) => {
+    return prisma.member.findMany({
+      where: { organizationId: data.organizationId, role: ORG_ROLE.AGENT },
+      include: { user: true },
+      orderBy: { createdAt: "asc" as const },
+    });
   });
 
 export const updateMemberRoleFn = createServerFn({ method: "POST" })

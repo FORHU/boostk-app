@@ -311,7 +311,7 @@ function TicketDetailPanel({
   const queryClient = useQueryClient();
 
   const agentsQuery = useQuery({
-    ...memberQueries.agentAllByOrgId(organizationId),
+    ...memberQueries.orgAgents(organizationId),
     enabled: !!organizationId,
   });
   const agents = (agentsQuery.data ?? []).filter((member) => hasOrgRole(member.role, ORG_ROLE.AGENT));
@@ -884,7 +884,7 @@ function ProjectTicketsPage() {
   const canEditAnyTicket = hasOrgRole(role, ORG_ROLE.ADMIN);
 
   const agentsQuery = useQuery({
-    ...memberQueries.agentAllByOrgId(organizationId),
+    ...memberQueries.orgAgents(organizationId),
     enabled: !!organizationId,
   });
   const agents = (agentsQuery.data ?? [])
