@@ -27,18 +27,28 @@ describe("CreateCustomerSchema", () => {
 });
 
 describe("GetProjectCustomersSchema", () => {
-  it("defaults the page size when the caller omits it", () => {
+  it("defaults to the first page when the caller omits pagination", () => {
     const parsed = GetProjectCustomersSchema.parse({ projectId: "proj_1" });
 
-    expect(parsed.take).toBe(25);
+    expect(parsed.page).toBe(1);
+    expect(parsed.pageSize).toBe(8);
   });
 
   // The cap is what stops a caller pulling an entire tenant's customer list in one call.
   it("holds the page size between 1 and 50", () => {
-    expect(GetProjectCustomersSchema.safeParse({ projectId: "p", take: 50 }).success).toBe(true);
-    expect(GetProjectCustomersSchema.safeParse({ projectId: "p", take: 51 }).success).toBe(false);
-    expect(GetProjectCustomersSchema.safeParse({ projectId: "p", take: 0 }).success).toBe(false);
-    expect(GetProjectCustomersSchema.safeParse({ projectId: "p", take: 2.5 }).success).toBe(false);
+    expect(GetProjectCustomersSchema.safeParse({ projectId: "p", pageSize: 50 }).success).toBe(true);
+    expect(GetProjectCustomersSchema.safeParse({ projectId: "p", pageSize: 51 }).success).toBe(false);
+    expect(GetProjectCustomersSchema.safeParse({ projectId: "p", pageSize: 0 }).success).toBe(false);
+    expect(GetProjectCustomersSchema.safeParse({ projectId: "p", pageSize: 2.5 }).success).toBe(false);
+  });
+
+  // `page` feeds `skip: (page - 1) * pageSize` in customer.functions.ts, so a zero or
+  // negative page would compute a negative offset and Prisma would throw at query time.
+  it("requires a whole page number of at least 1", () => {
+    expect(GetProjectCustomersSchema.safeParse({ projectId: "p", page: 1 }).success).toBe(true);
+    expect(GetProjectCustomersSchema.safeParse({ projectId: "p", page: 0 }).success).toBe(false);
+    expect(GetProjectCustomersSchema.safeParse({ projectId: "p", page: -1 }).success).toBe(false);
+    expect(GetProjectCustomersSchema.safeParse({ projectId: "p", page: 1.5 }).success).toBe(false);
   });
 
   it("bounds the search term so it cannot be used as an oversized payload", () => {
@@ -46,7 +56,7 @@ describe("GetProjectCustomersSchema", () => {
     expect(GetProjectCustomersSchema.safeParse({ projectId: "p", search: "x".repeat(201) }).success).toBe(false);
   });
 
-  it("treats search and cursor as optional", () => {
+  it("treats search and pagination as optional", () => {
     expect(GetProjectCustomersSchema.safeParse({ projectId: "p" }).success).toBe(true);
   });
 });
