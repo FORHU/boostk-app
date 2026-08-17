@@ -1,6 +1,6 @@
-import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { Users } from "lucide-react";
+import { ChevronLeft, ChevronRight, Users } from "lucide-react";
 import type { Member, User } from "prisma/generated/client";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -24,7 +24,7 @@ export const Route = createFileRoute("/(app)/dashboard/org/$organizationId/teams
     }
   },
   loader: ({ context, params }) => {
-    context.queryClient.ensureQueryData(memberQueries.adminAllByOrgId(params.organizationId));
+    return context.queryClient.ensureQueryData(memberQueries.adminList({ organizationId: params.organizationId }));
   },
   component: OrganizationTeamsPage,
 });
@@ -278,24 +278,41 @@ function MemberRowActions({ member, organizationId }: { member: Member & { user:
 
 // MAIN COMPONENT
 function TeamTable({ organizationId }: { organizationId: string }) {
-  const query = useSuspenseQuery(memberQueries.adminAllByOrgId(organizationId));
-  const members = (query.data ?? []) as Array<Member & { user: User }>;
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
-
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery);
   const [activeTab, setActiveTab] = useState("ALL USERS");
+  const [page, setPage] = useState(1);
 
-  const filteredMembers = members.filter((m) => {
-    const matchesTab = activeTab === "ALL USERS" || m.role?.toUpperCase() === activeTab;
+  const roleFilter = activeTab === "ALL USERS" ? undefined : (activeTab.toLowerCase() as "admin" | "agent" | "member");
 
-    const searchLower = debouncedSearchQuery.toLowerCase();
-    const matchesSearch =
-      (m.user?.name ?? "").toLowerCase().includes(searchLower) ||
-      (m.user?.email ?? "").toLowerCase().includes(searchLower);
+  const membersQuery = useQuery(
+    memberQueries.adminList({ organizationId, page, role: roleFilter, search: debouncedSearchQuery || undefined }),
+  );
+  const data = membersQuery.data;
+  const members = (data?.members ?? []) as Array<Member & { user: User }>;
+  const totalPages = data?.totalPages ?? 1;
 
-    return matchesTab && matchesSearch;
-  });
+  const prevSearchRef = useRef(debouncedSearchQuery);
+  const prevTabRef = useRef(activeTab);
+
+  // Reset to page 1 when search or tab changes.
+  useEffect(() => {
+    if (prevSearchRef.current !== debouncedSearchQuery || prevTabRef.current !== activeTab) {
+      prevSearchRef.current = debouncedSearchQuery;
+      prevTabRef.current = activeTab;
+      setPage(1);
+    }
+  }, [debouncedSearchQuery, activeTab]);
+
+  // Clamp page when dataset shrinks (e.g. search narrows on last page).
+  useEffect(() => {
+    if (membersQuery.isSuccess && page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [membersQuery.isSuccess, page, totalPages]);
+
+  if (membersQuery.isPending && members.length === 0) return null;
 
   return (
     <div className="space-y-6 min-w-0 w-full">
@@ -370,7 +387,7 @@ function TeamTable({ organizationId }: { organizationId: string }) {
       </div>
 
       <div className="bg-background rounded-[7px] border border-border shadow-sm overflow-hidden w-full">
-        {filteredMembers.length === 0 ? (
+        {members.length === 0 ? (
           <EmptyState icon={<Users className="w-12 h-12" />} title="No users found" className="py-20 bg-muted/50" />
         ) : (
           <div className="overflow-x-auto w-full">
@@ -394,7 +411,7 @@ function TeamTable({ organizationId }: { organizationId: string }) {
               </thead>
 
               <tbody className="divide-y divide-border bg-background">
-                {filteredMembers.map((m) => {
+                {members.map((m) => {
                   const isRole = (role: string) => m.role?.toLowerCase() === role.toLowerCase();
                   const joinedDate = m.createdAt ?? m.user?.createdAt;
 
@@ -485,11 +502,50 @@ function TeamTable({ organizationId }: { organizationId: string }) {
           </div>
         )}
       </div>
+      <MemberPagination page={page} totalPages={totalPages} onPageChange={setPage} />
       <InviteModal
         isOpen={isInviteModalOpen}
         onClose={() => setIsInviteModalOpen(false)}
         organizationId={organizationId}
       />
+    </div>
+  );
+}
+
+function MemberPagination({
+  page,
+  totalPages,
+  onPageChange,
+}: {
+  page: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}) {
+  if (totalPages <= 1) return null;
+
+  return (
+    <div className="flex items-center justify-center gap-3 py-2">
+      <button
+        type="button"
+        onClick={() => onPageChange(page - 1)}
+        disabled={page <= 1}
+        className="inline-flex size-8 items-center justify-center rounded-sm border border-muted bg-background text-muted-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
+        title="Previous page"
+      >
+        <ChevronLeft className="size-4" />
+      </button>
+      <span className="text-sm font-medium tabular-nums">
+        {page} / {totalPages}
+      </span>
+      <button
+        type="button"
+        onClick={() => onPageChange(page + 1)}
+        disabled={page >= totalPages}
+        className="inline-flex size-8 items-center justify-center rounded-sm border border-muted bg-background text-muted-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
+        title="Next page"
+      >
+        <ChevronRight className="size-4" />
+      </button>
     </div>
   );
 }

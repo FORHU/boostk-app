@@ -1,9 +1,11 @@
-import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import {
   AlertCircle,
   Archive,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
   Clock,
   Filter,
   MessageSquare,
@@ -13,7 +15,7 @@ import {
   X,
 } from "lucide-react";
 import type { Member, User } from "prisma/generated/client";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { DataTableSkeleton, TextSkeleton } from "@/components/ui/skeleton";
@@ -30,7 +32,9 @@ export const Route = createFileRoute("/(app)/dashboard/project/$projectId/agents
     }
   },
   loader: ({ context }) => {
-    context.queryClient.ensureQueryData(memberQueries.agentAllByOrgId(context.project.organizationId));
+    return context.queryClient.ensureQueryData(
+      memberQueries.agentList({ organizationId: context.project.organizationId }),
+    );
   },
   component: ProjectAgentsPage,
 });
@@ -56,36 +60,44 @@ function ProjectAgentsPage() {
 }
 
 function AgentTable({ organizationId, projectId }: { organizationId: string; projectId: string }) {
-  // Fetch Agents
-  const agentsQuery = useSuspenseQuery(memberQueries.agentAllByOrgId(organizationId));
-  const allMembers = (agentsQuery.data ?? []) as Array<Member & { user: User }>;
-  const members = allMembers.filter((m) => hasOrgRole(m.role, ORG_ROLE.AGENT));
-
-  // State
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery);
   const [roleFilter, setRoleFilter] = useState("ALL");
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
 
-  // Derived Data
+  const agentsQuery = useQuery(
+    memberQueries.agentList({
+      organizationId,
+      page,
+      role: roleFilter === "ALL" ? undefined : (roleFilter.toLowerCase() as "admin" | "agent" | "member"),
+      search: debouncedSearchQuery || undefined,
+    }),
+  );
+  const data = agentsQuery.data;
+  const members = (data?.members ?? []) as Array<Member & { user: User }>;
+  const totalPages = data?.totalPages ?? 1;
+
   const selectedAgent = members.find((m) => m.id === selectedAgentId) ?? null;
 
-  // --- FILTER FIX APPLIED HERE ---
-  const filteredMembers = members.filter((m) => {
-    const safeSearch = debouncedSearchQuery.toLowerCase();
+  const prevSearchRef = useRef(debouncedSearchQuery);
+  const prevRoleRef = useRef(roleFilter);
 
-    // 1. Safe Search: Explicitly allow through if search is empty, otherwise safely check name/email
-    const matchesSearch =
-      !safeSearch ||
-      (m.user?.name?.toLowerCase().includes(safeSearch) ?? false) ||
-      (m.user?.email?.toLowerCase().includes(safeSearch) ?? false);
+  // Reset to page 1 when search or role filter changes.
+  useEffect(() => {
+    if (prevSearchRef.current !== debouncedSearchQuery || prevRoleRef.current !== roleFilter) {
+      prevSearchRef.current = debouncedSearchQuery;
+      prevRoleRef.current = roleFilter;
+      setPage(1);
+    }
+  }, [debouncedSearchQuery, roleFilter]);
 
-    // 2. Safe Role: Fallback to "AGENT" if role is null, and convert both to uppercase for comparison
-    const memberRole = (m.role || "AGENT").toUpperCase();
-    const matchesRole = roleFilter === "ALL" || memberRole === roleFilter.toUpperCase();
-
-    return matchesSearch && matchesRole;
-  });
+  // Clamp page when dataset shrinks (e.g. search narrows on last page).
+  useEffect(() => {
+    if (agentsQuery.isSuccess && page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [agentsQuery.isSuccess, page, totalPages]);
 
   // Per-agent stats are computed server-side, only when an agent is selected —
   // the page no longer downloads the project's entire chat history up front.
@@ -94,6 +106,8 @@ function AgentTable({ organizationId, projectId }: { organizationId: string; pro
     enabled: !!selectedAgent?.user?.id,
   });
   const agentStats = agentConversationsQuery.data ?? { handledChats: [], messagesSentCount: 0 };
+
+  if (agentsQuery.isPending && members.length === 0) return null;
 
   // Helper for specific Badge colors
   const getRoleBadgeColors = (role: string) => {
@@ -157,7 +171,7 @@ function AgentTable({ organizationId, projectId }: { organizationId: string; pro
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {filteredMembers.map((m) => {
+                {members.map((m) => {
                   const initial = (m.user?.name || m.user?.email || "?").charAt(0).toUpperCase();
                   const isActive = true; // Mocked active status
 
@@ -208,7 +222,7 @@ function AgentTable({ organizationId, projectId }: { organizationId: string; pro
                   );
                 })}
 
-                {filteredMembers.length === 0 && (
+                {members.length === 0 && (
                   <tr>
                     <td colSpan={5} className="text-center">
                       <EmptyState
@@ -223,6 +237,7 @@ function AgentTable({ organizationId, projectId }: { organizationId: string; pro
             </table>
           </div>
         </div>
+        <AgentPagination page={page} totalPages={totalPages} onPageChange={setPage} />
       </main>
 
       {/* DRILL-DOWN VIEW DRAWER */}
@@ -365,6 +380,44 @@ function AgentTable({ organizationId, projectId }: { organizationId: string; pro
           </>
         )}
       </aside>
+    </div>
+  );
+}
+
+function AgentPagination({
+  page,
+  totalPages,
+  onPageChange,
+}: {
+  page: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}) {
+  if (totalPages <= 1) return null;
+
+  return (
+    <div className="flex items-center justify-center gap-3 py-2">
+      <button
+        type="button"
+        onClick={() => onPageChange(page - 1)}
+        disabled={page <= 1}
+        className="inline-flex size-8 items-center justify-center rounded-sm border border-muted bg-background text-muted-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
+        title="Previous page"
+      >
+        <ChevronLeft className="size-4" />
+      </button>
+      <span className="text-sm font-medium tabular-nums">
+        {page} / {totalPages}
+      </span>
+      <button
+        type="button"
+        onClick={() => onPageChange(page + 1)}
+        disabled={page >= totalPages}
+        className="inline-flex size-8 items-center justify-center rounded-sm border border-muted bg-background text-muted-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
+        title="Next page"
+      >
+        <ChevronRight className="size-4" />
+      </button>
     </div>
   );
 }
