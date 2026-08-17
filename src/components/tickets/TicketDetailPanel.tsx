@@ -1,15 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import {
-  ArrowLeft,
-  Loader2,
-  Maximize,
-  MessageCircle,
-  Minimize,
-  Star,
-  User,
-  X,
-} from "lucide-react";
+import { ArrowLeft, Loader2, Maximize, MessageCircle, Minimize, Star, User, X } from "lucide-react";
 import type { TicketMessage } from "prisma/generated/client";
 import { useState } from "react";
 import { ReplyInput } from "@/components/chat-support/reply-input";

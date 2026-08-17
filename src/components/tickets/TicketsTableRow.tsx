@@ -1,18 +1,18 @@
-import { useEffect, useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import { Star } from "lucide-react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { InlineAssigneeEditor } from "@/components/tickets/InlineAssigneeEditor";
+import { InlineTicketPriority } from "@/components/tickets/InlineTicketPriority";
 import { useToast } from "@/components/ui/toast";
 import { formatRelative } from "@/lib/format-date";
+import type { getProjectTicketsFn } from "@/modules/ticket/ticket.functions";
 import {
   assignTicketFn,
   projectTicketQueries,
   updateTicketPriorityFn,
   updateTicketStatusFn,
 } from "@/routes/(app)/dashboard/project.$projectId/tickets";
-import { InlineTicketPriority } from "@/components/tickets/InlineTicketPriority";
-import { InlineAssigneeEditor } from "@/components/tickets/InlineAssigneeEditor";
-import type { getProjectTicketsFn } from "@/modules/ticket/ticket.functions";
 
 function getStatusBadgeClasses(status: string) {
   switch (status.toUpperCase()) {

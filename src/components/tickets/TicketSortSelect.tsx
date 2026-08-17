@@ -7,7 +7,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { TicketSort } from "@/modules/ticket/ticket.schema";
 
-export function TicketSortSelect({ sort, onSortChange }: { sort: TicketSort; onSortChange: (sort: TicketSort) => void }) {
+export function TicketSortSelect({
+  sort,
+  onSortChange,
+}: {
+  sort: TicketSort;
+  onSortChange: (sort: TicketSort) => void;
+}) {
   const sortOptions: { label: string; value: TicketSort }[] = [
     { label: "Newest first", value: "newest" },
     { label: "Oldest first", value: "oldest" },
