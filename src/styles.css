@@ -2,8 +2,6 @@
 
 @import 'tw-animate-css';
 
-@import "tw-animate-css";
-
 @import "shadcn/tailwind.css";
 
 @import "@fontsource/poppins/400.css";
@@ -90,7 +88,7 @@ code {
   --chart-5:
     oklch(0.424 0.199 265.638);
   --radius:
-    0;
+    0.625rem;
   --sidebar:
     oklch(0.985 0 0);
   --sidebar-foreground:
