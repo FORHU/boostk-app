@@ -4,7 +4,7 @@ import { CheckCircle2, Loader2, Send } from "lucide-react";
 import type { TicketMessage } from "prisma/generated/client";
 import { useCallback, useEffect, useState } from "react";
 import { BoostkLogo } from "@/components/BoostkLogo";
-import { AttachmentButton, AttachmentPreview } from "@/components/chat-support/attachment-picker";
+import { AttachmentButton, AttachmentHint, AttachmentPreview } from "@/components/chat-support/attachment-picker";
 import IntakeCustomerForm from "@/components/chat-support/IntakeCustomerForm";
 import { RateLimitBanner } from "@/components/chat-support/rate-limit-banner";
 import { SatisfactionRating } from "@/components/chat-support/SatisfactionRating";
@@ -340,6 +340,8 @@ const ChatInput = ({
             <Send size={18} />
           </button>
         </div>
+
+        {!attachment && <AttachmentHint />}
       </form>
     </div>
   );

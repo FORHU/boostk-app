@@ -50,8 +50,12 @@ export function HeroChat() {
       <div className="absolute bottom-[-10%] left-[20%] w-[50%] h-[40%] rounded-full bg-pink-100/40 blur-[100px] pointer-events-none" />
 
       <div className="relative mx-auto max-w-[1248px]">
-        {/* Header content */}
-        <div className="flex flex-col items-center text-center gap-6 mb-16 relative z-20">
+        {/* Only the eyebrow sits above the chat. The headline moved BELOW it — see the
+            block after the chat. This section's whole premise is that the conversation
+            IS the pitch, and putting a 68px headline plus a paragraph in front of it
+            asked visitors to read the claim before they could see the thing that backs
+            it up. The badge is small enough to frame the chat without competing. */}
+        <div className="flex flex-col items-center text-center mb-10 relative z-20">
           <motion.span
             initial={{ y: 10 }}
             animate={{ y: 0 }}
@@ -59,32 +63,10 @@ export function HeroChat() {
           >
             ⭐ Trusted by 200+ Korean SMEs going global
           </motion.span>
-
-          <motion.h1
-            initial={{ y: 10 }}
-            animate={{ y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="text-[40px] font-extrabold leading-[1.06] tracking-tight text-ink sm:text-[52px] lg:text-[68px]"
-          >
-            Speak Local.{" "}
-            <span className="text-transparent bg-clip-text bg-linear-to-r from-brand to-purple-600">Sell Global.</span>
-            <br />
-            Grow Without Limits.
-          </motion.h1>
-
-          <motion.p
-            initial={{ y: 10 }}
-            animate={{ y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="max-w-[700px] text-[17px] leading-[1.6] text-ink-body lg:text-[19px]"
-          >
-            The done for you growth team that turns SMEs into global brands content, commerce, and partnerships, handled
-            end to end.
-          </motion.p>
         </div>
 
         {/* Central UI with Floating Cards */}
-        <div className="relative mx-auto w-full max-w-[1240px] mt-12 flex justify-center">
+        <div className="relative mx-auto w-full max-w-[1240px] flex justify-center">
           {/* Card 1: Social Media (Top Left) */}
           <FloatingCard className="right-[50%] mr-[400px] top-10 rotate-[-4deg]" delay={0.2} duration={5}>
             <div className="flex items-center gap-3 min-w-[180px]">
@@ -180,6 +162,34 @@ export function HeroChat() {
               </ClientOnly>
             </div>
           </motion.div>
+        </div>
+
+        {/* The headline, now reading as a caption under the product rather than a
+            billboard in front of it. Kept at full hero weight — it is still the page's
+            h1, and demoting the type would cost the SEO and the scan-ability without
+            buying anything back. */}
+        <div className="flex flex-col items-center text-center gap-6 mt-16 relative z-20 lg:mt-20">
+          <motion.h1
+            initial={{ y: 10 }}
+            animate={{ y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="text-[40px] font-extrabold leading-[1.06] tracking-tight text-ink sm:text-[52px] lg:text-[68px]"
+          >
+            Speak Local.{" "}
+            <span className="text-transparent bg-clip-text bg-linear-to-r from-brand to-purple-600">Sell Global.</span>
+            <br />
+            Grow Without Limits.
+          </motion.h1>
+
+          <motion.p
+            initial={{ y: 10 }}
+            animate={{ y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="max-w-[700px] text-[17px] leading-[1.6] text-ink-body lg:text-[19px]"
+          >
+            The done for you growth team that turns SMEs into global brands content, commerce, and partnerships, handled
+            end to end.
+          </motion.p>
         </div>
       </div>
     </section>

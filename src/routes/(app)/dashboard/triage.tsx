@@ -109,7 +109,7 @@ function RouteComponent() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search name or email…"
-            className="mt-3 w-full bg-gray-100 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+            className="mt-3 w-full bg-gray-100 text-gray-900 placeholder:text-gray-500 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
           />
 
           <div className="mt-3 flex items-center gap-1 rounded-lg bg-gray-100 p-0.5">
@@ -237,7 +237,11 @@ function TriageComposer({ intakeTicketId, disabled }: { intakeTicketId: string; 
           onChange={(e) => setContent(e.target.value)}
           placeholder="Reply to the visitor…"
           disabled={disabled || sendMutation.isPending}
-          className="flex-1 min-w-0 bg-gray-100 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
+          // Text and placeholder colours are pinned alongside the background. This page
+          // is hardcoded light throughout, so a control that fixes only its background
+          // inherits `--foreground` for its text — which is near-white under `.dark` and
+          // left the agent typing invisibly into a light grey field.
+          className="flex-1 min-w-0 bg-gray-100 text-gray-900 placeholder:text-gray-500 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
         />
         <button
           type="submit"
@@ -419,7 +423,7 @@ function TriageDetail({ intakeTicketId, onDone }: { intakeTicketId: string; onDo
                   setProjectId(""); // the old project belongs to a different org
                 }}
                 disabled={isBusy}
-                className="bg-gray-100 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
+                className="bg-gray-100 text-gray-900 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
               >
                 <option value="">Select organization…</option>
                 {targets?.map((org) => (
@@ -433,7 +437,7 @@ function TriageDetail({ intakeTicketId, onDone }: { intakeTicketId: string; onDo
                 value={projectId}
                 onChange={(e) => setProjectId(e.target.value)}
                 disabled={isBusy || !organizationId}
-                className="bg-gray-100 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
+                className="bg-gray-100 text-gray-900 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
               >
                 <option value="">{organizationId ? "Select project…" : "Pick an organization first"}</option>
                 {projects.map((project) => (

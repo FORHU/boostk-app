@@ -2,8 +2,26 @@ import { FileText, Loader2, Paperclip, X } from "lucide-react";
 import { useId, useRef } from "react";
 import type { StagedAttachment } from "@/hooks/use-attachment-upload";
 import { cn } from "@/lib/utils";
-import { ATTACHMENT_ACCEPT } from "@/modules/attachment/attachment.schema";
+import { ATTACHMENT_ACCEPT, ATTACHMENT_MAX_BYTES } from "@/modules/attachment/attachment.schema";
 import { formatFileSize } from "@/modules/attachment/attachment.utils";
+
+/** Human-readable cap, derived from the constant the server enforces so they cannot drift. */
+const MAX_LABEL = formatFileSize(ATTACHMENT_MAX_BYTES);
+
+/**
+ * Tells the visitor what will be accepted, before they pick something that won't be.
+ *
+ * The limit was previously discoverable only by hitting it — you picked a 12MB photo,
+ * waited, and got a toast. Stating it up front costs one line and turns a failure into
+ * a constraint. Kept deliberately quiet: it is guidance, not a warning.
+ */
+export function AttachmentHint({ className }: { className?: string }) {
+  return (
+    <p className={cn("text-[10px] leading-tight text-gray-500 mt-1.5 px-1", className)}>
+      Images and documents up to {MAX_LABEL}. Large photos are resized automatically.
+    </p>
+  );
+}
 
 interface AttachmentButtonProps {
   onSelect: (file: File) => void;
@@ -37,8 +55,8 @@ export function AttachmentButton({ onSelect, disabled, isUploading, className }:
       />
       <button
         type="button"
-        aria-label="Attach a file"
-        title="Attach a file"
+        aria-label={`Attach a file, up to ${MAX_LABEL}`}
+        title={`Attach a file (up to ${MAX_LABEL})`}
         disabled={disabled || isUploading}
         onClick={() => inputRef.current?.click()}
         className={cn(

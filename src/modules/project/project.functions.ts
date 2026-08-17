@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { createProjectSchema, getProjectSchema } from "@/modules/project/project.schema";
-import { createProject, getProjectById } from "@/modules/project/project.service";
+import { createProject, getProjectById, toPublicProject } from "@/modules/project/project.service";
 import { requireOrganizationMiddleware } from "../organization/organization.middleware";
 import { requireProjectMiddleware } from "./project.middleware";
 
@@ -44,11 +44,7 @@ export const getProjectPublicFn = createServerFn({ method: "GET" })
     //   throw new Error("This project is private and cannot accept public users.");
     // }
 
-    //to avoid leaking all the data add only what public can show so dont return the whole project(return project)
-    return {
-      name: project.name,
-      id: project.id,
-      logo: project.logo,
-      description: project.description,
-    };
+    // Never return the whole row: `toPublicProject` is the whitelist that keeps
+    // organizationId, slug and timestamps off an unauthenticated response.
+    return toPublicProject(project);
   });

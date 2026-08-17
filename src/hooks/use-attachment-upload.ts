@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from "react";
+import { downscaleImage } from "@/lib/downscale-image";
 import {
   ATTACHMENT_MAX_BYTES,
   isAllowedMimeType,
@@ -48,22 +49,33 @@ export function useAttachmentUpload({ ticketId, projectId, onError }: UseAttachm
   }, [revokePreview]);
 
   const upload = useCallback(
-    async (file: File) => {
+    async (picked: File) => {
       // Mirror the server allowlist so an obviously bad file never leaves the browser.
       // The server re-checks regardless — this is feedback, not enforcement.
-      if (file.size > ATTACHMENT_MAX_BYTES) {
-        onError?.(`"${file.name}" is larger than ${Math.floor(ATTACHMENT_MAX_BYTES / (1024 * 1024))}MB.`);
+      if (!isAllowedMimeType(picked.type)) {
+        onError?.(`"${picked.name}" is not a supported file type.`);
         return;
       }
-      if (!isAllowedMimeType(file.type)) {
-        onError?.(`"${file.name}" is not a supported file type.`);
+
+      setIsUploading(true);
+
+      // Shrink before the size check, not after: a 9MB phone photo is perfectly
+      // acceptable as a support attachment once it is downscaled, and rejecting it for
+      // a limit that exists to protect the database would be an arbitrary "no" to the
+      // single most common thing a visitor attaches. Non-images pass through untouched.
+      const file = await downscaleImage(picked);
+
+      if (file.size > ATTACHMENT_MAX_BYTES) {
+        setIsUploading(false);
+        onError?.(`"${picked.name}" is larger than ${Math.floor(ATTACHMENT_MAX_BYTES / (1024 * 1024))}MB.`);
         return;
       }
 
       revokePreview();
+      // Preview the file that is actually being sent, so the thumbnail is what the
+      // agent will see rather than the original.
       const preview = isImageMimeType(file.type) ? URL.createObjectURL(file) : null;
       objectUrlRef.current = preview;
-      setIsUploading(true);
 
       try {
         const form = new FormData();
