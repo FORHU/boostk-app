@@ -106,14 +106,14 @@ function ProjectOverviewPage() {
             </div>
           }
         >
-          <OverviewContent projectId={projectId} />
+          <OverviewContent projectId={projectId} slug={project.slug} />
         </Suspense>
       </div>
     </div>
   );
 }
 
-function OverviewContent({ projectId }: { projectId: string }) {
+function OverviewContent({ projectId, slug }: { projectId: string; slug: string }) {
   const query = useSuspenseQuery(projectQueries.overview(projectId));
   const { openTickets, closedTickets, customers, newTicketsThisWeek, resolutionRate, recentTickets } = query.data;
 
@@ -242,7 +242,7 @@ function OverviewContent({ projectId }: { projectId: string }) {
               Project Settings
             </Link>
             <a
-              href={`/support/${projectId}/chat-widget`}
+              href={`/support/${slug}/chat-widget`}
               target="_blank"
               rel="noreferrer"
               className="flex items-center p-3 rounded-lg hover:bg-muted transition-colors text-sm font-medium text-foreground mt-2 border-t border-border"

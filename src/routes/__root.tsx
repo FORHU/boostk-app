@@ -29,7 +29,7 @@ export const Route = createRootRouteWithContext<RootRouterContext>()({
       // Browser chrome tint only. The PWA install tags deliberately do NOT live here:
       // anything in the root head applies to every page, which made the entire site
       // installable as one app. Installability belongs to the customer chat widget alone
-      // — see src/routes/(public)/support.$projectId/chat-widget.tsx.
+      // — see src/routes/(public)/support.$projectSlug/chat-widget.tsx.
       { name: "theme-color", content: "#1447e6" },
       { name: "application-name", content: "Boostk" },
     ],

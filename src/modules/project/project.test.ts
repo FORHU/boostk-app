@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { createProjectSchema, getProjectSchema, updateProjectSchema } from "./project.schema";
+import { createProjectSchema, getProjectSchema, getPublicProjectSchema, updateProjectSchema } from "./project.schema";
 import { toPublicProject } from "./project.service";
 
-/** A full project row, as `getProjectById` returns it. */
+/** A full project row, as `getProjectByIdOrSlug` returns it. */
 const projectRow = {
   id: "proj_1",
   name: "Acme Support",
@@ -28,8 +28,8 @@ describe("toPublicProject", () => {
     });
   });
 
-  // `getProjectPublicFn` has no auth middleware — anyone with a project id can call it —
-  // so these are the fields that must never reach an anonymous visitor.
+  // `getProjectPublicFn` has no auth middleware — anyone with a project id or slug can
+  // call it — so these are the fields that must never reach an anonymous visitor.
   it("does not leak tenancy or internal columns", () => {
     const publicProject = toPublicProject(projectRow) as Record<string, unknown>;
 
@@ -77,5 +77,11 @@ describe("project schemas", () => {
     expect(getProjectSchema.safeParse({ projectId: "proj_1" }).success).toBe(true);
     expect(getProjectSchema.safeParse({ projectId: "" }).success).toBe(false);
     expect(getProjectSchema.safeParse({}).success).toBe(false);
+  });
+
+  it("requires a project slug on public read", () => {
+    expect(getPublicProjectSchema.safeParse({ projectSlug: "acme-support-9f2c" }).success).toBe(true);
+    expect(getPublicProjectSchema.safeParse({ projectSlug: "" }).success).toBe(false);
+    expect(getPublicProjectSchema.safeParse({}).success).toBe(false);
   });
 });

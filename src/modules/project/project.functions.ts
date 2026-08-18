@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
-import { createProjectSchema, getProjectSchema } from "@/modules/project/project.schema";
-import { createProject, getProjectById, toPublicProject } from "@/modules/project/project.service";
+import { createProjectSchema, getProjectSchema, getPublicProjectSchema } from "@/modules/project/project.schema";
+import { createProject, getProjectByIdOrSlug, toPublicProject } from "@/modules/project/project.service";
 import { requireOrganizationMiddleware } from "../organization/organization.middleware";
 import { requireProjectMiddleware } from "./project.middleware";
 
@@ -30,10 +30,10 @@ export const getProjectFn = createServerFn({ method: "GET" })
   });
 
 export const getProjectPublicFn = createServerFn({ method: "GET" })
-  .inputValidator(getProjectSchema)
+  .inputValidator(getPublicProjectSchema)
   .handler(async ({ data }) => {
-    const project = await getProjectById(data.projectId);
-    // Abort if the project ID is invalid or deleted.
+    const project = await getProjectByIdOrSlug(data.projectSlug);
+    // Abort if the project slug/id is invalid or deleted.
     // This ensures `project` is defined before we check privacy settings.
     if (!project) {
       return null;

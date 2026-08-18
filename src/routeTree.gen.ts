@@ -24,8 +24,8 @@ import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiAttachmentsIdRouteImport } from './routes/api/attachments/$id'
 import { Route as appDashboardTriageRouteImport } from './routes/(app)/dashboard/triage'
 import { Route as appDashboardOrganizationsRouteImport } from './routes/(app)/dashboard/organizations'
-import { Route as publicSupportProjectIdManifestRouteImport } from './routes/(public)/support.$projectId/manifest'
-import { Route as publicSupportProjectIdChatWidgetRouteImport } from './routes/(public)/support.$projectId/chat-widget'
+import { Route as publicSupportProjectSlugManifestRouteImport } from './routes/(public)/support.$projectSlug/manifest'
+import { Route as publicSupportProjectSlugChatWidgetRouteImport } from './routes/(public)/support.$projectSlug/chat-widget'
 import { Route as appDashboardProjectProjectIdRouteRouteImport } from './routes/(app)/dashboard/project.$projectId/route'
 import { Route as appDashboardOrgOrganizationIdRouteRouteImport } from './routes/(app)/dashboard/org.$organizationId/route'
 import { Route as appDashboardProjectProjectIdIndexRouteImport } from './routes/(app)/dashboard/project.$projectId/index'
@@ -115,16 +115,16 @@ const appDashboardOrganizationsRoute =
     path: '/dashboard/organizations',
     getParentRoute: () => appRouteRoute,
   } as any)
-const publicSupportProjectIdManifestRoute =
-  publicSupportProjectIdManifestRouteImport.update({
-    id: '/(public)/support/$projectId/manifest',
-    path: '/support/$projectId/manifest',
+const publicSupportProjectSlugManifestRoute =
+  publicSupportProjectSlugManifestRouteImport.update({
+    id: '/(public)/support/$projectSlug/manifest',
+    path: '/support/$projectSlug/manifest',
     getParentRoute: () => rootRouteImport,
   } as any)
-const publicSupportProjectIdChatWidgetRoute =
-  publicSupportProjectIdChatWidgetRouteImport.update({
-    id: '/(public)/support/$projectId/chat-widget',
-    path: '/support/$projectId/chat-widget',
+const publicSupportProjectSlugChatWidgetRoute =
+  publicSupportProjectSlugChatWidgetRouteImport.update({
+    id: '/(public)/support/$projectSlug/chat-widget',
+    path: '/support/$projectSlug/chat-widget',
     getParentRoute: () => rootRouteImport,
   } as any)
 const appDashboardProjectProjectIdRouteRoute =
@@ -228,8 +228,8 @@ export interface FileRoutesByFullPath {
   '/api/attachments/': typeof ApiAttachmentsIndexRoute
   '/dashboard/org/$organizationId': typeof appDashboardOrgOrganizationIdRouteRouteWithChildren
   '/dashboard/project/$projectId': typeof appDashboardProjectProjectIdRouteRouteWithChildren
-  '/support/$projectId/chat-widget': typeof publicSupportProjectIdChatWidgetRoute
-  '/support/$projectId/manifest': typeof publicSupportProjectIdManifestRoute
+  '/support/$projectSlug/chat-widget': typeof publicSupportProjectSlugChatWidgetRoute
+  '/support/$projectSlug/manifest': typeof publicSupportProjectSlugManifestRoute
   '/dashboard/org/$organizationId/billing': typeof appDashboardOrgOrganizationIdBillingRoute
   '/dashboard/org/$organizationId/integrations': typeof appDashboardOrgOrganizationIdIntegrationsRoute
   '/dashboard/org/$organizationId/settings': typeof appDashboardOrgOrganizationIdSettingsRoute
@@ -257,8 +257,8 @@ export interface FileRoutesByTo {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/notification/sse': typeof ApiNotificationSseRoute
   '/api/attachments': typeof ApiAttachmentsIndexRoute
-  '/support/$projectId/chat-widget': typeof publicSupportProjectIdChatWidgetRoute
-  '/support/$projectId/manifest': typeof publicSupportProjectIdManifestRoute
+  '/support/$projectSlug/chat-widget': typeof publicSupportProjectSlugChatWidgetRoute
+  '/support/$projectSlug/manifest': typeof publicSupportProjectSlugManifestRoute
   '/dashboard/org/$organizationId/billing': typeof appDashboardOrgOrganizationIdBillingRoute
   '/dashboard/org/$organizationId/integrations': typeof appDashboardOrgOrganizationIdIntegrationsRoute
   '/dashboard/org/$organizationId/settings': typeof appDashboardOrgOrganizationIdSettingsRoute
@@ -291,8 +291,8 @@ export interface FileRoutesById {
   '/api/attachments/': typeof ApiAttachmentsIndexRoute
   '/(app)/dashboard/org/$organizationId': typeof appDashboardOrgOrganizationIdRouteRouteWithChildren
   '/(app)/dashboard/project/$projectId': typeof appDashboardProjectProjectIdRouteRouteWithChildren
-  '/(public)/support/$projectId/chat-widget': typeof publicSupportProjectIdChatWidgetRoute
-  '/(public)/support/$projectId/manifest': typeof publicSupportProjectIdManifestRoute
+  '/(public)/support/$projectSlug/chat-widget': typeof publicSupportProjectSlugChatWidgetRoute
+  '/(public)/support/$projectSlug/manifest': typeof publicSupportProjectSlugManifestRoute
   '/(app)/dashboard/org/$organizationId/billing': typeof appDashboardOrgOrganizationIdBillingRoute
   '/(app)/dashboard/org/$organizationId/integrations': typeof appDashboardOrgOrganizationIdIntegrationsRoute
   '/(app)/dashboard/org/$organizationId/settings': typeof appDashboardOrgOrganizationIdSettingsRoute
@@ -324,8 +324,8 @@ export interface FileRouteTypes {
     | '/api/attachments/'
     | '/dashboard/org/$organizationId'
     | '/dashboard/project/$projectId'
-    | '/support/$projectId/chat-widget'
-    | '/support/$projectId/manifest'
+    | '/support/$projectSlug/chat-widget'
+    | '/support/$projectSlug/manifest'
     | '/dashboard/org/$organizationId/billing'
     | '/dashboard/org/$organizationId/integrations'
     | '/dashboard/org/$organizationId/settings'
@@ -353,8 +353,8 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/notification/sse'
     | '/api/attachments'
-    | '/support/$projectId/chat-widget'
-    | '/support/$projectId/manifest'
+    | '/support/$projectSlug/chat-widget'
+    | '/support/$projectSlug/manifest'
     | '/dashboard/org/$organizationId/billing'
     | '/dashboard/org/$organizationId/integrations'
     | '/dashboard/org/$organizationId/settings'
@@ -386,8 +386,8 @@ export interface FileRouteTypes {
     | '/api/attachments/'
     | '/(app)/dashboard/org/$organizationId'
     | '/(app)/dashboard/project/$projectId'
-    | '/(public)/support/$projectId/chat-widget'
-    | '/(public)/support/$projectId/manifest'
+    | '/(public)/support/$projectSlug/chat-widget'
+    | '/(public)/support/$projectSlug/manifest'
     | '/(app)/dashboard/org/$organizationId/billing'
     | '/(app)/dashboard/org/$organizationId/integrations'
     | '/(app)/dashboard/org/$organizationId/settings'
@@ -413,8 +413,8 @@ export interface RootRouteChildren {
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiNotificationSseRoute: typeof ApiNotificationSseRoute
   ApiAttachmentsIndexRoute: typeof ApiAttachmentsIndexRoute
-  publicSupportProjectIdChatWidgetRoute: typeof publicSupportProjectIdChatWidgetRoute
-  publicSupportProjectIdManifestRoute: typeof publicSupportProjectIdManifestRoute
+  publicSupportProjectSlugChatWidgetRoute: typeof publicSupportProjectSlugChatWidgetRoute
+  publicSupportProjectSlugManifestRoute: typeof publicSupportProjectSlugManifestRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -524,18 +524,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof appDashboardOrganizationsRouteImport
       parentRoute: typeof appRouteRoute
     }
-    '/(public)/support/$projectId/manifest': {
-      id: '/(public)/support/$projectId/manifest'
-      path: '/support/$projectId/manifest'
-      fullPath: '/support/$projectId/manifest'
-      preLoaderRoute: typeof publicSupportProjectIdManifestRouteImport
+    '/(public)/support/$projectSlug/manifest': {
+      id: '/(public)/support/$projectSlug/manifest'
+      path: '/support/$projectSlug/manifest'
+      fullPath: '/support/$projectSlug/manifest'
+      preLoaderRoute: typeof publicSupportProjectSlugManifestRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/(public)/support/$projectId/chat-widget': {
-      id: '/(public)/support/$projectId/chat-widget'
-      path: '/support/$projectId/chat-widget'
-      fullPath: '/support/$projectId/chat-widget'
-      preLoaderRoute: typeof publicSupportProjectIdChatWidgetRouteImport
+    '/(public)/support/$projectSlug/chat-widget': {
+      id: '/(public)/support/$projectSlug/chat-widget'
+      path: '/support/$projectSlug/chat-widget'
+      fullPath: '/support/$projectSlug/chat-widget'
+      preLoaderRoute: typeof publicSupportProjectSlugChatWidgetRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/(app)/dashboard/project/$projectId': {
@@ -746,8 +746,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiNotificationSseRoute: ApiNotificationSseRoute,
   ApiAttachmentsIndexRoute: ApiAttachmentsIndexRoute,
-  publicSupportProjectIdChatWidgetRoute: publicSupportProjectIdChatWidgetRoute,
-  publicSupportProjectIdManifestRoute: publicSupportProjectIdManifestRoute,
+  publicSupportProjectSlugChatWidgetRoute:
+    publicSupportProjectSlugChatWidgetRoute,
+  publicSupportProjectSlugManifestRoute: publicSupportProjectSlugManifestRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
