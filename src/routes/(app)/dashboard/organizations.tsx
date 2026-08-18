@@ -178,8 +178,8 @@ const OrganizationList = () => {
     <div className="space-y-3">
       {organizations.map((org) => (
         <Link
-          to="/dashboard/org/$organizationId"
-          params={{ organizationId: org.id }}
+          to="/dashboard/org/$organizationSlug"
+          params={{ organizationSlug: org.slug }}
           key={org.id}
           className="group flex items-center gap-3 rounded-xl border border-border bg-background p-3 transition-colors hover:bg-accent/50 hover:border-primary/40"
         >

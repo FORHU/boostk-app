@@ -9,15 +9,22 @@ import { getMemberRole, hasOrgRole, type OrgRole } from "../auth/roles";
 export const requireOrganizationMiddleware = createMiddleware({ type: "function" })
   .middleware([requireAuthMiddleware])
   .server(async ({ next, context, data }) => {
-    const result = z.object({ organizationId: z.string() }).safeParse(data);
+    const result = z
+      .object({ organizationId: z.string().optional(), organizationSlug: z.string().optional() })
+      .refine((v) => v.organizationId || v.organizationSlug, "Organization id or slug is required")
+      .safeParse(data);
 
     if (!result.success) {
       throw redirect({ to: "/dashboard/organizations", search: { reason: REDIRECT_REASON.SERVER_ERROR } });
     }
 
+    // URL resolution is slug-only; internal callers pass the cuid id. Matching each key
+    // against its own column (never id OR slug) keeps legacy cuid URLs out of the router.
     const organization = await prisma.organization.findFirst({
       where: {
-        id: result.data.organizationId,
+        ...(result.data.organizationSlug
+          ? { slug: result.data.organizationSlug }
+          : { id: result.data.organizationId as string }),
         members: { some: { userId: context.authSession.user.id } },
       },
       include: { members: true },

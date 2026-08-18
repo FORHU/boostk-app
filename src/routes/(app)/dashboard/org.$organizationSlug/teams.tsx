@@ -14,7 +14,7 @@ import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
 import { removeMemberFn, updateMemberRoleFn } from "@/modules/members/member.functions";
 import { memberQueries } from "@/modules/members/member.queries";
 
-export const Route = createFileRoute("/(app)/dashboard/org/$organizationId/teams")({
+export const Route = createFileRoute("/(app)/dashboard/org/$organizationSlug/teams")({
   beforeLoad: ({ context }) => {
     if (!hasOrgRole(context.role, ORG_ROLE.ADMIN)) {
       throw redirect({
@@ -23,14 +23,15 @@ export const Route = createFileRoute("/(app)/dashboard/org/$organizationId/teams
       });
     }
   },
-  loader: ({ context, params }) => {
-    return context.queryClient.ensureQueryData(memberQueries.adminList({ organizationId: params.organizationId }));
+  loader: ({ context }) => {
+    return context.queryClient.ensureQueryData(memberQueries.adminList({ organizationId: context.organization.id }));
   },
   component: OrganizationTeamsPage,
 });
 
 function OrganizationTeamsPage() {
-  const { organizationId } = Route.useParams();
+  const { organization } = Route.useRouteContext();
+  const organizationId = organization.id;
   const tableColumns = ["User", "Email", "Joined", "Actions"];
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto w-full overflow-hidden">

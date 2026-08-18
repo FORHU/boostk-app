@@ -14,8 +14,8 @@ import {
 } from "@/components/ui/sidebar";
 
 interface ProjectSidebarProps extends React.ComponentProps<typeof Sidebar> {
-  projectId: string;
-  project: { name: string; logo?: string | null; organizationId: string };
+  projectSlug: string;
+  project: { name: string; logo?: string | null; organizationSlug: string };
 }
 
 interface NavRoute {
@@ -26,23 +26,23 @@ interface NavRoute {
 }
 
 const routes: NavRoute[] = [
-  { label: "Project Overview", icon: Home, href: "/dashboard/project/$projectId", exact: true },
-  { label: "Chat Support", icon: MessageCircle, href: "/dashboard/project/$projectId/chat-support" },
-  { label: "Tickets", icon: Ticket, href: "/dashboard/project/$projectId/tickets" },
-  { label: "Customers", icon: Users, href: "/dashboard/project/$projectId/customers" },
-  { label: "Agents", icon: HatGlasses, href: "/dashboard/project/$projectId/agents" },
-  { label: "Project Settings", icon: Settings, href: "/dashboard/project/$projectId/settings" },
+  { label: "Project Overview", icon: Home, href: "/dashboard/project/$projectSlug", exact: true },
+  { label: "Chat Support", icon: MessageCircle, href: "/dashboard/project/$projectSlug/chat-support" },
+  { label: "Tickets", icon: Ticket, href: "/dashboard/project/$projectSlug/tickets" },
+  { label: "Customers", icon: Users, href: "/dashboard/project/$projectSlug/customers" },
+  { label: "Agents", icon: HatGlasses, href: "/dashboard/project/$projectSlug/agents" },
+  { label: "Project Settings", icon: Settings, href: "/dashboard/project/$projectSlug/settings" },
 ];
 
-export default function ProjectSidebar({ projectId, project, ...props }: ProjectSidebarProps) {
+export default function ProjectSidebar({ projectSlug, project, ...props }: ProjectSidebarProps) {
   const { pathname } = useLocation();
 
   return (
     <Sidebar {...props}>
       <SidebarHeader>
         <Link
-          to="/dashboard/org/$organizationId"
-          params={{ organizationId: project.organizationId }}
+          to="/dashboard/org/$organizationSlug"
+          params={{ organizationSlug: project.organizationSlug }}
           className="flex items-center gap-1.5 px-2 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
         >
           <ArrowLeft className="size-3.5" />
@@ -59,7 +59,7 @@ export default function ProjectSidebar({ projectId, project, ...props }: Project
           <SidebarGroupContent>
             <SidebarMenu className="flex flex-col gap-1">
               {routes.map((route) => {
-                const href = route.href.replace("$projectId", projectId);
+                const href = route.href.replace("$projectSlug", projectSlug);
                 const isActive = route.exact
                   ? pathname === href || pathname === `${href}/`
                   : pathname === href || pathname.startsWith(`${href}/`);
@@ -68,7 +68,7 @@ export default function ProjectSidebar({ projectId, project, ...props }: Project
                   <SidebarMenuItem key={route.href}>
                     <SidebarMenuButton
                       isActive={isActive}
-                      render={<Link to={route.href} params={{ projectId }} preload="intent" />}
+                      render={<Link to={route.href} params={{ projectSlug }} preload="intent" />}
                     >
                       <route.icon />
                       <span>{route.label}</span>

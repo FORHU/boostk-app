@@ -6,9 +6,9 @@ import { REDIRECT_REASON } from "@/enums/enums";
 import { useViewport } from "@/hooks/use-viewport";
 import { getProjectFn } from "@/modules/project/project.functions";
 
-export const Route = createFileRoute("/(app)/dashboard/project/$projectId")({
+export const Route = createFileRoute("/(app)/dashboard/project/$projectSlug")({
   beforeLoad: async ({ params }) => {
-    const { project, role, memberId } = await getProjectFn({ data: { projectId: params.projectId } });
+    const { project, role, memberId } = await getProjectFn({ data: { projectSlug: params.projectSlug } });
     if (!project) {
       throw redirect({ to: "/dashboard/organizations", search: { reason: REDIRECT_REASON.PERMISSION_DENIED } });
     }
@@ -34,14 +34,14 @@ function OrganizationLayout() {
           } as React.CSSProperties
         }
       >
-        <ProjectSidebar projectId={project.id} project={project} />
+        <ProjectSidebar projectSlug={project.slug} project={project} />
         <SidebarInset>
           <div className={`flex-1 overflow-auto ${isMobile ? "pb-24" : ""}`}>
             <Outlet />
           </div>
         </SidebarInset>
       </SidebarProvider>
-      <OrganizationBottomNav organizationId={project.organizationId} role={role} />
+      <OrganizationBottomNav organizationSlug={project.organizationSlug} role={role} />
     </div>
   );
 }

@@ -79,15 +79,15 @@ export function NotificationBell({ notifications, unreadCount, markAsRead }: Not
                   <DropdownMenuItem
                     key={item.localId}
                     onClick={() => {
-                      const projectId = item.data?.projectId;
-                      if (typeof projectId !== "string") return;
+                      const projectSlug = item.data?.projectSlug;
+                      if (typeof projectSlug !== "string") return;
                       const ticketId = item.data?.ticketId;
                       if (typeof ticketId === "string") {
                         markAsRead(ticketId);
                       }
                       navigate({
-                        to: "/dashboard/project/$projectId/tickets",
-                        params: { projectId },
+                        to: "/dashboard/project/$projectSlug/tickets",
+                        params: { projectSlug },
                         search: {
                           statusFilter: "ALL",
                           sort: "newest",

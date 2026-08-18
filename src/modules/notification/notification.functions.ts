@@ -35,6 +35,7 @@ export const sendNotificationMessage = createServerFn({ method: "POST" })
 
 export type UnreadTicketSummary = {
   projectId: string;
+  projectSlug: string;
   ticketId: string;
   referenceNumber: string;
   projectName: string;
@@ -92,6 +93,7 @@ export const getUnreadTicketSummaries = createServerFn({ method: "GET" })
       ticketId: string;
       referenceNumber: string;
       projectId: string;
+      projectSlug: string;
       projectName: string;
       customerName: string;
       messages: { content: string; contentType: string; userId: string | null; createdAt: Date }[];
@@ -109,6 +111,7 @@ export const getUnreadTicketSummaries = createServerFn({ method: "GET" })
           ticketId: tId,
           referenceNumber: t.referenceNumber,
           projectId: t.projectId,
+          projectSlug: t.project.slug,
           projectName: t.project.name,
           customerName: t.customer.name,
           messages: [],
@@ -128,6 +131,7 @@ export const getUnreadTicketSummaries = createServerFn({ method: "GET" })
       const last = group.messages[0];
       return {
         projectId: group.projectId,
+        projectSlug: group.projectSlug,
         ticketId: group.ticketId,
         referenceNumber: group.referenceNumber,
         projectName: group.projectName,

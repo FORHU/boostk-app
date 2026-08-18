@@ -205,7 +205,7 @@ const ticketSearchSchema = z.object({
   page: z.number().int().min(1).optional().catch(1),
 });
 
-export const Route = createFileRoute("/(app)/dashboard/project/$projectId/tickets")({
+export const Route = createFileRoute("/(app)/dashboard/project/$projectSlug/tickets")({
   validateSearch: (search) => ticketSearchSchema.parse(search),
   beforeLoad: ({ context }) => {
     if (!hasOrgRole(context.role, ORG_ROLE.AGENT)) {
@@ -220,11 +220,11 @@ export const Route = createFileRoute("/(app)/dashboard/project/$projectId/ticket
 });
 
 function ProjectTicketsPage() {
-  const { projectId } = Route.useParams();
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
 
   const { authSession, project, role, memberId } = Route.useRouteContext();
+  const projectId = project.id;
   const organizationId = project.organizationId;
   const queryClient = useQueryClient();
   const selectedTicketId = search.selectedTicketId ?? null;

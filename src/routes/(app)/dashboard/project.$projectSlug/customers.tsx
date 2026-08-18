@@ -69,7 +69,7 @@ function CustomersLoadingFallback() {
   );
 }
 
-export const Route = createFileRoute("/(app)/dashboard/project/$projectId/customers")({
+export const Route = createFileRoute("/(app)/dashboard/project/$projectSlug/customers")({
   validateSearch: (search) => customerSearchSchema.parse(search),
   beforeLoad: ({ context }) => {
     if (!hasOrgRole(context.role, ORG_ROLE.AGENT)) {
@@ -173,7 +173,9 @@ function CustomerPagination({
 }
 
 function ProjectCustomersPage() {
-  const { projectId } = Route.useParams();
+  const { project } = Route.useRouteContext();
+  const projectId = project.id;
+  const projectSlug = project.slug;
 
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery);
@@ -437,8 +439,8 @@ function ProjectCustomersPage() {
 
             <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 md:space-y-8">
               <Link
-                to="/dashboard/project/$projectId/chat-support"
-                params={{ projectId }}
+                to="/dashboard/project/$projectSlug/chat-support"
+                params={{ projectSlug }}
                 className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-[8px] border border-primary/20 text-primary hover:bg-primary/5 text-sm font-medium transition-colors"
               >
                 <MessageCircle className="w-4 h-4" />

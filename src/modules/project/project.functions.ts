@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { createProjectSchema, getProjectSchema, getPublicProjectSchema } from "@/modules/project/project.schema";
+import { createProjectSchema, getProjectBySlugSchema, getPublicProjectSchema } from "@/modules/project/project.schema";
 import { createProject, getProjectByIdOrSlug, toPublicProject } from "@/modules/project/project.service";
 import { requireOrganizationMiddleware } from "../organization/organization.middleware";
 import { requireProjectMiddleware } from "./project.middleware";
@@ -21,7 +21,7 @@ export const createProjectFn = createServerFn({ method: "POST" })
 
 export const getProjectFn = createServerFn({ method: "GET" })
   .middleware([requireProjectMiddleware])
-  .inputValidator(getProjectSchema)
+  .inputValidator(getProjectBySlugSchema)
   .handler(async ({ context }) => {
     // `requireProjectMiddleware` already validated access and resolved the
     // caller's role and member record; surface both so routes can role-gate

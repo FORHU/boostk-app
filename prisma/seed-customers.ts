@@ -139,7 +139,7 @@ async function main() {
   });
 
   console.log(`✅ Seeded ${CUSTOMER_COUNT} customers, ${ticketCount} tickets, ${messageCount} messages.`);
-  console.log(`Open: /dashboard/project/${project.id}/customers`);
+  console.log(`Open: /dashboard/project/${project.slug}/customers`);
 }
 
 main()

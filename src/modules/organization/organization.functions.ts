@@ -36,7 +36,7 @@ export const getAuthOrganizationsFn = createServerFn({ method: "GET" })
 
 // url based active organization
 export const getOrganizationFn = createServerFn({ method: "GET" })
-  .inputValidator(z.object({ organizationId: z.string() }))
+  .inputValidator(z.object({ organizationSlug: z.string().min(1) }))
   .middleware([requireOrganizationMiddleware])
   .handler(async ({ context }) => {
     return context.organization;

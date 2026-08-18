@@ -15,7 +15,7 @@ import {
 import { hasOrgRole, ORG_ROLE, type OrgRole } from "@/modules/auth/roles";
 
 interface OrganizationSidebarProps extends React.ComponentProps<typeof Sidebar> {
-  organizationId: string;
+  organizationSlug: string;
   organization: { name: string; logo?: string | null };
   memberRole: OrgRole | null;
 }
@@ -29,16 +29,16 @@ interface NavRoute {
 }
 
 const routes: NavRoute[] = [
-  { label: "Projects", icon: Boxes, href: "/dashboard/org/$organizationId", exact: true, adminOnly: false },
-  { label: "Teams", icon: Users, href: "/dashboard/org/$organizationId/teams", adminOnly: true },
-  { label: "Integrations", icon: Blocks, href: "/dashboard/org/$organizationId/integrations", adminOnly: true },
-  { label: "Billing", icon: CreditCard, href: "/dashboard/org/$organizationId/billing", adminOnly: true },
-  { label: "Usage", icon: ChartBarBig, href: "/dashboard/org/$organizationId/usage", adminOnly: true },
-  { label: "Settings", icon: Settings, href: "/dashboard/org/$organizationId/settings", adminOnly: true },
+  { label: "Projects", icon: Boxes, href: "/dashboard/org/$organizationSlug", exact: true, adminOnly: false },
+  { label: "Teams", icon: Users, href: "/dashboard/org/$organizationSlug/teams", adminOnly: true },
+  { label: "Integrations", icon: Blocks, href: "/dashboard/org/$organizationSlug/integrations", adminOnly: true },
+  { label: "Billing", icon: CreditCard, href: "/dashboard/org/$organizationSlug/billing", adminOnly: true },
+  { label: "Usage", icon: ChartBarBig, href: "/dashboard/org/$organizationSlug/usage", adminOnly: true },
+  { label: "Settings", icon: Settings, href: "/dashboard/org/$organizationSlug/settings", adminOnly: true },
 ];
 
 export default function OrganizationSidebar({
-  organizationId,
+  organizationSlug,
   organization,
   memberRole,
   ...props
@@ -68,7 +68,7 @@ export default function OrganizationSidebar({
           <SidebarGroupContent>
             <SidebarMenu className="flex flex-col gap-1">
               {visibleRoutes.map((route) => {
-                const href = route.href.replace("$organizationId", organizationId);
+                const href = route.href.replace("$organizationSlug", organizationSlug);
                 const isActive = route.exact
                   ? pathname === href || pathname === `${href}/`
                   : pathname === href || pathname.startsWith(`${href}/`);
@@ -77,7 +77,7 @@ export default function OrganizationSidebar({
                   <SidebarMenuItem key={route.href}>
                     <SidebarMenuButton
                       isActive={isActive}
-                      render={<Link to={route.href} params={{ organizationId }} preload="intent" />}
+                      render={<Link to={route.href} params={{ organizationSlug }} preload="intent" />}
                     >
                       <route.icon />
                       <span>{route.label}</span>

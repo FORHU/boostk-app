@@ -62,7 +62,7 @@ export const projectSettingQueries = {
     }),
 };
 
-export const Route = createFileRoute("/(app)/dashboard/project/$projectId/settings")({
+export const Route = createFileRoute("/(app)/dashboard/project/$projectSlug/settings")({
   beforeLoad: ({ context }) => {
     if (!hasOrgRole(context.role, ORG_ROLE.ADMIN)) {
       throw redirect({ to: "/dashboard/organizations", search: { reason: REDIRECT_REASON.PERMISSION_DENIED } });
@@ -72,7 +72,9 @@ export const Route = createFileRoute("/(app)/dashboard/project/$projectId/settin
 });
 
 function ProjectSettingsPage() {
-  const { projectId } = Route.useParams();
+  const { project: routeProject } = Route.useRouteContext();
+  const projectId = routeProject.id;
+  const navigate = Route.useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -95,10 +97,17 @@ function ProjectSettingsPage() {
   const updateProjectMutation = useMutation({
     mutationKey: ["update-project", projectId],
     mutationFn: updateProjectFn,
-    onSuccess: () => {
+    onSuccess: (updated) => {
       queryClient.invalidateQueries({ queryKey: projectSettingQueries.setting });
       setIsEditing(false);
       toast("Project settings updated successfully!", "success");
+      if (updated.slug && updated.slug !== routeProject.slug) {
+        navigate({
+          to: "/dashboard/project/$projectSlug/settings",
+          params: { projectSlug: updated.slug },
+          replace: true,
+        });
+      }
     },
     onError: (error) => {
       console.error(error);

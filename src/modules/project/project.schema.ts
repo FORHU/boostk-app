@@ -19,6 +19,11 @@ export const getProjectSchema = z.object({
 });
 export type GetProjectInput = z.infer<typeof getProjectSchema>;
 
+export const getProjectBySlugSchema = z.object({
+  projectSlug: z.string().min(1, "Project slug is required"),
+});
+export type GetProjectBySlugInput = z.infer<typeof getProjectBySlugSchema>;
+
 export const getPublicProjectSchema = z.object({
   projectSlug: z.string().min(1, "Project slug is required"),
 });
