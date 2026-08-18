@@ -14,6 +14,7 @@ export enum EventType {
   // visitor's open window can re-point itself at the new ticket and its socket room.
   TICKET_ROUTED = "ticket_routed",
 
+  DEGRADED = "degraded",
   TEST = "test",
 }
 
