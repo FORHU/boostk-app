@@ -228,6 +228,15 @@ export function useNotifications({
       nextSource.addEventListener(EventType.CHAT_MESSAGE, handleMessage);
       nextSource.addEventListener(EventType.TICKET_STATUS_CHANGED, handleMessage);
 
+      // The server tells us the moment its RabbitMQ channel fails, then closes the
+      // stream. Without this the tab looks healthy until the 25s watchdog notices the
+      // silence -- a whole heartbeat window of an agent believing they are connected
+      // while messages are being dropped. `onerror` fires afterwards on the close and
+      // drives the actual reconnect; this only makes the indicator honest immediately.
+      nextSource.addEventListener(EventType.DEGRADED, () => {
+        markReconnecting();
+      });
+
       nextSource.onmessage = handleMessage;
 
       nextSource.onerror = (err) => {

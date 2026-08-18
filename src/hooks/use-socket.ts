@@ -117,6 +117,15 @@ export function useSocket({ userId, ticketId, projectId }: { userId?: string; ti
       const message = { event: event as EventType, data };
       setLastMessage(message);
 
+      // The relay lost its RabbitMQ channel. The socket itself is still open, so neither
+      // `disconnect` nor `connect_error` will fire -- without this the indicator would
+      // stay green while no event can ever arrive again. Not a notification, so it
+      // returns before the bell logic.
+      if (message.event === EventType.DEGRADED) {
+        setStatus("reconnecting");
+        return;
+      }
+
       const shouldRing = NOTIFICATION_EVENTS.has(message.event) && shouldRingBell(message.event, data, userId);
 
       if (shouldRing) {
