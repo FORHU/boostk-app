@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { CheckCircle2, Loader2, Send } from "lucide-react";
+import { CheckCircle2, FileText, Loader2, Send, X } from "lucide-react";
 import type { TicketMessage } from "prisma/generated/client";
 import { useCallback, useEffect, useState } from "react";
 import { BoostkLogo } from "@/components/BoostkLogo";
@@ -16,6 +16,8 @@ import { useAttachmentUpload } from "@/hooks/use-attachment-upload";
 import { useRateLimitNotice } from "@/hooks/use-rate-limit-notice";
 import { useSocket } from "@/hooks/use-socket";
 import { EventType } from "@/lib/notifier/core";
+import { isAllowedMimeType, isImageMimeType } from "@/modules/attachment/attachment.schema";
+import { formatFileSize } from "@/modules/attachment/attachment.utils";
 import { clearIntakeCookieFn, createIntakeMessageFn, rateIntakeTicketFn } from "@/modules/intake/intake.functions";
 import { intakeQueries } from "@/modules/intake/intake.queries";
 
@@ -38,6 +40,7 @@ export default function GlobalChat({ headerAction }: { headerAction?: React.Reac
 
   const { lastMessage, status } = useSocket({ ticketId: ticket?.id, projectId: ticket?.projectId });
   const [initialMessage, setInitialMessage] = useState<string | null>(null);
+  const [stagedFile, setStagedFile] = useState<File | null>(null);
 
   useEffect(() => {
     if (lastMessage?.event === EventType.CHAT_MESSAGE) {
@@ -54,12 +57,23 @@ export default function GlobalChat({ headerAction }: { headerAction?: React.Reac
     }
   }, [lastMessage, queryClient]);
 
-  // If a ticket exists (intake complete), clear the initial message state
+  // If a ticket exists (intake complete), clear the initial message state and staged file
   useEffect(() => {
     if (ticket && initialMessage !== null) {
       setInitialMessage(null);
     }
-  }, [ticket, initialMessage]);
+    if (ticket && stagedFile) {
+      setStagedFile(null);
+    }
+  }, [ticket, initialMessage, stagedFile]);
+
+  const handleStageFile = useCallback((file: File) => {
+    setStagedFile(file);
+  }, []);
+
+  const handleClearStagedFile = useCallback(() => {
+    setStagedFile(null);
+  }, []);
 
   const isLoading = sessionLoading || messagesLoading;
 
@@ -86,9 +100,22 @@ export default function GlobalChat({ headerAction }: { headerAction?: React.Reac
           statusEvent={lastMessage}
         />
       ) : initialMessage !== null ? (
-        <IntakeCustomerForm initialSubject={initialMessage} onCancel={() => setInitialMessage(null)} />
+        <IntakeCustomerForm
+          initialSubject={initialMessage}
+          onCancel={() => {
+            setInitialMessage(null);
+            handleClearStagedFile();
+          }}
+          stagedFile={stagedFile}
+          onClearStagedFile={handleClearStagedFile}
+        />
       ) : (
-        <FakeChatInput onSubmit={setInitialMessage} />
+        <FakeChatInput
+          onSubmit={setInitialMessage}
+          onStageFile={handleStageFile}
+          stagedFile={stagedFile}
+          onClearStagedFile={handleClearStagedFile}
+        />
       )}
     </div>
   );
@@ -347,20 +374,90 @@ const ChatInput = ({
   );
 };
 
-const FakeChatInput = ({ onSubmit }: { onSubmit: (message: string) => void }) => {
+const FakeChatInput = ({
+  onSubmit,
+  onStageFile,
+  stagedFile,
+  onClearStagedFile,
+}: {
+  onSubmit: (message: string) => void;
+  onStageFile: (file: File) => void;
+  stagedFile: File | null;
+  onClearStagedFile: () => void;
+}) => {
   const [message, setMessage] = useState("");
+  const { toast } = useToast();
+  const [objectUrl, setObjectUrl] = useState<string | null>(null);
+
+  const handleFileSelect = useCallback(
+    (file: File) => {
+      if (!isAllowedMimeType(file.type)) {
+        toast(`"${file.name}" is not a supported file type.`, "error");
+        return;
+      }
+      onStageFile(file);
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      setObjectUrl(URL.createObjectURL(file));
+    },
+    [onStageFile, toast, objectUrl],
+  );
+
+  const handleClear = useCallback(() => {
+    if (objectUrl) {
+      URL.revokeObjectURL(objectUrl);
+      setObjectUrl(null);
+    }
+    onClearStagedFile();
+  }, [objectUrl, onClearStagedFile]);
+
+  // Clean up object URL on unmount
+  useEffect(() => {
+    return () => {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [objectUrl]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = message.trim();
-    if (!trimmed) return;
+    if (!trimmed && !stagedFile) return;
     onSubmit(trimmed);
   };
+
+  const isImage = stagedFile ? isImageMimeType(stagedFile.type) : false;
 
   return (
     <div className="flex-none p-3 bg-white border-t border-gray-100">
       <form onSubmit={handleSubmit}>
+        {stagedFile && (
+          <div className="flex items-center gap-2 mb-2 px-2 py-1.5 bg-gray-100 rounded-lg w-fit max-w-full">
+            {isImage && objectUrl ? (
+              <img src={objectUrl} alt="" className="w-9 h-9 rounded object-cover shrink-0" />
+            ) : (
+              <div className="w-9 h-9 rounded bg-gray-200 flex items-center justify-center shrink-0">
+                <FileText className="w-4 h-4 text-gray-500" />
+              </div>
+            )}
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-gray-900 truncate max-w-[180px]">{stagedFile.name}</p>
+              <p className="text-[10px] text-gray-500">{formatFileSize(stagedFile.size)}</p>
+            </div>
+            <button
+              type="button"
+              onClick={handleClear}
+              aria-label={`Remove ${stagedFile.name}`}
+              className="p-1 rounded-full hover:bg-gray-200 text-gray-500 hover:text-gray-700 shrink-0 transition-colors"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
+
         <div className="flex items-center gap-2">
+          <AttachmentButton
+            onSelect={handleFileSelect}
+            className="text-gray-400 hover:text-gray-700 hover:bg-gray-100"
+          />
           <input
             type="text"
             value={message}
@@ -370,12 +467,14 @@ const FakeChatInput = ({ onSubmit }: { onSubmit: (message: string) => void }) =>
           />
           <button
             type="submit"
-            disabled={!message.trim()}
+            disabled={!message.trim() && !stagedFile}
             className="bg-brand text-white p-2.5 rounded-xl active:scale-95 disabled:opacity-50 shrink-0"
           >
             <Send size={18} />
           </button>
         </div>
+
+        {!stagedFile && <AttachmentHint />}
       </form>
     </div>
   );
