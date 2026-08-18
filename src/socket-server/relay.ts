@@ -1,6 +1,7 @@
 import type { ChannelWrapper } from "amqp-connection-manager";
 import type { ConfirmChannel } from "amqplib";
 import type { Server } from "socket.io";
+import { EventType } from "@/lib/notifier/core";
 import { connection, EXCHANGE_NAME } from "@/lib/rabbitmq";
 
 const BINDING_PATTERNS = ["user.*.*", "ticket.*.*", "project.*.*"];
@@ -48,6 +49,13 @@ export async function startRealtimeRelay(io: Server): Promise<ChannelWrapper> {
 
   relayChannel.on("error", (err) => {
     console.error("[Socket.IO] RabbitMQ Relay Channel Error:", err);
+
+    // Tell every connected client the feed is broken, the way the SSE route already does.
+    // This failure is invisible otherwise: the socket itself stays open, so `disconnect`
+    // and `connect_error` never fire and the client keeps showing "connected" while no
+    // event will ever arrive again. Broadcast rather than per-room — the relay is a single
+    // shared consumer, so when it dies it dies for everyone.
+    io.emit(EventType.DEGRADED, { reason: "relay_channel_error" });
   });
 
   return relayChannel;

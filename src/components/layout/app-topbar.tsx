@@ -3,6 +3,7 @@
 import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { Link, useMatch, useNavigate } from "@tanstack/react-router";
 import { BadgeCheckIcon, CreditCardIcon, InboxIcon, LogOutIcon, SparklesIcon, ZapIcon } from "lucide-react";
+import { useEffect } from "react";
 import ThemeToggle from "@/components/ThemeToggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -56,7 +57,12 @@ export default function AppTopbar({ connectionStatus, notifications, unreadCount
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  // TODO: investigate why useSuspenseQuery is not working (return data can be nullable)
+  // `useSuspenseQuery` is behaving correctly here, despite the nullable type: it removes
+  // the *loading* state (`data` is never `undefined`), but `null` is a resolved value, not
+  // a pending one. The nullability comes from the server function's own contract —
+  // `getAuthUserSessionFn` runs `authMiddleware`, which passes `authSession` through as-is
+  // and yields `null` when signed out, rather than `requireAuthMiddleware`, which
+  // redirects. So `Session | null` is the honest type and there is nothing to fix upstream.
   const { data: authSession } = useSuspenseQuery(authQueries.authUser());
 
   const orgMatch = useMatch({
@@ -65,11 +71,18 @@ export default function AppTopbar({ connectionStatus, notifications, unreadCount
   });
   const { data: organizations } = useSuspenseQuery(organizationQueries.getAuthOrganization());
 
-  if (!authSession) {
-    console.error("No auth session. Redirecting to login.");
-    navigate({ to: "/signin" });
-    return null;
-  }
+  // Reached only when the session expires *while* the dashboard is open: `(app)/route.tsx`
+  // already redirects on `beforeLoad`, so a signed-out visitor never gets this far on a
+  // fresh navigation. The refetched query can still resolve to null under a route context
+  // that still holds the old session, which is why the guard stays.
+  //
+  // The redirect runs in an effect rather than during render — navigating mid-render is a
+  // side effect React is entitled to discard or run twice.
+  useEffect(() => {
+    if (!authSession) navigate({ to: "/signin" });
+  }, [authSession, navigate]);
+
+  if (!authSession) return null;
 
   const { user } = authSession;
   const organizationSlug = orgMatch?.params.organizationSlug ?? organizations[0]?.slug;
