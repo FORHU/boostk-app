@@ -10,7 +10,7 @@ const SHELL_CACHE = `boostk-shell-${VERSION}`;
 
 // Static, backend-independent assets safe to pre-cache.
 // The manifest is intentionally absent: it is now generated per project at
-// /support/<projectId>/manifest, so there is no single static manifest to cache.
+// /support/<projectSlug>/manifest, so there is no single static manifest to cache.
 const PRECACHE = [
   "/favicon-32.png",
   "/favicon-16.png",

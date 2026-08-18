@@ -18,15 +18,16 @@ import { createProjectFn } from "@/modules/project/project.functions";
 import { projectQueries } from "@/modules/project/project.queries";
 import { type CreateProjectInput, createProjectSchema } from "@/modules/project/project.schema";
 
-export const Route = createFileRoute("/(app)/dashboard/org/$organizationId/")({
-  loader: ({ context, params }) => {
-    context.queryClient.ensureQueryData(projectQueries.allByOrgId(params.organizationId));
+export const Route = createFileRoute("/(app)/dashboard/org/$organizationSlug/")({
+  loader: ({ context }) => {
+    context.queryClient.ensureQueryData(projectQueries.allByOrgId(context.organization.id));
   },
   component: OrganizationPage,
 });
 
 function OrganizationPage() {
-  const { organizationId } = Route.useParams();
+  const { organization } = Route.useRouteContext();
+  const organizationId = organization.id;
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
@@ -173,8 +174,8 @@ const OrgProjects = ({ organizationId, searchQuery }: { organizationId: string; 
         <div className="grid gap-4 sm:grid-cols-2">
           {filteredProjects.map((project) => (
             <Link
-              to="/dashboard/project/$projectId"
-              params={{ projectId: project.id }}
+              to="/dashboard/project/$projectSlug"
+              params={{ projectSlug: project.slug }}
               key={project.id}
               className="group block rounded-2xl border border-border bg-card p-4 transition-colors hover:border-primary/40 hover:bg-accent/40"
             >

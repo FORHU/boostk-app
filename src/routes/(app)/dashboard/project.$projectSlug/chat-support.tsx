@@ -151,7 +151,7 @@ function ChatSupportLoadingFallback() {
   );
 }
 
-export const Route = createFileRoute("/(app)/dashboard/project/$projectId/chat-support")({
+export const Route = createFileRoute("/(app)/dashboard/project/$projectSlug/chat-support")({
   beforeLoad: ({ context }) => {
     if (!hasOrgRole(context.role, ORG_ROLE.AGENT)) {
       throw redirect({ to: "/dashboard/organizations", search: { reason: REDIRECT_REASON.PERMISSION_DENIED } });
@@ -256,8 +256,8 @@ function TicketScopeFilter({
 }
 
 function ProjectChatSupportPage() {
-  const { projectId } = Route.useParams();
-  const { authSession, role, memberId } = Route.useRouteContext();
+  const { authSession, role, memberId, project } = Route.useRouteContext();
+  const projectId = project.id;
   const queryClient = useQueryClient();
 
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);

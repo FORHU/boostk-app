@@ -35,20 +35,20 @@ import { ticketMessageQueries } from "@/modules/ticket-message/ticket-message.qu
 // must never gate access to anything — `projectId` remains the only trust boundary.
 const REF_MAX = 64;
 
-export const Route = createFileRoute("/(public)/support/$projectId/chat-widget")({
+export const Route = createFileRoute("/(public)/support/$projectSlug/chat-widget")({
   validateSearch: z.object({
     ref: z.string().trim().min(1).max(REF_MAX).optional().catch(undefined),
   }),
   beforeLoad: async ({ params }) => {
-    const project = await getProjectPublicFn({ data: { projectId: params.projectId } });
+    const project = await getProjectPublicFn({ data: { projectSlug: params.projectSlug } });
     if (!project) throw notFound();
 
-    const ticket = await getTicketCookieFn({ data: { projectId: params.projectId } });
+    const ticket = await getTicketCookieFn({ data: { projectId: project.id } });
 
     return { project, ticket };
   },
-  loader: ({ context, params }) => {
-    context.queryClient.ensureQueryData(ticketMessageQueries.getTicketMessages(params.projectId));
+  loader: ({ context }) => {
+    context.queryClient.ensureQueryData(ticketMessageQueries.getTicketMessages(context.project.id));
     // Surfaced so `head` can title the installed app after the project.
     return { projectName: context.project.name };
   },
@@ -64,7 +64,7 @@ export const Route = createFileRoute("/(public)/support/$projectId/chat-widget")
       { name: "apple-mobile-web-app-status-bar-style", content: "default" },
       { name: "apple-mobile-web-app-title", content: loaderData?.projectName ?? "Support" },
     ],
-    links: [{ rel: "manifest", href: `/support/${params.projectId}/manifest` }],
+    links: [{ rel: "manifest", href: `/support/${params.projectSlug}/manifest` }],
   }),
   component: RouteComponent,
 });

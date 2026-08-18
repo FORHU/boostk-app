@@ -60,7 +60,7 @@ export default function AppTopbar({ connectionStatus, notifications, unreadCount
   const { data: authSession } = useSuspenseQuery(authQueries.authUser());
 
   const orgMatch = useMatch({
-    from: "/(app)/dashboard/org/$organizationId",
+    from: "/(app)/dashboard/org/$organizationSlug",
     shouldThrow: false,
   });
   const { data: organizations } = useSuspenseQuery(organizationQueries.getAuthOrganization());
@@ -72,13 +72,13 @@ export default function AppTopbar({ connectionStatus, notifications, unreadCount
   }
 
   const { user } = authSession;
-  const organizationId = orgMatch?.params.organizationId ?? organizations[0]?.id;
+  const organizationSlug = orgMatch?.params.organizationSlug ?? organizations[0]?.slug;
 
   // Billing is admin-and-above (same bar as Teams, Settings and Usage). Agents and
   // members do not manage the plan, so offering them a link that only redirects to
   // permission_denied is worse than not showing it. This mirrors the route guard in
   // billing.tsx — it does not replace it.
-  const canManageBilling = hasOrgRole(organizations.find((org) => org.id === organizationId)?.role, ORG_ROLE.ADMIN);
+  const canManageBilling = hasOrgRole(organizations.find((org) => org.slug === organizationSlug)?.role, ORG_ROLE.ADMIN);
 
   const handleLogout = async () => {
     queryClient.clear();
@@ -143,12 +143,12 @@ export default function AppTopbar({ connectionStatus, notifications, unreadCount
               {/* Both of these go to the same billing page, so both are admin-gated.
                   The separator lives inside the condition — left outside, hiding the
                   group would leave two dividers stacked against each other. */}
-              {canManageBilling && organizationId && (
+              {canManageBilling && organizationSlug && (
                 <>
                   <DropdownMenuSeparator />
                   <DropdownMenuGroup>
                     <DropdownMenuItem
-                      render={<Link to="/dashboard/org/$organizationId/billing" params={{ organizationId }} />}
+                      render={<Link to="/dashboard/org/$organizationSlug/billing" params={{ organizationSlug }} />}
                     >
                       <SparklesIcon />
                       Upgrade to Pro
@@ -162,9 +162,9 @@ export default function AppTopbar({ connectionStatus, notifications, unreadCount
                   <BadgeCheckIcon />
                   Account
                 </DropdownMenuItem>
-                {canManageBilling && organizationId && (
+                {canManageBilling && organizationSlug && (
                   <DropdownMenuItem
-                    render={<Link to="/dashboard/org/$organizationId/billing" params={{ organizationId }} />}
+                    render={<Link to="/dashboard/org/$organizationSlug/billing" params={{ organizationSlug }} />}
                   >
                     <CreditCardIcon />
                     Billing

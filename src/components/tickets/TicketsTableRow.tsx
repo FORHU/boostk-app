@@ -12,7 +12,7 @@ import {
   projectTicketQueries,
   updateTicketPriorityFn,
   updateTicketStatusFn,
-} from "@/routes/(app)/dashboard/project.$projectId/tickets";
+} from "@/routes/(app)/dashboard/project.$projectSlug/tickets";
 
 function getStatusBadgeClasses(status: string) {
   switch (status.toUpperCase()) {

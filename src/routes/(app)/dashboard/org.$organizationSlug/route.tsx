@@ -7,9 +7,9 @@ import { useViewport } from "@/hooks/use-viewport";
 import { getMemberRole } from "@/modules/auth/roles";
 import { getOrganizationFn } from "@/modules/organization/organization.functions";
 
-export const Route = createFileRoute("/(app)/dashboard/org/$organizationId")({
+export const Route = createFileRoute("/(app)/dashboard/org/$organizationSlug")({
   beforeLoad: async ({ context, params }) => {
-    const organization = await getOrganizationFn({ data: { organizationId: params.organizationId } });
+    const organization = await getOrganizationFn({ data: { organizationSlug: params.organizationSlug } });
     if (!organization) {
       throw redirect({ to: "/dashboard/organizations", search: { reason: REDIRECT_REASON.PERMISSION_DENIED } });
     }
@@ -23,7 +23,7 @@ export const Route = createFileRoute("/(app)/dashboard/org/$organizationId")({
 });
 
 function OrganizationLayout() {
-  const { organizationId } = Route.useParams();
+  const { organizationSlug } = Route.useParams();
   const { organization, role } = Route.useRouteContext();
   const { isMobile } = useViewport();
 
@@ -39,14 +39,14 @@ function OrganizationLayout() {
           } as React.CSSProperties
         }
       >
-        <OrganizationSidebar organizationId={organizationId} organization={organization} memberRole={role} />
+        <OrganizationSidebar organizationSlug={organizationSlug} organization={organization} memberRole={role} />
         <SidebarInset>
           <div className={`flex-1 overflow-auto ${isMobile ? "pb-24" : ""}`}>
             <Outlet />
           </div>
         </SidebarInset>
       </SidebarProvider>
-      <OrganizationBottomNav organizationId={organizationId} role={role} />
+      <OrganizationBottomNav organizationSlug={organizationSlug} role={role} />
     </div>
   );
 }

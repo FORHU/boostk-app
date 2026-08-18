@@ -34,7 +34,7 @@ function formatConnectedDate(date: Date | string): string {
   });
 }
 
-export const Route = createFileRoute("/(app)/dashboard/org/$organizationId/integrations")({
+export const Route = createFileRoute("/(app)/dashboard/org/$organizationSlug/integrations")({
   beforeLoad: ({ context }) => {
     if (!hasOrgRole(context.role, ORG_ROLE.ADMIN)) {
       throw redirect({ to: "/dashboard/organizations", search: { reason: REDIRECT_REASON.PERMISSION_DENIED } });
@@ -136,7 +136,8 @@ const AVAILABLE_INTEGRATIONS: IntegrationCatalogEntry[] = [
 ];
 
 function OrganizationIntegrationsPage() {
-  const { organizationId } = Route.useParams();
+  const { organization } = Route.useRouteContext();
+  const organizationId = organization.id;
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState("All");
   const [pendingProvider, setPendingProvider] = useState<IntegrationProvider | null>(null);

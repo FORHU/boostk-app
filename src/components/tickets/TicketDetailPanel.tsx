@@ -16,7 +16,7 @@ import {
   projectTicketQueries,
   updateTicketPriorityFn,
   updateTicketStatusFn,
-} from "@/routes/(app)/dashboard/project.$projectId/tickets";
+} from "@/routes/(app)/dashboard/project.$projectSlug/tickets";
 
 const isSameGroup = (m1?: TicketMessage, m2?: TicketMessage) => {
   if (!m1 || !m2) return false;
