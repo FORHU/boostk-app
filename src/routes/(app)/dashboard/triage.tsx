@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { motion } from "framer-motion";
 import {
   AlertTriangle,
   Ban,
@@ -8,14 +9,19 @@ import {
   CircleSlash,
   Inbox,
   Loader2,
-  Paperclip,
+  MessageCircle,
+  Search,
   Send,
   Star,
-  User,
 } from "lucide-react";
+import type { TicketMessage } from "prisma/generated/client";
 import { useEffect, useMemo, useState } from "react";
+import type { TicketMessageWithAttachment } from "@/components/chat-support/TicketChatMessageBubble";
+import TicketChatMessageBubble from "@/components/chat-support/TicketChatMessageBubble";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useToast } from "@/components/ui/toast";
 import { useSocket } from "@/hooks/use-socket";
+import { formatRelative } from "@/lib/format-date";
 import { EventType } from "@/lib/notifier/core";
 import { closeIntakeTicketFn, createTriageMessageFn, routeIntakeTicketFn } from "@/modules/intake/intake.functions";
 import { intakeQueries } from "@/modules/intake/intake.queries";
@@ -69,6 +75,14 @@ const CLOSE_REASON: Record<string, string> = {
   spam: "Spam",
 };
 
+// Two messages belong to the same visual group when same sender within 30s.
+const isSameGroup = (m1?: TicketMessage, m2?: TicketMessage) => {
+  if (!m1 || !m2) return false;
+  if (m1.userId !== m2.userId) return false;
+  if (m1.customerId !== m2.customerId) return false;
+  return Math.abs(new Date(m2.createdAt).getTime() - new Date(m1.createdAt).getTime()) <= 30000;
+};
+
 function RouteComponent() {
   const queryClient = useQueryClient();
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -93,96 +107,123 @@ function RouteComponent() {
 
   return (
     <div className="flex h-[calc(100vh-4rem)] overflow-hidden">
-      <aside className="w-80 shrink-0 border-r border-gray-200 flex flex-col bg-white">
-        <div className="p-4 border-b border-gray-100">
-          <h1 className="font-bold text-gray-900 flex items-center gap-2">
-            <Inbox size={18} className="text-blue-600" />
-            Global intake
-            {items.length > 0 && (
-              <span className="ml-auto text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-semibold">
-                {items.length}
-              </span>
-            )}
-          </h1>
-          <input
-            type="search"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search name or email…"
-            className="mt-3 w-full bg-gray-100 text-gray-900 placeholder:text-gray-500 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-          />
+      <aside className="w-80 shrink-0 border-r border-border flex flex-col bg-background">
+        <div className="p-4 border-b border-border/50">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold tracking-tight flex items-center gap-2">
+              <Inbox size={18} className="text-primary" />
+              Global intake
+            </h2>
+            {isLoading && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
+          </div>
 
-          <div className="mt-3 flex items-center gap-1 rounded-lg bg-gray-100 p-0.5">
-            {TABS.map((tab) => (
-              <button
-                key={tab.value}
-                type="button"
-                onClick={() => {
-                  setFilter(tab.value);
-                  // The selected conversation almost certainly is not in the new list.
-                  setSelectedId(null);
-                }}
-                className={`flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
-                  filter === tab.value ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-800"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 rounded-lg bg-muted p-0.5 flex-1">
+              {TABS.map((tab) => (
+                <button
+                  key={tab.value}
+                  type="button"
+                  onClick={() => {
+                    setFilter(tab.value);
+                    setSelectedId(null);
+                  }}
+                  className={`flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
+                    filter === tab.value
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="relative mt-2">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Search name or email…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 bg-muted/50 border border-input rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary min-w-0"
+            />
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto">
-          {isLoading ? (
-            <div className="p-8 flex justify-center">
-              <Loader2 className="animate-spin text-blue-600" size={20} />
-            </div>
-          ) : items.length === 0 ? (
-            <p className="p-6 text-sm text-gray-500 text-center">
-              {filter === "waiting"
-                ? "Nothing waiting. New chats appear here instantly."
-                : filter === "forwarded"
-                  ? "Nothing forwarded yet. Conversations you route to a project appear here."
-                  : "Nothing closed yet. Conversations you resolve or dismiss appear here."}
-            </p>
+        <div className="no-scrollbar flex-1 overflow-y-auto p-2 space-y-2">
+          {items.length === 0 ? (
+            <EmptyState
+              title={
+                filter === "waiting"
+                  ? "Nothing waiting."
+                  : filter === "forwarded"
+                    ? "Nothing forwarded yet."
+                    : "Nothing closed yet."
+              }
+              description={
+                filter === "waiting"
+                  ? "New chats appear here instantly."
+                  : filter === "forwarded"
+                    ? "Conversations you route to a project appear here."
+                    : "Conversations you resolve or dismiss appear here."
+              }
+              size="sm"
+              className="p-4"
+            />
           ) : (
             items.map((item) => (
               <button
                 key={item.id}
                 type="button"
                 onClick={() => setSelectedId(item.id)}
-                className={`w-full text-left p-4 border-b border-gray-50 hover:bg-gray-50 transition-colors ${
-                  selectedId === item.id ? "bg-blue-50 border-l-2 border-l-blue-600" : ""
+                className={`w-full text-left p-3 border rounded-md cursor-pointer flex flex-col gap-1 transition-all ${
+                  selectedId === item.id
+                    ? "bg-primary/5 border-primary/20 shadow-sm"
+                    : "bg-background border-transparent hover:bg-muted/50"
                 }`}
               >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-medium text-sm text-gray-900 truncate">{item.customer.name}</span>
-                  <span className="text-[10px] text-gray-400 shrink-0">
-                    {new Date(item.createdAt).toLocaleDateString()}
-                  </span>
+                <div className="flex justify-between items-start gap-2">
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <div className="w-6 h-6 bg-muted text-muted-foreground rounded-full flex items-center justify-center text-xs font-bold uppercase shrink-0">
+                      {item.customer.name.charAt(0)}
+                    </div>
+                    <span className="font-semibold text-sm text-foreground truncate">{item.customer.name}</span>
+                    {item.customer.language ? (
+                      <span className="shrink-0 rounded-full border border-border bg-muted/50 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                        {item.customer.language}
+                      </span>
+                    ) : null}
+                    <span
+                      className={`w-2.5 h-2.5 rounded-full shrink-0 ${
+                        item.status === "OPEN"
+                          ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"
+                          : "bg-muted-foreground"
+                      }`}
+                    />
+                  </div>
+                  <span className="text-xs text-muted-foreground shrink-0 pl-1">{formatRelative(item.updatedAt)}</span>
                 </div>
-                <p className="text-xs text-gray-500 truncate">{item.customer.email}</p>
-                {/* Prefer the support-language version: the raw text is unreadable to
-                    staff when the visitor writes in a language they do not speak. */}
-                <p className="text-xs text-gray-400 truncate mt-1">{queuePreview(item)}</p>
+                <div className="flex justify-between items-center gap-2 mt-1">
+                  <p className="text-xs text-muted-foreground truncate flex-1 min-w-0">{queuePreview(item)}</p>
+                  <div className="shrink-0">
+                    {item.routedTo ? (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-700">
+                        <Building2 size={10} className="shrink-0" />
+                        <span className="truncate max-w-[120px]">
+                          {item.routedTo.organizationName} / {item.routedTo.projectName}
+                        </span>
+                      </span>
+                    ) : item.triageNote ? (
+                      <span className="inline-block rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                        {CLOSE_REASON[item.triageNote] ?? item.triageNote}
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
 
-                {/* The outcome, so history is scannable without opening each row. */}
-                {item.routedTo ? (
-                  <p className="mt-1.5 flex items-center gap-1 text-[11px] text-emerald-700 truncate">
-                    <Building2 size={11} className="shrink-0" />
-                    <span className="truncate">
-                      {item.routedTo.organizationName} / {item.routedTo.projectName}
-                    </span>
-                  </p>
-                ) : item.triageNote ? (
-                  <span className="mt-1.5 inline-block rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-600">
-                    {CLOSE_REASON[item.triageNote] ?? item.triageNote}
-                  </span>
-                ) : null}
-
-                {/* CSAT: the visitor's own rating of a closed conversation. */}
                 {item.satisfactionScore != null && (
-                  <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700">
+                  <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700 w-fit">
                     <Star size={10} className="fill-amber-400 text-amber-400" />
                     {item.satisfactionScore}/5
                   </span>
@@ -193,14 +234,20 @@ function RouteComponent() {
         </div>
       </aside>
 
-      <main className="flex-1 overflow-hidden bg-slate-50">
+      <main className="flex-1 overflow-hidden bg-muted/20">
         {selectedId ? (
           <TriageDetail key={selectedId} intakeTicketId={selectedId} onDone={() => setSelectedId(null)} />
         ) : (
-          <div className="h-full flex flex-col items-center justify-center text-center text-gray-500">
-            <Inbox size={40} className="text-gray-300 mb-3" />
-            <p className="text-sm">Select a conversation to read it and route it to a project.</p>
-          </div>
+          <EmptyState
+            icon={
+              <div className="bg-primary/10 p-4 rounded-full">
+                <Inbox className="text-primary" size={32} />
+              </div>
+            }
+            title="Select a conversation"
+            description="Read it and route it to a project."
+            className="h-full p-6"
+          />
         )}
       </main>
     </div>
@@ -229,29 +276,28 @@ function TriageComposer({ intakeTicketId, disabled }: { intakeTicketId: string; 
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex-none bg-white border-t border-gray-100 px-4 py-3">
-      <div className="flex items-center gap-2">
+    <form
+      onSubmit={handleSubmit}
+      className="flex-none bg-background border-t border-border px-4 py-3 focus-within:ring-2 focus-within:ring-primary/20 transition-all"
+    >
+      <div className="flex items-end gap-2">
         <input
           type="text"
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder="Reply to the visitor…"
           disabled={disabled || sendMutation.isPending}
-          // Text and placeholder colours are pinned alongside the background. This page
-          // is hardcoded light throughout, so a control that fixes only its background
-          // inherits `--foreground` for its text — which is near-white under `.dark` and
-          // left the agent typing invisibly into a light grey field.
-          className="flex-1 min-w-0 bg-gray-100 text-gray-900 placeholder:text-gray-500 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
+          className="flex-1 min-w-0 bg-muted rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary disabled:opacity-60 placeholder:text-muted-foreground transition-all"
         />
         <button
           type="submit"
           disabled={!content.trim() || disabled || sendMutation.isPending}
-          className="bg-blue-600 text-white p-2.5 rounded-xl active:scale-95 disabled:opacity-50 shrink-0"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground p-2.5 rounded-xl shadow-sm active:scale-95 disabled:opacity-50 shrink-0 transition-all"
         >
           {sendMutation.isPending ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
         </button>
       </div>
-      <p className="mt-1.5 text-[11px] text-gray-400">
+      <p className="mt-1.5 text-[11px] text-muted-foreground">
         Sent as BOOSTK support, translated into the visitor's language. Ask what they need before routing.
       </p>
     </form>
@@ -302,102 +348,88 @@ function TriageDetail({ intakeTicketId, onDone }: { intakeTicketId: string; onDo
   if (isLoading) {
     return (
       <div className="h-full flex items-center justify-center">
-        <Loader2 className="animate-spin text-blue-600" size={24} />
+        <Loader2 className="animate-spin text-primary" size={24} />
       </div>
     );
   }
 
   if (!thread) {
-    return <div className="h-full flex items-center justify-center text-sm text-gray-500">Conversation not found.</div>;
+    return (
+      <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
+        Conversation not found.
+      </div>
+    );
   }
 
   return (
     <div className="h-full flex flex-col">
-      <header className="flex-none bg-white border-b border-gray-200 p-4">
-        <div className="flex items-center gap-3">
-          <div className="bg-blue-50 p-2 rounded-lg">
-            <User size={18} className="text-blue-600" />
+      <header className="h-16 flex-none flex items-center justify-between px-6 bg-muted/50 z-10 border-b border-border">
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <div className="w-10 h-10 bg-muted text-muted-foreground rounded-full flex items-center justify-center text-sm font-bold shadow-inner uppercase shrink-0">
+            {thread.customer.name.charAt(0)}
           </div>
-          <div className="min-w-0">
-            <h2 className="font-semibold text-gray-900 text-sm truncate">{thread.customer.name}</h2>
-            <p className="text-xs text-gray-500 truncate">
-              {thread.customer.email}
-              {thread.customer.phone ? ` · ${thread.customer.phone}` : ""}
-              {thread.customer.language ? ` · ${thread.customer.language}` : ""}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <h1 className="font-bold text-foreground truncate">{thread.customer.name}</h1>
+            </div>
+            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+              <span
+                className={`w-2.5 h-2.5 rounded-full shrink-0 ${
+                  thread.status === "OPEN"
+                    ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"
+                    : "bg-muted-foreground"
+                }`}
+              />
+              <span className="truncate">
+                {thread.referenceNumber} · {thread.customer.email}
+                {thread.customer.phone ? ` · ${thread.customer.phone}` : ""}
+                {thread.customer.language ? ` · ${thread.customer.language}` : ""}
+              </span>
             </p>
           </div>
-          <div className="ml-auto flex items-center gap-2">
-            {thread.satisfactionScore != null && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700">
-                <Star size={10} className="fill-amber-400 text-amber-400" />
-                Rated {thread.satisfactionScore}/5
-              </span>
-            )}
-            <span className="text-xs text-gray-400 font-mono">{thread.referenceNumber}</span>
-          </div>
         </div>
-        {/* The intake form's subject is recorded as the visitor's first message, so it
-            appears in the thread below — translated — instead of being repeated here
-            untranslated. Only older conversations, created before that change, still
-            carry it solely on `metadata`. */}
-        {thread.customer.metadata && thread.ticketMessages.length === 0 && (
-          <p className="mt-2 text-sm text-gray-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
-            {thread.customer.metadata}
-          </p>
-        )}
+        <div className="flex items-center gap-2 shrink-0">
+          {thread.satisfactionScore != null && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700">
+              <Star size={10} className="fill-amber-400 text-amber-400" />
+              Rated {thread.satisfactionScore}/5
+            </span>
+          )}
+        </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+      {/* The intake form's subject is recorded as the visitor's first message, so it
+          appears in the thread below — translated — instead of being repeated here
+          untranslated. Only older conversations, created before that change, still
+          carry it solely on `metadata`. */}
+      {thread.customer.metadata && thread.ticketMessages.length === 0 && (
+        <div className="px-6 py-2 bg-background border-b border-border">
+          <p className="text-sm text-foreground bg-muted rounded-lg px-3 py-2">{thread.customer.metadata}</p>
+        </div>
+      )}
+
+      <div className="flex-1 overflow-y-auto p-6 space-y-6 mt-3">
         {thread.ticketMessages.length === 0 ? (
-          <p className="text-sm text-gray-500 text-center py-8">
-            No messages yet — the visitor filled in the form but hasn't written anything.
-          </p>
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="h-full">
+            <EmptyState
+              icon={
+                <div className="bg-primary/10 p-4 rounded-full">
+                  <MessageCircle className="text-primary" size={32} />
+                </div>
+              }
+              title="Waiting for the visitor"
+              description="No messages yet — the visitor filled in the form but hasn't written anything."
+              className="h-full p-6"
+            />
+          </motion.div>
         ) : (
-          thread.ticketMessages.map((msg) => (
-            <div key={msg.id} className={`flex ${msg.customerId ? "justify-start" : "justify-end"}`}>
-              <div
-                className={`max-w-[70%] rounded-2xl text-sm overflow-hidden ${
-                  msg.contentType === "IMAGE" ? "p-1" : "px-4 py-2"
-                } ${msg.customerId ? "bg-white border border-gray-200 text-gray-800" : "bg-blue-600 text-white"}`}
-              >
-                {/* For attachments `content` is the /api/attachments/:id URL, not text —
-                    rendering it raw showed staff a bare link instead of the screenshot a
-                    visitor sent. Translations never apply to these. */}
-                {msg.contentType === "IMAGE" ? (
-                  <a href={msg.content} target="_blank" rel="noreferrer">
-                    <img
-                      src={msg.content}
-                      alt={msg.attachment?.filename ?? "Attachment"}
-                      className="rounded-xl max-h-64 w-auto object-contain"
-                    />
-                  </a>
-                ) : msg.contentType === "FILE" ? (
-                  <a
-                    href={msg.content}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center gap-2 underline underline-offset-2"
-                  >
-                    <Paperclip size={14} className="shrink-0" />
-                    <span className="truncate">{msg.attachment?.filename ?? "Attachment"}</span>
-                  </a>
-                ) : (
-                  <>
-                    <p className="whitespace-pre-wrap break-words">{msg.content}</p>
-                    {msg.translatedContent && (
-                      <p
-                        className={`mt-1 pt-1 border-t text-xs ${
-                          msg.customerId ? "border-gray-100 text-gray-500" : "border-blue-400 text-blue-100"
-                        }`}
-                      >
-                        {msg.translatedContent}
-                      </p>
-                    )}
-                  </>
-                )}
-              </div>
-            </div>
-          ))
+          <div className="flex flex-col space-y-0.5">
+            {thread.ticketMessages.map((msg: TicketMessageWithAttachment, index: number) => {
+              const isStart = !isSameGroup(thread.ticketMessages[index - 1], msg);
+              const isEnd = !isSameGroup(msg, thread.ticketMessages[index + 1]);
+              return <TicketChatMessageBubble key={msg.id} msg={msg} isStart={isStart} isEnd={isEnd} viewer="agent" />;
+            })}
+          </div>
         )}
       </div>
 
@@ -407,7 +439,7 @@ function TriageDetail({ intakeTicketId, onDone }: { intakeTicketId: string; onDo
           routed: from that point the receiving org's agents own the conversation. */}
       {!thread.routedTicket && <TriageComposer intakeTicketId={intakeTicketId} disabled={isBusy} />}
 
-      <footer className="flex-none bg-white border-t border-gray-200 p-4">
+      <footer className="flex-none bg-background border-t border-border p-4">
         {thread.routedTicket ? (
           <p className="text-sm text-emerald-700 bg-emerald-50 rounded-lg px-3 py-2 flex items-center gap-2">
             <Building2 size={14} />
@@ -423,7 +455,7 @@ function TriageDetail({ intakeTicketId, onDone }: { intakeTicketId: string; onDo
                   setProjectId(""); // the old project belongs to a different org
                 }}
                 disabled={isBusy}
-                className="bg-gray-100 text-gray-900 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
+                className="bg-muted text-foreground rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary disabled:opacity-60"
               >
                 <option value="">Select organization…</option>
                 {targets?.map((org) => (
@@ -437,7 +469,7 @@ function TriageDetail({ intakeTicketId, onDone }: { intakeTicketId: string; onDo
                 value={projectId}
                 onChange={(e) => setProjectId(e.target.value)}
                 disabled={isBusy || !organizationId}
-                className="bg-gray-100 text-gray-900 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
+                className="bg-muted text-foreground rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary disabled:opacity-60"
               >
                 <option value="">{organizationId ? "Select project…" : "Pick an organization first"}</option>
                 {projects.map((project) => (
@@ -460,7 +492,7 @@ function TriageDetail({ intakeTicketId, onDone }: { intakeTicketId: string; onDo
                 type="button"
                 disabled={!projectId || isBusy}
                 onClick={() => routeMutation.mutate({ data: { intakeTicketId, organizationId, projectId } })}
-                className="flex-1 bg-blue-600 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-700 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-1 bg-primary text-primary-foreground py-2.5 rounded-xl text-sm font-semibold hover:bg-primary/90 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm"
               >
                 {routeMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
                 Route to project
@@ -485,7 +517,7 @@ function TriageDetail({ intakeTicketId, onDone }: { intakeTicketId: string; onDo
                 disabled={isBusy}
                 onClick={() => closeMutation.mutate({ data: { intakeTicketId, reason: "no_fit" } })}
                 title="Belongs to no organization we work with"
-                className="px-3 py-2.5 rounded-xl text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors disabled:opacity-50 flex items-center gap-1.5"
+                className="px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground bg-muted hover:bg-muted/80 transition-colors disabled:opacity-50 flex items-center gap-1.5"
               >
                 <CircleSlash size={16} />
                 No fit
