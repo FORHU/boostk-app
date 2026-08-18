@@ -82,6 +82,13 @@ const NOT_A_TRANSLATION = [
 export const isNotATranslation = (candidate: string) => NOT_A_TRANSLATION.some((pattern) => pattern.test(candidate));
 
 /**
+ * Scripts that cannot be English: Hiragana/Katakana, CJK, Hangul, Cyrillic, Arabic, Thai.
+ * Used to tell "the agent typed the customer's language" from "the agent typed English"
+ * without spending an API call on language detection for every outbound reply.
+ */
+const NON_LATIN_SCRIPT = /[぀-ヿ㐀-䶿一-鿿가-힯Ѐ-ӿ؀-ۿ฀-๿]/;
+
+/**
  * Translate on a throwaway session, retrying while the engine returns anything that is
  * not a translation. Returns null when every attempt failed, which callers render as "no
  * translation available" and fall back to the original text. Never throws -- a failed
@@ -157,22 +164,56 @@ export function shouldDetectLanguage(current: string | null | undefined, content
 }
 
 /**
- * Translate an outbound AGENT reply (written in the support language) into the
- * customer's language so they can read it. Skips when the customer's language is
- * the support language or unknown. Never throws.
+ * Translate an outbound AGENT reply. Never throws.
+ *
+ * The direction depends on what the agent actually typed, not on an assumption that
+ * staff always write the support language:
+ *
+ *  - wrote the support language -> translate INTO the customer's language, so the
+ *    customer can read it. `targetLang` is the customer's language.
+ *  - wrote the customer's language (someone on the team speaks it) -> translate INTO
+ *    the SUPPORT language, so colleagues who do not speak it can follow the thread.
+ *    `targetLang` is the support language, and the customer reads `content` verbatim.
+ *
+ * That second branch is why `targetLang` — not the sender — decides which side sees the
+ * translation (see `TicketChatMessageBubble`). Assuming the direction used to send the
+ * customer a *paraphrase*: asking the engine to translate Korean into Korean returns
+ * reworded Korean, which is not an echo, so it was stored and shown as the agent's words.
  */
 export async function translateOutgoingMessage(
   content: string,
   { ticketId, customerLang }: { ticketId: string; customerLang: string | null | undefined },
 ): Promise<MessageTranslation> {
   const trimmed = content.trim();
-  const targetLang = (customerLang ?? "").trim();
-  if (!trimmed || isSupportLanguage(targetLang)) return NONE(targetLang || SUPPORT_LANGUAGE);
+  const customerTarget = (customerLang ?? "").trim();
+  if (!trimmed) return NONE(customerTarget || SUPPORT_LANGUAGE);
+
+  // Deliberately NOT `looksLikeEnglish` here: that wants three marker words before it
+  // will say yes, which a normal short reply ("Hello, how can I help you?" — one marker)
+  // fails, and misreading English as foreign flips the translation the wrong way.
+  // Script is the reliable signal for the case this exists to serve — a colleague
+  // answering a Korean/Japanese/Chinese customer in their own language.
+  //
+  // Latin-script languages (Spanish, Tagalog) read as "support language" and fall back to
+  // the previous assumption. That is the status quo, not a regression.
+  const wroteSupportLanguage = SUPPORT_LANGUAGE === "en" ? !NON_LATIN_SCRIPT.test(trimmed) : true;
+
+  // Agent wrote in a language that is not the support language: translate it back for
+  // staff instead of "translating" it into the language it is already in.
+  const targetLang = wroteSupportLanguage ? customerTarget : SUPPORT_LANGUAGE;
+
+  // Nothing to do when sender and recipient already share a language.
+  if (isSupportLanguage(targetLang) && wroteSupportLanguage) return NONE(SUPPORT_LANGUAGE);
+  if (!targetLang) return NONE(SUPPORT_LANGUAGE);
 
   try {
     const translatedContent = await translateWithRetry(trimmed, targetLang, ticketId);
     if (!translatedContent) return NONE(targetLang);
-    return { translatedContent, sourceLang: SUPPORT_LANGUAGE, targetLang };
+    return {
+      translatedContent,
+      sourceLang: wroteSupportLanguage ? SUPPORT_LANGUAGE : customerTarget || null,
+      targetLang,
+    };
   } catch {
     return NONE(targetLang);
   }

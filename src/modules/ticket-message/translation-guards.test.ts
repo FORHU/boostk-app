@@ -1,6 +1,12 @@
 import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 import { fetchSessionId, translateText } from "@/modules/translation/forhu-chat";
-import { isEcho, isNotATranslation, translateIncomingMessage } from "./ticket-message.translation";
+import {
+  isEcho,
+  isNotATranslation,
+  SUPPORT_LANGUAGE,
+  translateIncomingMessage,
+  translateOutgoingMessage,
+} from "./ticket-message.translation";
 
 // Stub the engine so the retry/session behaviour can be asserted without the network.
 // `looksLikeEnglish` and the prompt constants are kept real — only the two calls that
@@ -129,5 +135,98 @@ describe("translateIncomingMessage — engine misbehaviour", () => {
     const result = await translateIncomingMessage("질문있어여", { ticketId: "t1" });
 
     expect(result.translatedContent).toBe("I have a question.");
+  });
+});
+
+/**
+ * Which way an agent's reply gets translated.
+ *
+ * The direction has to follow what the agent actually typed. Assuming they always write
+ * the support language meant a colleague replying in Korean got their message "translated"
+ * Korean->Korean, which returns a *reworded* paraphrase — not an echo, so it was stored
+ * and shown to the customer as the agent's own words.
+ */
+describe("translateOutgoingMessage — direction", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    sessionMock.mockResolvedValue("sess_1");
+    translateMock.mockResolvedValue("translated text");
+  });
+
+  /** The language the engine was actually asked to translate into. */
+  const requestedTarget = () => translateMock.mock.calls[0]?.[1];
+
+  it("translates an agent's English reply into the customer's language", async () => {
+    const result = await translateOutgoingMessage("Hello, how can I help you?", {
+      ticketId: "t1",
+      customerLang: "Korean",
+    });
+
+    expect(requestedTarget()).toBe("Korean");
+    expect(result.targetLang).toBe("Korean");
+  });
+
+  // The reported bug. The customer must keep the agent's exact Korean, so the translation
+  // goes the other way — into the support language, for colleagues who do not read Korean.
+  it("translates an agent's Korean reply into the support language instead", async () => {
+    const result = await translateOutgoingMessage("안녕하세요, 무엇을 도와드릴까요?", {
+      ticketId: "t1",
+      customerLang: "Korean",
+    });
+
+    expect(requestedTarget()).toBe(SUPPORT_LANGUAGE);
+    expect(result.targetLang).toBe(SUPPORT_LANGUAGE);
+  });
+
+  it("does the same for other non-Latin scripts", async () => {
+    for (const [text, lang] of [
+      ["こんにちは、ご用件をお伺いします", "Japanese"],
+      ["您好，我可以帮您什么", "Chinese"],
+      ["Здравствуйте, чем помочь", "Russian"],
+    ] as const) {
+      vi.clearAllMocks();
+      translateMock.mockResolvedValue("translated text");
+
+      const result = await translateOutgoingMessage(text, { ticketId: "t1", customerLang: lang });
+
+      expect(result.targetLang).toBe(SUPPORT_LANGUAGE);
+    }
+  });
+
+  // A short reply carries too few marker words for `looksLikeEnglish`, which is why the
+  // direction check uses script rather than that heuristic.
+  it("treats a short English reply as the support language", async () => {
+    await translateOutgoingMessage("Hi!", { ticketId: "t1", customerLang: "Korean" });
+
+    expect(requestedTarget()).toBe("Korean");
+  });
+
+  it("skips the engine entirely when both sides already share a language", async () => {
+    const result = await translateOutgoingMessage("Hello there, how are you?", {
+      ticketId: "t1",
+      customerLang: "English",
+    });
+
+    expect(translateMock).not.toHaveBeenCalled();
+    expect(result.translatedContent).toBeNull();
+  });
+
+  it("skips the engine for an empty reply", async () => {
+    await translateOutgoingMessage("   ", { ticketId: "t1", customerLang: "Korean" });
+
+    expect(translateMock).not.toHaveBeenCalled();
+  });
+
+  // `sourceLang` is what the agent wrote, and it was previously hardcoded to the support
+  // language even when they had plainly written Korean.
+  it("records the language the agent actually wrote in", async () => {
+    const english = await translateOutgoingMessage("Hello, how can I help?", {
+      ticketId: "t1",
+      customerLang: "Korean",
+    });
+    const korean = await translateOutgoingMessage("안녕하세요", { ticketId: "t1", customerLang: "Korean" });
+
+    expect(english.sourceLang).toBe(SUPPORT_LANGUAGE);
+    expect(korean.sourceLang).toBe("Korean");
   });
 });
