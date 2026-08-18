@@ -9,10 +9,9 @@
 import { env } from "@/env";
 import { prisma } from "@/lib/prisma";
 import {
-  clearSession,
   DEFAULT_TRANSLATE_PROMPT,
   detectLanguage,
-  getSessionId,
+  fetchSessionId,
   looksLikeEnglish,
   translateText,
 } from "@/modules/translation/forhu-chat";
@@ -44,14 +43,10 @@ const NONE = (targetLang: string): MessageTranslation => ({
 /**
  * How many times to ask the engine before giving up and showing the original.
  *
- * The forhu agent ignores the translate instruction and echoes the input straight back
- * roughly half the time -- measured at 5/10 on repeated identical calls, with no error
- * and no empty response, which is why a plain try/catch never caught it.
- *
- * Crucially the failures CLUSTER: once a session has started echoing it keeps echoing,
- * so retrying on the same session barely helps (measured 5/12 still failing). Each
- * retry therefore drops the session and mints a fresh one, which is what actually
- * recovers.
+ * The forhu agent ignores the translate instruction and hands back something that is not
+ * a translation roughly half the time -- with no error and no empty response, which is
+ * why a plain try/catch never caught it. It is non-deterministic, so asking again on a
+ * clean session usually works.
  */
 const TRANSLATE_ATTEMPTS = 3;
 
@@ -61,29 +56,60 @@ const TRANSLATE_ATTEMPTS = 3;
  * capitalisation is still the untranslated original, and storing it as a
  * "translation" would show the visitor the support language twice.
  */
-const isEcho = (candidate: string, source: string) => candidate.trim().toLowerCase() === source.trim().toLowerCase();
+export const isEcho = (candidate: string, source: string) =>
+  candidate.trim().toLowerCase() === source.trim().toLowerCase();
 
 /**
- * Translate, retrying on a fresh session while the engine echoes the input back.
- * Returns null when every attempt failed, which callers render as "no translation
- * available" and fall back to the original text. Never throws -- a failed attempt must
- * not block the message being sent.
+ * Phrases that mean the engine talked ABOUT the task instead of doing it -- it answered
+ * the customer, or narrated the translation instruction back at us.
  *
- * Takes the session *key* rather than an id precisely so it can invalidate it.
+ * Deliberately narrow. A refusal is indistinguishable from a translation by shape, so the
+ * only safe signal is meta-commentary that names the instruction or the act of replying.
+ * Broad markers like a bare "I'm sorry" are excluded on purpose: a customer who writes
+ * "죄송하지만 환불해 주세요" translates to "I'm sorry, but please refund me", and rejecting
+ * that would throw away a correct translation.
  */
-async function translateWithRetry(trimmed: string, targetLang: string, sessionKey: string): Promise<string | null> {
+const NOT_A_TRANSLATION = [
+  /\bas per the instructions?\b/i,
+  /\bI can only (respond|reply|answer)\b/i,
+  /\b(provide|give) the translation\b/i,
+  /\btranslation in the specified format\b/i,
+  /\bwould you like to ask something else\b/i,
+  /명령에 따라/,
+  /한국어로만 응답할 수 있습니다/,
+];
+
+export const isNotATranslation = (candidate: string) => NOT_A_TRANSLATION.some((pattern) => pattern.test(candidate));
+
+/**
+ * Translate on a throwaway session, retrying while the engine returns anything that is
+ * not a translation. Returns null when every attempt failed, which callers render as "no
+ * translation available" and fall back to the original text. Never throws -- a failed
+ * attempt must not block the message being sent.
+ *
+ * A FRESH session per attempt is the load-bearing part. Sharing one session per ticket
+ * (the previous design) let conversation state accumulate across both translation
+ * directions and language detection, and the agent eventually adopted a persona from its
+ * own history -- answering "I can only respond in Korean as per the instructions" instead
+ * of translating. Measured on the five messages from that bug report: 1/5 corrupted on a
+ * shared session, 0/5 on fresh ones. Translation is one-shot and stateless, so there is
+ * nothing to gain from reuse; `document_context` does not persist across turns anyway.
+ */
+async function translateWithRetry(trimmed: string, targetLang: string, ticketId: string): Promise<string | null> {
   for (let attempt = 0; attempt < TRANSLATE_ATTEMPTS; attempt++) {
     try {
-      const sessionId = await getSessionId(sessionKey);
+      const sessionId = await fetchSessionId();
       const candidate = await translateText(trimmed, targetLang, sessionId, TRANSLATE_SYSTEM_PROMPT);
-      if (candidate && !isEcho(candidate, trimmed)) return candidate;
+
+      if (candidate && !isEcho(candidate, trimmed) && !isNotATranslation(candidate)) return candidate;
     } catch {
       // Swallow -- a transient failure on one attempt should not waste the rest.
     }
-    // Either it echoed or it threw. Both mean this session is no longer translating
-    // reliably, so bin it and let the next attempt mint a new one.
-    clearSession(sessionKey);
   }
+
+  // Every attempt failed. The caller falls back to showing the original, which is safe
+  // but silent, so say so here: this is the only place the failure is visible at all.
+  console.error(`[translate] gave up after ${TRANSLATE_ATTEMPTS} attempts (ticket=${ticketId}, target=${targetLang})`);
   return null;
 }
 
@@ -104,8 +130,7 @@ export async function translateIncomingMessage(
   }
 
   try {
-    // One forhu session per ticket keeps the conversation coherent and cheap.
-    const translatedContent = await translateWithRetry(trimmed, targetLang, `ticket:${ticketId}`);
+    const translatedContent = await translateWithRetry(trimmed, targetLang, ticketId);
     if (!translatedContent) return NONE(targetLang);
     return { translatedContent, sourceLang: null, targetLang };
   } catch {
@@ -145,7 +170,7 @@ export async function translateOutgoingMessage(
   if (!trimmed || isSupportLanguage(targetLang)) return NONE(targetLang || SUPPORT_LANGUAGE);
 
   try {
-    const translatedContent = await translateWithRetry(trimmed, targetLang, `ticket:${ticketId}`);
+    const translatedContent = await translateWithRetry(trimmed, targetLang, ticketId);
     if (!translatedContent) return NONE(targetLang);
     return { translatedContent, sourceLang: SUPPORT_LANGUAGE, targetLang };
   } catch {
@@ -162,10 +187,15 @@ export async function detectMessageLanguage(content: string, ticketId: string): 
   const trimmed = content.trim();
   if (!trimmed) return null;
   try {
-    const sessionId = await getSessionId(`ticket:${ticketId}`);
+    // Fresh session for the same reason translation uses one: detection asks a different
+    // question, and sharing a session let the two contaminate each other.
+    const sessionId = await fetchSessionId();
     const name = await detectLanguage(trimmed, sessionId);
     return name || null;
   } catch {
+    // Detection failing is not fatal -- the customer's language just stays unknown and
+    // agent replies go out untranslated -- but that is invisible without this.
+    console.error(`[translate] language detection failed (ticket=${ticketId})`);
     return null;
   }
 }
