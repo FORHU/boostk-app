@@ -105,20 +105,22 @@ export const Route = createFileRoute("/api/notification/sse")({
 
             sseChannelWrapper.on("error", (err) => {
               console.error(`[SSE] RabbitMQ Channel Error for User ${userId}:`, err);
-              // TODO: Send an SSE event to the client telling them
-              // the real-time connection degraded, so they know to refresh or rely on standard polling.
+              sendSseMessage({
+                event: EventType.DEGRADED,
+                data: { reason: "channel_error" },
+              });
+              controller.close();
+              clearInterval(timer);
             });
 
             request.signal.addEventListener("abort", () => {
               // [SSE] client disconnect log removed
               clearInterval(timer);
+              controller.close();
 
               if (sseChannelWrapper) {
                 sseChannelWrapper.close().catch(console.error);
               }
-
-              // TODO: Check if this is needed
-              // controller.close();
             });
           },
         });
