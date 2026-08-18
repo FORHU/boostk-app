@@ -7,21 +7,22 @@ import { REDIRECT_REASON } from "@/enums/enums";
 import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
 import { usageQueries } from "@/modules/usage/usage.queries";
 
-export const Route = createFileRoute("/(app)/dashboard/org/$organizationId/usage")({
+export const Route = createFileRoute("/(app)/dashboard/org/$organizationSlug/usage")({
   beforeLoad: ({ context }) => {
     if (!hasOrgRole(context.role, ORG_ROLE.ADMIN)) {
       throw redirect({ to: "/dashboard/organizations", search: { reason: REDIRECT_REASON.PERMISSION_DENIED } });
     }
   },
-  loader: ({ context, params }) => {
-    context.queryClient.ensureQueryData(usageQueries.allByOrgId(params.organizationId));
+  loader: ({ context }) => {
+    context.queryClient.ensureQueryData(usageQueries.allByOrgId(context.organization.id));
   },
   component: OrganizationUsagePage,
 });
 
 //FRONTEND: Page and Components
 function OrganizationUsagePage() {
-  const { organizationId } = Route.useParams();
+  const { organization } = Route.useRouteContext();
+  const organizationId = organization.id;
   return (
     <div>
       <Suspense

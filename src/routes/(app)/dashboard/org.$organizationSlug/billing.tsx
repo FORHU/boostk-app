@@ -5,7 +5,7 @@ import { useToast } from "@/components/ui/toast";
 import { REDIRECT_REASON } from "@/enums/enums";
 import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
 
-export const Route = createFileRoute("/(app)/dashboard/org/$organizationId/billing")({
+export const Route = createFileRoute("/(app)/dashboard/org/$organizationSlug/billing")({
   // Billing was the only org admin page without this guard — teams, settings, usage and
   // integrations all had it. Any member, including an agent, could open it and act on
   // plans. `role` is resolved once by the parent org route.

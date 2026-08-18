@@ -24,22 +24,22 @@ import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiAttachmentsIdRouteImport } from './routes/api/attachments/$id'
 import { Route as appDashboardTriageRouteImport } from './routes/(app)/dashboard/triage'
 import { Route as appDashboardOrganizationsRouteImport } from './routes/(app)/dashboard/organizations'
-import { Route as publicSupportProjectIdManifestRouteImport } from './routes/(public)/support.$projectId/manifest'
-import { Route as publicSupportProjectIdChatWidgetRouteImport } from './routes/(public)/support.$projectId/chat-widget'
-import { Route as appDashboardProjectProjectIdRouteRouteImport } from './routes/(app)/dashboard/project.$projectId/route'
-import { Route as appDashboardOrgOrganizationIdRouteRouteImport } from './routes/(app)/dashboard/org.$organizationId/route'
-import { Route as appDashboardProjectProjectIdIndexRouteImport } from './routes/(app)/dashboard/project.$projectId/index'
-import { Route as appDashboardOrgOrganizationIdIndexRouteImport } from './routes/(app)/dashboard/org.$organizationId/index'
-import { Route as appDashboardProjectProjectIdTicketsRouteImport } from './routes/(app)/dashboard/project.$projectId/tickets'
-import { Route as appDashboardProjectProjectIdSettingsRouteImport } from './routes/(app)/dashboard/project.$projectId/settings'
-import { Route as appDashboardProjectProjectIdCustomersRouteImport } from './routes/(app)/dashboard/project.$projectId/customers'
-import { Route as appDashboardProjectProjectIdChatSupportRouteImport } from './routes/(app)/dashboard/project.$projectId/chat-support'
-import { Route as appDashboardProjectProjectIdAgentsRouteImport } from './routes/(app)/dashboard/project.$projectId/agents'
-import { Route as appDashboardOrgOrganizationIdUsageRouteImport } from './routes/(app)/dashboard/org.$organizationId/usage'
-import { Route as appDashboardOrgOrganizationIdTeamsRouteImport } from './routes/(app)/dashboard/org.$organizationId/teams'
-import { Route as appDashboardOrgOrganizationIdSettingsRouteImport } from './routes/(app)/dashboard/org.$organizationId/settings'
-import { Route as appDashboardOrgOrganizationIdIntegrationsRouteImport } from './routes/(app)/dashboard/org.$organizationId/integrations'
-import { Route as appDashboardOrgOrganizationIdBillingRouteImport } from './routes/(app)/dashboard/org.$organizationId/billing'
+import { Route as publicSupportProjectSlugManifestRouteImport } from './routes/(public)/support.$projectSlug/manifest'
+import { Route as publicSupportProjectSlugChatWidgetRouteImport } from './routes/(public)/support.$projectSlug/chat-widget'
+import { Route as appDashboardProjectProjectSlugRouteRouteImport } from './routes/(app)/dashboard/project.$projectSlug/route'
+import { Route as appDashboardOrgOrganizationSlugRouteRouteImport } from './routes/(app)/dashboard/org.$organizationSlug/route'
+import { Route as appDashboardProjectProjectSlugIndexRouteImport } from './routes/(app)/dashboard/project.$projectSlug/index'
+import { Route as appDashboardOrgOrganizationSlugIndexRouteImport } from './routes/(app)/dashboard/org.$organizationSlug/index'
+import { Route as appDashboardProjectProjectSlugTicketsRouteImport } from './routes/(app)/dashboard/project.$projectSlug/tickets'
+import { Route as appDashboardProjectProjectSlugSettingsRouteImport } from './routes/(app)/dashboard/project.$projectSlug/settings'
+import { Route as appDashboardProjectProjectSlugCustomersRouteImport } from './routes/(app)/dashboard/project.$projectSlug/customers'
+import { Route as appDashboardProjectProjectSlugChatSupportRouteImport } from './routes/(app)/dashboard/project.$projectSlug/chat-support'
+import { Route as appDashboardProjectProjectSlugAgentsRouteImport } from './routes/(app)/dashboard/project.$projectSlug/agents'
+import { Route as appDashboardOrgOrganizationSlugUsageRouteImport } from './routes/(app)/dashboard/org.$organizationSlug/usage'
+import { Route as appDashboardOrgOrganizationSlugTeamsRouteImport } from './routes/(app)/dashboard/org.$organizationSlug/teams'
+import { Route as appDashboardOrgOrganizationSlugSettingsRouteImport } from './routes/(app)/dashboard/org.$organizationSlug/settings'
+import { Route as appDashboardOrgOrganizationSlugIntegrationsRouteImport } from './routes/(app)/dashboard/org.$organizationSlug/integrations'
+import { Route as appDashboardOrgOrganizationSlugBillingRouteImport } from './routes/(app)/dashboard/org.$organizationSlug/billing'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -115,101 +115,101 @@ const appDashboardOrganizationsRoute =
     path: '/dashboard/organizations',
     getParentRoute: () => appRouteRoute,
   } as any)
-const publicSupportProjectIdManifestRoute =
-  publicSupportProjectIdManifestRouteImport.update({
-    id: '/(public)/support/$projectId/manifest',
-    path: '/support/$projectId/manifest',
+const publicSupportProjectSlugManifestRoute =
+  publicSupportProjectSlugManifestRouteImport.update({
+    id: '/(public)/support/$projectSlug/manifest',
+    path: '/support/$projectSlug/manifest',
     getParentRoute: () => rootRouteImport,
   } as any)
-const publicSupportProjectIdChatWidgetRoute =
-  publicSupportProjectIdChatWidgetRouteImport.update({
-    id: '/(public)/support/$projectId/chat-widget',
-    path: '/support/$projectId/chat-widget',
+const publicSupportProjectSlugChatWidgetRoute =
+  publicSupportProjectSlugChatWidgetRouteImport.update({
+    id: '/(public)/support/$projectSlug/chat-widget',
+    path: '/support/$projectSlug/chat-widget',
     getParentRoute: () => rootRouteImport,
   } as any)
-const appDashboardProjectProjectIdRouteRoute =
-  appDashboardProjectProjectIdRouteRouteImport.update({
-    id: '/dashboard/project/$projectId',
-    path: '/dashboard/project/$projectId',
+const appDashboardProjectProjectSlugRouteRoute =
+  appDashboardProjectProjectSlugRouteRouteImport.update({
+    id: '/dashboard/project/$projectSlug',
+    path: '/dashboard/project/$projectSlug',
     getParentRoute: () => appRouteRoute,
   } as any)
-const appDashboardOrgOrganizationIdRouteRoute =
-  appDashboardOrgOrganizationIdRouteRouteImport.update({
-    id: '/dashboard/org/$organizationId',
-    path: '/dashboard/org/$organizationId',
+const appDashboardOrgOrganizationSlugRouteRoute =
+  appDashboardOrgOrganizationSlugRouteRouteImport.update({
+    id: '/dashboard/org/$organizationSlug',
+    path: '/dashboard/org/$organizationSlug',
     getParentRoute: () => appRouteRoute,
   } as any)
-const appDashboardProjectProjectIdIndexRoute =
-  appDashboardProjectProjectIdIndexRouteImport.update({
+const appDashboardProjectProjectSlugIndexRoute =
+  appDashboardProjectProjectSlugIndexRouteImport.update({
     id: '/',
     path: '/',
-    getParentRoute: () => appDashboardProjectProjectIdRouteRoute,
+    getParentRoute: () => appDashboardProjectProjectSlugRouteRoute,
   } as any)
-const appDashboardOrgOrganizationIdIndexRoute =
-  appDashboardOrgOrganizationIdIndexRouteImport.update({
+const appDashboardOrgOrganizationSlugIndexRoute =
+  appDashboardOrgOrganizationSlugIndexRouteImport.update({
     id: '/',
     path: '/',
-    getParentRoute: () => appDashboardOrgOrganizationIdRouteRoute,
+    getParentRoute: () => appDashboardOrgOrganizationSlugRouteRoute,
   } as any)
-const appDashboardProjectProjectIdTicketsRoute =
-  appDashboardProjectProjectIdTicketsRouteImport.update({
+const appDashboardProjectProjectSlugTicketsRoute =
+  appDashboardProjectProjectSlugTicketsRouteImport.update({
     id: '/tickets',
     path: '/tickets',
-    getParentRoute: () => appDashboardProjectProjectIdRouteRoute,
+    getParentRoute: () => appDashboardProjectProjectSlugRouteRoute,
   } as any)
-const appDashboardProjectProjectIdSettingsRoute =
-  appDashboardProjectProjectIdSettingsRouteImport.update({
+const appDashboardProjectProjectSlugSettingsRoute =
+  appDashboardProjectProjectSlugSettingsRouteImport.update({
     id: '/settings',
     path: '/settings',
-    getParentRoute: () => appDashboardProjectProjectIdRouteRoute,
+    getParentRoute: () => appDashboardProjectProjectSlugRouteRoute,
   } as any)
-const appDashboardProjectProjectIdCustomersRoute =
-  appDashboardProjectProjectIdCustomersRouteImport.update({
+const appDashboardProjectProjectSlugCustomersRoute =
+  appDashboardProjectProjectSlugCustomersRouteImport.update({
     id: '/customers',
     path: '/customers',
-    getParentRoute: () => appDashboardProjectProjectIdRouteRoute,
+    getParentRoute: () => appDashboardProjectProjectSlugRouteRoute,
   } as any)
-const appDashboardProjectProjectIdChatSupportRoute =
-  appDashboardProjectProjectIdChatSupportRouteImport.update({
+const appDashboardProjectProjectSlugChatSupportRoute =
+  appDashboardProjectProjectSlugChatSupportRouteImport.update({
     id: '/chat-support',
     path: '/chat-support',
-    getParentRoute: () => appDashboardProjectProjectIdRouteRoute,
+    getParentRoute: () => appDashboardProjectProjectSlugRouteRoute,
   } as any)
-const appDashboardProjectProjectIdAgentsRoute =
-  appDashboardProjectProjectIdAgentsRouteImport.update({
+const appDashboardProjectProjectSlugAgentsRoute =
+  appDashboardProjectProjectSlugAgentsRouteImport.update({
     id: '/agents',
     path: '/agents',
-    getParentRoute: () => appDashboardProjectProjectIdRouteRoute,
+    getParentRoute: () => appDashboardProjectProjectSlugRouteRoute,
   } as any)
-const appDashboardOrgOrganizationIdUsageRoute =
-  appDashboardOrgOrganizationIdUsageRouteImport.update({
+const appDashboardOrgOrganizationSlugUsageRoute =
+  appDashboardOrgOrganizationSlugUsageRouteImport.update({
     id: '/usage',
     path: '/usage',
-    getParentRoute: () => appDashboardOrgOrganizationIdRouteRoute,
+    getParentRoute: () => appDashboardOrgOrganizationSlugRouteRoute,
   } as any)
-const appDashboardOrgOrganizationIdTeamsRoute =
-  appDashboardOrgOrganizationIdTeamsRouteImport.update({
+const appDashboardOrgOrganizationSlugTeamsRoute =
+  appDashboardOrgOrganizationSlugTeamsRouteImport.update({
     id: '/teams',
     path: '/teams',
-    getParentRoute: () => appDashboardOrgOrganizationIdRouteRoute,
+    getParentRoute: () => appDashboardOrgOrganizationSlugRouteRoute,
   } as any)
-const appDashboardOrgOrganizationIdSettingsRoute =
-  appDashboardOrgOrganizationIdSettingsRouteImport.update({
+const appDashboardOrgOrganizationSlugSettingsRoute =
+  appDashboardOrgOrganizationSlugSettingsRouteImport.update({
     id: '/settings',
     path: '/settings',
-    getParentRoute: () => appDashboardOrgOrganizationIdRouteRoute,
+    getParentRoute: () => appDashboardOrgOrganizationSlugRouteRoute,
   } as any)
-const appDashboardOrgOrganizationIdIntegrationsRoute =
-  appDashboardOrgOrganizationIdIntegrationsRouteImport.update({
+const appDashboardOrgOrganizationSlugIntegrationsRoute =
+  appDashboardOrgOrganizationSlugIntegrationsRouteImport.update({
     id: '/integrations',
     path: '/integrations',
-    getParentRoute: () => appDashboardOrgOrganizationIdRouteRoute,
+    getParentRoute: () => appDashboardOrgOrganizationSlugRouteRoute,
   } as any)
-const appDashboardOrgOrganizationIdBillingRoute =
-  appDashboardOrgOrganizationIdBillingRouteImport.update({
+const appDashboardOrgOrganizationSlugBillingRoute =
+  appDashboardOrgOrganizationSlugBillingRouteImport.update({
     id: '/billing',
     path: '/billing',
-    getParentRoute: () => appDashboardOrgOrganizationIdRouteRoute,
+    getParentRoute: () => appDashboardOrgOrganizationSlugRouteRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -226,22 +226,22 @@ export interface FileRoutesByFullPath {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/notification/sse': typeof ApiNotificationSseRoute
   '/api/attachments/': typeof ApiAttachmentsIndexRoute
-  '/dashboard/org/$organizationId': typeof appDashboardOrgOrganizationIdRouteRouteWithChildren
-  '/dashboard/project/$projectId': typeof appDashboardProjectProjectIdRouteRouteWithChildren
-  '/support/$projectId/chat-widget': typeof publicSupportProjectIdChatWidgetRoute
-  '/support/$projectId/manifest': typeof publicSupportProjectIdManifestRoute
-  '/dashboard/org/$organizationId/billing': typeof appDashboardOrgOrganizationIdBillingRoute
-  '/dashboard/org/$organizationId/integrations': typeof appDashboardOrgOrganizationIdIntegrationsRoute
-  '/dashboard/org/$organizationId/settings': typeof appDashboardOrgOrganizationIdSettingsRoute
-  '/dashboard/org/$organizationId/teams': typeof appDashboardOrgOrganizationIdTeamsRoute
-  '/dashboard/org/$organizationId/usage': typeof appDashboardOrgOrganizationIdUsageRoute
-  '/dashboard/project/$projectId/agents': typeof appDashboardProjectProjectIdAgentsRoute
-  '/dashboard/project/$projectId/chat-support': typeof appDashboardProjectProjectIdChatSupportRoute
-  '/dashboard/project/$projectId/customers': typeof appDashboardProjectProjectIdCustomersRoute
-  '/dashboard/project/$projectId/settings': typeof appDashboardProjectProjectIdSettingsRoute
-  '/dashboard/project/$projectId/tickets': typeof appDashboardProjectProjectIdTicketsRoute
-  '/dashboard/org/$organizationId/': typeof appDashboardOrgOrganizationIdIndexRoute
-  '/dashboard/project/$projectId/': typeof appDashboardProjectProjectIdIndexRoute
+  '/dashboard/org/$organizationSlug': typeof appDashboardOrgOrganizationSlugRouteRouteWithChildren
+  '/dashboard/project/$projectSlug': typeof appDashboardProjectProjectSlugRouteRouteWithChildren
+  '/support/$projectSlug/chat-widget': typeof publicSupportProjectSlugChatWidgetRoute
+  '/support/$projectSlug/manifest': typeof publicSupportProjectSlugManifestRoute
+  '/dashboard/org/$organizationSlug/billing': typeof appDashboardOrgOrganizationSlugBillingRoute
+  '/dashboard/org/$organizationSlug/integrations': typeof appDashboardOrgOrganizationSlugIntegrationsRoute
+  '/dashboard/org/$organizationSlug/settings': typeof appDashboardOrgOrganizationSlugSettingsRoute
+  '/dashboard/org/$organizationSlug/teams': typeof appDashboardOrgOrganizationSlugTeamsRoute
+  '/dashboard/org/$organizationSlug/usage': typeof appDashboardOrgOrganizationSlugUsageRoute
+  '/dashboard/project/$projectSlug/agents': typeof appDashboardProjectProjectSlugAgentsRoute
+  '/dashboard/project/$projectSlug/chat-support': typeof appDashboardProjectProjectSlugChatSupportRoute
+  '/dashboard/project/$projectSlug/customers': typeof appDashboardProjectProjectSlugCustomersRoute
+  '/dashboard/project/$projectSlug/settings': typeof appDashboardProjectProjectSlugSettingsRoute
+  '/dashboard/project/$projectSlug/tickets': typeof appDashboardProjectProjectSlugTicketsRoute
+  '/dashboard/org/$organizationSlug/': typeof appDashboardOrgOrganizationSlugIndexRoute
+  '/dashboard/project/$projectSlug/': typeof appDashboardProjectProjectSlugIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -257,20 +257,20 @@ export interface FileRoutesByTo {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/notification/sse': typeof ApiNotificationSseRoute
   '/api/attachments': typeof ApiAttachmentsIndexRoute
-  '/support/$projectId/chat-widget': typeof publicSupportProjectIdChatWidgetRoute
-  '/support/$projectId/manifest': typeof publicSupportProjectIdManifestRoute
-  '/dashboard/org/$organizationId/billing': typeof appDashboardOrgOrganizationIdBillingRoute
-  '/dashboard/org/$organizationId/integrations': typeof appDashboardOrgOrganizationIdIntegrationsRoute
-  '/dashboard/org/$organizationId/settings': typeof appDashboardOrgOrganizationIdSettingsRoute
-  '/dashboard/org/$organizationId/teams': typeof appDashboardOrgOrganizationIdTeamsRoute
-  '/dashboard/org/$organizationId/usage': typeof appDashboardOrgOrganizationIdUsageRoute
-  '/dashboard/project/$projectId/agents': typeof appDashboardProjectProjectIdAgentsRoute
-  '/dashboard/project/$projectId/chat-support': typeof appDashboardProjectProjectIdChatSupportRoute
-  '/dashboard/project/$projectId/customers': typeof appDashboardProjectProjectIdCustomersRoute
-  '/dashboard/project/$projectId/settings': typeof appDashboardProjectProjectIdSettingsRoute
-  '/dashboard/project/$projectId/tickets': typeof appDashboardProjectProjectIdTicketsRoute
-  '/dashboard/org/$organizationId': typeof appDashboardOrgOrganizationIdIndexRoute
-  '/dashboard/project/$projectId': typeof appDashboardProjectProjectIdIndexRoute
+  '/support/$projectSlug/chat-widget': typeof publicSupportProjectSlugChatWidgetRoute
+  '/support/$projectSlug/manifest': typeof publicSupportProjectSlugManifestRoute
+  '/dashboard/org/$organizationSlug/billing': typeof appDashboardOrgOrganizationSlugBillingRoute
+  '/dashboard/org/$organizationSlug/integrations': typeof appDashboardOrgOrganizationSlugIntegrationsRoute
+  '/dashboard/org/$organizationSlug/settings': typeof appDashboardOrgOrganizationSlugSettingsRoute
+  '/dashboard/org/$organizationSlug/teams': typeof appDashboardOrgOrganizationSlugTeamsRoute
+  '/dashboard/org/$organizationSlug/usage': typeof appDashboardOrgOrganizationSlugUsageRoute
+  '/dashboard/project/$projectSlug/agents': typeof appDashboardProjectProjectSlugAgentsRoute
+  '/dashboard/project/$projectSlug/chat-support': typeof appDashboardProjectProjectSlugChatSupportRoute
+  '/dashboard/project/$projectSlug/customers': typeof appDashboardProjectProjectSlugCustomersRoute
+  '/dashboard/project/$projectSlug/settings': typeof appDashboardProjectProjectSlugSettingsRoute
+  '/dashboard/project/$projectSlug/tickets': typeof appDashboardProjectProjectSlugTicketsRoute
+  '/dashboard/org/$organizationSlug': typeof appDashboardOrgOrganizationSlugIndexRoute
+  '/dashboard/project/$projectSlug': typeof appDashboardProjectProjectSlugIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -289,22 +289,22 @@ export interface FileRoutesById {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/notification/sse': typeof ApiNotificationSseRoute
   '/api/attachments/': typeof ApiAttachmentsIndexRoute
-  '/(app)/dashboard/org/$organizationId': typeof appDashboardOrgOrganizationIdRouteRouteWithChildren
-  '/(app)/dashboard/project/$projectId': typeof appDashboardProjectProjectIdRouteRouteWithChildren
-  '/(public)/support/$projectId/chat-widget': typeof publicSupportProjectIdChatWidgetRoute
-  '/(public)/support/$projectId/manifest': typeof publicSupportProjectIdManifestRoute
-  '/(app)/dashboard/org/$organizationId/billing': typeof appDashboardOrgOrganizationIdBillingRoute
-  '/(app)/dashboard/org/$organizationId/integrations': typeof appDashboardOrgOrganizationIdIntegrationsRoute
-  '/(app)/dashboard/org/$organizationId/settings': typeof appDashboardOrgOrganizationIdSettingsRoute
-  '/(app)/dashboard/org/$organizationId/teams': typeof appDashboardOrgOrganizationIdTeamsRoute
-  '/(app)/dashboard/org/$organizationId/usage': typeof appDashboardOrgOrganizationIdUsageRoute
-  '/(app)/dashboard/project/$projectId/agents': typeof appDashboardProjectProjectIdAgentsRoute
-  '/(app)/dashboard/project/$projectId/chat-support': typeof appDashboardProjectProjectIdChatSupportRoute
-  '/(app)/dashboard/project/$projectId/customers': typeof appDashboardProjectProjectIdCustomersRoute
-  '/(app)/dashboard/project/$projectId/settings': typeof appDashboardProjectProjectIdSettingsRoute
-  '/(app)/dashboard/project/$projectId/tickets': typeof appDashboardProjectProjectIdTicketsRoute
-  '/(app)/dashboard/org/$organizationId/': typeof appDashboardOrgOrganizationIdIndexRoute
-  '/(app)/dashboard/project/$projectId/': typeof appDashboardProjectProjectIdIndexRoute
+  '/(app)/dashboard/org/$organizationSlug': typeof appDashboardOrgOrganizationSlugRouteRouteWithChildren
+  '/(app)/dashboard/project/$projectSlug': typeof appDashboardProjectProjectSlugRouteRouteWithChildren
+  '/(public)/support/$projectSlug/chat-widget': typeof publicSupportProjectSlugChatWidgetRoute
+  '/(public)/support/$projectSlug/manifest': typeof publicSupportProjectSlugManifestRoute
+  '/(app)/dashboard/org/$organizationSlug/billing': typeof appDashboardOrgOrganizationSlugBillingRoute
+  '/(app)/dashboard/org/$organizationSlug/integrations': typeof appDashboardOrgOrganizationSlugIntegrationsRoute
+  '/(app)/dashboard/org/$organizationSlug/settings': typeof appDashboardOrgOrganizationSlugSettingsRoute
+  '/(app)/dashboard/org/$organizationSlug/teams': typeof appDashboardOrgOrganizationSlugTeamsRoute
+  '/(app)/dashboard/org/$organizationSlug/usage': typeof appDashboardOrgOrganizationSlugUsageRoute
+  '/(app)/dashboard/project/$projectSlug/agents': typeof appDashboardProjectProjectSlugAgentsRoute
+  '/(app)/dashboard/project/$projectSlug/chat-support': typeof appDashboardProjectProjectSlugChatSupportRoute
+  '/(app)/dashboard/project/$projectSlug/customers': typeof appDashboardProjectProjectSlugCustomersRoute
+  '/(app)/dashboard/project/$projectSlug/settings': typeof appDashboardProjectProjectSlugSettingsRoute
+  '/(app)/dashboard/project/$projectSlug/tickets': typeof appDashboardProjectProjectSlugTicketsRoute
+  '/(app)/dashboard/org/$organizationSlug/': typeof appDashboardOrgOrganizationSlugIndexRoute
+  '/(app)/dashboard/project/$projectSlug/': typeof appDashboardProjectProjectSlugIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -322,22 +322,22 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/notification/sse'
     | '/api/attachments/'
-    | '/dashboard/org/$organizationId'
-    | '/dashboard/project/$projectId'
-    | '/support/$projectId/chat-widget'
-    | '/support/$projectId/manifest'
-    | '/dashboard/org/$organizationId/billing'
-    | '/dashboard/org/$organizationId/integrations'
-    | '/dashboard/org/$organizationId/settings'
-    | '/dashboard/org/$organizationId/teams'
-    | '/dashboard/org/$organizationId/usage'
-    | '/dashboard/project/$projectId/agents'
-    | '/dashboard/project/$projectId/chat-support'
-    | '/dashboard/project/$projectId/customers'
-    | '/dashboard/project/$projectId/settings'
-    | '/dashboard/project/$projectId/tickets'
-    | '/dashboard/org/$organizationId/'
-    | '/dashboard/project/$projectId/'
+    | '/dashboard/org/$organizationSlug'
+    | '/dashboard/project/$projectSlug'
+    | '/support/$projectSlug/chat-widget'
+    | '/support/$projectSlug/manifest'
+    | '/dashboard/org/$organizationSlug/billing'
+    | '/dashboard/org/$organizationSlug/integrations'
+    | '/dashboard/org/$organizationSlug/settings'
+    | '/dashboard/org/$organizationSlug/teams'
+    | '/dashboard/org/$organizationSlug/usage'
+    | '/dashboard/project/$projectSlug/agents'
+    | '/dashboard/project/$projectSlug/chat-support'
+    | '/dashboard/project/$projectSlug/customers'
+    | '/dashboard/project/$projectSlug/settings'
+    | '/dashboard/project/$projectSlug/tickets'
+    | '/dashboard/org/$organizationSlug/'
+    | '/dashboard/project/$projectSlug/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -353,20 +353,20 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/notification/sse'
     | '/api/attachments'
-    | '/support/$projectId/chat-widget'
-    | '/support/$projectId/manifest'
-    | '/dashboard/org/$organizationId/billing'
-    | '/dashboard/org/$organizationId/integrations'
-    | '/dashboard/org/$organizationId/settings'
-    | '/dashboard/org/$organizationId/teams'
-    | '/dashboard/org/$organizationId/usage'
-    | '/dashboard/project/$projectId/agents'
-    | '/dashboard/project/$projectId/chat-support'
-    | '/dashboard/project/$projectId/customers'
-    | '/dashboard/project/$projectId/settings'
-    | '/dashboard/project/$projectId/tickets'
-    | '/dashboard/org/$organizationId'
-    | '/dashboard/project/$projectId'
+    | '/support/$projectSlug/chat-widget'
+    | '/support/$projectSlug/manifest'
+    | '/dashboard/org/$organizationSlug/billing'
+    | '/dashboard/org/$organizationSlug/integrations'
+    | '/dashboard/org/$organizationSlug/settings'
+    | '/dashboard/org/$organizationSlug/teams'
+    | '/dashboard/org/$organizationSlug/usage'
+    | '/dashboard/project/$projectSlug/agents'
+    | '/dashboard/project/$projectSlug/chat-support'
+    | '/dashboard/project/$projectSlug/customers'
+    | '/dashboard/project/$projectSlug/settings'
+    | '/dashboard/project/$projectSlug/tickets'
+    | '/dashboard/org/$organizationSlug'
+    | '/dashboard/project/$projectSlug'
   id:
     | '__root__'
     | '/'
@@ -384,22 +384,22 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/notification/sse'
     | '/api/attachments/'
-    | '/(app)/dashboard/org/$organizationId'
-    | '/(app)/dashboard/project/$projectId'
-    | '/(public)/support/$projectId/chat-widget'
-    | '/(public)/support/$projectId/manifest'
-    | '/(app)/dashboard/org/$organizationId/billing'
-    | '/(app)/dashboard/org/$organizationId/integrations'
-    | '/(app)/dashboard/org/$organizationId/settings'
-    | '/(app)/dashboard/org/$organizationId/teams'
-    | '/(app)/dashboard/org/$organizationId/usage'
-    | '/(app)/dashboard/project/$projectId/agents'
-    | '/(app)/dashboard/project/$projectId/chat-support'
-    | '/(app)/dashboard/project/$projectId/customers'
-    | '/(app)/dashboard/project/$projectId/settings'
-    | '/(app)/dashboard/project/$projectId/tickets'
-    | '/(app)/dashboard/org/$organizationId/'
-    | '/(app)/dashboard/project/$projectId/'
+    | '/(app)/dashboard/org/$organizationSlug'
+    | '/(app)/dashboard/project/$projectSlug'
+    | '/(public)/support/$projectSlug/chat-widget'
+    | '/(public)/support/$projectSlug/manifest'
+    | '/(app)/dashboard/org/$organizationSlug/billing'
+    | '/(app)/dashboard/org/$organizationSlug/integrations'
+    | '/(app)/dashboard/org/$organizationSlug/settings'
+    | '/(app)/dashboard/org/$organizationSlug/teams'
+    | '/(app)/dashboard/org/$organizationSlug/usage'
+    | '/(app)/dashboard/project/$projectSlug/agents'
+    | '/(app)/dashboard/project/$projectSlug/chat-support'
+    | '/(app)/dashboard/project/$projectSlug/customers'
+    | '/(app)/dashboard/project/$projectSlug/settings'
+    | '/(app)/dashboard/project/$projectSlug/tickets'
+    | '/(app)/dashboard/org/$organizationSlug/'
+    | '/(app)/dashboard/project/$projectSlug/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -413,8 +413,8 @@ export interface RootRouteChildren {
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiNotificationSseRoute: typeof ApiNotificationSseRoute
   ApiAttachmentsIndexRoute: typeof ApiAttachmentsIndexRoute
-  publicSupportProjectIdChatWidgetRoute: typeof publicSupportProjectIdChatWidgetRoute
-  publicSupportProjectIdManifestRoute: typeof publicSupportProjectIdManifestRoute
+  publicSupportProjectSlugChatWidgetRoute: typeof publicSupportProjectSlugChatWidgetRoute
+  publicSupportProjectSlugManifestRoute: typeof publicSupportProjectSlugManifestRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -524,195 +524,195 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof appDashboardOrganizationsRouteImport
       parentRoute: typeof appRouteRoute
     }
-    '/(public)/support/$projectId/manifest': {
-      id: '/(public)/support/$projectId/manifest'
-      path: '/support/$projectId/manifest'
-      fullPath: '/support/$projectId/manifest'
-      preLoaderRoute: typeof publicSupportProjectIdManifestRouteImport
+    '/(public)/support/$projectSlug/manifest': {
+      id: '/(public)/support/$projectSlug/manifest'
+      path: '/support/$projectSlug/manifest'
+      fullPath: '/support/$projectSlug/manifest'
+      preLoaderRoute: typeof publicSupportProjectSlugManifestRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/(public)/support/$projectId/chat-widget': {
-      id: '/(public)/support/$projectId/chat-widget'
-      path: '/support/$projectId/chat-widget'
-      fullPath: '/support/$projectId/chat-widget'
-      preLoaderRoute: typeof publicSupportProjectIdChatWidgetRouteImport
+    '/(public)/support/$projectSlug/chat-widget': {
+      id: '/(public)/support/$projectSlug/chat-widget'
+      path: '/support/$projectSlug/chat-widget'
+      fullPath: '/support/$projectSlug/chat-widget'
+      preLoaderRoute: typeof publicSupportProjectSlugChatWidgetRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/(app)/dashboard/project/$projectId': {
-      id: '/(app)/dashboard/project/$projectId'
-      path: '/dashboard/project/$projectId'
-      fullPath: '/dashboard/project/$projectId'
-      preLoaderRoute: typeof appDashboardProjectProjectIdRouteRouteImport
+    '/(app)/dashboard/project/$projectSlug': {
+      id: '/(app)/dashboard/project/$projectSlug'
+      path: '/dashboard/project/$projectSlug'
+      fullPath: '/dashboard/project/$projectSlug'
+      preLoaderRoute: typeof appDashboardProjectProjectSlugRouteRouteImport
       parentRoute: typeof appRouteRoute
     }
-    '/(app)/dashboard/org/$organizationId': {
-      id: '/(app)/dashboard/org/$organizationId'
-      path: '/dashboard/org/$organizationId'
-      fullPath: '/dashboard/org/$organizationId'
-      preLoaderRoute: typeof appDashboardOrgOrganizationIdRouteRouteImport
+    '/(app)/dashboard/org/$organizationSlug': {
+      id: '/(app)/dashboard/org/$organizationSlug'
+      path: '/dashboard/org/$organizationSlug'
+      fullPath: '/dashboard/org/$organizationSlug'
+      preLoaderRoute: typeof appDashboardOrgOrganizationSlugRouteRouteImport
       parentRoute: typeof appRouteRoute
     }
-    '/(app)/dashboard/project/$projectId/': {
-      id: '/(app)/dashboard/project/$projectId/'
+    '/(app)/dashboard/project/$projectSlug/': {
+      id: '/(app)/dashboard/project/$projectSlug/'
       path: '/'
-      fullPath: '/dashboard/project/$projectId/'
-      preLoaderRoute: typeof appDashboardProjectProjectIdIndexRouteImport
-      parentRoute: typeof appDashboardProjectProjectIdRouteRoute
+      fullPath: '/dashboard/project/$projectSlug/'
+      preLoaderRoute: typeof appDashboardProjectProjectSlugIndexRouteImport
+      parentRoute: typeof appDashboardProjectProjectSlugRouteRoute
     }
-    '/(app)/dashboard/org/$organizationId/': {
-      id: '/(app)/dashboard/org/$organizationId/'
+    '/(app)/dashboard/org/$organizationSlug/': {
+      id: '/(app)/dashboard/org/$organizationSlug/'
       path: '/'
-      fullPath: '/dashboard/org/$organizationId/'
-      preLoaderRoute: typeof appDashboardOrgOrganizationIdIndexRouteImport
-      parentRoute: typeof appDashboardOrgOrganizationIdRouteRoute
+      fullPath: '/dashboard/org/$organizationSlug/'
+      preLoaderRoute: typeof appDashboardOrgOrganizationSlugIndexRouteImport
+      parentRoute: typeof appDashboardOrgOrganizationSlugRouteRoute
     }
-    '/(app)/dashboard/project/$projectId/tickets': {
-      id: '/(app)/dashboard/project/$projectId/tickets'
+    '/(app)/dashboard/project/$projectSlug/tickets': {
+      id: '/(app)/dashboard/project/$projectSlug/tickets'
       path: '/tickets'
-      fullPath: '/dashboard/project/$projectId/tickets'
-      preLoaderRoute: typeof appDashboardProjectProjectIdTicketsRouteImport
-      parentRoute: typeof appDashboardProjectProjectIdRouteRoute
+      fullPath: '/dashboard/project/$projectSlug/tickets'
+      preLoaderRoute: typeof appDashboardProjectProjectSlugTicketsRouteImport
+      parentRoute: typeof appDashboardProjectProjectSlugRouteRoute
     }
-    '/(app)/dashboard/project/$projectId/settings': {
-      id: '/(app)/dashboard/project/$projectId/settings'
+    '/(app)/dashboard/project/$projectSlug/settings': {
+      id: '/(app)/dashboard/project/$projectSlug/settings'
       path: '/settings'
-      fullPath: '/dashboard/project/$projectId/settings'
-      preLoaderRoute: typeof appDashboardProjectProjectIdSettingsRouteImport
-      parentRoute: typeof appDashboardProjectProjectIdRouteRoute
+      fullPath: '/dashboard/project/$projectSlug/settings'
+      preLoaderRoute: typeof appDashboardProjectProjectSlugSettingsRouteImport
+      parentRoute: typeof appDashboardProjectProjectSlugRouteRoute
     }
-    '/(app)/dashboard/project/$projectId/customers': {
-      id: '/(app)/dashboard/project/$projectId/customers'
+    '/(app)/dashboard/project/$projectSlug/customers': {
+      id: '/(app)/dashboard/project/$projectSlug/customers'
       path: '/customers'
-      fullPath: '/dashboard/project/$projectId/customers'
-      preLoaderRoute: typeof appDashboardProjectProjectIdCustomersRouteImport
-      parentRoute: typeof appDashboardProjectProjectIdRouteRoute
+      fullPath: '/dashboard/project/$projectSlug/customers'
+      preLoaderRoute: typeof appDashboardProjectProjectSlugCustomersRouteImport
+      parentRoute: typeof appDashboardProjectProjectSlugRouteRoute
     }
-    '/(app)/dashboard/project/$projectId/chat-support': {
-      id: '/(app)/dashboard/project/$projectId/chat-support'
+    '/(app)/dashboard/project/$projectSlug/chat-support': {
+      id: '/(app)/dashboard/project/$projectSlug/chat-support'
       path: '/chat-support'
-      fullPath: '/dashboard/project/$projectId/chat-support'
-      preLoaderRoute: typeof appDashboardProjectProjectIdChatSupportRouteImport
-      parentRoute: typeof appDashboardProjectProjectIdRouteRoute
+      fullPath: '/dashboard/project/$projectSlug/chat-support'
+      preLoaderRoute: typeof appDashboardProjectProjectSlugChatSupportRouteImport
+      parentRoute: typeof appDashboardProjectProjectSlugRouteRoute
     }
-    '/(app)/dashboard/project/$projectId/agents': {
-      id: '/(app)/dashboard/project/$projectId/agents'
+    '/(app)/dashboard/project/$projectSlug/agents': {
+      id: '/(app)/dashboard/project/$projectSlug/agents'
       path: '/agents'
-      fullPath: '/dashboard/project/$projectId/agents'
-      preLoaderRoute: typeof appDashboardProjectProjectIdAgentsRouteImport
-      parentRoute: typeof appDashboardProjectProjectIdRouteRoute
+      fullPath: '/dashboard/project/$projectSlug/agents'
+      preLoaderRoute: typeof appDashboardProjectProjectSlugAgentsRouteImport
+      parentRoute: typeof appDashboardProjectProjectSlugRouteRoute
     }
-    '/(app)/dashboard/org/$organizationId/usage': {
-      id: '/(app)/dashboard/org/$organizationId/usage'
+    '/(app)/dashboard/org/$organizationSlug/usage': {
+      id: '/(app)/dashboard/org/$organizationSlug/usage'
       path: '/usage'
-      fullPath: '/dashboard/org/$organizationId/usage'
-      preLoaderRoute: typeof appDashboardOrgOrganizationIdUsageRouteImport
-      parentRoute: typeof appDashboardOrgOrganizationIdRouteRoute
+      fullPath: '/dashboard/org/$organizationSlug/usage'
+      preLoaderRoute: typeof appDashboardOrgOrganizationSlugUsageRouteImport
+      parentRoute: typeof appDashboardOrgOrganizationSlugRouteRoute
     }
-    '/(app)/dashboard/org/$organizationId/teams': {
-      id: '/(app)/dashboard/org/$organizationId/teams'
+    '/(app)/dashboard/org/$organizationSlug/teams': {
+      id: '/(app)/dashboard/org/$organizationSlug/teams'
       path: '/teams'
-      fullPath: '/dashboard/org/$organizationId/teams'
-      preLoaderRoute: typeof appDashboardOrgOrganizationIdTeamsRouteImport
-      parentRoute: typeof appDashboardOrgOrganizationIdRouteRoute
+      fullPath: '/dashboard/org/$organizationSlug/teams'
+      preLoaderRoute: typeof appDashboardOrgOrganizationSlugTeamsRouteImport
+      parentRoute: typeof appDashboardOrgOrganizationSlugRouteRoute
     }
-    '/(app)/dashboard/org/$organizationId/settings': {
-      id: '/(app)/dashboard/org/$organizationId/settings'
+    '/(app)/dashboard/org/$organizationSlug/settings': {
+      id: '/(app)/dashboard/org/$organizationSlug/settings'
       path: '/settings'
-      fullPath: '/dashboard/org/$organizationId/settings'
-      preLoaderRoute: typeof appDashboardOrgOrganizationIdSettingsRouteImport
-      parentRoute: typeof appDashboardOrgOrganizationIdRouteRoute
+      fullPath: '/dashboard/org/$organizationSlug/settings'
+      preLoaderRoute: typeof appDashboardOrgOrganizationSlugSettingsRouteImport
+      parentRoute: typeof appDashboardOrgOrganizationSlugRouteRoute
     }
-    '/(app)/dashboard/org/$organizationId/integrations': {
-      id: '/(app)/dashboard/org/$organizationId/integrations'
+    '/(app)/dashboard/org/$organizationSlug/integrations': {
+      id: '/(app)/dashboard/org/$organizationSlug/integrations'
       path: '/integrations'
-      fullPath: '/dashboard/org/$organizationId/integrations'
-      preLoaderRoute: typeof appDashboardOrgOrganizationIdIntegrationsRouteImport
-      parentRoute: typeof appDashboardOrgOrganizationIdRouteRoute
+      fullPath: '/dashboard/org/$organizationSlug/integrations'
+      preLoaderRoute: typeof appDashboardOrgOrganizationSlugIntegrationsRouteImport
+      parentRoute: typeof appDashboardOrgOrganizationSlugRouteRoute
     }
-    '/(app)/dashboard/org/$organizationId/billing': {
-      id: '/(app)/dashboard/org/$organizationId/billing'
+    '/(app)/dashboard/org/$organizationSlug/billing': {
+      id: '/(app)/dashboard/org/$organizationSlug/billing'
       path: '/billing'
-      fullPath: '/dashboard/org/$organizationId/billing'
-      preLoaderRoute: typeof appDashboardOrgOrganizationIdBillingRouteImport
-      parentRoute: typeof appDashboardOrgOrganizationIdRouteRoute
+      fullPath: '/dashboard/org/$organizationSlug/billing'
+      preLoaderRoute: typeof appDashboardOrgOrganizationSlugBillingRouteImport
+      parentRoute: typeof appDashboardOrgOrganizationSlugRouteRoute
     }
   }
 }
 
-interface appDashboardOrgOrganizationIdRouteRouteChildren {
-  appDashboardOrgOrganizationIdBillingRoute: typeof appDashboardOrgOrganizationIdBillingRoute
-  appDashboardOrgOrganizationIdIntegrationsRoute: typeof appDashboardOrgOrganizationIdIntegrationsRoute
-  appDashboardOrgOrganizationIdSettingsRoute: typeof appDashboardOrgOrganizationIdSettingsRoute
-  appDashboardOrgOrganizationIdTeamsRoute: typeof appDashboardOrgOrganizationIdTeamsRoute
-  appDashboardOrgOrganizationIdUsageRoute: typeof appDashboardOrgOrganizationIdUsageRoute
-  appDashboardOrgOrganizationIdIndexRoute: typeof appDashboardOrgOrganizationIdIndexRoute
+interface appDashboardOrgOrganizationSlugRouteRouteChildren {
+  appDashboardOrgOrganizationSlugBillingRoute: typeof appDashboardOrgOrganizationSlugBillingRoute
+  appDashboardOrgOrganizationSlugIntegrationsRoute: typeof appDashboardOrgOrganizationSlugIntegrationsRoute
+  appDashboardOrgOrganizationSlugSettingsRoute: typeof appDashboardOrgOrganizationSlugSettingsRoute
+  appDashboardOrgOrganizationSlugTeamsRoute: typeof appDashboardOrgOrganizationSlugTeamsRoute
+  appDashboardOrgOrganizationSlugUsageRoute: typeof appDashboardOrgOrganizationSlugUsageRoute
+  appDashboardOrgOrganizationSlugIndexRoute: typeof appDashboardOrgOrganizationSlugIndexRoute
 }
 
-const appDashboardOrgOrganizationIdRouteRouteChildren: appDashboardOrgOrganizationIdRouteRouteChildren =
+const appDashboardOrgOrganizationSlugRouteRouteChildren: appDashboardOrgOrganizationSlugRouteRouteChildren =
   {
-    appDashboardOrgOrganizationIdBillingRoute:
-      appDashboardOrgOrganizationIdBillingRoute,
-    appDashboardOrgOrganizationIdIntegrationsRoute:
-      appDashboardOrgOrganizationIdIntegrationsRoute,
-    appDashboardOrgOrganizationIdSettingsRoute:
-      appDashboardOrgOrganizationIdSettingsRoute,
-    appDashboardOrgOrganizationIdTeamsRoute:
-      appDashboardOrgOrganizationIdTeamsRoute,
-    appDashboardOrgOrganizationIdUsageRoute:
-      appDashboardOrgOrganizationIdUsageRoute,
-    appDashboardOrgOrganizationIdIndexRoute:
-      appDashboardOrgOrganizationIdIndexRoute,
+    appDashboardOrgOrganizationSlugBillingRoute:
+      appDashboardOrgOrganizationSlugBillingRoute,
+    appDashboardOrgOrganizationSlugIntegrationsRoute:
+      appDashboardOrgOrganizationSlugIntegrationsRoute,
+    appDashboardOrgOrganizationSlugSettingsRoute:
+      appDashboardOrgOrganizationSlugSettingsRoute,
+    appDashboardOrgOrganizationSlugTeamsRoute:
+      appDashboardOrgOrganizationSlugTeamsRoute,
+    appDashboardOrgOrganizationSlugUsageRoute:
+      appDashboardOrgOrganizationSlugUsageRoute,
+    appDashboardOrgOrganizationSlugIndexRoute:
+      appDashboardOrgOrganizationSlugIndexRoute,
   }
 
-const appDashboardOrgOrganizationIdRouteRouteWithChildren =
-  appDashboardOrgOrganizationIdRouteRoute._addFileChildren(
-    appDashboardOrgOrganizationIdRouteRouteChildren,
+const appDashboardOrgOrganizationSlugRouteRouteWithChildren =
+  appDashboardOrgOrganizationSlugRouteRoute._addFileChildren(
+    appDashboardOrgOrganizationSlugRouteRouteChildren,
   )
 
-interface appDashboardProjectProjectIdRouteRouteChildren {
-  appDashboardProjectProjectIdAgentsRoute: typeof appDashboardProjectProjectIdAgentsRoute
-  appDashboardProjectProjectIdChatSupportRoute: typeof appDashboardProjectProjectIdChatSupportRoute
-  appDashboardProjectProjectIdCustomersRoute: typeof appDashboardProjectProjectIdCustomersRoute
-  appDashboardProjectProjectIdSettingsRoute: typeof appDashboardProjectProjectIdSettingsRoute
-  appDashboardProjectProjectIdTicketsRoute: typeof appDashboardProjectProjectIdTicketsRoute
-  appDashboardProjectProjectIdIndexRoute: typeof appDashboardProjectProjectIdIndexRoute
+interface appDashboardProjectProjectSlugRouteRouteChildren {
+  appDashboardProjectProjectSlugAgentsRoute: typeof appDashboardProjectProjectSlugAgentsRoute
+  appDashboardProjectProjectSlugChatSupportRoute: typeof appDashboardProjectProjectSlugChatSupportRoute
+  appDashboardProjectProjectSlugCustomersRoute: typeof appDashboardProjectProjectSlugCustomersRoute
+  appDashboardProjectProjectSlugSettingsRoute: typeof appDashboardProjectProjectSlugSettingsRoute
+  appDashboardProjectProjectSlugTicketsRoute: typeof appDashboardProjectProjectSlugTicketsRoute
+  appDashboardProjectProjectSlugIndexRoute: typeof appDashboardProjectProjectSlugIndexRoute
 }
 
-const appDashboardProjectProjectIdRouteRouteChildren: appDashboardProjectProjectIdRouteRouteChildren =
+const appDashboardProjectProjectSlugRouteRouteChildren: appDashboardProjectProjectSlugRouteRouteChildren =
   {
-    appDashboardProjectProjectIdAgentsRoute:
-      appDashboardProjectProjectIdAgentsRoute,
-    appDashboardProjectProjectIdChatSupportRoute:
-      appDashboardProjectProjectIdChatSupportRoute,
-    appDashboardProjectProjectIdCustomersRoute:
-      appDashboardProjectProjectIdCustomersRoute,
-    appDashboardProjectProjectIdSettingsRoute:
-      appDashboardProjectProjectIdSettingsRoute,
-    appDashboardProjectProjectIdTicketsRoute:
-      appDashboardProjectProjectIdTicketsRoute,
-    appDashboardProjectProjectIdIndexRoute:
-      appDashboardProjectProjectIdIndexRoute,
+    appDashboardProjectProjectSlugAgentsRoute:
+      appDashboardProjectProjectSlugAgentsRoute,
+    appDashboardProjectProjectSlugChatSupportRoute:
+      appDashboardProjectProjectSlugChatSupportRoute,
+    appDashboardProjectProjectSlugCustomersRoute:
+      appDashboardProjectProjectSlugCustomersRoute,
+    appDashboardProjectProjectSlugSettingsRoute:
+      appDashboardProjectProjectSlugSettingsRoute,
+    appDashboardProjectProjectSlugTicketsRoute:
+      appDashboardProjectProjectSlugTicketsRoute,
+    appDashboardProjectProjectSlugIndexRoute:
+      appDashboardProjectProjectSlugIndexRoute,
   }
 
-const appDashboardProjectProjectIdRouteRouteWithChildren =
-  appDashboardProjectProjectIdRouteRoute._addFileChildren(
-    appDashboardProjectProjectIdRouteRouteChildren,
+const appDashboardProjectProjectSlugRouteRouteWithChildren =
+  appDashboardProjectProjectSlugRouteRoute._addFileChildren(
+    appDashboardProjectProjectSlugRouteRouteChildren,
   )
 
 interface appRouteRouteChildren {
   appDashboardOrganizationsRoute: typeof appDashboardOrganizationsRoute
   appDashboardTriageRoute: typeof appDashboardTriageRoute
-  appDashboardOrgOrganizationIdRouteRoute: typeof appDashboardOrgOrganizationIdRouteRouteWithChildren
-  appDashboardProjectProjectIdRouteRoute: typeof appDashboardProjectProjectIdRouteRouteWithChildren
+  appDashboardOrgOrganizationSlugRouteRoute: typeof appDashboardOrgOrganizationSlugRouteRouteWithChildren
+  appDashboardProjectProjectSlugRouteRoute: typeof appDashboardProjectProjectSlugRouteRouteWithChildren
 }
 
 const appRouteRouteChildren: appRouteRouteChildren = {
   appDashboardOrganizationsRoute: appDashboardOrganizationsRoute,
   appDashboardTriageRoute: appDashboardTriageRoute,
-  appDashboardOrgOrganizationIdRouteRoute:
-    appDashboardOrgOrganizationIdRouteRouteWithChildren,
-  appDashboardProjectProjectIdRouteRoute:
-    appDashboardProjectProjectIdRouteRouteWithChildren,
+  appDashboardOrgOrganizationSlugRouteRoute:
+    appDashboardOrgOrganizationSlugRouteRouteWithChildren,
+  appDashboardProjectProjectSlugRouteRoute:
+    appDashboardProjectProjectSlugRouteRouteWithChildren,
 }
 
 const appRouteRouteWithChildren = appRouteRoute._addFileChildren(
@@ -746,8 +746,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiNotificationSseRoute: ApiNotificationSseRoute,
   ApiAttachmentsIndexRoute: ApiAttachmentsIndexRoute,
-  publicSupportProjectIdChatWidgetRoute: publicSupportProjectIdChatWidgetRoute,
-  publicSupportProjectIdManifestRoute: publicSupportProjectIdManifestRoute,
+  publicSupportProjectSlugChatWidgetRoute:
+    publicSupportProjectSlugChatWidgetRoute,
+  publicSupportProjectSlugManifestRoute: publicSupportProjectSlugManifestRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

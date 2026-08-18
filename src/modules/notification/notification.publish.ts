@@ -40,6 +40,7 @@ export async function publishToProjectAgents({
       prisma.project.findUnique({
         where: { id: projectId },
         select: {
+          slug: true,
           organization: {
             select: { members: { select: { userId: true, role: true } } },
           },
@@ -55,7 +56,11 @@ export async function publishToProjectAgents({
     if (excludeUserId) agentUserIds = agentUserIds.filter((userId) => userId !== excludeUserId);
     if (agentUserIds.length === 0) return;
 
-    const payload = assignee?.userId ? { ...data, notifyUserId: assignee.userId } : data;
+    const payload = {
+      ...data,
+      projectSlug: project?.slug,
+      ...(assignee?.userId ? { notifyUserId: assignee.userId } : {}),
+    };
     const message = buildMessage(event, payload);
     await Promise.all(agentUserIds.map((userId) => publishEvent(`user.${userId}.${event}`, message)));
   } catch (err) {

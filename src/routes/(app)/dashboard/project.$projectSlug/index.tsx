@@ -68,17 +68,17 @@ export const projectQueries = {
 };
 
 // 3. ROUTE CONFIG
-export const Route = createFileRoute("/(app)/dashboard/project/$projectId/")({
-  loader: ({ context, params }) => {
-    context.queryClient.ensureQueryData(projectQueries.overview(params.projectId));
+export const Route = createFileRoute("/(app)/dashboard/project/$projectSlug/")({
+  loader: ({ context }) => {
+    context.queryClient.ensureQueryData(projectQueries.overview(context.project.id));
   },
   component: ProjectOverviewPage,
 });
 
 // 4. FRONTEND COMPONENTS
 function ProjectOverviewPage() {
-  const { projectId } = Route.useParams();
   const { project } = Route.useRouteContext();
+  const projectId = project.id;
 
   return (
     <div className="w-full h-[calc(100dvh-64px)] overflow-y-auto bg-background text-foreground">
@@ -106,14 +106,14 @@ function ProjectOverviewPage() {
             </div>
           }
         >
-          <OverviewContent projectId={projectId} />
+          <OverviewContent projectId={projectId} slug={project.slug} />
         </Suspense>
       </div>
     </div>
   );
 }
 
-function OverviewContent({ projectId }: { projectId: string }) {
+function OverviewContent({ projectId, slug }: { projectId: string; slug: string }) {
   const query = useSuspenseQuery(projectQueries.overview(projectId));
   const { openTickets, closedTickets, customers, newTicketsThisWeek, resolutionRate, recentTickets } = query.data;
 
@@ -148,9 +148,9 @@ function OverviewContent({ projectId }: { projectId: string }) {
           <div className="px-4 md:px-6 py-5 border-b border-border flex justify-between items-center">
             <h3 className="font-semibold text-foreground">Recent Tickets</h3>
             <Link
-              to="/dashboard/project/$projectId/tickets"
+              to="/dashboard/project/$projectSlug/tickets"
               search={{ statusFilter: "ALL", sort: "newest" }}
-              params={{ projectId }}
+              params={{ projectSlug: slug }}
               className="text-sm text-primary hover:underline flex items-center"
             >
               View All
@@ -164,8 +164,8 @@ function OverviewContent({ projectId }: { projectId: string }) {
                 className="p-6"
                 action={
                   <Link
-                    to="/dashboard/project/$projectId/tickets"
-                    params={{ projectId }}
+                    to="/dashboard/project/$projectSlug/tickets"
+                    params={{ projectSlug: slug }}
                     search={{ statusFilter: "ALL", sort: "newest" }}
                     className="text-sm text-primary hover:underline"
                   >
@@ -177,9 +177,9 @@ function OverviewContent({ projectId }: { projectId: string }) {
               recentTickets.map((ticket) => (
                 <Link
                   key={ticket.id}
-                  to="/dashboard/project/$projectId/tickets"
+                  to="/dashboard/project/$projectSlug/tickets"
                   search={{ statusFilter: "ALL", sort: "newest" }}
-                  params={{ projectId }}
+                  params={{ projectSlug: slug }}
                   className="flex items-center justify-between gap-3 p-4 md:px-6 hover:bg-muted/50 transition-colors group"
                 >
                   <div className="flex-1 min-w-0">
@@ -217,8 +217,8 @@ function OverviewContent({ projectId }: { projectId: string }) {
           </div>
           <div className="p-2">
             <Link
-              to="/dashboard/project/$projectId/tickets"
-              params={{ projectId }}
+              to="/dashboard/project/$projectSlug/tickets"
+              params={{ projectSlug: slug }}
               search={{ statusFilter: "ALL", sort: "newest" }}
               className="flex items-center p-3 rounded-lg hover:bg-muted transition-colors text-sm font-medium text-foreground"
             >
@@ -226,23 +226,23 @@ function OverviewContent({ projectId }: { projectId: string }) {
               Manage Tickets
             </Link>
             <Link
-              to="/dashboard/project/$projectId/customers"
-              params={{ projectId }}
+              to="/dashboard/project/$projectSlug/customers"
+              params={{ projectSlug: slug }}
               className="flex items-center p-3 rounded-lg hover:bg-muted transition-colors text-sm font-medium text-foreground"
             >
               <Users className="w-5 h-5 mr-3 flex-shrink-0 text-muted-foreground" />
               Customers
             </Link>
             <Link
-              to="/dashboard/project/$projectId/settings"
-              params={{ projectId }}
+              to="/dashboard/project/$projectSlug/settings"
+              params={{ projectSlug: slug }}
               className="flex items-center p-3 rounded-lg hover:bg-muted transition-colors text-sm font-medium text-foreground"
             >
               <Settings className="w-5 h-5 mr-3 flex-shrink-0 text-muted-foreground" />
               Project Settings
             </Link>
             <a
-              href={`/support/${projectId}/chat-widget`}
+              href={`/support/${slug}/chat-widget`}
               target="_blank"
               rel="noreferrer"
               className="flex items-center p-3 rounded-lg hover:bg-muted transition-colors text-sm font-medium text-foreground mt-2 border-t border-border"

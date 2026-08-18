@@ -63,7 +63,7 @@ export const settingQueries = {
     }),
 };
 
-export const Route = createFileRoute("/(app)/dashboard/org/$organizationId/settings")({
+export const Route = createFileRoute("/(app)/dashboard/org/$organizationSlug/settings")({
   beforeLoad: ({ context }) => {
     if (!hasOrgRole(context.role, ORG_ROLE.ADMIN)) {
       throw redirect({ to: "/dashboard/organizations", search: { reason: REDIRECT_REASON.PERMISSION_DENIED } });
@@ -73,7 +73,9 @@ export const Route = createFileRoute("/(app)/dashboard/org/$organizationId/setti
 });
 
 function OrganizationSettingsPage() {
-  const { organizationId } = Route.useParams();
+  const { organization: routeOrganization } = Route.useRouteContext();
+  const organizationId = routeOrganization.id;
+  const navigate = Route.useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -124,10 +126,17 @@ function OrganizationSettingsPage() {
   const updateOrgMutation = useMutation({
     mutationKey: ["update", "organization", organizationId],
     mutationFn: updateOrganizationFn,
-    onSuccess: () => {
+    onSuccess: (updated) => {
       queryClient.invalidateQueries({ queryKey: settingQueries.setting });
       setIsEditing(false);
       toast("Organization settings updated successfully!", "success");
+      if (updated.slug && updated.slug !== routeOrganization.slug) {
+        navigate({
+          to: "/dashboard/org/$organizationSlug/settings",
+          params: { organizationSlug: updated.slug },
+          replace: true,
+        });
+      }
     },
     onError: (error) => {
       console.error(error);

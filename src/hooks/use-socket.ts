@@ -89,6 +89,7 @@ export function useSocket({ userId, ticketId, projectId }: { userId?: string; ti
                 ticketId: s.ticketId,
                 referenceNumber: s.referenceNumber,
                 projectId: s.projectId,
+                projectSlug: s.projectSlug,
                 projectName: s.projectName,
                 customerName: s.customerName,
                 content: s.lastMessagePreview,

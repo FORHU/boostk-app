@@ -25,7 +25,7 @@ import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
 import { memberQueries } from "@/modules/members/member.queries";
 import { ticketMessageQueries } from "@/modules/ticket-message/ticket-message.queries";
 
-export const Route = createFileRoute("/(app)/dashboard/project/$projectId/agents")({
+export const Route = createFileRoute("/(app)/dashboard/project/$projectSlug/agents")({
   beforeLoad: ({ context }) => {
     if (!hasOrgRole(context.role, ORG_ROLE.AGENT)) {
       throw redirect({ to: "/dashboard/organizations", search: { reason: REDIRECT_REASON.PERMISSION_DENIED } });
@@ -41,7 +41,6 @@ export const Route = createFileRoute("/(app)/dashboard/project/$projectId/agents
 
 function ProjectAgentsPage() {
   const { project } = Route.useRouteContext();
-  const { projectId } = Route.useParams();
 
   return (
     <div className="flex h-screen w-full bg-muted/20 text-foreground font-sans overflow-hidden">
@@ -53,7 +52,7 @@ function ProjectAgentsPage() {
           </div>
         }
       >
-        <AgentTable organizationId={project.organizationId} projectId={projectId} />
+        <AgentTable organizationId={project.organizationId} projectId={project.id} />
       </Suspense>
     </div>
   );

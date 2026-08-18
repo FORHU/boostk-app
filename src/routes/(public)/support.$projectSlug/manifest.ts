@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { getProjectById } from "@/modules/project/project.service";
+import { getProjectByIdOrSlug } from "@/modules/project/project.service";
 
 // Per-project web app manifest for the customer chat widget.
 //
@@ -7,7 +7,7 @@ import { getProjectById } from "@/modules/project/project.service";
 // `scope` is what decides how much of the site an installed PWA owns, and it must be a
 // concrete URL path prefix. A single static manifest can only ever say `scope: "/"`, which
 // is why installing used to swallow the whole site (landing page, dashboard, billing…).
-// Scoping to `/support/<projectId>/` means the installed app contains the customer chat
+// Scoping to `/support/<projectSlug>/` means the installed app contains the customer chat
 // and nothing else — any link outside that prefix opens in the normal browser instead.
 //
 // It also gives each project its own installable identity: distinct `id`, and a home
@@ -16,15 +16,15 @@ import { getProjectById } from "@/modules/project/project.service";
 // Home screen labels get truncated by the OS anyway; keep short_name genuinely short.
 const SHORT_NAME_MAX = 12;
 
-export const Route = createFileRoute("/(public)/support/$projectId/manifest")({
+export const Route = createFileRoute("/(public)/support/$projectSlug/manifest")({
   server: {
     handlers: {
-      GET: async ({ params }: { params: { projectId: string } }) => {
+      GET: async ({ params }: { params: { projectSlug: string } }) => {
         // Browsers refetch the manifest on their own schedule and surface failures as
         // "not installable", so fail with a clean status rather than an unhandled throw.
-        let project: Awaited<ReturnType<typeof getProjectById>>;
+        let project: Awaited<ReturnType<typeof getProjectByIdOrSlug>>;
         try {
-          project = await getProjectById(params.projectId);
+          project = await getProjectByIdOrSlug(params.projectSlug);
         } catch {
           return new Response("Service unavailable", { status: 503 });
         }
@@ -33,8 +33,8 @@ export const Route = createFileRoute("/(public)/support/$projectId/manifest")({
         }
 
         // Trailing slash matters: without it the scope prefix would also match sibling
-        // paths like /support/<id>-other/.
-        const scope = `/support/${project.id}/`;
+        // paths like /support/<slug>-other/.
+        const scope = `/support/${project.slug}/`;
 
         const manifest = {
           id: scope,
