@@ -4,6 +4,20 @@ import { formatRelative } from "@/lib/format-date";
 import { cn } from "@/lib/utils";
 import { formatFileSize } from "@/modules/attachment/attachment.utils";
 
+/**
+ * Client-safe mirror of `isSupportLanguage`.
+ *
+ * The real one lives in `ticket-message.translation.ts`, which imports `env` and
+ * `prisma` — importing it here would drag the server (and DATABASE_URL) into the browser
+ * bundle. This copy hardcodes English because `SUPPORT_LANGUAGE` is a server-only value;
+ * a deployment that changes it also falls back to the old sender-based behaviour on the
+ * server, so the two stay consistent.
+ */
+const isSupportLanguage = (lang: string) => {
+  const value = lang.trim().toLowerCase();
+  return value === "" || value === "en" || value === "english";
+};
+
 /** Metadata joined onto IMAGE/FILE messages. Bytes are fetched separately from `content`. */
 export type MessageAttachment = {
   id: string;
@@ -82,11 +96,22 @@ const FileAttachment = ({
 );
 
 const TicketChatMessageBubble = ({ msg, isStart, isEnd, viewer = "customer" }: TicketChatMessageBubbleProps) => {
-  // A message is "own" when this viewer wrote it. Sender writes in `content`;
-  // the other side reads `translatedContent` (their language), original kept below.
+  // "Own" only decides which side of the thread the bubble sits on.
   const isOwn = viewer === "agent" ? msg.userId !== null : msg.customerId !== null;
-  const primary = isOwn ? msg.content : (msg.translatedContent ?? msg.content);
-  const original = !isOwn && msg.translatedContent ? msg.content : null;
+
+  // Which text to lead with is a *language* question, not a "who sent it" one, so it keys
+  // off `targetLang` — the language `translatedContent` is written in. Staff read the
+  // support language, the customer reads anything else, and a translation is only
+  // promoted when it is in the reader's own language.
+  //
+  // Deciding by sender instead used to hide the translation of an agent's own message:
+  // when someone on the team replies in the customer's language, the support-language
+  // version exists but was treated as "theirs" and never shown to colleagues.
+  const translationIsForSupport = isSupportLanguage(msg.targetLang ?? "");
+  const showTranslation = Boolean(msg.translatedContent) && (viewer === "agent") === translationIsForSupport;
+
+  const primary = showTranslation ? (msg.translatedContent as string) : msg.content;
+  const original = showTranslation ? msg.content : null;
 
   // Attachments are never translated, so `content` is the URL for both viewers.
   const isImage = msg.contentType === "IMAGE";
