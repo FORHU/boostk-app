@@ -5,7 +5,7 @@ import { z } from "zod";
  * (see the `Attachment` model), so this is deliberately small — it bounds both the
  * row size and the memory used to buffer the upload on the server.
  */
-export const ATTACHMENT_MAX_BYTES = 5 * 1024 * 1024; // 5MB
+export const ATTACHMENT_MAX_BYTES = 10 * 1024 * 1024; // 10MB
 
 /**
  * Ceilings on a *conversation*, not a file.
@@ -17,12 +17,12 @@ export const ATTACHMENT_MAX_BYTES = 5 * 1024 * 1024; // 5MB
  *    patient uploader who waits between batches;
  *  - the per-ticket totals are counted in the database, so they survive restarts and
  *    are the actual ceiling on what one conversation can cost. At the defaults below a
- *    single ticket can hold at most 50MB.
+ *    single ticket can hold at most 100MB.
  */
 export const ATTACHMENT_UPLOADS_PER_WINDOW = 10;
 export const ATTACHMENT_UPLOAD_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
 export const ATTACHMENT_MAX_PER_TICKET = 50;
-export const ATTACHMENT_MAX_TOTAL_BYTES = 50 * 1024 * 1024; // 50MB
+export const ATTACHMENT_MAX_TOTAL_BYTES = 100 * 1024 * 1024; // 100MB
 
 /**
  * Allowed MIME types, as an explicit allowlist rather than a deny-list: anything

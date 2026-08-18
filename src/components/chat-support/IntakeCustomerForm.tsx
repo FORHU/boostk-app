@@ -2,14 +2,18 @@ import { useForm } from "@tanstack/react-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { ArrowRight, Mail, MessageSquare, User } from "lucide-react";
+import { ArrowRight, FileText, Mail, MessageSquare, User, X } from "lucide-react";
+import { useEffect, useState } from "react";
 import { RateLimitBanner } from "@/components/chat-support/rate-limit-banner";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { useRateLimitNotice } from "@/hooks/use-rate-limit-notice";
+import { downscaleImage } from "@/lib/downscale-image";
 import { getFieldInvalid } from "@/lib/form-utils";
-import { startIntakeChatFn } from "@/modules/intake/intake.functions";
+import { isImageMimeType } from "@/modules/attachment/attachment.schema";
+import { formatFileSize } from "@/modules/attachment/attachment.utils";
+import { createIntakeMessageFn, startIntakeChatFn } from "@/modules/intake/intake.functions";
 import { intakeQueries } from "@/modules/intake/intake.queries";
 import { type StartIntakeChatInput, StartIntakeChatSchema } from "@/modules/intake/intake.schema";
 
@@ -24,14 +28,30 @@ import { type StartIntakeChatInput, StartIntakeChatSchema } from "@/modules/inta
 export default function IntakeCustomerForm({
   initialSubject = "",
   onCancel,
+  stagedFile,
+  onClearStagedFile,
 }: {
   initialSubject?: string;
   onCancel?: () => void;
+  stagedFile?: File | null;
+  onClearStagedFile?: () => void;
 }) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const rateLimit = useRateLimitNotice();
+  const [objectUrl, setObjectUrl] = useState<string | null>(null);
+
+  // Create preview URL when staged file arrives
+  useEffect(() => {
+    if (!stagedFile) {
+      setObjectUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(stagedFile);
+    setObjectUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [stagedFile]);
 
   const startIntakeChatMutation = useMutation({
     mutationFn: startIntakeChatFn,
@@ -61,7 +81,45 @@ export default function IntakeCustomerForm({
       onSubmit: StartIntakeChatSchema,
     },
     onSubmit: async ({ value }) => {
-      await startIntakeChatMutation.mutateAsync({ data: value });
+      const result = await startIntakeChatMutation.mutateAsync({ data: value });
+
+      // Upload staged file after ticket is created
+      if (stagedFile && result?.ticket) {
+        try {
+          const file = await downscaleImage(stagedFile);
+          const form = new FormData();
+          form.append("file", file);
+          form.append("ticketId", result.ticket.id);
+          form.append("projectId", result.ticket.projectId);
+
+          const response = await fetch("/api/attachments", { method: "POST", body: form });
+          const body = (await response.json().catch(() => null)) as {
+            id?: string;
+            url?: string;
+            contentType?: string;
+            error?: string;
+          } | null;
+
+          if (!response.ok || !body?.id) {
+            toast(body?.error ?? "File upload failed. Your message was sent without the attachment.", "error");
+            return;
+          }
+
+          // Send the attachment as a message
+          await createIntakeMessageFn({
+            data: {
+              content: body.url ?? "",
+              contentType: body.contentType as "IMAGE" | "FILE",
+              attachmentId: body.id,
+              ticketId: result.ticket.id,
+            },
+          });
+
+          await queryClient.invalidateQueries({ queryKey: intakeQueries.all });
+        } catch {
+          toast("File upload failed. Your message was sent without the attachment.", "error");
+        }
+      }
     },
   });
 
@@ -80,6 +138,32 @@ export default function IntakeCustomerForm({
         }}
       >
         <RateLimitBanner notice={rateLimit} />
+
+        {stagedFile && (
+          <div className="flex items-center gap-2 mb-2 px-2 py-1.5 bg-gray-100 rounded-lg w-fit max-w-full">
+            {isImageMimeType(stagedFile.type) && objectUrl ? (
+              <img src={objectUrl} alt="" className="w-9 h-9 rounded object-cover shrink-0" />
+            ) : (
+              <div className="w-9 h-9 rounded bg-gray-200 flex items-center justify-center shrink-0">
+                <FileText className="w-4 h-4 text-gray-500" />
+              </div>
+            )}
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-gray-900 truncate max-w-[180px]">{stagedFile.name}</p>
+              <p className="text-[10px] text-gray-500">{formatFileSize(stagedFile.size)}</p>
+            </div>
+            {onClearStagedFile && (
+              <button
+                type="button"
+                onClick={onClearStagedFile}
+                aria-label={`Remove ${stagedFile.name}`}
+                className="p-1 rounded-full hover:bg-gray-200 text-gray-500 hover:text-gray-700 shrink-0 transition-colors"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
           <form.Field name="name">
