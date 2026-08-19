@@ -2,7 +2,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { Socket } from "socket.io-client";
 import { io } from "socket.io-client";
 import { EventType, type Message } from "@/lib/notifier/core";
-import { getUnreadTicketSummaries, markTicketReadFn } from "@/modules/notification/notification.functions";
+import {
+  getUnreadTicketSummaries,
+  markIntakeTicketReadFn,
+  markTicketReadFn,
+} from "@/modules/notification/notification.functions";
 import { type ConnectionStatus, type NotificationItem, shouldRingBell, useNotifications } from "./use-notifications";
 
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:3001";
@@ -96,6 +100,7 @@ export function useSocket({ userId, ticketId, projectId }: { userId?: string; ti
                 sender: s.sender,
                 createdAt: s.lastMessageAt,
                 unreadCount: s.unreadCount,
+                isIntake: s.isIntake,
               },
               timestamp: Date.now(),
               read: false,
@@ -165,14 +170,15 @@ export function useSocket({ userId, ticketId, projectId }: { userId?: string; ti
     };
   }, [useSseFallback, userId, ticketId, projectId]);
 
-  const markAsRead = useCallback((ticketId: string) => {
+  const markAsRead = useCallback((ticketId: string, isIntake?: boolean) => {
     setNotifications((prev) =>
       prev.some((n) => n.data?.ticketId === ticketId && !n.read)
         ? prev.map((n) => (n.data?.ticketId === ticketId ? { ...n, read: true } : n))
         : prev,
     );
 
-    markTicketReadFn({ data: { ticketId } }).catch((err) => console.error("[Socket] markTicketReadFn failed:", err));
+    const fn = isIntake ? markIntakeTicketReadFn : markTicketReadFn;
+    fn({ data: { ticketId } }).catch((err) => console.error("[Socket] markAsRead failed:", err));
   }, []);
 
   if (useSseFallback) {

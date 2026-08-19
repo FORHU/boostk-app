@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { EventType, type Message } from "@/lib/notifier/core";
 import {
   getUnreadTicketSummaries,
+  markIntakeTicketReadFn,
   markTicketReadFn,
   type UnreadTicketSummary,
 } from "@/modules/notification/notification.functions";
@@ -124,6 +125,7 @@ export function useNotifications({
                 sender: s.sender,
                 createdAt: s.lastMessageAt,
                 unreadCount: s.unreadCount,
+                isIntake: s.isIntake,
               },
               timestamp: Date.now(),
               read: false,
@@ -290,16 +292,15 @@ export function useNotifications({
     };
   }, [userId, ticketId, enabled]);
 
-  const markAsRead = useCallback((ticketId: string) => {
+  const markAsRead = useCallback((ticketId: string, isIntake?: boolean) => {
     setNotifications((prev) =>
       prev.some((n) => n.data?.ticketId === ticketId && !n.read)
         ? prev.map((n) => (n.data?.ticketId === ticketId ? { ...n, read: true } : n))
         : prev,
     );
 
-    markTicketReadFn({ data: { ticketId } }).catch((err) =>
-      console.error("[Notifications] markTicketReadFn failed:", err),
-    );
+    const fn = isIntake ? markIntakeTicketReadFn : markTicketReadFn;
+    fn({ data: { ticketId } }).catch((err) => console.error("[Notifications] markAsRead failed:", err));
   }, []);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
