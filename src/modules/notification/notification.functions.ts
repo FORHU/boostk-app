@@ -3,7 +3,9 @@ import z from "zod";
 import { EventType } from "@/lib/notifier/core";
 import { prisma } from "@/lib/prisma";
 import { publishEvent } from "@/lib/rabbitmq";
-import { requireAuthMiddleware } from "@/modules/auth/auth.middleware";
+import { requireAuthMiddleware, requirePlatformStaffMiddleware } from "@/modules/auth/auth.middleware";
+import { hasPlatformRole } from "@/modules/auth/roles";
+import { INTAKE_PROJECT_SLUG } from "@/modules/intake/intake.constants";
 import { requireTicketAgentMiddleware } from "@/modules/ticket/ticket.middleware";
 
 const SendNotificationMessageSchema = z.object({
@@ -44,6 +46,7 @@ export type UnreadTicketSummary = {
   lastMessagePreview: string;
   lastMessageAt: string;
   sender: string;
+  isIntake?: boolean;
 };
 
 const MAX_PREVIEW_LENGTH = 80;
@@ -73,7 +76,6 @@ export const getUnreadTicketSummaries = createServerFn({ method: "GET" })
     });
 
     const orgIds = memberships.map((m) => m.organizationId);
-    if (orgIds.length === 0) return [];
 
     const unreadMessages = await prisma.ticketMessage.findMany({
       where: {
@@ -97,6 +99,7 @@ export const getUnreadTicketSummaries = createServerFn({ method: "GET" })
       projectName: string;
       customerName: string;
       messages: { content: string; contentType: string; userId: string | null; createdAt: Date }[];
+      isIntake?: boolean;
     }
 
     const byTicket = new Map<string, GroupEntry>();
@@ -126,6 +129,54 @@ export const getUnreadTicketSummaries = createServerFn({ method: "GET" })
       });
     }
 
+    // Platform staff also see unread messages on intake tickets, which live in the
+    // seeded intake project rather than any org the staff member belongs to.
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { platformRole: true },
+    });
+
+    if (hasPlatformRole(user?.platformRole)) {
+      const intakeUnread = await prisma.ticketMessage.findMany({
+        where: {
+          ticket: { project: { slug: INTAKE_PROJECT_SLUG } },
+          messageReads: { none: { userId } },
+        },
+        include: {
+          ticket: {
+            include: { project: true, customer: true },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+        take: 200,
+      });
+
+      for (const m of intakeUnread) {
+        // biome-ignore lint/suspicious/noExplicitAny: Prisma 7 + accelerate extension masks nested include types
+        const t = (m as Record<string, any>).ticket as Record<string, any>;
+        const tId: string = t.id;
+        if (!byTicket.has(tId)) {
+          byTicket.set(tId, {
+            ticketId: tId,
+            referenceNumber: t.referenceNumber,
+            projectId: t.projectId,
+            projectSlug: t.project.slug,
+            projectName: t.project.name,
+            customerName: t.customer.name,
+            messages: [],
+            isIntake: true,
+          });
+          ticketOrder.push(tId);
+        }
+        byTicket.get(tId)?.messages.push({
+          content: m.content,
+          contentType: m.contentType,
+          userId: m.userId,
+          createdAt: m.createdAt,
+        });
+      }
+    }
+
     return ticketOrder.slice(0, 20).map((ticketId): UnreadTicketSummary => {
       const group = byTicket.get(ticketId) as GroupEntry;
       const last = group.messages[0];
@@ -140,6 +191,7 @@ export const getUnreadTicketSummaries = createServerFn({ method: "GET" })
         lastMessagePreview: previewContent(last.content, last.contentType),
         lastMessageAt: last.createdAt.toISOString(),
         sender: last.userId ? "agent" : "customer",
+        isIntake: group.isIntake,
       };
     });
   });
@@ -150,6 +202,42 @@ export const markTicketReadFn = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     const userId = context.authSession.user.id;
     const ticketId = context.agentTicket.id;
+
+    const unread = await prisma.ticketMessage.findMany({
+      where: {
+        ticketId,
+        messageReads: { none: { userId } },
+      },
+      select: { id: true },
+    });
+
+    if (unread.length === 0) return { marked: 0 };
+
+    await prisma.messageRead.createMany({
+      data: unread.map((m) => ({
+        messageId: m.id,
+        ticketId,
+        userId,
+      })),
+      skipDuplicates: true,
+    });
+
+    return { marked: unread.length };
+  });
+
+/**
+ * Mark all unread messages in an intake ticket as read.
+ *
+ * Intake tickets belong to the seeded intake project, and platform staff may not be
+ * org members — so `requireTicketAgentMiddleware` (which checks org membership) rejects
+ * them. This function uses `requirePlatformStaffMiddleware` instead.
+ */
+export const markIntakeTicketReadFn = createServerFn({ method: "POST" })
+  .inputValidator(z.object({ ticketId: z.string() }))
+  .middleware([requirePlatformStaffMiddleware])
+  .handler(async ({ data, context }) => {
+    const userId = context.authSession.user.id;
+    const ticketId = data.ticketId;
 
     const unread = await prisma.ticketMessage.findMany({
       where: {
