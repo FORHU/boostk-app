@@ -22,4 +22,4 @@ pnpm-lock.yaml
 prisma/generated
 
 /docs
-
+docs/
