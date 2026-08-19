@@ -31,7 +31,39 @@ export const getAuthOrganizationsFn = createServerFn({ method: "GET" })
 
     const roleByOrgId = new Map(memberships.map((m) => [m.organizationId, normalizeRole(m.role)]));
 
-    return organizations.map((org) => ({ ...org, role: roleByOrgId.get(org.id) ?? null }));
+    const orgIds = organizations.map((org) => org.id);
+
+    // groupBy's literal `by` fields don't typecheck against the generated client,
+    // so fetch the scalars and reduce them in JS instead (same pattern as customer.functions.ts).
+    const [projectRows, memberRows] = await Promise.all([
+      prisma.project.findMany({
+        where: { organizationId: { in: orgIds } },
+        select: { organizationId: true },
+      }),
+      prisma.member.findMany({
+        where: { organizationId: { in: orgIds } },
+        select: { organizationId: true },
+      }),
+    ]);
+
+    const projectCountByOrgId = new Map<string, number>();
+    for (const row of projectRows) {
+      projectCountByOrgId.set(row.organizationId, (projectCountByOrgId.get(row.organizationId) ?? 0) + 1);
+    }
+
+    const memberCountByOrgId = new Map<string, number>();
+    for (const row of memberRows) {
+      memberCountByOrgId.set(row.organizationId, (memberCountByOrgId.get(row.organizationId) ?? 0) + 1);
+    }
+
+    return organizations.map((org) => ({
+      ...org,
+      role: roleByOrgId.get(org.id) ?? null,
+      _count: {
+        projects: projectCountByOrgId.get(org.id) ?? 0,
+        members: memberCountByOrgId.get(org.id) ?? 0,
+      },
+    }));
   });
 
 // url based active organization
@@ -75,9 +107,18 @@ export const createOrganizationFn = createServerFn({ method: "POST" })
         name: data.name,
         slug: generateSlug(data.name),
         userId: context.authSession.user.id,
+        logo: data.logo || undefined,
       },
       headers: context.request.headers,
     });
+
+    // Better Auth may ignore the logo field — persist it directly as a fallback.
+    if (data.logo && organization?.id) {
+      await prisma.organization.update({
+        where: { id: organization.id },
+        data: { logo: data.logo },
+      });
+    }
 
     return organization;
   });

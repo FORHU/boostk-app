@@ -93,8 +93,8 @@ function OrganizationSettingsPage() {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 2 * 1024 * 1024) {
-      toast("Image must be less than 2MB", "error");
+    if (file.size > 10 * 1024 * 1024) {
+      toast("Image must be less than 10MB.", "error");
       return;
     }
 
