@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, notFound, useRouter } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { CheckCircle2, Loader2, Send } from "lucide-react";
@@ -43,14 +43,13 @@ export const Route = createFileRoute("/(public)/support/$projectSlug/chat-widget
     const project = await getProjectPublicFn({ data: { projectSlug: params.projectSlug } });
     if (!project) throw notFound();
 
-    const ticket = await getTicketCookieFn({ data: { projectId: project.id } });
-
-    return { project, ticket };
+    return { project };
   },
-  loader: ({ context }) => {
+  loader: async ({ context }) => {
+    const ticket = await getTicketCookieFn({ data: { projectId: context.project.id } });
     context.queryClient.ensureQueryData(ticketMessageQueries.getTicketMessages(context.project.id));
     // Surfaced so `head` can title the installed app after the project.
-    return { projectName: context.project.name };
+    return { projectName: context.project.name, ticket };
   },
   // This route is the ONLY installable surface in the app. The manifest link lives here
   // rather than in __root.tsx so the marketing site and the agent dashboard are not
@@ -70,7 +69,8 @@ export const Route = createFileRoute("/(public)/support/$projectSlug/chat-widget
 });
 
 function RouteComponent() {
-  const { project, ticket } = Route.useRouteContext();
+  const { project } = Route.useRouteContext();
+  const { ticket } = Route.useLoaderData();
   const { ref } = Route.useSearch();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -78,6 +78,12 @@ function RouteComponent() {
   const [ticketStatus, setTicketStatus] = useState<string | null>(ticket?.status ?? null);
   const [isCloseConfirmOpen, setIsCloseConfirmOpen] = useState(false);
   const { lastMessage, status } = useSocket({ ticketId: ticket?.id, projectId: project.id });
+
+  const { data: ticketMessages } = useQuery({
+    ...ticketMessageQueries.getTicketMessages(project.id),
+    enabled: !!ticket,
+  });
+  const hasCustomerMessage = ticketMessages?.some((m) => m.customerId != null) ?? false;
 
   // Realtime: refetch the message list whenever a new message arrives over
   // socket.io so agent replies appear without a manual refresh.
@@ -124,6 +130,7 @@ function RouteComponent() {
         project={project}
         connectionStatus={ticket ? status : undefined}
         ticketStatus={ticketStatus}
+        hasCustomerMessage={hasCustomerMessage}
         isClosingTicket={closeTicketMutation.isPending}
         onRequestClose={() => setIsCloseConfirmOpen(true)}
       />
@@ -188,12 +195,14 @@ const ChatHeader = ({
   project,
   connectionStatus,
   ticketStatus,
+  hasCustomerMessage,
   isClosingTicket,
   onRequestClose,
 }: {
   project: Pick<Project, "id" | "name" | "logo" | "description">;
   connectionStatus?: "connecting" | "connected" | "reconnecting";
   ticketStatus?: string | null;
+  hasCustomerMessage: boolean;
   isClosingTicket: boolean;
   onRequestClose: () => void;
 }) => {
@@ -227,7 +236,7 @@ const ChatHeader = ({
         </div>
       </div>
 
-      {ticketStatus === "OPEN" && (
+      {ticketStatus === "OPEN" && hasCustomerMessage && (
         <button
           type="button"
           onClick={onRequestClose}
