@@ -1,5 +1,6 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import AppTopbar from "@/components/layout/app-topbar";
+import { NotificationProvider } from "@/contexts/notification-context";
 import { useSocket } from "@/hooks/use-socket";
 
 export const Route = createFileRoute("/(app)")({
@@ -18,14 +19,16 @@ function AppLayout() {
   });
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden">
-      <AppTopbar
-        connectionStatus={status}
-        notifications={notifications}
-        unreadCount={unreadCount}
-        markAsRead={markAsRead}
-      />
-      <Outlet />
-    </div>
+    <NotificationProvider value={{ markAsRead }}>
+      <div className="flex flex-col h-screen overflow-hidden">
+        <AppTopbar
+          connectionStatus={status}
+          notifications={notifications}
+          unreadCount={unreadCount}
+          markAsRead={markAsRead}
+        />
+        <Outlet />
+      </div>
+    </NotificationProvider>
   );
 }

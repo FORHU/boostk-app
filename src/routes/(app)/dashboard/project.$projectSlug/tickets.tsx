@@ -10,6 +10,7 @@ import { TicketSortSelect } from "@/components/tickets/TicketSortSelect";
 import { TicketsLoadingFallback } from "@/components/tickets/TicketsLoadingFallback";
 import { TICKET_TABLE_COLUMNS, TicketsTableRow } from "@/components/tickets/TicketsTableRow";
 import { EmptyState } from "@/components/ui/empty-state";
+import { useNotification } from "@/contexts/notification-context";
 import { REDIRECT_REASON } from "@/enums/enums";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useSocket } from "@/hooks/use-socket";
@@ -228,6 +229,7 @@ function ProjectTicketsPage() {
   const organizationId = project.organizationId;
   const queryClient = useQueryClient();
   const selectedTicketId = search.selectedTicketId ?? null;
+  const { markAsRead } = useNotification();
 
   const canEditAnyTicket = hasOrgRole(role, ORG_ROLE.ADMIN);
 
@@ -459,11 +461,12 @@ function ProjectTicketsPage() {
                           agents={agents}
                           canEditAnyTicket={canEditAnyTicket}
                           memberId={memberId}
-                          onOpenTicket={() =>
+                          onOpenTicket={() => {
+                            markAsRead(ticket.id);
                             navigate({
                               search: (prev) => ({ ...prev, selectedTicketId: ticket.id }),
-                            })
-                          }
+                            });
+                          }}
                         />
                       ))}
                     </tbody>
@@ -563,11 +566,12 @@ function ProjectTicketsPage() {
                         agents={agents}
                         canEditAnyTicket={canEditAnyTicket}
                         memberId={memberId}
-                        onOpenTicket={() =>
+                        onOpenTicket={() => {
+                          markAsRead(ticket.id);
                           navigate({
                             search: (prev) => ({ ...prev, selectedTicketId: ticket.id }),
-                          })
-                        }
+                          });
+                        }}
                       />
                     ))}
                   </tbody>

@@ -2,7 +2,6 @@
 
 import { useNavigate } from "@tanstack/react-router";
 import { BellIcon, MessageSquareIcon, TicketIcon } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -57,11 +56,7 @@ export function NotificationBell({ notifications, unreadCount, markAsRead }: Not
         }
       >
         <BellIcon className="size-4 text-foreground" />
-        {unreadCount > 0 && (
-          <Badge className="absolute -top-1.5 -right-1.5 h-4 min-w-4 justify-center rounded-full border-0 bg-destructive px-1 text-[10px] leading-none text-white">
-            {unreadCount > 99 ? "99+" : unreadCount}
-          </Badge>
-        )}
+        {unreadCount > 0 && <span className="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-destructive" />}
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-80 min-w-80 rounded-lg" side="top" align="end" sideOffset={4}>
         <DropdownMenuGroup>
