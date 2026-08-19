@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
-import { fetchSessionId, translateText } from "@/modules/translation/forhu-chat";
+import { fetchSessionId, parseLanguageName, translateText } from "@/modules/translation/forhu-chat";
 import {
   isEcho,
   isNotATranslation,
   SUPPORT_LANGUAGE,
+  shouldDetectLanguage,
   translateIncomingMessage,
   translateOutgoingMessage,
 } from "./ticket-message.translation";
@@ -228,5 +229,87 @@ describe("translateOutgoingMessage — direction", () => {
 
     expect(english.sourceLang).toBe(SUPPORT_LANGUAGE);
     expect(korean.sourceLang).toBe("Korean");
+  });
+});
+
+/**
+ * Language detection has to survive the engine answering in a sentence.
+ *
+ * It used to keep the first run of letters, so "The language is Serbian." was stored as
+ * "The" on `Customer.language` — and every later reply was translated "into The", which
+ * the engine answers by handing the input straight back.
+ */
+describe("parseLanguageName", () => {
+  it("takes the bare answer the prompt asks for", () => {
+    expect(parseLanguageName("Serbian")).toBe("Serbian");
+    expect(parseLanguageName("Korean.")).toBe("Korean");
+  });
+
+  it("finds the language when the engine answers in a sentence", () => {
+    for (const reply of [
+      "The language is Serbian.",
+      "This text appears to be in Serbian.",
+      "It looks like Serbian to me.",
+      "  the language of the text is serbian  ",
+    ]) {
+      expect(parseLanguageName(reply)).toBe("Serbian");
+    }
+  });
+
+  // The exact regression: the old parser returned "The" for every one of those.
+  it("never returns an English filler word", () => {
+    for (const reply of ["The language is Serbian.", "This is Spanish", "It is Korean"]) {
+      expect(["The", "This", "It"]).not.toContain(parseLanguageName(reply));
+    }
+  });
+
+  it("returns empty when no language is named, rather than guessing", () => {
+    for (const reply of ["I cannot determine that.", "", "Unknown", "12345"]) {
+      expect(parseLanguageName(reply)).toBe("");
+    }
+  });
+
+  it("normalises casing to the canonical name", () => {
+    expect(parseLanguageName("serbian")).toBe("Serbian");
+    expect(parseLanguageName("JAPANESE")).toBe("Japanese");
+  });
+});
+
+describe("corrupted Customer.language values", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    sessionMock.mockResolvedValue("sess_1");
+    translateMock.mockResolvedValue("translated text");
+  });
+
+  it("does not attempt a translation into a value that is not a language", async () => {
+    const result = await translateOutgoingMessage("I am the administrator", {
+      ticketId: "t1",
+      customerLang: "The",
+    });
+
+    expect(translateMock).not.toHaveBeenCalled();
+    expect(result.translatedContent).toBeNull();
+  });
+
+  it("still translates normally for a real language", async () => {
+    const result = await translateOutgoingMessage("I am the administrator", {
+      ticketId: "t1",
+      customerLang: "Serbian",
+    });
+
+    expect(translateMock.mock.calls[0]?.[1]).toBe("Serbian");
+    expect(result.targetLang).toBe("Serbian");
+  });
+
+  // Self-healing: a customer stuck on a junk value must be re-detected, or their replies
+  // stay untranslated for the life of the account.
+  it("re-detects when the stored language is junk", () => {
+    expect(shouldDetectLanguage("The", "gde je administrator?")).toBe(true);
+  });
+
+  it("stays locked in on a language it recognises", () => {
+    expect(shouldDetectLanguage("Serbian", "gde je administrator?")).toBe(false);
+    expect(shouldDetectLanguage("Korean", "안녕하세요")).toBe(false);
   });
 });

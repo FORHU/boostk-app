@@ -12,6 +12,7 @@ import {
   DEFAULT_TRANSLATE_PROMPT,
   detectLanguage,
   fetchSessionId,
+  isKnownLanguage,
   looksLikeEnglish,
   translateText,
 } from "@/modules/translation/forhu-chat";
@@ -159,7 +160,10 @@ export function isSupportLanguage(lang: string): boolean {
  * Skips detection when the message itself already looks like the support language.
  */
 export function shouldDetectLanguage(current: string | null | undefined, content: string): boolean {
-  if (current && !isSupportLanguage(current)) return false;
+  // Only a *recognised* non-support language counts as locked in. Rows written before the
+  // detector validated its output hold values like "The", and without this check they
+  // would never be re-detected — that customer's replies stay untranslated forever.
+  if (current && !isSupportLanguage(current) && isKnownLanguage(current)) return false;
   return !looksLikeEnglish(content);
 }
 
@@ -185,7 +189,14 @@ export async function translateOutgoingMessage(
   { ticketId, customerLang }: { ticketId: string; customerLang: string | null | undefined },
 ): Promise<MessageTranslation> {
   const trimmed = content.trim();
-  const customerTarget = (customerLang ?? "").trim();
+  const stored = (customerLang ?? "").trim();
+
+  // Ignore a stored value that is not actually a language. Detection used to keep the
+  // first word of the engine's reply, so "The language is Serbian." was saved as "The" —
+  // and every reply after that was translated "into The", which the engine answers by
+  // handing the input straight back. Treating it as unknown sends the agent's own words
+  // instead, which is merely untranslated rather than wrong.
+  const customerTarget = stored && (isKnownLanguage(stored) || isSupportLanguage(stored)) ? stored : "";
   if (!trimmed) return NONE(customerTarget || SUPPORT_LANGUAGE);
 
   // Deliberately NOT `looksLikeEnglish` here: that wants three marker words before it

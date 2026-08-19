@@ -172,6 +172,134 @@ export function buildTranslateInput(systemPrompt: string, langName: string, text
 }
 
 /**
+ * Language names the detector is allowed to return.
+ *
+ * The engine is asked for one word and usually complies, but not always — and when it
+ * answers in a sentence, taking the first word yields "The". Matching against real
+ * language names is what stops that reaching `Customer.language`, where it becomes the
+ * target of every later reply translation.
+ */
+const LANGUAGE_NAMES = [
+  "English",
+  "Spanish",
+  "Portuguese",
+  "French",
+  "German",
+  "Italian",
+  "Dutch",
+  "Catalan",
+  "Galician",
+  "Basque",
+  "Russian",
+  "Ukrainian",
+  "Polish",
+  "Czech",
+  "Slovak",
+  "Serbian",
+  "Croatian",
+  "Bosnian",
+  "Slovenian",
+  "Bulgarian",
+  "Macedonian",
+  "Albanian",
+  "Romanian",
+  "Hungarian",
+  "Greek",
+  "Turkish",
+  "Lithuanian",
+  "Latvian",
+  "Estonian",
+  "Finnish",
+  "Swedish",
+  "Norwegian",
+  "Danish",
+  "Icelandic",
+  "Irish",
+  "Welsh",
+  "Maltese",
+  "Latin",
+  "Arabic",
+  "Hebrew",
+  "Persian",
+  "Farsi",
+  "Urdu",
+  "Pashto",
+  "Kurdish",
+  "Hindi",
+  "Bengali",
+  "Punjabi",
+  "Gujarati",
+  "Marathi",
+  "Tamil",
+  "Telugu",
+  "Kannada",
+  "Malayalam",
+  "Nepali",
+  "Sinhala",
+  "Thai",
+  "Lao",
+  "Khmer",
+  "Burmese",
+  "Vietnamese",
+  "Indonesian",
+  "Malay",
+  "Filipino",
+  "Tagalog",
+  "Cebuano",
+  "Ilocano",
+  "Hiligaynon",
+  "Bikol",
+  "Waray",
+  "Japanese",
+  "Korean",
+  "Chinese",
+  "Mandarin",
+  "Cantonese",
+  "Mongolian",
+  "Georgian",
+  "Armenian",
+  "Azerbaijani",
+  "Kazakh",
+  "Uzbek",
+  "Swahili",
+  "Afrikaans",
+  "Zulu",
+  "Xhosa",
+  "Hausa",
+  "Yoruba",
+  "Igbo",
+  "Amharic",
+  "Somali",
+  "Malagasy",
+  "Haitian",
+  "Maori",
+  "Samoan",
+  "Hawaiian",
+] as const;
+
+const LANGUAGE_BY_LOWER = new Map(LANGUAGE_NAMES.map((name) => [name.toLowerCase(), name as string]));
+
+/** True when a stored value is a language name we recognise rather than stray prose. */
+export function isKnownLanguage(name: string | null | undefined): boolean {
+  return typeof name === "string" && LANGUAGE_BY_LOWER.has(name.trim().toLowerCase());
+}
+
+/**
+ * Pull a language name out of whatever the engine replied.
+ *
+ * Scans every word rather than taking the first, so "The language is Serbian." resolves
+ * to "Serbian" instead of "The". Returns "" when nothing matches — an unknown language is
+ * safe (replies simply go out untranslated), a wrong one is not.
+ */
+export function parseLanguageName(response: string): string {
+  for (const word of response.match(/[A-Za-z]+/g) ?? []) {
+    const known = LANGUAGE_BY_LOWER.get(word.toLowerCase());
+    if (known) return known;
+  }
+  return "";
+}
+
+/**
  * Ask forhu to identify the language of `text`. Returns the English language name
  * (e.g. "Korean", "Tagalog"), or "" if it couldn't be determined. Used to decide
  * which language to translate an agent's reply back into.
@@ -181,8 +309,8 @@ export async function detectLanguage(text: string, sessionId: string): Promise<s
     session_id: sessionId,
     user_input: `Identify the language of the text below. Respond with ONLY the English name of the language, one word:\n\n${text}`,
   });
-  // Keep just the leading word of letters ("Korean." -> "Korean").
-  return (raw.response.match(/[A-Za-z]+/) ?? [""])[0];
+
+  return parseLanguageName(raw.response);
 }
 
 /**
