@@ -1,11 +1,17 @@
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Plus } from "lucide-react";
+import { ChevronRight, Plus } from "lucide-react";
 import { Suspense } from "react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { EntityAvatar } from "@/components/ui/entity-avatar";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { PageHeader } from "@/components/ui/page-header";
+import { UsageCardsSkeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/components/ui/toast";
 import { getFieldInvalid } from "@/lib/form-utils";
 import { createOrganizationFn } from "@/modules/organization/organization.functions";
 import { organizationQueries } from "@/modules/organization/organization.queries";
@@ -21,32 +27,31 @@ export const Route = createFileRoute("/(app)/dashboard/organizations")({
 function OrganizationsPage() {
   return (
     <div className="p-6 space-y-8 max-w-5xl mx-auto">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold tracking-tight">Organizations</h1>
-        <p className="text-muted-foreground text-sm">Manage your organizations and switch between them.</p>
-      </div>
+      <PageHeader title="Organizations" description="Manage your organizations and switch between them." />
 
       <div className="grid gap-8 lg:grid-cols-5">
-        <div className="lg:col-span-2 space-y-6">
-          <div className="rounded-xl border bg-card text-card-foreground shadow-sm">
-            <div className="flex flex-col space-y-1.5 p-6">
-              <h3 className="text-lg font-semibold leading-none tracking-tight">Create Organization</h3>
-              <p className="text-sm text-muted-foreground">Add a new organization to your account.</p>
-            </div>
-            <OrganizationForm />
-          </div>
+        <div className="lg:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Create Organization</CardTitle>
+              <CardDescription>Add a new organization to your account.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <OrganizationForm />
+            </CardContent>
+          </Card>
         </div>
 
-        <div className="lg:col-span-3 space-y-6">
-          <div className="rounded-xl border bg-card text-card-foreground shadow-sm">
-            <div className="flex flex-col space-y-1.5 p-6">
-              <h3 className="text-lg font-semibold leading-none tracking-tight">Your Organizations</h3>
-              <p className="text-sm text-muted-foreground">List of organizations you are a member of.</p>
-            </div>
-            <div className="p-6 pt-0">
+        <div className="lg:col-span-3">
+          <Card>
+            <CardHeader>
+              <CardTitle>Your Organizations</CardTitle>
+              <CardDescription>List of organizations you are a member of.</CardDescription>
+            </CardHeader>
+            <CardContent>
               <OrganizationListSuspense />
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
@@ -55,15 +60,18 @@ function OrganizationsPage() {
 
 const OrganizationForm = () => {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const createOrganizationMutation = useMutation({
     mutationKey: ["create", "organization"],
     mutationFn: createOrganizationFn,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: organizationQueries.all });
+      toast("Organization created successfully!", "success");
     },
     onError: (error) => {
       console.error(error);
+      toast(error.message || "Failed to create organization. Please try again.", "error");
     },
   });
 
@@ -77,7 +85,6 @@ const OrganizationForm = () => {
       onSubmit: createOrganizationSchema,
     },
     onSubmit: async ({ value }) => {
-      console.log(value);
       await createOrganizationMutation.mutateAsync({ data: value });
     },
   });
@@ -97,7 +104,7 @@ const OrganizationForm = () => {
             const isInvalid = getFieldInvalid(field, createOrganizationForm);
             return (
               <Field data-invalid={isInvalid}>
-                <FieldLabel htmlFor={field.name}>Project Name</FieldLabel>
+                <FieldLabel htmlFor={field.name}>Organization Name</FieldLabel>
                 <Input
                   id={field.name}
                   name={field.name}
@@ -105,8 +112,7 @@ const OrganizationForm = () => {
                   onBlur={field.handleBlur}
                   onChange={(e) => field.handleChange(e.target.value)}
                   aria-invalid={isInvalid}
-                  placeholder="Enter your project name"
-                  className="rounded"
+                  placeholder="Enter your organization name"
                 />
                 {isInvalid && <FieldError errors={field.state.meta.errors} />}
               </Field>
@@ -124,11 +130,9 @@ const OrganizationForm = () => {
                   name={field.name}
                   value={field.state.value}
                   onBlur={field.handleBlur}
-                  type="file"
                   onChange={(e) => field.handleChange(e.target.value)}
                   aria-invalid={isInvalid}
                   placeholder="https://example.com/logo.png"
-                  className="rounded"
                 />
                 {isInvalid && <FieldError errors={field.state.meta.errors} />}
               </Field>
@@ -140,10 +144,10 @@ const OrganizationForm = () => {
       <Button
         type="submit"
         disabled={createOrganizationMutation.isPending}
-        className="w-full h-14 bg-primary hover:bg-primary/90 text-white font-bold text-lg group rounded"
+        className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold group"
       >
         {createOrganizationMutation.isPending ? "Creating..." : "Create Organization"}
-        <Plus className="ml-2 size-5 group-hover:translate-x-1 transition-transform" />
+        <Plus className="ml-2 size-4 group-hover:translate-x-1 transition-transform" />
       </Button>
     </form>
   );
@@ -151,7 +155,7 @@ const OrganizationForm = () => {
 
 const OrganizationListSuspense = () => {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<UsageCardsSkeleton count={1} className="md:grid-cols-1" />}>
       <OrganizationList />
     </Suspense>
   );
@@ -160,21 +164,43 @@ const OrganizationListSuspense = () => {
 const OrganizationList = () => {
   const { data: organizations } = useSuspenseQuery(organizationQueries.getAuthOrganization());
 
+  if (organizations.length === 0) {
+    return (
+      <EmptyState
+        title="No organizations yet"
+        description="Create your first organization to start managing projects."
+        size="sm"
+      />
+    );
+  }
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {organizations.map((org) => (
         <Link
-          to="/dashboard/org/$organizationId"
-          params={{ organizationId: org.id }}
+          to="/dashboard/org/$organizationSlug"
+          params={{ organizationSlug: org.slug }}
           key={org.id}
-          className="flex items-center justify-between p-4 rounded-lg border bg-background hover:bg-accent/50 transition-colors"
+          className="group flex items-center gap-3 rounded-xl border border-border bg-background p-3 transition-colors hover:bg-accent/50 hover:border-primary/40"
         >
-          <div className="flex flex-col">
+          <EntityAvatar
+            name={org.name}
+            logo={org.logo}
+            className="size-10"
+            fallbackClassName="bg-primary/10 text-primary"
+          />
+          <div className="flex min-w-0 flex-1 flex-col">
             <div className="flex items-center gap-2">
-              <span className="font-semibold">{org.name}</span>
+              <span className="truncate font-semibold">{org.name}</span>
+              {org.role && (
+                <span className="rounded-full border border-border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  {org.role}
+                </span>
+              )}
             </div>
-            <span className="text-xs text-muted-foreground">/{org.slug}</span>
+            <span className="truncate text-xs text-muted-foreground">/{org.slug}</span>
           </div>
+          <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
         </Link>
       ))}
     </div>

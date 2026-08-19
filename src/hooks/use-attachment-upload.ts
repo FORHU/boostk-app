@@ -1,0 +1,107 @@
+import { useCallback, useRef, useState } from "react";
+import { downscaleImage } from "@/lib/downscale-image";
+import {
+  ATTACHMENT_MAX_BYTES,
+  isAllowedMimeType,
+  isImageMimeType,
+  type UploadedAttachment,
+} from "@/modules/attachment/attachment.schema";
+
+/**
+ * Staged attachment state for a chat composer.
+ *
+ * The file uploads as soon as it is picked rather than on send, so the user finds out
+ * immediately that a 40MB video is not going through — and pressing Send then only has
+ * to post a message that already has its URL. `objectUrl` is a local preview so the
+ * thumbnail appears before the round trip finishes.
+ */
+export type StagedAttachment = UploadedAttachment & { objectUrl: string | null };
+
+type UseAttachmentUploadOptions = {
+  ticketId: string;
+  projectId: string;
+  /**
+   * Surfaces a rejected file or a failed upload.
+   *
+   * `detail` carries the server's parsed response body when there was one, so a caller
+   * can recognise a structured rejection — a 429 from the upload limiter — and render it
+   * as a cooldown rather than one more toast. Callers that only want to say something
+   * can ignore it and show `message`.
+   */
+  onError?: (message: string, detail?: unknown) => void;
+};
+
+export function useAttachmentUpload({ ticketId, projectId, onError }: UseAttachmentUploadOptions) {
+  const [attachment, setAttachment] = useState<StagedAttachment | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const objectUrlRef = useRef<string | null>(null);
+
+  const revokePreview = useCallback(() => {
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current);
+      objectUrlRef.current = null;
+    }
+  }, []);
+
+  const clear = useCallback(() => {
+    revokePreview();
+    setAttachment(null);
+  }, [revokePreview]);
+
+  const upload = useCallback(
+    async (picked: File) => {
+      // Mirror the server allowlist so an obviously bad file never leaves the browser.
+      // The server re-checks regardless — this is feedback, not enforcement.
+      if (!isAllowedMimeType(picked.type)) {
+        onError?.(`"${picked.name}" is not a supported file type.`);
+        return;
+      }
+
+      setIsUploading(true);
+
+      // Shrink before the size check, not after: a 9MB phone photo is perfectly
+      // acceptable as a support attachment once it is downscaled, and rejecting it for
+      // a limit that exists to protect the database would be an arbitrary "no" to the
+      // single most common thing a visitor attaches. Non-images pass through untouched.
+      const file = await downscaleImage(picked);
+
+      if (file.size > ATTACHMENT_MAX_BYTES) {
+        setIsUploading(false);
+        onError?.(`"${picked.name}" is larger than ${Math.floor(ATTACHMENT_MAX_BYTES / (1024 * 1024))}MB.`);
+        return;
+      }
+
+      revokePreview();
+      // Preview the file that is actually being sent, so the thumbnail is what the
+      // agent will see rather than the original.
+      const preview = isImageMimeType(file.type) ? URL.createObjectURL(file) : null;
+      objectUrlRef.current = preview;
+
+      try {
+        const form = new FormData();
+        form.append("file", file);
+        form.append("ticketId", ticketId);
+        form.append("projectId", projectId);
+
+        const response = await fetch("/api/attachments", { method: "POST", body: form });
+        const body = (await response.json().catch(() => null)) as (UploadedAttachment & { error?: string }) | null;
+
+        if (!response.ok || !body?.id) {
+          revokePreview();
+          onError?.(body?.error ?? "Upload failed. Please try again.", body);
+          return;
+        }
+
+        setAttachment({ ...body, objectUrl: preview });
+      } catch {
+        revokePreview();
+        onError?.("Upload failed. Please try again.");
+      } finally {
+        setIsUploading(false);
+      }
+    },
+    [ticketId, projectId, onError, revokePreview],
+  );
+
+  return { attachment, isUploading, upload, clear };
+}

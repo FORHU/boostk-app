@@ -1,0 +1,422 @@
+import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import {
+  AlertCircle,
+  Archive,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Filter,
+  MessageSquare,
+  MoreVertical,
+  Search,
+  Users,
+  X,
+} from "lucide-react";
+import type { Member, User } from "prisma/generated/client";
+import { Suspense, useEffect, useRef, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
+import { DataTableSkeleton, TextSkeleton } from "@/components/ui/skeleton";
+import { REDIRECT_REASON } from "@/enums/enums";
+import { useDebounce } from "@/hooks/use-debounce";
+import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
+import { memberQueries } from "@/modules/members/member.queries";
+import { ticketMessageQueries } from "@/modules/ticket-message/ticket-message.queries";
+
+export const Route = createFileRoute("/(app)/dashboard/project/$projectSlug/agents")({
+  beforeLoad: ({ context }) => {
+    if (!hasOrgRole(context.role, ORG_ROLE.AGENT)) {
+      throw redirect({ to: "/dashboard/organizations", search: { reason: REDIRECT_REASON.PERMISSION_DENIED } });
+    }
+  },
+  loader: ({ context }) => {
+    return context.queryClient.ensureQueryData(
+      memberQueries.agentList({ organizationId: context.project.organizationId }),
+    );
+  },
+  component: ProjectAgentsPage,
+});
+
+function ProjectAgentsPage() {
+  const { project } = Route.useRouteContext();
+
+  return (
+    <div className="flex h-screen w-full bg-muted/20 text-foreground font-sans overflow-hidden">
+      <Suspense
+        fallback={
+          <div className="w-full max-w-7xl mx-auto p-4 md:p-10 space-y-10 overflow-hidden">
+            <TextSkeleton lines={1} />
+            <DataTableSkeleton />
+          </div>
+        }
+      >
+        <AgentTable organizationId={project.organizationId} projectId={project.id} />
+      </Suspense>
+    </div>
+  );
+}
+
+function AgentTable({ organizationId, projectId }: { organizationId: string; projectId: string }) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearchQuery = useDebounce(searchQuery);
+  const [roleFilter, setRoleFilter] = useState("ALL");
+  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+
+  const agentsQuery = useQuery(
+    memberQueries.agentList({
+      organizationId,
+      page,
+      role: roleFilter === "ALL" ? undefined : (roleFilter.toLowerCase() as "admin" | "agent" | "member"),
+      search: debouncedSearchQuery || undefined,
+    }),
+  );
+  const data = agentsQuery.data;
+  const members = (data?.members ?? []) as Array<Member & { user: User }>;
+  const totalPages = data?.totalPages ?? 1;
+
+  const selectedAgent = members.find((m) => m.id === selectedAgentId) ?? null;
+
+  const prevSearchRef = useRef(debouncedSearchQuery);
+  const prevRoleRef = useRef(roleFilter);
+
+  // Reset to page 1 when search or role filter changes.
+  useEffect(() => {
+    if (prevSearchRef.current !== debouncedSearchQuery || prevRoleRef.current !== roleFilter) {
+      prevSearchRef.current = debouncedSearchQuery;
+      prevRoleRef.current = roleFilter;
+      setPage(1);
+    }
+  }, [debouncedSearchQuery, roleFilter]);
+
+  // Clamp page when dataset shrinks (e.g. search narrows on last page).
+  useEffect(() => {
+    if (agentsQuery.isSuccess && page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [agentsQuery.isSuccess, page, totalPages]);
+
+  // Per-agent stats are computed server-side, only when an agent is selected —
+  // the page no longer downloads the project's entire chat history up front.
+  const agentConversationsQuery = useQuery({
+    ...ticketMessageQueries.getAgentConversations(projectId, selectedAgent?.user?.id ?? ""),
+    enabled: !!selectedAgent?.user?.id,
+  });
+  const agentStats = agentConversationsQuery.data ?? { handledChats: [], messagesSentCount: 0 };
+
+  if (agentsQuery.isPending && members.length === 0) return null;
+
+  // Helper for specific Badge colors
+  const getRoleBadgeColors = (role: string) => {
+    switch (role.toUpperCase()) {
+      case "ADMIN":
+        return "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20";
+      default:
+        return "bg-green-100 text-green-700 border-green-200 dark:bg-green-500/10 dark:text-green-400 dark:border-green-500/20";
+    }
+  };
+
+  return (
+    <div className="flex flex-1 w-full relative overflow-hidden">
+      {/* MAIN CONTENT AREA */}
+      <main className="flex-1 flex flex-col w-full h-full p-4 md:p-8 overflow-y-auto">
+        {/* Header & Actions */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 md:mb-8">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Agents</h1>
+            <p className="text-sm text-muted-foreground mt-1">Manage your support team and view their performance.</p>
+          </div>
+
+          <div className="flex items-center gap-2 md:gap-3 flex-wrap md:flex-nowrap">
+            <div className="relative flex-1 md:w-64">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Search agents..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 bg-background border border-input rounded-[8px] text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+
+            <div className="relative md:block">
+              <select
+                value={roleFilter}
+                onChange={(e) => setRoleFilter(e.target.value)}
+                className="appearance-none pl-9 pr-8 py-2 bg-background border border-input rounded-[8px] text-sm focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
+              >
+                <option value="ALL">All Roles</option>
+                <option value="ADMIN">Admin</option>
+                <option value="AGENT">Agent</option>
+              </select>
+              <Filter className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
+            </div>
+          </div>
+        </div>
+
+        {/* Data Table */}
+        <div className="bg-background rounded-[12px] border border-border shadow-sm overflow-hidden">
+          <div className="overflow-x-auto w-full">
+            <table className="w-full text-sm text-left min-w-[600px]">
+              <thead className="bg-muted/50 text-muted-foreground text-xs uppercase font-semibold border-b border-border">
+                <tr>
+                  <th className="px-4 md:px-6 py-4 rounded-tl-[12px]">User</th>
+                  <th className="px-4 md:px-6 py-4">Email</th>
+                  <th className="px-4 md:px-6 py-4">Role</th>
+                  <th className="px-4 md:px-6 py-4">Status</th>
+                  <th className="px-4 md:px-6 py-4 text-right rounded-tr-[12px]"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {members.map((m) => {
+                  const initial = (m.user?.name || m.user?.email || "?").charAt(0).toUpperCase();
+                  const isActive = true; // Mocked active status
+
+                  return (
+                    <tr
+                      key={m.id}
+                      onClick={() => setSelectedAgentId(m.id)}
+                      className="hover:bg-muted/30 cursor-pointer transition-colors group"
+                    >
+                      <td className="px-4 md:px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold shadow-sm shrink-0">
+                            {initial}
+                          </div>
+                          <span className="font-medium text-foreground">{m.user?.name ?? "Unknown User"}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 md:px-6 py-4 whitespace-nowrap text-muted-foreground">
+                        {m.user?.email ?? "-"}
+                      </td>
+                      <td className="px-4 md:px-6 py-4 whitespace-nowrap">
+                        <Badge
+                          className={`uppercase tracking-wider text-[10px] ${getRoleBadgeColors(m.role || "AGENT")}`}
+                        >
+                          {m.role ?? "AGENT"}
+                        </Badge>
+                      </td>
+                      <td className="px-4 md:px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-1.5">
+                          <span
+                            className={`w-2 h-2 rounded-full ${
+                              isActive ? "bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.4)]" : "bg-muted-foreground"
+                            }`}
+                          />
+                          <span className="text-muted-foreground">{isActive ? "Active" : "Inactive"}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 md:px-6 py-4 whitespace-nowrap text-right text-muted-foreground">
+                        <button
+                          type="button"
+                          className="p-1.5 rounded-md hover:bg-muted md:opacity-0 md:group-hover:opacity-100 transition-all focus:opacity-100"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <MoreVertical className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+
+                {members.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="text-center">
+                      <EmptyState
+                        icon={<Users className="w-10 h-10 opacity-20" />}
+                        title="No agents found"
+                        description="Try adjusting your search or filters."
+                      />
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <AgentPagination page={page} totalPages={totalPages} onPageChange={setPage} />
+      </main>
+
+      {/* DRILL-DOWN VIEW DRAWER */}
+      {selectedAgentId && (
+        <button
+          type="button"
+          className="fixed inset-0 bg-background/50 backdrop-blur-sm z-40 transition-opacity"
+          onClick={() => setSelectedAgentId(null)}
+        />
+      )}
+
+      <aside
+        className={`fixed inset-y-0 right-0 z-50 w-full sm:max-w-md bg-background border-l border-border shadow-2xl flex flex-col transform transition-transform duration-300 ease-in-out ${
+          selectedAgentId ? "translate-x-0" : "translate-x-full"
+        }`}
+      >
+        {selectedAgent && (
+          <>
+            <header className="p-4 md:p-6 border-b border-border flex items-start justify-between bg-muted/20">
+              <div className="flex items-center gap-3 md:gap-4 min-w-0">
+                <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-primary/10 text-primary flex items-center justify-center text-lg md:text-xl font-bold shadow-sm shrink-0 border border-primary/20">
+                  {(selectedAgent.user?.name || selectedAgent.user?.email || "?").charAt(0).toUpperCase()}
+                </div>
+                <div className="min-w-0">
+                  <h2 className="text-base md:text-lg font-bold text-foreground truncate">
+                    {selectedAgent.user?.name ?? "Unknown User"}
+                  </h2>
+                  <div className="flex items-center gap-2 mt-0.5 md:mt-1 flex-wrap">
+                    <span className="text-xs md:text-sm text-muted-foreground truncate max-w-[120px] md:max-w-[200px]">
+                      {selectedAgent.user?.email}
+                    </span>
+                    <span className="text-muted-foreground/40 hidden sm:inline">•</span>
+
+                    <Badge
+                      className={`text-[9px] uppercase tracking-wider shrink-0 px-2 py-0.5 ${getRoleBadgeColors(selectedAgent.role || "AGENT")}`}
+                    >
+                      {selectedAgent.role ?? "AGENT"}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedAgentId(null)}
+                className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors shrink-0"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </header>
+
+            <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 md:space-y-8">
+              <div>
+                <h3 className="text-xs md:text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3 md:mb-4">
+                  Performance Metrics
+                </h3>
+                <div className="grid grid-cols-3 gap-2 md:gap-3">
+                  <div className="p-3 md:p-4 rounded-[10px] bg-muted/40 border border-border flex flex-col items-center text-center">
+                    <MessageSquare className="w-4 h-4 md:w-5 md:h-5 text-blue-500 mb-1.5 md:mb-2 opacity-80" />
+                    <span className="text-xl md:text-2xl font-bold text-foreground">
+                      {agentStats.handledChats.length}
+                    </span>
+                    <span className="text-[9px] md:text-[10px] uppercase font-semibold text-muted-foreground mt-1">
+                      Chats Handled
+                    </span>
+                  </div>
+                  <div className="p-3 md:p-4 rounded-[10px] bg-muted/40 border border-border flex flex-col items-center text-center">
+                    <Users className="w-4 h-4 md:w-5 md:h-5 text-blue-500 mb-1.5 md:mb-2 opacity-80" />
+                    <span className="text-xl md:text-2xl font-bold text-foreground">
+                      {agentStats.messagesSentCount}
+                    </span>
+                    <span className="text-[9px] md:text-[10px] uppercase font-semibold text-muted-foreground mt-1">
+                      Messages Sent
+                    </span>
+                  </div>
+                  {/* static for now  */}
+                  <div className="p-3 md:p-4 rounded-[10px] bg-muted/40 border border-border flex flex-col items-center text-center">
+                    <Clock className="w-4 h-4 md:w-5 md:h-5 text-emerald-500 mb-1.5 md:mb-2 opacity-80" />
+                    <span className="text-xl md:text-2xl font-bold text-foreground">2m 14s</span>
+                    <span className="text-[9px] md:text-[10px] uppercase font-semibold text-muted-foreground mt-1">
+                      Avg Response
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-xs md:text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3 md:mb-4">
+                  Recent Conversations
+                </h3>
+                <div className="space-y-3">
+                  {agentConversationsQuery.isLoading ? (
+                    <div className="flex justify-center p-6">
+                      <span className="text-sm text-muted-foreground animate-pulse">Loading conversations...</span>
+                    </div>
+                  ) : agentStats.handledChats.length === 0 ? (
+                    <div className="flex flex-col items-center text-center border border-dashed border-border p-6 rounded-[10px] bg-muted/20">
+                      <AlertCircle className="w-8 h-8 text-muted-foreground/50 mb-2" />
+                      <p className="text-sm font-medium text-muted-foreground">No recent conversations.</p>
+                      <p className="text-xs text-muted-foreground/70 mt-1">
+                        This agent hasn't replied to any tickets yet.
+                      </p>
+                    </div>
+                  ) : (
+                    agentStats.handledChats.map((chat) => (
+                      <div
+                        key={chat.id}
+                        className="p-3 md:p-4 rounded-[12px] bg-background border border-border hover:border-primary/30 transition-colors shadow-sm flex flex-col gap-3"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <h4 className="text-sm font-semibold text-foreground truncate">{chat.customerName}</h4>
+                            <p className="text-xs text-muted-foreground truncate mt-0.5 pr-2">"{chat.lastMessage}"</p>
+                          </div>
+                          {chat.status === "OPEN" ? (
+                            <div className="flex items-center gap-1 text-emerald-600 bg-emerald-500/10 px-2 py-1 rounded-[4px] shrink-0">
+                              <CheckCircle2 className="w-3 h-3" />
+                              <span className="text-[10px] font-bold uppercase">Active</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1 text-muted-foreground bg-muted px-2 py-1 rounded-[4px] shrink-0">
+                              <Archive className="w-3 h-3" />
+                              <span className="text-[10px] font-bold uppercase">Closed</span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex justify-end pt-2 border-t border-border/50">
+                          <button
+                            type="button"
+                            className="text-[10px] md:text-xs font-medium text-primary hover:text-primary/80 border border-primary/20 hover:border-primary/50 px-3 py-1.5 rounded-[6px] transition-colors"
+                          >
+                            View Transcript
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+      </aside>
+    </div>
+  );
+}
+
+function AgentPagination({
+  page,
+  totalPages,
+  onPageChange,
+}: {
+  page: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}) {
+  if (totalPages <= 1) return null;
+
+  return (
+    <div className="flex items-center justify-center gap-3 py-2">
+      <button
+        type="button"
+        onClick={() => onPageChange(page - 1)}
+        disabled={page <= 1}
+        className="inline-flex size-8 items-center justify-center rounded-sm border border-muted bg-background text-muted-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
+        title="Previous page"
+      >
+        <ChevronLeft className="size-4" />
+      </button>
+      <span className="text-sm font-medium tabular-nums">
+        {page} / {totalPages}
+      </span>
+      <button
+        type="button"
+        onClick={() => onPageChange(page + 1)}
+        disabled={page >= totalPages}
+        className="inline-flex size-8 items-center justify-center rounded-sm border border-muted bg-background text-muted-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
+        title="Next page"
+      >
+        <ChevronRight className="size-4" />
+      </button>
+    </div>
+  );
+}

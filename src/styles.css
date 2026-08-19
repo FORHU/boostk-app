@@ -2,13 +2,19 @@
 
 @import 'tw-animate-css';
 
-@import "tw-animate-css";
-
 @import "shadcn/tailwind.css";
 
-@import "@fontsource-variable/geist";
+@import "@fontsource/poppins/400.css";
+@import "@fontsource/poppins/500.css";
+@import "@fontsource/poppins/600.css";
+@import "@fontsource/poppins/700.css";
+@import "@fontsource/poppins/800.css";
 
 @custom-variant dark (&:is(.dark *));
+
+html {
+  font-size: clamp(13px, 0.5vw + 10px, 16px);
+}
 
 body {
   @apply m-0;
@@ -55,7 +61,16 @@ code {
     oklch(0.205 0 0);
   --destructive:
     oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.577 0.245 27.325);
+  /* FIX: was identical to --destructive (invisible text on destructive-filled buttons/badges).
+     Near-white text against this saturated mid-lightness red clears WCAG AA. */
+  --destructive-foreground:
+    oklch(0.985 0 0);
+  /* NEW: use this (not --destructive) for red text sitting directly on --background.
+     --destructive itself is only 3.76:1 against white — fails AA (4.5:1) at normal text
+     size. This darker value is a starting point; re-check with a contrast tool against
+     your final --background before shipping. */
+  --destructive-text:
+    oklch(0.45 0.2 27.325);
   --border:
     oklch(0.922 0 0);
   --input:
@@ -73,7 +88,7 @@ code {
   --chart-5:
     oklch(0.424 0.199 265.638);
   --radius:
-    0;
+    0.625rem;
   --sidebar:
     oklch(0.985 0 0);
   --sidebar-foreground:
@@ -123,7 +138,15 @@ code {
     oklch(0.985 0 0);
   --destructive:
     oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.637 0.237 25.331);
+  /* FIX: was identical-family-but-not-matching-bg (oklch(0.637 0.237 25.331)), and either
+     way too light against this lighter dark-mode destructive fill. Dark text reads clearly
+     against it instead. */
+  --destructive-foreground:
+    oklch(0.145 0 0);
+  /* NEW: matches --destructive here — this lighter red already has enough contrast
+     against the near-black dark --background. Re-verify with a contrast tool. */
+  --destructive-text:
+    oklch(0.704 0.191 22.216);
   --border:
     oklch(1 0 0 / 10%);
   --input:
@@ -175,6 +198,7 @@ code {
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive-text: var(--destructive-text);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -198,13 +222,47 @@ code {
   --font-heading:
     var(--font-sans);
   --font-sans:
-    'Geist Variable', sans-serif;
+    'Poppins', sans-serif;
   --radius-2xl:
     calc(var(--radius) * 1.8);
   --radius-3xl:
     calc(var(--radius) * 2.2);
   --radius-4xl:
     calc(var(--radius) * 2.6);
+}
+
+/*
+ * BOOSTK marketing palette, from the Figma landing design.
+ *
+ * Deliberately separate from the shadcn tokens above: those are theme-aware (they flip
+ * under `.dark`) and drive the authenticated app. These are fixed brand colours the
+ * public marketing page paints with, and must NOT flip with the theme — the hero is
+ * brand-blue in both. Figma names them `brand/primary`, `neutral/ink` and so on.
+ */
+@theme {
+  --color-brand: #1447e6;
+  /* Derived, not in the Figma file: hover/active state for brand-filled buttons. */
+  --color-brand-dark: #0f37b8;
+  --color-gold: #f5b400;
+  --color-gold-dark: #d99e00;
+  --color-ink: #0f1424;
+  --color-ink-body: #4a5165;
+  /* CHECK: ~3.18:1 against white — fails WCAG AA (4.5:1) for normal-size text, only
+     clears the large-text minimum (3:1). Confirm this is only used for large headings,
+     icons, or borders — not normal-size body copy — before shipping as-is. */
+  --color-ink-muted: #8a90a3;
+  --color-surface-soft: #f5f7fd;
+  --color-hairline: #e4e7f2;
+  /* Backs every image frame, so a slow/broken photo leaves a brand-tinted block. */
+  --color-image-ph: #dee5fa;
+}
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 @layer base {

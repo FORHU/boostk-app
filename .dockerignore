@@ -1,0 +1,14 @@
+node_modules
+dist
+.git
+.github
+.env
+.output
+.vscode
+.docs
+
+# Not needed at build or runtime — keeps the build context small.
+# brand-logo.png alone is ~4.7 MB of source art.
+docs
+README.md
+scripts/brand-logo.png

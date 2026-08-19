@@ -1,0 +1,22 @@
+services:
+
+  local-db:
+    image: postgres:15-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: localuser
+      POSTGRES_PASSWORD: passWord123!
+      POSTGRES_DB: localdata
+    volumes:
+      - boostk_local:/var/lib/postgresql/data
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+volumes:
+ boostk_local:
+
+  

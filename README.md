@@ -1,193 +1,193 @@
-Welcome to your new TanStack Start app! 
+# Welcome to BOOSTK
 
-# Getting Started
+Boostk is a dual-purpose platform combining a real-time agent-customer chat support system with a global business services hub. It is designed to connect Korean and Japanese SMEs with English-speaking professionals in the Philippines to bridge global market entry barriers.
 
-To run this application:
+This application is built with a modern, high-performance stack:
+* **Frontend/SSR:** TanStack Start (Full-stack React)
+* **Runtime & Package Manager:** Bun
+* **Database:** PostgreSQL with Prisma ORM
+* **Real-Time:** RabbitMQ topic exchange + standalone Socket.io relay server (SSE fallback)
 
-```bash
+## 🛠 Prerequisites
+Before setting up the project, make sure you have the following installed on your machine:
+
+1. **Bun (v1.1+):** Our mandatory runtime and package manager. (Do not use npm, yarn, or pnpm). 
+   * *Windows Installation (PowerShell as Admin):* `powershell -c "irm bun.sh/install.ps1 | iex"`
+   * Note: Restart your terminal after installation to ensure the bun command is recognized. You can verify the installation by running: bun -v
+
+2. **Docker Desktop:** Required to run our local PostgreSQL database container easily.
+
+3. **Git:** For version control and cloning the repository.
+
+### Getting Started
+
+# Frontend & Core
+Navigate to the root directory and install the required dependencies:
 bun install
-bun --bun run dev
-```
 
-# Building For Production
+### Creating Local database
+Create a file name: Dockerfile
 
-To build this application for production:
+1. # Use the official Bun image instead of Node
+FROM oven/bun:alpine
 
-```bash
-bun --bun run build
-```
+2. # Goes to the app directory
+WORKDIR /app
 
-## Testing
+3. # Copy the package.json (and lock file if you have one)
+COPY package.json bun.lockb* ./
 
-This project uses [Vitest](https://vitest.dev/) for testing. You can run the tests with:
+4. # Install dependencies 
+RUN bun install
 
-```bash
-bun --bun run test
-```
+5. # Copy everything else in the file (respecting .dockerignore)
+COPY . .
 
-## Styling
+6. # Set port env variable (Removed spaces around the '=' to fix the warning)
+ENV PORT=3030
 
-This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
+7. # Start the app (Use CMD instead of RUN) Replace "start" with whatever your actual script is in package.json (e.g., "dev" or "index.ts")
+CMD ["bun", "run", "start"]
 
-### Removing Tailwind CSS
+### Create a dockerignore
+Create a file name: .dockerignore
 
-If you prefer not to use Tailwind CSS:
+1. # put inside the .dockerignore file
+node_modules
+.DS_Store
+dist
+dist-ssr
+*.local
+.env
+.nitro
+.tanstack
+.wrangler
+.output
+.vinxi
+__unconfig*
+todos.json
+prisma/generated
 
-1. Remove the demo pages in `src/routes/demo/`
-2. Replace the Tailwind import in `src/styles.css` with your own styles
-3. Remove `tailwindcss()` from the plugins array in `vite.config.ts`
-4. Uninstall the packages: `bun install @tailwindcss/vite tailwindcss -D`
+### Create compose file
+Create a file name: compose.yaml / docker-compose.yaml
+
+# content inside of a compose file
+1. # Define the list of services to be managed
+services:
+
+2. # Name of the database service
+local-db: 
+
+3. # Use the official PostgreSQL image from Docker Hub
+image: postgres:latest
+
+4. # Map the container's ports to your host machine and Map host port 5432 to container port 5432
+ports:
+   - "5432:5432"
+
+5. # Set variables for database initialization
+environment:
+
+6. # Set the default username
+POSTGRES_USER: user
+
+7. # Set the password for the database user
+POSTGRES_PASSWORD: password123
+
+8. # Set the initial database name
+POSTGRES_DB: my_data
+
+9.  # Define where to store database data persistently
+volumes:
+   - boostk_local:/var/lib/postgresql/data
+
+10. # Define named volumes for shared data storage
+volumes:
+ boostk_local:
+11. # Docker Setup Buil
+docker build -t (name) .
+### compose snippet code
+services:
+  local-db:
+    image: postgres:latest
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: my_data
+    volumes:
+      - boostk_local:/var/lib/postgresql/data
+volumes:
+ boostk_local:
 
 
 
-## Routing
+# Database Configuration
+Create a .env file in the root directory (boostk-app/) and populate it with the following configuration (replace the DATABASE_URL with your own from Postgresql, and update the API keys):
 
-This project uses [TanStack Router](https://tanstack.com/router) with file-based routing. Routes are managed as files in `src/routes`.
+VITE_SOCKET_URL=http://localhost:3001
 
-### Adding A Route
+DATABASE_URL=postgresql://postgres.[YOUR_USERNAME] [YOUR_PASSWORD]@localhost:5432/[YOUR_DATABASE_NAME]
 
-To add a new route to your application just add a new file in the `./src/routes` directory.
+BETTER_AUTH_SECRET=your_better_auth_secret_here
+BETTER_AUTH_URL=http://localhost:3000/
 
-TanStack will automatically generate the content of the route file for you.
+RABBITMQ_URL=amqp://[user]:[password]@[ip]:5672
 
-Now that you have two routes you can use a `Link` component to navigate between them.
+  FORHU_CHAT_URL=https://chat-dev.forhu.ai
 
-### Adding Links
+SUPPORT_LANGUAGE=en
 
-To use SPA (Single Page Application) navigation you will need to import the `Link` component from `@tanstack/react-router`.
+# Optional. Project whose support inbox receives chats started from the landing page.
+# Unset hides the "Chat with us" link.
+VITE_SUPPORT_PROJECT_ID=your_project_id_here
 
-```tsx
-import { Link } from "@tanstack/react-router";
-```
+# Initialize Database
+For first-time implementation, initialize the Prisma client, run migrations, and seed the database using the consolidated script:
+bun run setup-local-db
 
-Then anywhere in your JSX you can use it like so:
+# ⚠️ CAUTION
+Running this command includes prisma migrate reset which will completely reset your database and erase all existing data. Only use this for initial setup or when you explicitly need a clean state.
 
-```tsx
-<Link to="/about">About</Link>
-```
+# Alternative Manual Database Setup (Optional)
+If you prefer to run the steps individually or need more control:
 
-This will create a link that will navigate to the `/about` route.
+1. Generate Prisma Client:
+bun prisma generate
 
-More information on the `Link` component can be found in the [Link documentation](https://tanstack.com/router/v1/docs/framework/react/api/router/linkComponent).
+2. Reset/Apply Migrations: (Note: This will erase existing data):
+bun prisma migrate reset
 
-### Using A Layout
+3. Seed the Database:
+bun prisma db seed
 
-In the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you render `{children}` in the `shellComponent`.
+# Running the Project
+Run the development server from your terminal in the boostk-app root directory:
+bun run dev
 
-Here is an example layout that includes a header:
+### Real-Time Socket.io Relay
+The realtime layer needs two processes: the main app and the Socket.io relay (which subscribes to RabbitMQ and pushes events to the browser). Start both together:
 
-```tsx
-import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
+bun run dev:all
 
-export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      { charSet: 'utf-8' },
-      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'My App' },
-    ],
-  }),
-  shellComponent: ({ children }) => (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        <header>
-          <nav>
-            <Link to="/">Home</Link>
-            <Link to="/about">About</Link>
-          </nav>
-        </header>
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  ),
-})
-```
+Or run them in separate terminals:
+bun run dev          # main app (port 3000)
+bun run socket:dev   # Socket.io relay (port 3001, SOCKET_PORT to override)
 
-More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
+If the Socket.io relay is unreachable, the browser automatically falls back to the SSE stream (`/api/notification/sse`).
 
-## Server Functions
 
-TanStack Start provides server functions that allow you to write server-side code that seamlessly integrates with your client components.
-
-```tsx
-import { createServerFn } from '@tanstack/react-start'
-
-const getServerTime = createServerFn({
-  method: 'GET',
-}).handler(async () => {
-  return new Date().toISOString()
-})
-
-// Use in a component
-function MyComponent() {
-  const [time, setTime] = useState('')
-  
-  useEffect(() => {
-    getServerTime().then(setTime)
-  }, [])
-  
-  return <div>Server time: {time}</div>
-}
-```
-
-## API Routes
-
-You can create API routes by using the `server` property in your route definitions:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-import { json } from '@tanstack/react-start'
-
-export const Route = createFileRoute('/api/hello')({
-  server: {
-    handlers: {
-      GET: () => json({ message: 'Hello, World!' }),
-    },
-  },
-})
-```
-
-## Data Fetching
-
-There are multiple ways to fetch data in your application. You can use TanStack Query to fetch data from a server. But you can also use the `loader` functionality built into TanStack Router to load the data for a route before it's rendered.
-
-For example:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-
-export const Route = createFileRoute('/people')({
-  loader: async () => {
-    const response = await fetch('https://swapi.dev/api/people')
-    return response.json()
-  },
-  component: PeopleComponent,
-})
-
-function PeopleComponent() {
-  const data = Route.useLoaderData()
-  return (
-    <ul>
-      {data.results.map((person) => (
-        <li key={person.name}>{person.name}</li>
-      ))}
-    </ul>
-  )
-}
-```
-
-Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
-
-# Demo files
-
-Files prefixed with `demo` can be safely deleted. They are there to provide a starting point for you to play around with the features you've installed.
-
-# Learn More
-
-You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
-
-For TanStack Start specific documentation, visit [TanStack Start](https://tanstack.com/start).
+# Seed Account
+| Role   | Email                            |
+|        |                                  |
+| Admin  | forhu-admin@example.com          |
+| Admin  | organization1-admin@example.com  |
+| Agent  | forhu-agent@example.com          |
+| Agent  | organization1-agent@example.com  |
+| Agent  | organization1-user1@example.com  |
+| Member | organization1-user2@example.com  |
+| Member | organization1-user3@example.com  |
+| Member | forhu-user1@example.com          |
+| Member | forhu-user2@example.com          |
+| Member | forhu-user3@example.com          |

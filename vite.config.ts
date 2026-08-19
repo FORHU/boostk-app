@@ -13,7 +13,16 @@ const config = defineConfig({
     tailwindcss(),
     tanstackStart(),
     viteReact(),
-    nitro({ preset: "bun", plugins: ["./src/modules/plugins/rabbitmq.plugin.ts"] }),
+    nitro({
+      preset: "bun",
+      plugins: ["./src/modules/plugins/rabbitmq.plugin.ts"],
+      // Always let the browser/CDN revalidate the SW so PWA updates are picked up promptly
+      // (the #1 "my PWA won't update" gotcha is a long-cached sw.js). The only manifest is
+      // generated per project at /support/<projectSlug>/manifest, which sets its own TTL.
+      routeRules: {
+        "/sw.js": { headers: { "cache-control": "no-cache" } },
+      },
+    }),
   ],
   build: {
     rollupOptions: {

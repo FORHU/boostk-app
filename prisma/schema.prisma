@@ -20,9 +20,16 @@ model User {
   sessions      Session[]
   accounts      Account[]
 
+  // Platform-level role, a tier ABOVE organizations (see auth/roles.ts).
+  // Null for every ordinary user; "staff" grants the BOOSTK team access to the
+  // global triage inbox across all orgs. Deliberately NOT a Member role: it
+  // confers no authority inside any organization.
+  platformRole String?
+
   members        Member[]
   invitations    Invitation[]
   ticketMessages TicketMessage[]
+  triagedTickets Ticket[]        @relation("TicketTriagedBy")
 
   @@map("users")
 }
@@ -88,6 +95,7 @@ model Organization {
   members     Member[]
   invitations Invitation[]
   projects    Project[]
+  integrations Integration[]
 
   @@unique([slug])
   @@map("organizations")
@@ -102,6 +110,8 @@ model Member {
   role           String       @default("member")
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
+
+  assignedTickets Ticket[]
 
   @@index([organizationId])
   @@index([userId])
@@ -151,6 +161,8 @@ model Customer {
   email    String
   phone    String?
   metadata String?
+  // Detected language of the customer (English name, e.g. "Korean"); agent replies are translated into it.
+  language String?
 
   projectId String
   project   Project @relation(fields: [projectId], references: [id])
@@ -164,6 +176,21 @@ model Customer {
   @@map("customers")
 }
 
+model Integration {
+  id             String       @id @default(cuid())
+  organizationId String
+  provider       String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  // Assuming your organization model is named 'Organization'
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  // An org should only have one active connection per provider
+  @@unique([organizationId, provider])
+  @@map("integrations")  
+}
+
 model Ticket {
   id              String         @id @default(cuid())
   referenceNumber String         @unique
@@ -175,11 +202,46 @@ model Ticket {
   customerId String
   customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
 
+  // The org member (role >= agent) responsible for this ticket. Nullable: a
+  // ticket starts unassigned and is claimed from the ticket detail panel.
+  assignedAgentId String?
+  assignedAgent   Member? @relation(fields: [assignedAgentId], references: [id], onDelete: SetNull)
+
+  // --- Global intake / triage (see docs/global-chat-triage.md) ---
+  //
+  // A chat started from the public /chat route lands in the seeded BOOSTK intake
+  // project with no organization behind it yet. Triage then creates a NEW ticket
+  // in the target project; these fields tie the two halves together.
+  //
+  // On the ROUTED ticket: points back at the intake conversation it came from.
+  intakeTicketId String? @unique
+  intakeTicket   Ticket? @relation("TicketIntake", fields: [intakeTicketId], references: [id], onDelete: SetNull)
+  // On the INTAKE ticket: the ticket triage created from it.
+  routedTicket   Ticket? @relation("TicketIntake")
+
+  // Set on the intake ticket when it is routed. The triage queue is
+  // `projectId = <intake> AND status = OPEN`, so no new TicketStatus is needed.
+  routedAt    DateTime?
+  triagedById String?
+  triagedBy   User?     @relation("TicketTriagedBy", fields: [triagedById], references: [id], onDelete: SetNull)
+  // Why an intake chat was closed without being routed ("spam" | "no_fit" | "resolved").
+  // Null on routed tickets, which record their outcome via `routedTicket` instead.
+  triageNote  String?
+
+  // 1-5 CSAT stars the visitor gave after the conversation closed (see GlobalChat).
+  // Null until rated; written once and never overwritten.
+  satisfactionScore Int?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   ticketMessages TicketMessage[]
+  messageReads   MessageRead[]
+  attachments    Attachment[]
 
+  @@index([assignedAgentId])
+  @@index([projectId, status])
+  @@index([triagedById])
   @@map("tickets")
 }
 
@@ -187,6 +249,12 @@ model TicketMessage {
   id          String                   @id @default(cuid())
   content     String
   contentType TicketMessageContentType @default(TEXT)
+
+  // Cached translation for cross-language support chat (see ticket-message.translation.ts).
+  // `content` is what the sender typed; `translatedContent` is the support-language version.
+  translatedContent String?
+  sourceLang        String?
+  targetLang        String?
 
   ticketId String
   ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
@@ -197,10 +265,58 @@ model TicketMessage {
   customerId String?
   customer   Customer? @relation(fields: [customerId], references: [id])
 
+  // Set when contentType is IMAGE or FILE. `content` then holds the attachment URL
+  // (see attachment.service.ts) and this relation carries the filename/size/mime
+  // needed to render the bubble without parsing the URL.
+  attachmentId String?     @unique
+  attachment   Attachment? @relation(fields: [attachmentId], references: [id], onDelete: SetNull)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  messageReads MessageRead[]
+
   @@map("ticket_messages")
+}
+
+model MessageRead {
+  id        String   @id @default(cuid())
+  messageId String
+  ticketId  String
+  userId    String
+  readAt    DateTime @default(now())
+
+  message TicketMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  ticket  Ticket        @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@index([ticketId, userId])
+  @@map("message_reads")
+}
+
+// Uploaded chat file, stored as bytes in Postgres rather than on disk or S3 —
+// the database is the only stateful service this app deploys with, so blobs kept
+// here survive redeploys with no volume or bucket to configure. Sizes are capped
+// hard (see ATTACHMENT_MAX_BYTES) precisely because this row lives in the DB.
+//
+// Rows are created before the message that references them, so an upload that is
+// never sent leaves an orphan — `ticketId` scopes it for access checks and cleanup.
+model Attachment {
+  id       String @id @default(cuid())
+  filename String
+  mimeType String
+  size     Int
+  bytes    Bytes
+
+  ticketId String
+  ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  message TicketMessage?
+
+  createdAt DateTime @default(now())
+
+  @@index([ticketId])
+  @@map("attachments")
 }
 
 enum TicketStatus {

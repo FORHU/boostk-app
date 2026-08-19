@@ -4,26 +4,58 @@ import { z } from "zod";
 import { REDIRECT_REASON } from "@/enums/enums";
 import { prisma } from "@/lib/prisma";
 import { requireAuthMiddleware } from "../auth/auth.middleware";
+import { getMemberRole, hasOrgRole, type OrgRole } from "../auth/roles";
 
 export const requireProjectMiddleware = createMiddleware({ type: "function" })
   .middleware([requireAuthMiddleware])
   .server(async ({ next, context, data }) => {
-    const result = z.object({ projectId: z.string() }).safeParse(data);
+    const result = z
+      .object({ projectId: z.string().optional(), projectSlug: z.string().optional() })
+      .refine((v) => v.projectId || v.projectSlug, "Project id or slug is required")
+      .safeParse(data);
 
     if (!result.success) {
       throw redirect({ to: "/dashboard/organizations", search: { reason: REDIRECT_REASON.SERVER_ERROR } });
     }
 
-    const project = await prisma.project.findFirst({
+    // URL resolution is slug-only; internal callers pass the cuid id. Matching each key
+    // against its own column (never id OR slug) keeps legacy cuid URLs out of the router.
+    const found = await prisma.project.findFirst({
       where: {
-        id: result.data.projectId,
+        ...(result.data.projectSlug ? { slug: result.data.projectSlug } : { id: result.data.projectId as string }),
         organization: { members: { some: { userId: context.authSession.user.id } } },
       },
+      // Pull the owning org's members (to resolve the caller's role) and its slug (to
+      // build the "back to projects" link without leaking the org's cuid).
+      include: { organization: { select: { members: true, slug: true } } },
     });
 
-    if (!project) {
+    if (!found) {
       throw redirect({ to: "/dashboard/organizations", search: { reason: REDIRECT_REASON.PERMISSION_DENIED } });
     }
 
-    return next({ context: { project } });
+    // Strip the joined organization back off so `project` stays a plain row, keeping only
+    // the org slug for navigation.
+    const { organization, ...project } = found;
+    const member = organization.members.find((m) => m.userId === context.authSession.user.id);
+    const role = getMemberRole(organization.members, context.authSession.user.id);
+
+    return next({
+      context: { project: { ...project, organizationSlug: organization.slug }, role, memberId: member?.id ?? null },
+    });
   });
+
+/**
+ * Wraps `requireProjectMiddleware` and additionally requires the caller's role
+ * in the owning org to meet or exceed `minRole`.
+ */
+export const requireProjectRole = (minRole: OrgRole) =>
+  createMiddleware({ type: "function" })
+    .middleware([requireProjectMiddleware])
+    .server(async ({ next, context }) => {
+      if (!hasOrgRole(context.role, minRole)) {
+        throw redirect({ to: "/dashboard/organizations", search: { reason: REDIRECT_REASON.PERMISSION_DENIED } });
+      }
+
+      return next();
+    });

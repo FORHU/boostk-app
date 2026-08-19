@@ -1,5 +1,7 @@
 node_modules
 .DS_Store
+# Filled-in production secrets — only app.env.example belongs in git.
+app.env
 dist
 dist-ssr
 *.local
@@ -12,6 +14,12 @@ dist-ssr
 __unconfig*
 todos.json
 
+# This is a Bun project — keep only bun.lock (no npm/yarn/pnpm lockfiles).
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
 prisma/generated
 
 /docs
+

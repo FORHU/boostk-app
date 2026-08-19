@@ -1,19 +1,13 @@
-import { prisma } from "@/lib/prisma";
+const PREFIX = "TK";
 
-export async function generateTicketReferenceNumber(): Promise<string> {
-  const prefix = "TK";
+// Characters that aren't easily confused (No 0, O, 1, I, L)
+const CHARSET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
+const REFERENCE_LENGTH = 6;
 
-  // Characters that aren't easily confused (No 0, O, 1, I, L)
-  const charset = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
+export function generateTicketReferenceNumber(): string {
   let result = "";
-  for (let i = 0; i < 6; i++) {
-    result += charset.charAt(Math.floor(Math.random() * charset.length));
+  for (let i = 0; i < REFERENCE_LENGTH; i++) {
+    result += CHARSET.charAt(Math.floor(Math.random() * CHARSET.length));
   }
-
-  const reference = `${prefix}-${result}`;
-
-  const exists = await prisma.ticket.findUnique({ where: { referenceNumber: reference } });
-  if (exists) return generateTicketReferenceNumber();
-
-  return reference;
+  return `${PREFIX}-${result}`;
 }

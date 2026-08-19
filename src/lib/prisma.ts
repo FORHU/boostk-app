@@ -1,9 +1,10 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { withAccelerate } from "@prisma/extension-accelerate";
+import { env } from "@/env";
 import { PrismaClient } from "../../prisma/generated/client";
 
 const adapter = new PrismaPg({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: env.DATABASE_URL,
 });
 
 export const prisma = new PrismaClient({

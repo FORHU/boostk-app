@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { Button } from "@/components/ui/button";
 
 const NotFound = () => {
   return (
@@ -21,14 +22,14 @@ const NotFound = () => {
           d="M178.832 515.447C140.884 515.447 135.282 509.96 134.728 505.534C134.488 503.616 135.069 501.907 136.455 500.454C146.682 489.731 205.591 494.266 287.127 500.545C298.498 501.421 310.262 502.326 322.323 503.222C404.707 509.344 437.872 508.547 444.692 500.273C446.09 498.576 446.382 496.459 445.604 493.612C442.346 481.664 398.718 481.572 382.186 482.54C381.404 482.58 380.726 481.986 380.68 481.201C380.635 480.416 381.234 479.741 382.02 479.695C388.341 479.324 443.901 476.534 448.356 492.864C449.383 496.631 448.904 499.648 446.892 502.088C439.196 511.424 407.712 512.426 322.111 506.066C310.047 505.17 298.282 504.264 286.908 503.389C209.193 497.404 147.81 492.676 138.519 502.424C137.732 503.25 137.426 504.126 137.558 505.182C137.911 508.006 144.694 514.34 199.97 512.134C230.844 510.902 261.867 507.54 262.177 507.506C262.953 507.42 263.664 507.985 263.749 508.769C263.834 509.551 263.269 510.256 262.486 510.341C262.176 510.374 231.068 513.746 200.097 514.981C192.069 515.3 185.019 515.447 178.832 515.447Z"
           fill="var(--background)"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
         ></path>
         <path
           d="M344.137 417.139C366.983 411.831 389.807 426.05 395.115 448.896C400.421 471.743 386.203 494.567 363.356 499.875C340.51 505.183 317.687 490.965 312.38 468.119C307.073 445.272 321.291 422.448 344.137 417.139Z"
           fill="var(--background)"
           stroke="var(--primary)"
-          stroke-width="1.00004"
+          strokeWidth="1.00004"
         ></path>
         <mask
           id="mask0_16372_94629"
@@ -43,7 +44,7 @@ const NotFound = () => {
             d="M344.137 417.139C366.983 411.831 389.807 426.05 395.115 448.896C400.421 471.743 386.203 494.567 363.356 499.875C340.51 505.183 317.687 490.965 312.38 468.119C307.073 445.272 321.291 422.448 344.137 417.139Z"
             fill="var(--background)"
             stroke="var(--background)"
-            stroke-width="1.00004"
+            strokeWidth="1.00004"
           ></path>
         </mask>
         <g mask="url(#mask0_16372_94629)">
@@ -66,7 +67,7 @@ const NotFound = () => {
             d="M344.137 417.139C366.983 411.831 389.807 426.05 395.115 448.896C400.421 471.743 386.203 494.567 363.356 499.875C340.51 505.183 317.687 490.965 312.38 468.119C307.073 445.272 321.291 422.448 344.137 417.139Z"
             fill="var(--background)"
             stroke="var(--background)"
-            stroke-width="1.00004"
+            strokeWidth="1.00004"
           ></path>
         </mask>
         <g mask="url(#mask1_16372_94629)">
@@ -90,90 +91,90 @@ const NotFound = () => {
             d="M344.137 417.139C366.983 411.831 389.807 426.05 395.115 448.896C400.421 471.743 386.203 494.567 363.356 499.875C340.51 505.183 317.687 490.965 312.38 468.119C307.073 445.272 321.291 422.448 344.137 417.139Z"
             fill="var(--background)"
             stroke="var(--background)"
-            stroke-width="1.00004"
+            strokeWidth="1.00004"
           ></path>
         </mask>
         <g mask="url(#mask2_16372_94629)">
           <path
             d="M374.873 475.342C362.251 462.992 347.704 459.136 347.704 459.136M374.873 475.342C375.631 475.352 376.374 475.372 377.148 475.373C383.106 469.372 387.24 463.571 390.094 458.495M374.873 475.342C357.193 475.086 343.749 472.362 333.654 468.77C334.306 441.626 343.989 423.539 349.053 415.88C350.65 415.7 352.271 415.6 353.916 415.6C355.385 415.6 356.835 415.675 358.265 415.818M390.094 458.495C369.967 437.204 350.338 439.379 350.338 439.379C350.338 439.379 369.966 437.204 390.094 458.495ZM390.094 458.495C391.204 456.521 392.124 454.661 392.883 452.94C384.559 441.206 370.142 433.246 362.351 432.02L360.549 431.597M360.549 431.597C355.338 430.777 352.093 431.477 352.093 431.477M360.549 431.597L365.676 417.239C363.282 416.561 360.809 416.072 358.265 415.818M358.265 415.818C354.951 421.177 346.385 438.312 346.385 472.307M384.582 466.598C367.461 449.916 348.582 449.038 348.582 449.038"
             stroke="var(--foreground)"
-            stroke-width="1.1133"
-            stroke-miterlimit="10"
-            stroke-linecap="round"
-            stroke-linejoin="round"
+            strokeWidth="1.1133"
+            strokeMiterlimit="10"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           ></path>
           <path
             d="M333.657 468.77C334.309 441.626 343.992 423.538 349.056 415.88C345.015 416.335 341.144 417.347 337.521 418.841C332.042 426.827 323.408 442.674 322.701 463.956C325.81 465.632 329.45 467.273 333.657 468.77Z"
             stroke="var(--foreground)"
-            stroke-width="1.1133"
-            stroke-miterlimit="10"
-            stroke-linecap="round"
-            stroke-linejoin="round"
+            strokeWidth="1.1133"
+            strokeMiterlimit="10"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           ></path>
           <path
             d="M337.521 418.841C322.743 424.934 312.108 439.013 310.979 455.705C313.601 458.156 317.401 461.099 322.701 463.956C323.408 442.674 332.042 426.827 337.521 418.841Z"
             stroke="var(--foreground)"
-            stroke-width="1.1133"
-            stroke-miterlimit="10"
-            stroke-linecap="round"
-            stroke-linejoin="round"
+            strokeWidth="1.1133"
+            strokeMiterlimit="10"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           ></path>
           <path
             d="M386.089 430.05C390.272 434.752 393.435 440.374 395.245 446.576C394.718 448.352 393.96 450.502 392.886 452.941C380.529 437.454 368.341 432.823 360.553 431.597L365.68 417.239C369.742 418.391 373.557 420.121 377.035 422.339M386.089 430.05L382.828 441.136M386.089 430.05C383.448 427.081 380.4 424.484 377.035 422.339M377.035 422.339L373.369 436.031"
             stroke="var(--foreground)"
-            stroke-width="1.1133"
-            stroke-miterlimit="10"
-            stroke-linecap="round"
-            stroke-linejoin="round"
+            strokeWidth="1.1133"
+            strokeMiterlimit="10"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           ></path>
           <path
             d="M392.884 452.941C393.959 450.502 394.716 448.352 395.243 446.576C396.361 450.409 396.972 454.458 396.972 458.652C396.972 459.281 396.952 459.904 396.925 460.525C378.775 485.947 364.777 496.925 356.082 501.648C355.366 501.684 354.645 501.703 353.919 501.703C349.397 501.703 345.04 501.002 340.945 499.71C346.563 497.13 351.633 494.437 356.172 491.674M392.884 452.941C392.897 452.958 392.91 452.972 392.923 452.989M392.884 452.941C392.125 454.662 392.17 454.638 391.06 456.612C391.125 456.68 390.03 458.428 390.095 458.496C390.03 458.426 388.949 460.656 388.884 460.586C386.031 465.661 377.418 475.379 377.557 475.379C377.418 475.379 372.904 479.471 370.434 481.534M370.434 481.534C370.468 481.53 370.499 481.529 370.533 481.525M370.434 481.534C366.353 484.943 361.627 488.353 356.172 491.674M356.172 491.674C356.275 491.654 356.383 491.642 356.485 491.622"
             stroke="var(--foreground)"
-            stroke-width="1.1133"
-            stroke-miterlimit="10"
-            stroke-linecap="round"
-            stroke-linejoin="round"
+            strokeWidth="1.1133"
+            strokeMiterlimit="10"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           ></path>
           <path
             d="M396.926 460.525C378.776 485.948 364.778 496.925 356.084 501.65C378.236 500.554 395.976 482.714 396.926 460.525Z"
             stroke="var(--foreground)"
-            stroke-width="1.1133"
-            stroke-miterlimit="10"
-            stroke-linecap="round"
-            stroke-linejoin="round"
+            strokeWidth="1.1133"
+            strokeMiterlimit="10"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           ></path>
           <path
             d="M320.268 485.49C325.538 492.09 332.703 497.11 340.946 499.711C346.562 497.131 351.633 494.437 356.173 491.675C345.925 493.567 329.899 488.87 320.268 485.49Z"
             stroke="var(--foreground)"
-            stroke-width="1.1133"
-            stroke-miterlimit="10"
-            stroke-linecap="round"
-            stroke-linejoin="round"
+            strokeWidth="1.1133"
+            strokeMiterlimit="10"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           ></path>
           <path
             d="M356.172 491.675C361.627 488.354 366.353 484.944 370.434 481.535C339.493 484.699 320.401 475.121 312.293 469.668C313.84 475.526 316.593 480.892 320.266 485.491C329.898 488.87 345.924 493.567 356.172 491.675Z"
             stroke="var(--foreground)"
-            stroke-width="1.1133"
-            stroke-miterlimit="10"
-            stroke-linecap="round"
-            stroke-linejoin="round"
+            strokeWidth="1.1133"
+            strokeMiterlimit="10"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           ></path>
           <path
             d="M374.874 475.342C375.631 475.352 376.375 475.372 377.149 475.373C375.125 477.413 372.905 479.471 370.435 481.534C339.494 484.699 320.402 475.121 312.295 469.667C311.368 466.151 310.867 462.46 310.867 458.652C310.867 457.661 310.913 456.679 310.979 455.705C313.601 458.156 318.91 463.662 333.658 468.77M374.874 475.342C375.037 475.501 375.202 475.656 375.364 475.818M374.874 475.342C357.194 475.086 343.75 472.362 333.658 468.77M333.658 468.77C333.658 468.779 333.656 468.786 333.656 468.794"
             stroke="var(--foreground)"
-            stroke-width="1.1133"
-            stroke-miterlimit="10"
-            stroke-linecap="round"
-            stroke-linejoin="round"
+            strokeWidth="1.1133"
+            strokeMiterlimit="10"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           ></path>
         </g>
         <path
           d="M363.47 500.362C386.585 494.991 400.971 471.899 395.601 448.783C390.231 425.667 367.14 411.282 344.024 416.652C320.909 422.023 306.523 445.116 311.893 468.232C317.262 491.347 340.354 505.733 363.47 500.362Z"
           stroke="var(--foreground)"
-          stroke-width="1.11335"
-          stroke-miterlimit="10"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          strokeWidth="1.11335"
+          strokeMiterlimit="10"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         ></path>
         <path
           d="M432.877 385.061C432.877 385.061 429.94 375.512 421.371 372.085C415.415 369.703 408.559 370.326 402.39 371.4C390.893 373.399 380.86 377.971 369.959 381.878C369.959 381.878 374.61 380.165 393.706 389.467C400.739 392.894 408.783 395.552 416.825 395.372C423.287 395.228 433.185 393.389 432.877 385.061Z"
@@ -206,67 +207,67 @@ const NotFound = () => {
         <path
           d="M464.192 446.088L447.038 403.861L427.244 355.037"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         ></path>
         <path
           d="M468.15 438.831L485.304 380.109L503.778 343.821"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         ></path>
         <path
           d="M474.748 415.738L491.902 405.84"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         ></path>
         <path
           d="M485.306 380.108L476.729 360.974"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         ></path>
         <path
           d="M496.039 361.069L516.975 351.738"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         ></path>
         <path
           d="M450.336 411.779L457.594 382.747"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         ></path>
         <path
           d="M440.712 389.713L423.945 380.769"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         ></path>
         <path
           d="M472.995 467.201H458.687C453.861 467.201 449.718 463.77 448.819 459.029L443.738 432.232H487.944L482.863 459.029C481.964 463.77 477.821 467.201 472.995 467.201Z"
           fill="var(--foreground)"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         ></path>
         <path
           d="M277.384 410.737C250.665 410.738 234.615 387.034 228.912 366.187L228.719 365.456C227.629 361.264 230.145 356.982 234.337 355.894C238.531 354.81 242.811 357.319 243.9 361.511L244.043 362.054C248.383 377.92 260.178 396.052 279.099 395.005C286.644 394.58 292.721 391.614 297.675 385.939C308.057 374.045 312.697 348.151 311.662 335.099C311.387 331.644 313.966 328.622 317.419 328.349C320.898 328.075 323.896 330.653 324.169 334.105C325.324 348.631 323.789 379.874 309.491 396.253C301.723 405.151 291.796 409.999 279.981 410.665C279.103 410.713 278.237 410.737 277.384 410.737Z"
@@ -290,7 +291,7 @@ const NotFound = () => {
           <path
             d="M317.416 328.347C313.963 328.621 311.384 331.644 311.659 335.097C312.164 341.467 311.314 350.895 309.109 360.261C311.82 360.129 314.932 360.43 318.428 361.476C317.92 367.885 315.904 377.304 309.27 386.517C297.616 402.703 280.135 407.883 266.539 405.94C260.461 405.072 253.482 401.875 247.617 398.605C255.372 405.865 265.279 410.737 277.383 410.737C278.236 410.737 279.103 410.712 279.978 410.664C291.793 409.998 301.722 405.15 309.488 396.252C323.786 379.873 325.321 348.63 324.166 334.104C323.893 330.651 320.895 328.072 317.416 328.347Z"
             fill="var(--primary)"
-            fill-opacity="0.5"
+            fillOpacity="0.5"
           ></path>
         </g>
         <mask
@@ -317,70 +318,70 @@ const NotFound = () => {
         <path
           d="M277.384 410.737C250.665 410.738 234.615 387.034 228.912 366.187L228.719 365.456C227.629 361.264 230.145 356.982 234.337 355.894C238.531 354.81 242.811 357.319 243.9 361.511L244.043 362.054C248.383 377.92 260.178 396.052 279.099 395.005C286.644 394.58 292.721 391.614 297.675 385.939C308.057 374.045 312.697 348.151 311.662 335.099C311.387 331.644 313.966 328.622 317.419 328.349C320.898 328.075 323.896 330.653 324.169 334.105C325.324 348.631 323.789 379.874 309.491 396.253C301.723 405.151 291.796 409.999 279.981 410.665C279.103 410.713 278.237 410.737 277.384 410.737Z"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         ></path>
         <path
           d="M261.974 394.496C262.604 391.558 255.57 396.158 249.68 400.439C251.86 402.27 254.199 403.909 256.691 405.318C258.795 401.905 261.365 397.337 261.974 394.496Z"
           fill="var(--primary)"
-          fill-opacity="0.5"
+          fillOpacity="0.5"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         ></path>
         <path
           d="M277.384 410.737C278.237 410.737 279.104 410.712 279.979 410.664C282.598 410.516 285.121 410.152 287.552 409.594C284.242 405.271 279.687 399.569 278.371 399.131C276.873 398.632 273.981 405.989 272.379 410.45C274.005 410.638 275.672 410.737 277.384 410.737Z"
           fill="var(--primary)"
-          fill-opacity="0.5"
+          fillOpacity="0.5"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         ></path>
         <path
           d="M244.041 362.054L243.898 361.511C242.809 357.319 238.529 354.81 234.335 355.893C230.144 356.982 227.627 361.265 228.717 365.456L228.91 366.187C230.804 373.107 233.845 380.34 238.03 386.918L252.322 380.113C248.477 374.568 245.708 368.145 244.041 362.054Z"
           fill="var(--primary)"
-          fill-opacity="0.5"
+          fillOpacity="0.5"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         ></path>
         <path
           d="M309.489 396.252C310.581 395 311.59 393.654 312.538 392.243C308.008 390.693 301.212 388.563 298.689 388.793C295.699 389.065 299.756 398.663 301.851 403.205C304.588 401.258 307.138 398.943 309.489 396.252Z"
           fill="var(--primary)"
-          fill-opacity="0.5"
+          fillOpacity="0.5"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         ></path>
         <path
           d="M309.74 370.613C309.265 371.564 315.133 375.845 319.093 378.59C320.353 374.883 321.348 371.029 322.118 367.164C317.314 368.119 310.209 369.675 309.74 370.613Z"
           fill="var(--primary)"
-          fill-opacity="0.5"
+          fillOpacity="0.5"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         ></path>
         <path
           d="M324.062 352.861C324.328 349.441 324.453 346.175 324.469 343.171C320.343 345.449 315.443 348.588 315.443 350.652C315.443 352.648 320.029 352.967 324.062 352.861Z"
           fill="var(--primary)"
-          fill-opacity="0.5"
+          fillOpacity="0.5"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         ></path>
         <path
           d="M259.45 260.017C259.45 260.017 247.804 293.761 254.075 320.039C260.346 346.316 283.339 354.977 283.339 354.977C283.339 354.977 266.319 360.949 270.201 370.206C274.083 379.463 288.714 373.49 293.493 370.505C298.27 367.519 304.242 358.56 305.139 352.588C306.034 346.615 305.736 343.331 305.736 343.331C305.736 343.331 325.146 341.24 338.285 330.491C338.285 330.491 349.931 339.748 358.293 337.956C366.654 336.164 378.598 321.234 377.404 307.796C376.21 294.359 368.446 294.359 363.667 296.449C358.889 298.54 357.097 300.63 357.097 300.63C357.097 300.63 363.966 292.268 357.097 280.622C350.23 268.976 337.986 268.08 337.986 268.08C337.986 268.08 334.403 248.969 323.652 241.802C312.903 234.635 274.679 227.17 259.45 260.017Z"
@@ -404,7 +405,7 @@ const NotFound = () => {
           <path
             d="M348.172 271.625C339.711 285.716 322.547 301.921 295.542 304.289C271.779 306.374 258.458 301.694 252.318 298.444C253.146 278.309 259.451 260.019 259.451 260.019C274.68 227.171 312.903 234.637 323.654 241.803C334.403 248.969 337.988 268.081 337.988 268.081C337.988 268.081 342.854 268.443 348.172 271.625ZM363.666 296.448C358.888 298.539 357.096 300.629 357.096 300.629C357.096 300.629 359.171 298.084 359.896 293.861C343.755 301.894 345.015 319.083 343.006 319.083C340.54 319.083 339.308 310.452 339.308 310.452C339.308 310.452 336.226 322.781 317.733 331.41C299.24 340.04 278.282 333.26 278.282 333.26C278.282 333.26 282.597 343.122 271.5 341.89C267.752 341.474 264.935 340.208 262.826 338.72C271.787 350.615 283.338 354.976 283.338 354.976C283.338 354.976 266.318 360.949 270.2 370.205C274.082 379.462 288.713 373.49 293.492 370.504C298.269 367.519 304.241 358.559 305.138 352.587C306.033 346.615 305.735 343.33 305.735 343.33C305.735 343.33 325.145 341.24 338.284 330.49C338.284 330.49 349.93 339.747 358.292 337.955C366.653 336.164 378.597 321.233 377.403 307.796C376.209 294.358 368.445 294.358 363.666 296.448Z"
             fill="var(--primary)"
-            fill-opacity="0.5"
+            fillOpacity="0.5"
           ></path>
         </g>
         <mask
@@ -446,87 +447,87 @@ const NotFound = () => {
           <path
             d="M305.735 343.331C305.735 343.331 285.857 344.948 271.955 327.838"
             stroke="var(--foreground)"
-            stroke-width="1.1133"
-            stroke-miterlimit="10"
-            stroke-linecap="round"
-            stroke-linejoin="round"
+            strokeWidth="1.1133"
+            strokeMiterlimit="10"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           ></path>
         </g>
         <path
           d="M259.45 260.017C259.45 260.017 247.804 293.761 254.075 320.039C260.346 346.316 283.339 354.977 283.339 354.977C283.339 354.977 266.319 360.949 270.201 370.206C274.083 379.463 288.714 373.49 293.493 370.505C298.27 367.519 304.242 358.56 305.139 352.588C306.034 346.615 305.736 343.331 305.736 343.331C305.736 343.331 325.146 341.24 338.285 330.491C338.285 330.491 349.931 339.748 358.293 337.956C366.654 336.164 378.598 321.234 377.404 307.796C376.21 294.359 368.446 294.359 363.667 296.449C358.889 298.54 357.097 300.63 357.097 300.63C357.097 300.63 363.966 292.268 357.097 280.622C350.23 268.976 337.986 268.08 337.986 268.08C337.986 268.08 334.403 248.969 323.652 241.802C312.903 234.635 274.679 227.17 259.45 260.017Z"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         ></path>
         <path
           d="M357.097 300.629C357.097 300.629 350.825 304.81 347.84 317.65"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         ></path>
         <path
           d="M368.607 306.12C367.869 308.308 365.871 309.61 364.145 309.027C362.418 308.445 361.617 306.198 362.355 304.011C363.092 301.823 365.09 300.521 366.817 301.104C368.544 301.686 369.346 303.931 368.607 306.12Z"
           fill="var(--background)"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         ></path>
         <path
           d="M374.785 310.006C374.047 312.193 372.049 313.495 370.322 312.912C368.596 312.33 367.794 310.084 368.532 307.896C369.27 305.708 371.268 304.406 372.995 304.99C374.721 305.573 375.523 307.818 374.785 310.006Z"
           fill="var(--background)"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         ></path>
         <path
           d="M376.102 315.824C375.565 317.413 374.115 318.359 372.861 317.935C371.607 317.512 371.025 315.881 371.56 314.292C372.097 312.703 373.547 311.758 374.801 312.181C376.056 312.605 376.638 314.236 376.102 315.824Z"
           fill="var(--background)"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         ></path>
         <path
           d="M368.22 323.819C366.062 327.714 361.74 329.447 358.567 327.689C355.393 325.931 354.568 321.348 356.726 317.453C358.884 313.558 363.206 311.825 366.38 313.583C369.553 315.341 370.377 319.924 368.22 323.819Z"
           fill="var(--background)"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         ></path>
         <path
           d="M283.34 354.977C283.34 354.977 288.715 357.962 296.18 355.872"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         ></path>
         <path
           d="M270.201 370.206C270.201 370.206 271.395 365.13 278.86 361.546"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         ></path>
         <path
           d="M277.666 374.686C277.666 374.686 280.652 367.519 285.729 364.234"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         ></path>
         <path
           d="M159.908 292.074C157.333 290.015 156.045 287.183 156.045 283.577V255.121H82.6557C78.7065 255.121 75.5097 253.792 73.0641 251.13C70.6173 248.471 69.3945 245.336 69.3945 241.732C69.3945 238.9 70.2093 236.239 71.8413 233.749L142.14 123.28C147.374 115.126 154.371 111.048 163.127 111.048C168.277 111.048 172.568 112.552 176.001 115.555C179.433 118.561 181.152 123.023 181.152 128.946V236.326H199.821C202.825 236.326 205.142 237.25 206.774 239.094C208.404 240.941 209.22 243.15 209.22 245.725C209.22 248.3 208.404 250.512 206.774 252.356C205.142 254.203 202.825 255.125 199.821 255.125H181.025V283.581C181.025 287.185 179.779 290.017 177.29 292.078C174.799 294.138 171.925 295.168 168.663 295.168C165.399 295.164 162.482 294.135 159.908 292.074ZM156.045 236.324V137.442L94.5021 236.324H156.045Z"
@@ -562,7 +563,7 @@ const NotFound = () => {
           <path
             d="M235.263 242.995C235.263 242.995 231.603 248.142 227.955 255.695C233.949 258.113 243.255 263.021 249.157 271.722C249.873 270.678 250.617 269.656 251.389 268.677C259.153 258.822 260.645 257.329 260.645 257.329C260.645 257.329 247.207 242.1 235.263 242.995Z"
             fill="var(--primary)"
-            fill-opacity="0.5"
+            fillOpacity="0.5"
           ></path>
         </g>
         <mask
@@ -589,46 +590,46 @@ const NotFound = () => {
         <path
           d="M235.262 242.995C235.262 242.995 222.72 260.614 220.928 278.531C219.137 296.448 221.227 308.393 226.602 312.872C231.977 317.351 237.352 315.559 240.338 311.379C243.325 307.198 238.547 292.566 238.547 292.566C238.547 292.566 243.624 278.531 251.388 268.677C259.152 258.822 260.645 257.329 260.645 257.329C260.645 257.329 247.206 242.1 235.262 242.995Z"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         ></path>
         <path
           d="M226.602 312.873C226.602 312.873 224.512 308.094 224.512 300.629"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         ></path>
         <path
           d="M234.665 314.664C234.665 314.664 231.68 309.588 231.381 300.928"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         ></path>
         <path
           d="M239.145 274.948C239.145 271.799 233.147 265.655 224.804 262.996C223.724 265.845 222.759 268.86 222.039 271.954C224.289 272.382 228.321 273.317 231.381 274.949C235.859 277.337 239.145 278.531 239.145 274.948Z"
           fill="var(--primary)"
-          fill-opacity="0.5"
+          fillOpacity="0.5"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         ></path>
         <path
           d="M234.534 244.07C233.488 245.645 231.444 248.874 229.234 253.137C231.44 253.716 233.887 254.643 236.457 256.136C245.714 261.51 247.506 262.108 244.52 254.344C242.66 249.509 238.371 246.182 234.534 244.07Z"
           fill="var(--primary)"
-          fill-opacity="0.5"
+          fillOpacity="0.5"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         ></path>
         <path
           d="M333.481 234.299C333.481 234.299 347.69 250.602 351.231 268.257C354.771 285.911 353.863 298.003 348.953 302.988C344.044 307.973 338.519 306.717 335.137 302.849C331.755 298.981 335.074 283.951 335.074 283.951C335.074 283.951 328.646 270.483 319.953 261.437C311.26 252.391 309.627 251.052 309.627 251.052C309.627 251.052 321.506 234.579 333.481 234.299Z"
@@ -652,7 +653,7 @@ const NotFound = () => {
           <path
             d="M333.481 234.297C321.506 234.577 309.627 251.052 309.627 251.052C309.627 251.052 311.259 252.391 319.952 261.437C321.569 263.12 323.109 264.957 324.543 266.833C327.584 261.761 333.568 253.773 343.337 248.477C338.515 240.077 333.481 234.297 333.481 234.297Z"
             fill="var(--primary)"
-            fill-opacity="0.5"
+            fillOpacity="0.5"
           ></path>
         </g>
         <mask
@@ -679,46 +680,46 @@ const NotFound = () => {
         <path
           d="M333.481 234.299C333.481 234.299 347.69 250.602 351.231 268.257C354.771 285.911 353.863 298.003 348.953 302.988C344.044 307.973 338.519 306.717 335.137 302.849C331.755 298.981 335.074 283.951 335.074 283.951C335.074 283.951 328.646 270.483 319.953 261.437C311.26 252.391 309.627 251.052 309.627 251.052C309.627 251.052 321.506 234.579 333.481 234.299Z"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         ></path>
         <path
           d="M348.951 302.988C348.951 302.988 350.563 298.029 349.831 290.6"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         ></path>
         <path
           d="M341.104 305.562C341.104 305.562 343.578 300.218 343.025 291.57"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         ></path>
         <path
           d="M332.751 266.477C332.443 263.343 337.808 256.641 345.85 253.175C347.205 255.904 348.461 258.81 349.48 261.819C347.283 262.467 343.363 263.792 340.478 265.715C336.254 268.533 333.103 270.044 332.751 266.477Z"
           fill="var(--primary)"
-          fill-opacity="0.5"
+          fillOpacity="0.5"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         ></path>
         <path
           d="M334.311 235.295C335.505 236.762 337.858 239.774 340.473 243.8C338.334 244.593 335.991 245.754 333.579 247.492C324.893 253.749 323.169 254.519 325.379 246.5C326.757 241.506 330.699 237.774 334.311 235.295Z"
           fill="var(--primary)"
-          fill-opacity="0.5"
+          fillOpacity="0.5"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         ></path>
         <path
           d="M234.086 227.757C234.086 227.757 230.391 240.229 231.776 245.31C233.162 250.391 239.628 245.772 246.095 251.315C252.562 256.858 258.557 266.83 283.04 268.677C307.522 270.525 322.314 257.32 327.396 249.929C332.477 242.538 332.015 233.761 340.792 233.299C349.569 232.837 342.178 215.746 339.406 212.974C339.406 212.974 356.498 187.567 356.498 181.101C356.498 174.634 340.33 176.02 320.466 182.025C320.466 182.025 305.685 174.172 278.892 178.791C252.1 183.409 244.247 191.263 244.247 191.263C244.247 191.263 210.988 195.42 208.678 199.578C206.369 203.735 213.298 221.289 234.086 227.757Z"
@@ -742,7 +743,7 @@ const NotFound = () => {
           <path
             d="M340.791 233.299C349.568 232.837 342.177 215.746 339.405 212.974C339.405 212.974 342.656 208.141 346.321 202.157C336.388 196.968 326.645 194.088 324.051 197.005C318.481 203.273 321.515 215.272 324.051 226.942C326.588 238.612 316.44 243.687 309.337 253.834C302.233 263.982 292.085 252.819 292.085 252.819C288.533 267.533 273.311 257.892 273.311 257.892C261.641 254.34 241.851 242.67 245.911 234.551C249.971 226.433 250.985 218.821 243.882 212.225C236.778 205.629 208.446 200.159 208.446 200.159C206.963 205.158 214.146 221.551 234.083 227.754C234.083 227.754 230.387 240.226 231.773 245.308C233.159 250.389 239.625 245.77 246.092 251.313C252.559 256.855 258.554 266.827 283.037 268.674C307.519 270.522 322.311 257.317 327.393 249.927C332.477 242.538 332.014 233.761 340.791 233.299Z"
             fill="var(--primary)"
-            fill-opacity="0.5"
+            fillOpacity="0.5"
           ></path>
         </g>
         <mask
@@ -784,7 +785,7 @@ const NotFound = () => {
           <path
             d="M304.67 236.094C305.01 239.017 298.515 242.173 290.164 243.144C281.814 244.115 274.768 242.533 274.429 239.61C274.089 236.687 280.584 233.531 288.933 232.56C297.285 231.588 304.329 233.171 304.67 236.094Z"
             fill="var(--primary)"
-            fill-opacity="0.5"
+            fillOpacity="0.5"
           ></path>
         </g>
         <mask
@@ -811,149 +812,148 @@ const NotFound = () => {
         <path
           d="M234.086 227.757C234.086 227.757 230.391 240.229 231.776 245.31C233.162 250.391 239.628 245.772 246.095 251.315C252.562 256.858 258.557 266.83 283.04 268.677C307.522 270.525 322.314 257.32 327.396 249.929C332.477 242.538 332.015 233.761 340.792 233.299C349.569 232.837 342.178 215.746 339.406 212.974C339.406 212.974 356.498 187.567 356.498 181.101C356.498 174.634 340.33 176.02 320.466 182.025C320.466 182.025 305.685 174.172 278.892 178.791C252.1 183.409 244.247 191.263 244.247 191.263C244.247 191.263 210.988 195.42 208.678 199.578C206.369 203.735 213.298 221.289 234.086 227.757Z"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
         ></path>
         <path
           d="M329.625 190.738C317.68 198.801 321.861 206.863 327.235 211.342C330.517 214.077 335.795 213.693 339.413 212.98C339.411 212.979 339.409 212.975 339.407 212.974C339.407 212.974 356.499 187.567 356.499 181.101C356.499 181.101 341.569 182.676 329.625 190.738Z"
           fill="var(--primary)"
-          fill-opacity="0.5"
+          fillOpacity="0.5"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
         ></path>
         <path
           d="M208.448 200.161C206.964 205.161 214.148 221.554 234.084 227.757C234.084 227.757 249.296 226.273 244.218 214.031C239.483 202.608 215.52 199.764 208.448 200.161Z"
           fill="var(--primary)"
-          fill-opacity="0.5"
+          fillOpacity="0.5"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
         ></path>
         <path
           d="M278.892 178.791C277.314 179.063 275.807 179.347 274.357 179.639C276.747 191.757 280.705 211.939 284.233 211.939C287.887 211.939 290.458 189.816 291.612 177.418C287.734 177.579 283.494 177.997 278.892 178.791Z"
           fill="var(--primary)"
-          fill-opacity="0.5"
+          fillOpacity="0.5"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
         ></path>
         <path
           d="M265.122 208.356C268.797 206.195 268.247 189.961 267.663 181.155C263.202 182.286 259.515 183.484 256.482 184.644C257.825 192.891 261.207 210.66 265.122 208.356Z"
           fill="var(--primary)"
-          fill-opacity="0.5"
+          fillOpacity="0.5"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
         ></path>
         <path
           d="M300.659 200.891C304.422 202.208 306.524 188.71 307.715 178.315C304.476 177.782 300.644 177.395 296.241 177.344C296.126 185.885 296.594 199.469 300.659 200.891Z"
           fill="var(--primary)"
-          fill-opacity="0.5"
+          fillOpacity="0.5"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
         ></path>
         <path
           d="M295.633 247.626C293.601 247.133 289.245 246.521 285.224 248.902C284.63 249.253 284.528 250.08 285.032 250.552L291.414 256.534C291.926 257.014 292.759 256.849 293.049 256.21L296.31 249.045C296.575 248.464 296.253 247.776 295.633 247.626Z"
           fill="var(--primary)"
-          fill-opacity="0.5"
+          fillOpacity="0.5"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         ></path>
         <path
           d="M280.484 237.612C281.365 239.923 281.018 242.202 279.708 242.701C278.397 243.2 276.622 241.732 275.741 239.42C274.86 237.109 275.207 234.83 276.517 234.331C277.827 233.832 279.603 235.301 280.484 237.612Z"
-          fill="black"
+          fill="var(--foreground)"
         ></path>
         <path
           d="M297.864 235.958C297.408 238.39 298.156 240.57 299.533 240.828C300.911 241.086 302.397 239.324 302.853 236.893C303.309 234.462 302.562 232.282 301.183 232.024C299.806 231.766 298.32 233.527 297.864 235.958Z"
-          fill="black"
+          fill="var(--foreground)"
         ></path>
         <path
           d="M293.048 256.21C293.048 256.21 284.532 267.781 276.768 256.134"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         ></path>
         <path
           d="M291.414 256.534C291.414 256.534 297.076 262.406 303.048 259.121C309.02 255.836 305.437 250.759 305.437 250.759"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         ></path>
         <path
           d="M265.422 228.364C265.422 228.364 267.512 220.898 277.367 222.69"
           stroke="var(--foreground)"
-          stroke-width="3.3399"
-          stroke-miterlimit="10"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          strokeWidth="3.3399"
+          strokeMiterlimit="10"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         ></path>
         <path
           d="M295.283 221.496C295.283 221.496 302.748 217.016 309.617 224.184"
           stroke="var(--foreground)"
-          stroke-width="3.3399"
-          stroke-miterlimit="10"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          strokeWidth="3.3399"
+          strokeMiterlimit="10"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         ></path>
         <path
           d="M259.748 248.371L266.914 250.163"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
-          stroke-linecap="round"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
+          strokeLinecap="round"
         ></path>
         <path
           d="M266.019 252.85L259.748 254.045"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
-          stroke-linecap="round"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
+          strokeLinecap="round"
         ></path>
         <path
           d="M267.212 256.135L262.732 258.523"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
-          stroke-linecap="round"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
+          strokeLinecap="round"
         ></path>
         <path
           d="M312.604 245.086L318.873 243.593"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
-          stroke-linecap="round"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
+          strokeLinecap="round"
         ></path>
         <path
           d="M313.797 248.073H317.977"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
-          stroke-linecap="round"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
+          strokeLinecap="round"
         ></path>
         <path
           d="M314.693 251.058L320.366 252.552"
           stroke="var(--foreground)"
-          stroke-width="1.1133"
-          stroke-miterlimit="10"
-          stroke-linecap="round"
+          strokeWidth="1.1133"
+          strokeMiterlimit="10"
+          strokeLinecap="round"
         ></path>
       </svg>
       <div className="text-center">
         <p className="mb-5">We couldn't find the page you are looking for </p>
-        <Link
-          to="/"
-          className="focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive inline-flex shrink-0 items-center justify-center gap-2 font-medium whitespace-nowrap transition-all outline-none focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:shrink-0 [&amp;_svg:not([class*='size-'])]:size-4 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-6 has-[&gt;svg]:px-4 rounded-lg text-base"
-        >
-          Back to home page
+        <Link to="/dashboard/organizations">
+          <Button size="lg" className="h-10 px-6 text-base">
+            Back to dashboard
+          </Button>
         </Link>
       </div>
     </div>
