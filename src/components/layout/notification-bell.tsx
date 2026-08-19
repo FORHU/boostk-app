@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils";
 interface NotificationBellProps {
   notifications: NotificationItem[];
   unreadCount: number;
-  markAsRead: (ticketId: string) => void;
+  markAsRead: (ticketId: string, isIntake?: boolean) => void;
 }
 
 function describeNotification(item: NotificationItem): { title: string; subtitle: string } {
@@ -79,12 +79,20 @@ export function NotificationBell({ notifications, unreadCount, markAsRead }: Not
                   <DropdownMenuItem
                     key={item.localId}
                     onClick={() => {
-                      const projectSlug = item.data?.projectSlug;
-                      if (typeof projectSlug !== "string") return;
+                      const isIntake = item.data?.isIntake === true;
                       const ticketId = item.data?.ticketId;
                       if (typeof ticketId === "string") {
-                        markAsRead(ticketId);
+                        markAsRead(ticketId, isIntake);
                       }
+                      if (isIntake) {
+                        navigate({
+                          to: "/dashboard/triage",
+                          search: { selectedTicketId: typeof ticketId === "string" ? ticketId : undefined },
+                        });
+                        return;
+                      }
+                      const projectSlug = item.data?.projectSlug;
+                      if (typeof projectSlug !== "string") return;
                       navigate({
                         to: "/dashboard/project/$projectSlug/tickets",
                         params: { projectSlug },

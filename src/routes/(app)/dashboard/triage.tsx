@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import type { TicketMessage } from "prisma/generated/client";
 import { useEffect, useMemo, useState } from "react";
+import z from "zod";
 import type { TicketMessageWithAttachment } from "@/components/chat-support/TicketChatMessageBubble";
 import TicketChatMessageBubble from "@/components/chat-support/TicketChatMessageBubble";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -35,7 +36,12 @@ import type { TriageFilter } from "@/modules/intake/intake.schema";
  * page calls — org roles grant nothing, so an org owner cannot reach another tenant's
  * intake by loading this URL.
  */
+const triageSearchSchema = z.object({
+  selectedTicketId: z.string().optional().catch(undefined),
+});
+
 export const Route = createFileRoute("/(app)/dashboard/triage")({
+  validateSearch: (search) => triageSearchSchema.parse(search),
   loader: ({ context }) => {
     context.queryClient.ensureQueryData(intakeQueries.queue());
     context.queryClient.ensureQueryData(intakeQueries.targets());
@@ -85,15 +91,15 @@ const isSameGroup = (m1?: TicketMessage, m2?: TicketMessage) => {
 
 function RouteComponent() {
   const queryClient = useQueryClient();
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const { selectedTicketId } = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const [selectedId, setSelectedId] = useState<string | null>(selectedTicketId ?? null);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<TriageFilter>("waiting");
 
   const { authSession } = Route.useRouteContext();
-  const { data: queue, isLoading } = useQuery(intakeQueries.queue(search || undefined, filter));
-  // Intake events fan out to each staff member's personal `user:<id>` room — there is no
-  // project room to join, since an untriaged chat belongs to no organization.
   const { lastMessage } = useSocket({ userId: authSession?.user.id });
+  const { data: queue, isLoading } = useQuery(intakeQueries.queue(search || undefined, filter));
 
   // New intake chats and their messages arrive on the staff member's personal channel
   // via publishToPlatformStaff.
@@ -102,6 +108,16 @@ function RouteComponent() {
       queryClient.invalidateQueries({ queryKey: intakeQueries.all });
     }
   }, [lastMessage, queryClient]);
+
+  // Sync the URL search param into local state when it changes (e.g. deep-link from bell).
+  useEffect(() => {
+    if (selectedTicketId) setSelectedId(selectedTicketId);
+  }, [selectedTicketId]);
+
+  const selectTicket = (id: string | null) => {
+    setSelectedId(id);
+    navigate({ search: { selectedTicketId: id ?? undefined }, replace: true });
+  };
 
   const items = queue?.items ?? [];
 
@@ -125,7 +141,7 @@ function RouteComponent() {
                   type="button"
                   onClick={() => {
                     setFilter(tab.value);
-                    setSelectedId(null);
+                    selectTicket(null);
                   }}
                   className={`flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
                     filter === tab.value
@@ -176,7 +192,7 @@ function RouteComponent() {
               <button
                 key={item.id}
                 type="button"
-                onClick={() => setSelectedId(item.id)}
+                onClick={() => selectTicket(item.id)}
                 className={`w-full text-left p-3 border rounded-md cursor-pointer flex flex-col gap-1 transition-all ${
                   selectedId === item.id
                     ? "bg-primary/5 border-primary/20 shadow-sm"
@@ -236,7 +252,7 @@ function RouteComponent() {
 
       <main className="flex-1 overflow-hidden bg-muted/20">
         {selectedId ? (
-          <TriageDetail key={selectedId} intakeTicketId={selectedId} onDone={() => setSelectedId(null)} />
+          <TriageDetail key={selectedId} intakeTicketId={selectedId} onDone={() => selectTicket(null)} />
         ) : (
           <EmptyState
             icon={

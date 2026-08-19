@@ -50,7 +50,7 @@ interface AppTopbarProps {
   connectionStatus?: "connecting" | "connected" | "reconnecting";
   notifications: NotificationItem[];
   unreadCount: number;
-  markAsRead: (ticketId: string) => void;
+  markAsRead: (ticketId: string, isIntake?: boolean) => void;
 }
 
 export default function AppTopbar({ connectionStatus, notifications, unreadCount, markAsRead }: AppTopbarProps) {
