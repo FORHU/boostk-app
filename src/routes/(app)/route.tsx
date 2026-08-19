@@ -1,5 +1,6 @@
 import { createFileRoute, Outlet, redirect, useMatch } from "@tanstack/react-router";
 import AppTopbar from "@/components/layout/app-topbar";
+import { NotificationProvider } from "@/contexts/notification-context";
 import { useSocket } from "@/hooks/use-socket";
 
 export const Route = createFileRoute("/(app)")({
@@ -30,14 +31,16 @@ function AppLayout() {
   const visibleUnreadCount = visibleNotifications.filter((n) => !n.read).length;
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden">
-      <AppTopbar
-        connectionStatus={status}
-        notifications={visibleNotifications}
-        unreadCount={visibleUnreadCount}
-        markAsRead={markAsRead}
-      />
-      <Outlet />
-    </div>
+    <NotificationProvider value={{ markAsRead }}>
+      <div className="flex flex-col h-screen overflow-hidden">
+        <AppTopbar
+          connectionStatus={status}
+          notifications={visibleNotifications}
+          unreadCount={visibleUnreadCount}
+          markAsRead={markAsRead}
+        />
+        <Outlet />
+      </div>
+    </NotificationProvider>
   );
 }

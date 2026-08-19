@@ -85,6 +85,10 @@ function RouteComponent() {
   });
   const hasCustomerMessage = ticketMessages?.some((m) => m.customerId != null) ?? false;
 
+  useEffect(() => {
+    setTicketStatus(ticket?.status ?? null);
+  }, [ticket?.status]);
+
   // Realtime: refetch the message list whenever a new message arrives over
   // socket.io so agent replies appear without a manual refresh.
   useEffect(() => {
