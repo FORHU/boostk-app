@@ -1,7 +1,7 @@
 import { createContext, useContext } from "react";
 
 interface NotificationContextValue {
-  markAsRead: (ticketId: string) => void;
+  markAsRead: (ticketId: string, isIntake?: boolean) => void;
 }
 
 const NotificationContext = createContext<NotificationContextValue | null>(null);
