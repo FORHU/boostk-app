@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { generateSlug } from "@/lib/utils";
+import { generateSlug } from "@/lib/slug";
 import type { CreateProjectInput } from "./project.schema";
 
 export interface OrgProjectListItem {
@@ -31,12 +31,14 @@ export const getProjectsByOrgId = async (organizationId: string): Promise<OrgPro
   return projects as unknown as OrgProjectListItem[];
 };
 
-export const getProjectByIdOrSlug = async (identifier: string) => {
-  const project = await prisma.project.findFirst({
-    where: { OR: [{ id: identifier }, { slug: identifier }] },
-  });
+/** Resolve a project by its canonical slug only (never its cuid). */
+export const getProjectBySlug = async (slug: string) => {
+  return prisma.project.findUnique({ where: { slug } });
+};
 
-  return project;
+/** Resolve a project by a slug it previously held (rename history). */
+export const getProjectByPreviousSlug = async (slug: string) => {
+  return prisma.project.findFirst({ where: { previousSlugs: { has: slug } } });
 };
 
 /** The only project fields an unauthenticated visitor is allowed to see. */

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { createProjectSchema, getProjectSchema, getPublicProjectSchema, updateProjectSchema } from "./project.schema";
 import { toPublicProject } from "./project.service";
 
-/** A full project row, as `getProjectByIdOrSlug` returns it. */
+/** A full project row, as `getProjectBySlug` returns it. */
 const projectRow = {
   id: "proj_1",
   name: "Acme Support",

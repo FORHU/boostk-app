@@ -30,6 +30,22 @@ export const requireProjectMiddleware = createMiddleware({ type: "function" })
       include: { organization: { select: { members: true, slug: true } } },
     });
 
+    // A renamed project keeps serving its old slug via a redirect, so URLs and installed
+    // widgets survive. Only the slug-resolved (URL) path participates — id callers keep the
+    // existing permission-denied behavior.
+    if (!found && result.data.projectSlug) {
+      const previous = await prisma.project.findFirst({
+        where: {
+          previousSlugs: { has: result.data.projectSlug },
+          organization: { members: { some: { userId: context.authSession.user.id } } },
+        },
+      });
+
+      if (previous) {
+        throw redirect({ to: "/dashboard/project/$projectSlug", params: { projectSlug: previous.slug } });
+      }
+    }
+
     if (!found) {
       throw redirect({ to: "/dashboard/organizations", search: { reason: REDIRECT_REASON.PERMISSION_DENIED } });
     }

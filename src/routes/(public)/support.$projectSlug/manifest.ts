@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { getProjectByIdOrSlug } from "@/modules/project/project.service";
+import { getProjectByPreviousSlug, getProjectBySlug } from "@/modules/project/project.service";
 
 // Per-project web app manifest for the customer chat widget.
 //
@@ -22,14 +22,24 @@ export const Route = createFileRoute("/(public)/support/$projectSlug/manifest")(
       GET: async ({ params }: { params: { projectSlug: string } }) => {
         // Browsers refetch the manifest on their own schedule and surface failures as
         // "not installable", so fail with a clean status rather than an unhandled throw.
-        let project: Awaited<ReturnType<typeof getProjectByIdOrSlug>>;
+        let project: Awaited<ReturnType<typeof getProjectBySlug>>;
         try {
-          project = await getProjectByIdOrSlug(params.projectSlug);
+          project =
+            (await getProjectBySlug(params.projectSlug)) ?? (await getProjectByPreviousSlug(params.projectSlug));
         } catch {
           return new Response("Service unavailable", { status: 503 });
         }
         if (!project) {
           return new Response("Not found", { status: 404 });
+        }
+
+        // A manifest fetched through an old slug must move to the canonical one, otherwise
+        // the installed app keeps a stale scope and stops resolving after a rename.
+        if (project.slug !== params.projectSlug) {
+          return new Response(null, {
+            status: 301,
+            headers: { Location: `/support/${project.slug}/manifest` },
+          });
         }
 
         // Trailing slash matters: without it the scope prefix would also match sibling
