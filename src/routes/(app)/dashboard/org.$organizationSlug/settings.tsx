@@ -163,7 +163,7 @@ function OrganizationSettingsPage() {
   });
 
   return (
-    <div className="p-6 flex flex-col items-center">
+    <div className="p-6">
       {isEditing ? (
         <form
           className="flex flex-col gap-4 max-w-2xl"
