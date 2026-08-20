@@ -141,7 +141,7 @@ model Project {
   name        String
   description String?
   logo        String?
-  slug        String  @unique
+  slug        String
 
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -152,6 +152,7 @@ model Project {
   customers Customer[]
   tickets   Ticket[]
 
+  @@unique([organizationId, slug])
   @@map("projects")
 }
 

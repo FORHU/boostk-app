@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { generateSlug } from "@/lib/utils";
+import { generateSlug, RESERVED_SLUGS } from "@/lib/utils";
 import type { CreateProjectInput } from "./project.schema";
 
 export interface OrgProjectListItem {
@@ -67,13 +67,37 @@ export const toPublicProject = (project: {
   description: project.description,
 });
 
-export const createProject = async (data: CreateProjectInput) => {
-  const project = await prisma.project.create({
-    data: {
-      ...data,
-      slug: generateSlug(data.name),
-    },
-  });
+const MAX_SLUG_RETRIES = 3;
 
-  return project;
+export const createProject = async (data: CreateProjectInput) => {
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt < MAX_SLUG_RETRIES; attempt++) {
+    const slug = generateSlug(data.name);
+
+    if (RESERVED_SLUGS.includes(slug as (typeof RESERVED_SLUGS)[number])) {
+      continue;
+    }
+
+    try {
+      const project = await prisma.project.create({
+        data: {
+          ...data,
+          slug,
+        },
+      });
+      return project;
+    } catch (error) {
+      lastError = error;
+      if (error && typeof error === "object" && "code" in error && error.code === "P2002") {
+        continue;
+      }
+      throw new Error("Failed to create project.");
+    }
+  }
+
+  if (lastError && typeof lastError === "object" && "code" in lastError && lastError.code === "P2002") {
+    throw new Error("Failed to generate a unique slug. Please try again.");
+  }
+  throw new Error("Failed to create project.");
 };

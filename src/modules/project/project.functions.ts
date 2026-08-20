@@ -13,9 +13,9 @@ export const createProjectFn = createServerFn({ method: "POST" })
       return project;
     } catch (error) {
       if (error && typeof error === "object" && "code" in error && error.code === "P2002") {
-        throw new Error("You already have a project with that name.");
+        throw new Error("A project with this slug already exists in this organization.");
       }
-      throw new Error("Failed to create project.");
+      throw new Error(error instanceof Error ? error.message : "Failed to create project.");
     }
   });
 

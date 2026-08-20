@@ -4,7 +4,7 @@ import { z } from "zod";
 import { REDIRECT_REASON } from "@/enums/enums";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { generateSlug } from "@/lib/utils";
+import { generateSlug, RESERVED_SLUGS } from "@/lib/utils";
 import { requireAuthMiddleware } from "@/modules/auth/auth.middleware";
 import { normalizeRole } from "@/modules/auth/roles";
 import { requireOrganizationMiddleware } from "@/modules/organization/organization.middleware";
@@ -102,23 +102,49 @@ export const createOrganizationFn = createServerFn({ method: "POST" })
   .inputValidator(createOrganizationSchema)
   .middleware([requireAuthMiddleware])
   .handler(async ({ context, data }) => {
-    const organization = await auth.api.createOrganization({
-      body: {
-        name: data.name,
-        slug: generateSlug(data.name),
-        userId: context.authSession.user.id,
-        logo: data.logo || undefined,
-      },
-      headers: context.request.headers,
-    });
+    const MAX_RETRIES = 3;
+    let lastError: unknown;
 
-    // Better Auth may ignore the logo field — persist it directly as a fallback.
-    if (data.logo && organization?.id) {
-      await prisma.organization.update({
-        where: { id: organization.id },
-        data: { logo: data.logo },
-      });
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      const slug = generateSlug(data.name);
+
+      // Defense-in-depth: reject reserved slugs even though generateSlug's random
+      // suffix makes collisions with "boostk" / "boostk-intake" practically impossible.
+      if (RESERVED_SLUGS.includes(slug as (typeof RESERVED_SLUGS)[number])) {
+        continue;
+      }
+
+      try {
+        const organization = await auth.api.createOrganization({
+          body: {
+            name: data.name,
+            slug,
+            userId: context.authSession.user.id,
+            logo: data.logo || undefined,
+          },
+          headers: context.request.headers,
+        });
+
+        // Better Auth may ignore the logo field — persist it directly as a fallback.
+        if (data.logo && organization?.id) {
+          await prisma.organization.update({
+            where: { id: organization.id },
+            data: { logo: data.logo },
+          });
+        }
+
+        return organization;
+      } catch (error) {
+        lastError = error;
+        if (error && typeof error === "object" && "code" in error && error.code === "P2002") {
+          continue;
+        }
+        throw new Error("Failed to create organization.");
+      }
     }
 
-    return organization;
+    if (lastError && typeof lastError === "object" && "code" in lastError && lastError.code === "P2002") {
+      throw new Error("Failed to generate a unique slug. Please try again.");
+    }
+    throw new Error("Failed to create organization.");
   });

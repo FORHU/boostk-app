@@ -11,16 +11,14 @@ import { useToast } from "@/components/ui/toast";
 import { REDIRECT_REASON } from "@/enums/enums";
 import { getFieldInvalid } from "@/lib/form-utils";
 import { prisma } from "@/lib/prisma";
+import { slugSchema } from "@/lib/utils";
 import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
 import { requireProjectRole } from "@/modules/project/project.middleware";
 
 // Zod schema for validation
 export const updateProjectSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  slug: z
-    .string()
-    .min(1, "Slug is required")
-    .regex(/^[a-z0-9-]+$/, "Slug must contain only lowercase letters, numbers, and hyphens"),
+  slug: slugSchema,
   description: z.string().optional().nullable(),
 });
 
@@ -48,7 +46,7 @@ export const updateProjectFn = createServerFn({ method: "POST" })
       });
     } catch (error) {
       if (error && typeof error === "object" && "code" in error && error.code === "P2002") {
-        throw new Error("This slug is already in use. Please choose another one.");
+        throw new Error("A project with this slug already exists in this organization.");
       }
       throw new Error("Failed to save project settings.");
     }
@@ -140,7 +138,7 @@ function ProjectSettingsPage() {
     <div className="p-6">
       {isEditing ? (
         <form
-          className="flex flex-col gap-4 mr-10"
+          className="flex flex-col gap-4 max-w-2xl"
           onSubmit={async (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -239,7 +237,7 @@ function ProjectSettingsPage() {
             <div>
               <h1 className="text-2xl font-bold">Project Settings</h1>
             </div>
-            <div className="ml-auto mr-20">
+            <div className="ml-auto">
               <button
                 type="button"
                 className="px-4 py-2 text-sm border rounded hover:bg-muted transition-colors"
