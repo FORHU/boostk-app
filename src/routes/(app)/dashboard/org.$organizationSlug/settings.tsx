@@ -2,11 +2,15 @@ import { useForm } from "@tanstack/react-form";
 import { queryOptions, useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
+import { Camera, Pencil } from "lucide-react";
 import { useRef, useState } from "react";
 import { z } from "zod";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { PageHeader } from "@/components/ui/page-header";
 import { useToast } from "@/components/ui/toast";
 import { REDIRECT_REASON } from "@/enums/enums";
 import { getFieldInvalid } from "@/lib/form-utils";
@@ -15,7 +19,6 @@ import { slugSchema } from "@/lib/utils";
 import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
 import { requireOrgRole } from "@/modules/organization/organization.middleware";
 
-// Zod schema for client and server validation
 export const updateOrganizationSchema = z.object({
   name: z.string().min(1, "Name is required"),
   slug: slugSchema,
@@ -114,13 +117,11 @@ function OrganizationSettingsPage() {
     };
     reader.readAsDataURL(file);
 
-    // Reset file input so same file can be uploaded again if needed
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
   };
 
-  //Mutation for Form Submission
   const updateOrgMutation = useMutation({
     mutationKey: ["update", "organization", organizationId],
     mutationFn: updateOrganizationFn,
@@ -163,160 +164,174 @@ function OrganizationSettingsPage() {
   });
 
   return (
-    <div className="p-6">
+    <div className="p-6 md:p-10 max-w-4xl mx-auto space-y-8">
       {isEditing ? (
-        <form
-          className="flex flex-col gap-4 max-w-2xl"
-          onSubmit={async (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            await updateForm.handleSubmit();
-          }}
-        >
-          {/* Server errors (duplicate slug, etc.) are surfaced via the error toast. */}
-          <FieldGroup className="flex flex-col gap-4">
-            <updateForm.Field name="name">
-              {(field) => {
-                const isInvalid = getFieldInvalid(field, updateForm);
-                return (
-                  <Field data-invalid={isInvalid}>
-                    <FieldLabel htmlFor={field.name} className="block text-sm font-medium mb-1">
-                      Organization Name
-                    </FieldLabel>
-                    <Input
-                      id={field.name}
-                      name={field.name}
-                      value={field.state.value}
-                      onBlur={field.handleBlur}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                      aria-invalid={isInvalid}
-                      className="w-full"
-                      required
-                    />
-                    {isInvalid && <FieldError errors={field.state.meta.errors} />}
-                  </Field>
-                );
-              }}
-            </updateForm.Field>
+        <>
+          <PageHeader title="Edit Settings" description="Update your organization profile and preferences.">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  updateForm.reset();
+                  updateOrgMutation.reset();
+                  setIsEditing(false);
+                }}
+                disabled={updateOrgMutation.isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={async (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  await updateForm.handleSubmit();
+                }}
+                disabled={updateOrgMutation.isPending || !updateForm.state.canSubmit}
+              >
+                {updateOrgMutation.isPending ? "Saving..." : "Save Changes"}
+              </Button>
+            </div>
+          </PageHeader>
 
-            <updateForm.Field name="slug">
-              {(field) => {
-                const isInvalid = getFieldInvalid(field, updateForm);
-                return (
-                  <Field data-invalid={isInvalid}>
-                    <FieldLabel htmlFor={field.name} className="block text-sm font-medium mb-1">
-                      Slug
-                    </FieldLabel>
-                    <Input
-                      id={field.name}
-                      name={field.name}
-                      value={field.state.value}
-                      onBlur={field.handleBlur}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                      aria-invalid={isInvalid}
-                      className="w-full font-mono"
-                      required
-                    />
-                    {isInvalid && <FieldError errors={field.state.meta.errors} />}
-                  </Field>
-                );
-              }}
-            </updateForm.Field>
+          <Card>
+            <CardHeader className="border-b">
+              <CardTitle>Organization Profile</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  await updateForm.handleSubmit();
+                }}
+                className="space-y-6"
+              >
+                <FieldGroup className="space-y-6">
+                  <updateForm.Field name="name">
+                    {(field) => {
+                      const isInvalid = getFieldInvalid(field, updateForm);
+                      return (
+                        <Field data-invalid={isInvalid}>
+                          <FieldLabel htmlFor={field.name}>Organization Name</FieldLabel>
+                          <Input
+                            id={field.name}
+                            name={field.name}
+                            value={field.state.value}
+                            onBlur={field.handleBlur}
+                            onChange={(e) => field.handleChange(e.target.value)}
+                            aria-invalid={isInvalid}
+                            placeholder="Enter organization name"
+                            required
+                          />
+                          {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                        </Field>
+                      );
+                    }}
+                  </updateForm.Field>
 
-            <updateForm.Field name="logo">
-              {(field) => {
-                const isInvalid = getFieldInvalid(field, updateForm);
-                return (
-                  <Field data-invalid={isInvalid}>
-                    <FieldLabel htmlFor={field.name} className="block text-sm font-medium mb-1">
-                      Logo URL
-                    </FieldLabel>
-                    <Input
-                      id={field.name}
-                      name={field.name}
-                      value={field.state.value || ""}
-                      onBlur={field.handleBlur}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                      aria-invalid={isInvalid}
-                      placeholder="https://example.com/logo.png"
-                      className="w-full"
-                    />
-                    {isInvalid && <FieldError errors={field.state.meta.errors} />}
-                  </Field>
-                );
-              }}
-            </updateForm.Field>
-          </FieldGroup>
+                  <updateForm.Field name="slug">
+                    {(field) => {
+                      const isInvalid = getFieldInvalid(field, updateForm);
+                      return (
+                        <Field data-invalid={isInvalid}>
+                          <FieldLabel htmlFor={field.name}>Slug</FieldLabel>
+                          <Input
+                            id={field.name}
+                            name={field.name}
+                            value={field.state.value}
+                            onBlur={field.handleBlur}
+                            onChange={(e) => field.handleChange(e.target.value)}
+                            aria-invalid={isInvalid}
+                            placeholder="organization-slug"
+                            className="font-mono"
+                            required
+                          />
+                          {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                        </Field>
+                      );
+                    }}
+                  </updateForm.Field>
 
-          <div className="flex gap-2 justify-end mt-4">
-            <button
-              type="button"
-              className="px-4 py-2 border hover:bg-muted transition-colors"
-              onClick={() => {
-                updateForm.reset();
-                updateOrgMutation.reset();
-                setIsEditing(false);
-              }}
-              disabled={updateOrgMutation.isPending}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={updateOrgMutation.isPending || !updateForm.state.canSubmit}
-              className="px-4 py-2 border bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors"
-            >
-              {updateOrgMutation.isPending ? "Saving..." : "Save Changes"}
-            </button>
-          </div>
-        </form>
+                  <updateForm.Field name="logo">
+                    {(field) => {
+                      const isInvalid = getFieldInvalid(field, updateForm);
+                      return (
+                        <Field data-invalid={isInvalid}>
+                          <FieldLabel htmlFor={field.name}>Logo URL</FieldLabel>
+                          <Input
+                            id={field.name}
+                            name={field.name}
+                            value={field.state.value || ""}
+                            onBlur={field.handleBlur}
+                            onChange={(e) => field.handleChange(e.target.value)}
+                            aria-invalid={isInvalid}
+                            placeholder="https://example.com/logo.png"
+                          />
+                          {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                        </Field>
+                      );
+                    }}
+                  </updateForm.Field>
+                </FieldGroup>
+              </form>
+            </CardContent>
+          </Card>
+        </>
       ) : (
         <>
-          {/* ----- READ-ONLY MODE ----- */}
-          <h1 className="mb-6 text-2xl font-bold ">Settings</h1>
-          <div className="grid grid-cols-2">
-            <button
-              type="button"
-              className="relative group size-50 mb-10 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-full border-none bg-transparent p-0 block text-left"
-              onClick={handleAvatarClick}
-            >
-              <Avatar className="size-full">
-                <AvatarImage
-                  src={organization?.logo || undefined}
-                  alt={`${organization?.name} logo`}
-                  className="object-cover"
-                />
-                <AvatarFallback className="text-lg">{fallbackInitials}</AvatarFallback>
-              </Avatar>
-              <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
-                <span className="text-white text-sm font-medium">Upload Image</span>
-              </div>
-              <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
-            </button>
+          <PageHeader title="Settings" description="Manage your organization profile and preferences.">
+            <Button variant="outline" onClick={() => setIsEditing(true)}>
+              <Pencil className="size-4" />
+              Edit Settings
+            </Button>
+          </PageHeader>
 
-            <div className="ml-auto">
-              <button
-                type="button"
-                onClick={() => setIsEditing(true)}
-                className="px-4 py-2 text-sm border rounded hover:bg-muted transition-colors"
-              >
-                Edit Settings
-              </button>
-            </div>
-          </div>
+          <Card>
+            <CardHeader className="border-b">
+              <CardTitle>Organization Profile</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <div className="flex flex-col sm:flex-row items-start gap-6">
+                <button
+                  type="button"
+                  className="relative group size-24 shrink-0 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-2xl bg-transparent p-0 block"
+                  onClick={handleAvatarClick}
+                >
+                  <Avatar className="size-full rounded-2xl">
+                    <AvatarImage
+                      src={organization?.logo || undefined}
+                      alt={`${organization?.name} logo`}
+                      className="object-cover rounded-2xl"
+                    />
+                    <AvatarFallback className="text-xl rounded-2xl">{fallbackInitials}</AvatarFallback>
+                  </Avatar>
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl">
+                    <Camera className="size-5 text-white" />
+                  </div>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                  />
+                </button>
 
-          <div className="border border-border rounded-2xl overflow-hidden shadow-sm bg-background isolate max-w-2xl">
-            <div className="divide-y divide-border">
-              <div className="grid grid-cols-2">
-                <div className="px-6 py-4 text-sm font-semibold">Name</div>
-                <div className="px-6 py-4 text-sm text-muted-foreground">{organization?.name}</div>
+                <div className="flex-1 min-w-0 space-y-4">
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Name</p>
+                      <p className="text-sm font-medium">{organization?.name}</p>
+                    </div>
+                    <div className="space-y-1.5">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Slug</p>
+                      <p className="text-sm font-medium font-mono">{organization?.slug}</p>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="grid grid-cols-2">
-                <div className="px-6 py-4 text-sm font-semibold">Slug</div>
-                <div className="px-6 py-4 text-sm text-muted-foreground">{organization?.slug}</div>
-              </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </>
       )}
     </div>
