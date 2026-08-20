@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { generateSlug } from "@/lib/utils";
+import { generateSlug } from "@/lib/slug";
 
 interface ProjectData {
   organizations: { name: string; slug: string } | { name: string; slug: string }[];

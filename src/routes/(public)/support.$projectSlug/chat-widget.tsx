@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute, notFound, useRouter } from "@tanstack/react-router";
+import { createFileRoute, notFound, redirect, useRouter } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { CheckCircle2, Loader2, Send } from "lucide-react";
 import type { Project, TicketMessage } from "prisma/generated/client";
@@ -40,10 +40,16 @@ export const Route = createFileRoute("/(public)/support/$projectSlug/chat-widget
     ref: z.string().trim().min(1).max(REF_MAX).optional().catch(undefined),
   }),
   beforeLoad: async ({ params }) => {
-    const project = await getProjectPublicFn({ data: { projectSlug: params.projectSlug } });
-    if (!project) throw notFound();
+    const resolved = await getProjectPublicFn({ data: { projectSlug: params.projectSlug } });
+    if (!resolved) throw notFound();
 
-    return { project };
+    // The widget was embedded with an older slug; redirect so the installed iframe keeps
+    // working after a project rename rather than 404ing.
+    if (resolved.slug !== params.projectSlug) {
+      throw redirect({ to: "/support/$projectSlug/chat-widget", params: { projectSlug: resolved.slug } });
+    }
+
+    return { project: resolved.project };
   },
   loader: async ({ context }) => {
     const ticket = await getTicketCookieFn({ data: { projectId: context.project.id } });

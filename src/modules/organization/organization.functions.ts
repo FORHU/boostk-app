@@ -4,7 +4,7 @@ import { z } from "zod";
 import { REDIRECT_REASON } from "@/enums/enums";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { generateSlug } from "@/lib/utils";
+import { generateSlug } from "@/lib/slug";
 import { requireAuthMiddleware } from "@/modules/auth/auth.middleware";
 import { normalizeRole } from "@/modules/auth/roles";
 import { requireOrganizationMiddleware } from "@/modules/organization/organization.middleware";

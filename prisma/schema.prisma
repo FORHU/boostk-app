@@ -97,6 +97,10 @@ model Organization {
   projects    Project[]
   integrations Integration[]
 
+  // Slugs this organization previously held, so shared URLs and installed widgets keep
+  // resolving after a rename (see organization.middleware.ts redirect).
+  previousSlugs String[]
+
   @@unique([slug])
   @@map("organizations")
 }
@@ -151,6 +155,10 @@ model Project {
 
   customers Customer[]
   tickets   Ticket[]
+
+  // Slugs this project previously held, so embedded chat widgets and shared links keep
+  // resolving after a rename (see project.middleware.ts and the public /support routes).
+  previousSlugs String[]
 
   @@map("projects")
 }

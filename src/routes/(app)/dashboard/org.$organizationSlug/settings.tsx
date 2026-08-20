@@ -11,16 +11,14 @@ import { useToast } from "@/components/ui/toast";
 import { REDIRECT_REASON } from "@/enums/enums";
 import { getFieldInvalid } from "@/lib/form-utils";
 import { prisma } from "@/lib/prisma";
+import { slugSchema } from "@/lib/slug";
 import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
 import { requireOrgRole } from "@/modules/organization/organization.middleware";
 
 // Zod schema for client and server validation
 export const updateOrganizationSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  slug: z
-    .string()
-    .min(1, "Slug is required")
-    .regex(/^[a-z0-9-]+$/, "Slug must contain only lowercase letters, numbers, and hyphens"),
+  slug: slugSchema,
   logo: z.string().optional().nullable(),
 });
 
@@ -38,12 +36,15 @@ export const updateOrganizationFn = createServerFn({ method: "POST" })
   .middleware([requireOrgRole(ORG_ROLE.ADMIN)])
   .handler(async ({ context, data }) => {
     try {
+      const previousSlug = context.organization.slug;
       return await prisma.organization.update({
         where: { id: context.organization.id },
         data: {
           name: data.name,
           slug: data.slug,
           logo: data.logo,
+          // Record the old slug so shared URLs keep resolving after a rename.
+          ...(data.slug !== previousSlug ? { previousSlugs: { push: previousSlug } } : {}),
         },
       });
     } catch (error) {
