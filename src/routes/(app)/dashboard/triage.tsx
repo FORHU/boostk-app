@@ -21,6 +21,7 @@ import type { TicketMessageWithAttachment } from "@/components/chat-support/Tick
 import TicketChatMessageBubble from "@/components/chat-support/TicketChatMessageBubble";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useToast } from "@/components/ui/toast";
+import { useNotification } from "@/contexts/notification-context";
 import { useSocket } from "@/hooks/use-socket";
 import { formatRelative } from "@/lib/format-date";
 import { EventType } from "@/lib/notifier/core";
@@ -99,6 +100,7 @@ function RouteComponent() {
 
   const { authSession } = Route.useRouteContext();
   const { lastMessage } = useSocket({ userId: authSession?.user.id });
+  const { markAsRead } = useNotification();
   const { data: queue, isLoading } = useQuery(intakeQueries.queue(search || undefined, filter));
 
   // New intake chats and their messages arrive on the staff member's personal channel
@@ -117,6 +119,7 @@ function RouteComponent() {
   const selectTicket = (id: string | null) => {
     setSelectedId(id);
     navigate({ search: { selectedTicketId: id ?? undefined }, replace: true });
+    if (id) markAsRead(id, true);
   };
 
   const items = queue?.items ?? [];

@@ -4,8 +4,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { z } from "zod";
+import { Pagination } from "@/components/Pagination";
 import { TicketDetailPanel } from "@/components/tickets/TicketDetailPanel";
-import { TicketPagination } from "@/components/tickets/TicketPagination";
 import { TicketSortSelect } from "@/components/tickets/TicketSortSelect";
 import { TicketsLoadingFallback } from "@/components/tickets/TicketsLoadingFallback";
 import { TICKET_TABLE_COLUMNS, TicketsTableRow } from "@/components/tickets/TicketsTableRow";
@@ -13,6 +13,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { useNotification } from "@/contexts/notification-context";
 import { REDIRECT_REASON } from "@/enums/enums";
 import { useDebounce } from "@/hooks/use-debounce";
+import { useResponsivePageSize } from "@/hooks/use-responsive-page-size";
 import { useSocket } from "@/hooks/use-socket";
 import { useViewport } from "@/hooks/use-viewport";
 import { EventType } from "@/lib/notifier/core";
@@ -164,11 +165,15 @@ export const assignTicketFn = createServerFn({ method: "POST" })
 export const projectTicketQueries = {
   tickets: ["project-tickets"],
   listPrefix: (projectId: string) => [...projectTicketQueries.tickets, projectId],
-  list: (projectId: string, params: { page: number; sort: TicketSort; statusFilter: string; searchQuery: string }) => ({
+  list: (
+    projectId: string,
+    params: { page: number; pageSize: number; sort: TicketSort; statusFilter: string; searchQuery: string },
+  ) => ({
     queryKey: [
       ...projectTicketQueries.listPrefix(projectId),
       "list",
       params.page,
+      params.pageSize,
       params.sort,
       params.statusFilter,
       params.searchQuery,
@@ -178,7 +183,7 @@ export const projectTicketQueries = {
         data: {
           projectId,
           page: params.page,
-          pageSize: 10,
+          pageSize: params.pageSize,
           sort: params.sort,
           statusFilter: params.statusFilter as "ALL" | "OPEN" | "CLOSED",
           searchQuery: params.searchQuery || undefined,
@@ -309,8 +314,11 @@ function ProjectTicketsPage() {
     });
   }, [debouncedSearchQuery, searchQuery, navigate]);
 
+  const { isMobile, isMounted } = useViewport();
+  const pageSize = useResponsivePageSize();
+
   const ticketsQuery = useQuery({
-    ...projectTicketQueries.list(projectId, { page, sort, statusFilter, searchQuery }),
+    ...projectTicketQueries.list(projectId, { page, pageSize, sort, statusFilter, searchQuery }),
     placeholderData: (prev) => prev,
   });
   const tickets = ticketsQuery.data?.tickets ?? [];
@@ -350,8 +358,6 @@ function ProjectTicketsPage() {
       search: (prev) => ({ ...prev, page: nextPage }),
       replace: true,
     });
-
-  const { isMobile, isMounted } = useViewport();
 
   if (!isMounted) {
     return <TicketsLoadingFallback />;
@@ -423,6 +429,10 @@ function ProjectTicketsPage() {
               </div>
             </div>
 
+            <p className="text-xs text-muted-foreground md:hidden">
+              Showing {tickets.length} of {total} tickets
+            </p>
+
             {total === 0 ? (
               <EmptyState
                 icon={<X className="size-10" strokeWidth={1} />}
@@ -436,7 +446,7 @@ function ProjectTicketsPage() {
               />
             ) : (
               <>
-                <div className="border border-muted rounded-lg shadow-sm overflow-x-auto w-full min-h-[620px]">
+                <div className="border border-muted rounded-lg shadow-sm overflow-x-auto w-full">
                   <table className="table-fixed w-full min-w-[820px] divide-y divide-muted">
                     <colgroup>
                       {TICKET_TABLE_COLUMNS.map(({ key, width }) => (
@@ -472,7 +482,7 @@ function ProjectTicketsPage() {
                     </tbody>
                   </table>
                 </div>
-                <TicketPagination page={page} totalPages={totalPages} onPageChange={goToPage} />
+                <Pagination page={page} totalPages={totalPages} onPageChange={goToPage} />
               </>
             )}
           </div>
@@ -541,7 +551,7 @@ function ProjectTicketsPage() {
             />
           ) : (
             <>
-              <div className="border border-muted rounded-lg shadow-sm overflow-x-auto w-full min-h-[620px]">
+              <div className="border border-muted rounded-lg shadow-sm overflow-x-auto w-full">
                 <table className="table-fixed w-full divide-y divide-muted">
                   <colgroup>
                     {TICKET_TABLE_COLUMNS.map(({ key, width }) => (
@@ -577,7 +587,7 @@ function ProjectTicketsPage() {
                   </tbody>
                 </table>
               </div>
-              <TicketPagination page={page} totalPages={totalPages} onPageChange={goToPage} />
+              <Pagination page={page} totalPages={totalPages} onPageChange={goToPage} />
             </>
           )}
 
