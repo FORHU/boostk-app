@@ -1,6 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import { createProjectSchema, getProjectBySlugSchema, getPublicProjectSchema } from "@/modules/project/project.schema";
-import { createProject, getProjectByIdOrSlug, toPublicProject } from "@/modules/project/project.service";
+import {
+  createProject,
+  getProjectByPreviousSlug,
+  getProjectBySlug,
+  toPublicProject,
+} from "@/modules/project/project.service";
 import { requireOrganizationMiddleware } from "../organization/organization.middleware";
 import { requireProjectMiddleware } from "./project.middleware";
 
@@ -32,7 +37,10 @@ export const getProjectFn = createServerFn({ method: "GET" })
 export const getProjectPublicFn = createServerFn({ method: "GET" })
   .inputValidator(getPublicProjectSchema)
   .handler(async ({ data }) => {
-    const project = await getProjectByIdOrSlug(data.projectSlug);
+    // Slug-only resolution: the public widget/manifest must not accept a cuid id, and a
+    // renamed project is still reachable through the slug it held when the widget was
+    // embedded. `slug` (canonical) lets the caller redirect off a historical slug.
+    const project = (await getProjectBySlug(data.projectSlug)) ?? (await getProjectByPreviousSlug(data.projectSlug));
     // Abort if the project slug/id is invalid or deleted.
     // This ensures `project` is defined before we check privacy settings.
     if (!project) {
@@ -45,6 +53,7 @@ export const getProjectPublicFn = createServerFn({ method: "GET" })
     // }
 
     // Never return the whole row: `toPublicProject` is the whitelist that keeps
-    // organizationId, slug and timestamps off an unauthenticated response.
-    return toPublicProject(project);
+    // organizationId, slug and timestamps off an unauthenticated response. The canonical
+    // slug is returned separately so routes can redirect, and is already public via the URL.
+    return { project: toPublicProject(project), slug: project.slug };
   });

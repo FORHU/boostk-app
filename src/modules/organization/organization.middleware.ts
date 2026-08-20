@@ -30,6 +30,21 @@ export const requireOrganizationMiddleware = createMiddleware({ type: "function"
       include: { members: true },
     });
 
+    // A renamed organization keeps serving its old slug via a redirect, so shared URLs
+    // survive. Only the slug-resolved (URL) path participates.
+    if (!organization && result.data.organizationSlug) {
+      const previous = await prisma.organization.findFirst({
+        where: {
+          previousSlugs: { has: result.data.organizationSlug },
+          members: { some: { userId: context.authSession.user.id } },
+        },
+      });
+
+      if (previous) {
+        throw redirect({ to: "/dashboard/org/$organizationSlug", params: { organizationSlug: previous.slug } });
+      }
+    }
+
     if (!organization) {
       throw redirect({ to: "/dashboard/organizations", search: { reason: REDIRECT_REASON.PERMISSION_DENIED } });
     }
