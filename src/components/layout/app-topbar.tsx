@@ -15,6 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useSidebar } from "@/components/ui/sidebar";
 import type { NotificationItem } from "@/hooks/use-notifications";
 import { authClient } from "@/lib/auth-client";
 import { authQueries } from "@/modules/auth/auth.queries";
@@ -50,12 +51,13 @@ interface AppTopbarProps {
   connectionStatus?: "connecting" | "connected" | "reconnecting";
   notifications: NotificationItem[];
   unreadCount: number;
-  markAsRead: (ticketId: string) => void;
+  markAsRead: (ticketId: string, isIntake?: boolean) => void;
 }
 
 export default function AppTopbar({ connectionStatus, notifications, unreadCount, markAsRead }: AppTopbarProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { toggleSidebar } = useSidebar();
 
   // `useSuspenseQuery` is behaving correctly here, despite the nullable type: it removes
   // the *loading* state (`data` is never `undefined`), but `null` is a resolved value, not
@@ -108,9 +110,13 @@ export default function AppTopbar({ connectionStatus, notifications, unreadCount
     <div className="w-full flex flex-row">
       <nav className="z-10 w-full h-11 border-b bg-background border-border flex flex-row items-center justify-between p-2">
         <div className="flex items-center gap-2">
-          <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+          <button
+            type="button"
+            onClick={toggleSidebar}
+            className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground hover:ring-2 hover:ring-primary/20 active:scale-95 transition-all duration-150 cursor-pointer"
+          >
             <ZapIcon className="size-4" />
-          </div>
+          </button>
           <RouterBreadcrumb />
         </div>
 

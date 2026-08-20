@@ -2,8 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import {
   Calendar,
-  ChevronLeft,
-  ChevronRight,
   CircleDot,
   Clock,
   Filter,
@@ -22,12 +20,15 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
+import { Pagination } from "@/components/Pagination";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { DataTableSkeleton, TextSkeleton, ToolbarSkeleton, UsageCardsSkeleton } from "@/components/ui/skeleton";
 import { TicketPriorityBadge } from "@/components/ui/ticket-priority";
 import { REDIRECT_REASON } from "@/enums/enums";
 import { useDebounce } from "@/hooks/use-debounce";
+import { useResponsivePageSize } from "@/hooks/use-responsive-page-size";
+import { useViewport } from "@/hooks/use-viewport";
 import { formatDate, formatRelative } from "@/lib/format-date";
 import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
 import { projectCustomerQueries } from "@/modules/customer/customer.queries";
@@ -54,7 +55,7 @@ const customerSearchSchema = z.object({
 
 function CustomersLoadingFallback() {
   return (
-    <div className="flex h-full w-full bg-muted/20 text-foreground font-sans overflow-hidden">
+    <div className="flex w-full bg-muted/20 text-foreground font-sans overflow-hidden">
       <main className="flex-1 flex flex-col w-full h-full p-4 md:p-8 overflow-y-auto">
         <TextSkeleton lines={1} className="max-w-sm" />
         <div className="mt-6 md:mt-8">
@@ -134,44 +135,6 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-function CustomerPagination({
-  page,
-  totalPages,
-  onPageChange,
-}: {
-  page: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
-}) {
-  if (totalPages <= 1) return null;
-
-  return (
-    <div className="flex items-center justify-center gap-3 py-2">
-      <button
-        type="button"
-        onClick={() => onPageChange(page - 1)}
-        disabled={page <= 1}
-        className="inline-flex size-8 items-center justify-center rounded-sm border border-muted bg-background text-muted-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
-        title="Previous page"
-      >
-        <ChevronLeft className="size-4" />
-      </button>
-      <span className="text-sm font-medium tabular-nums">
-        {page} / {totalPages}
-      </span>
-      <button
-        type="button"
-        onClick={() => onPageChange(page + 1)}
-        disabled={page >= totalPages}
-        className="inline-flex size-8 items-center justify-center rounded-sm border border-muted bg-background text-muted-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
-        title="Next page"
-      >
-        <ChevronRight className="size-4" />
-      </button>
-    </div>
-  );
-}
-
 function ProjectCustomersPage() {
   const { project } = Route.useRouteContext();
   const projectId = project.id;
@@ -185,12 +148,15 @@ function ProjectCustomersPage() {
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
   const page = search.page ?? 1;
+  const pageSize = useResponsivePageSize();
+  const { isMounted } = useViewport();
 
   const customersQuery = useQuery({
-    ...projectCustomerQueries.list({ projectId, search: debouncedSearchQuery, page }),
+    ...projectCustomerQueries.list({ projectId, search: debouncedSearchQuery, page, pageSize }),
     placeholderData: (prev) => prev,
   });
   const customers = customersQuery.data?.customers ?? [];
+  const total = customersQuery.data?.total ?? 0;
   const totalPages = customersQuery.data?.totalPages ?? 1;
 
   const statsQuery = useQuery(projectCustomerQueries.stats(projectId));
@@ -223,6 +189,10 @@ function ProjectCustomersPage() {
 
   const goToPage = (nextPage: number) => navigate({ search: (prev) => ({ ...prev, page: nextPage }), replace: true });
 
+  if (!isMounted) {
+    return <CustomersLoadingFallback />;
+  }
+
   if (customersQuery.isPending && customers.length === 0) {
     return <CustomersLoadingFallback />;
   }
@@ -236,9 +206,9 @@ function ProjectCustomersPage() {
       : null;
 
   return (
-    <div className="flex h-full w-full bg-muted/20 text-foreground font-sans overflow-hidden">
+    <div className="flex w-full bg-muted/20 text-foreground font-sans overflow-hidden">
       {/* MAIN CONTENT AREA */}
-      <main className="flex-1 flex flex-col w-full h-full p-4 md:p-8 overflow-y-auto">
+      <main className="flex-1 flex flex-col w-full gap-6 p-4 md:p-8">
         {/* Header & Actions */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 md:mb-8">
           <div>
@@ -303,6 +273,9 @@ function ProjectCustomersPage() {
         </div>
 
         {/* Data Table */}
+        <p className="text-xs text-muted-foreground md:hidden">
+          Showing {customers.length} of {total} customers
+        </p>
         <div className="bg-background rounded-[12px] border border-border shadow-sm overflow-hidden">
           <div className="overflow-x-auto w-full">
             <table className="w-full text-sm text-left min-w-[800px]">
@@ -390,7 +363,7 @@ function ProjectCustomersPage() {
           </div>
         </div>
 
-        <CustomerPagination page={page} totalPages={totalPages} onPageChange={goToPage} />
+        <Pagination page={page} totalPages={totalPages} onPageChange={goToPage} />
       </main>
 
       {/* DRILL-DOWN DETAIL DRAWER */}

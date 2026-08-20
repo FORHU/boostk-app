@@ -34,6 +34,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TicketPriorityBadge } from "@/components/ui/ticket-priority";
 import { useToast } from "@/components/ui/toast";
+import { useNotification } from "@/contexts/notification-context";
 import { REDIRECT_REASON } from "@/enums/enums";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useSocket } from "@/hooks/use-socket";
@@ -259,6 +260,7 @@ function ProjectChatSupportPage() {
   const { authSession, role, memberId, project } = Route.useRouteContext();
   const projectId = project.id;
   const queryClient = useQueryClient();
+  const { markAsRead } = useNotification();
 
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -311,6 +313,13 @@ function ProjectChatSupportPage() {
   // it already has current data for.
   const lastSeenMessageAtRef = useRef<Record<string, number>>({});
 
+  // Mark the open conversation read as soon as it is selected, whether that is the
+  // auto-selected first ticket on load or a sidebar click, so the bell clears without
+  // having to go through the notification itself.
+  useEffect(() => {
+    if (selectedTicket?.id) markAsRead(selectedTicket.id);
+  }, [selectedTicket?.id, markAsRead]);
+
   useEffect(() => {
     if (!lastMessage) return;
 
@@ -325,6 +334,7 @@ function ProjectChatSupportPage() {
       const lastSeen = lastSeenMessageAtRef.current[ticketId] ?? 0;
       if (!Number.isNaN(messageAt) && messageAt <= lastSeen) return;
       lastSeenMessageAtRef.current[ticketId] = messageAt;
+      markAsRead(ticketId);
       queryClient.invalidateQueries({ queryKey: ticketMessageQueries.getByTicket(ticketId).queryKey });
     }
 
@@ -335,7 +345,7 @@ function ProjectChatSupportPage() {
     ) {
       queryClient.invalidateQueries({ queryKey: ticketInboxQueries.listPrefix(projectId) });
     }
-  }, [lastMessage, selectedTicket, queryClient, projectId]);
+  }, [lastMessage, selectedTicket, queryClient, projectId, markAsRead]);
 
   if (!isMounted) {
     return <ChatSupportLoadingFallback />;

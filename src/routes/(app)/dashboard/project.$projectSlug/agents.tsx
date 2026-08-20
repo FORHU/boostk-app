@@ -4,8 +4,6 @@ import {
   AlertCircle,
   Archive,
   CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
   Clock,
   Filter,
   MessageSquare,
@@ -16,11 +14,14 @@ import {
 } from "lucide-react";
 import type { Member, User } from "prisma/generated/client";
 import { Suspense, useEffect, useRef, useState } from "react";
+import { Pagination } from "@/components/Pagination";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { DataTableSkeleton, TextSkeleton } from "@/components/ui/skeleton";
 import { REDIRECT_REASON } from "@/enums/enums";
 import { useDebounce } from "@/hooks/use-debounce";
+import { useResponsivePageSize } from "@/hooks/use-responsive-page-size";
+import { useViewport } from "@/hooks/use-viewport";
 import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
 import { memberQueries } from "@/modules/members/member.queries";
 import { ticketMessageQueries } from "@/modules/ticket-message/ticket-message.queries";
@@ -43,7 +44,7 @@ function ProjectAgentsPage() {
   const { project } = Route.useRouteContext();
 
   return (
-    <div className="flex h-screen w-full bg-muted/20 text-foreground font-sans overflow-hidden">
+    <div className="flex w-full bg-muted/20 text-foreground font-sans overflow-hidden">
       <Suspense
         fallback={
           <div className="w-full max-w-7xl mx-auto p-4 md:p-10 space-y-10 overflow-hidden">
@@ -64,17 +65,21 @@ function AgentTable({ organizationId, projectId }: { organizationId: string; pro
   const [roleFilter, setRoleFilter] = useState("ALL");
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const pageSize = useResponsivePageSize();
+  const { isMounted } = useViewport();
 
   const agentsQuery = useQuery(
     memberQueries.agentList({
       organizationId,
       page,
+      pageSize,
       role: roleFilter === "ALL" ? undefined : (roleFilter.toLowerCase() as "admin" | "agent" | "member"),
       search: debouncedSearchQuery || undefined,
     }),
   );
   const data = agentsQuery.data;
   const members = (data?.members ?? []) as Array<Member & { user: User }>;
+  const total = data?.total ?? 0;
   const totalPages = data?.totalPages ?? 1;
 
   const selectedAgent = members.find((m) => m.id === selectedAgentId) ?? null;
@@ -106,6 +111,8 @@ function AgentTable({ organizationId, projectId }: { organizationId: string; pro
   });
   const agentStats = agentConversationsQuery.data ?? { handledChats: [], messagesSentCount: 0 };
 
+  if (!isMounted) return null;
+
   if (agentsQuery.isPending && members.length === 0) return null;
 
   // Helper for specific Badge colors
@@ -119,9 +126,9 @@ function AgentTable({ organizationId, projectId }: { organizationId: string; pro
   };
 
   return (
-    <div className="flex flex-1 w-full relative overflow-hidden">
+    <div className="flex flex-1 w-full relative">
       {/* MAIN CONTENT AREA */}
-      <main className="flex-1 flex flex-col w-full h-full p-4 md:p-8 overflow-y-auto">
+      <main className="flex-1 flex flex-col w-full gap-6 p-4 md:p-8">
         {/* Header & Actions */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 md:mb-8">
           <div>
@@ -157,6 +164,9 @@ function AgentTable({ organizationId, projectId }: { organizationId: string; pro
         </div>
 
         {/* Data Table */}
+        <p className="text-xs text-muted-foreground md:hidden">
+          Showing {members.length} of {total} agents
+        </p>
         <div className="bg-background rounded-[12px] border border-border shadow-sm overflow-hidden">
           <div className="overflow-x-auto w-full">
             <table className="w-full text-sm text-left min-w-[600px]">
@@ -236,7 +246,7 @@ function AgentTable({ organizationId, projectId }: { organizationId: string; pro
             </table>
           </div>
         </div>
-        <AgentPagination page={page} totalPages={totalPages} onPageChange={setPage} />
+        <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
       </main>
 
       {/* DRILL-DOWN VIEW DRAWER */}
@@ -379,44 +389,6 @@ function AgentTable({ organizationId, projectId }: { organizationId: string; pro
           </>
         )}
       </aside>
-    </div>
-  );
-}
-
-function AgentPagination({
-  page,
-  totalPages,
-  onPageChange,
-}: {
-  page: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
-}) {
-  if (totalPages <= 1) return null;
-
-  return (
-    <div className="flex items-center justify-center gap-3 py-2">
-      <button
-        type="button"
-        onClick={() => onPageChange(page - 1)}
-        disabled={page <= 1}
-        className="inline-flex size-8 items-center justify-center rounded-sm border border-muted bg-background text-muted-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
-        title="Previous page"
-      >
-        <ChevronLeft className="size-4" />
-      </button>
-      <span className="text-sm font-medium tabular-nums">
-        {page} / {totalPages}
-      </span>
-      <button
-        type="button"
-        onClick={() => onPageChange(page + 1)}
-        disabled={page >= totalPages}
-        className="inline-flex size-8 items-center justify-center rounded-sm border border-muted bg-background text-muted-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
-        title="Next page"
-      >
-        <ChevronRight className="size-4" />
-      </button>
     </div>
   );
 }

@@ -28,7 +28,7 @@ import { PanelLeftIcon } from "lucide-react"
 const SIDEBAR_COOKIE_NAME = "sidebar_state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
 const SIDEBAR_WIDTH = "16rem"
-const SIDEBAR_WIDTH_MOBILE = "18rem"
+const SIDEBAR_WIDTH_MOBILE = "15rem"
 const SIDEBAR_WIDTH_ICON = "3rem"
 const SIDEBAR_KEYBOARD_SHORTCUT = "b"
 
@@ -242,7 +242,7 @@ function Sidebar({
         <div
           data-sidebar="sidebar"
           data-slot="sidebar-inner"
-          className="flex size-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:shadow-sm group-data-[variant=floating]:ring-1 group-data-[variant=floating]:ring-sidebar-border"
+          className="flex size-full flex-col bg-sidebar transition-[opacity] duration-200 ease-linear group-data-[collapsible=offcanvas]:opacity-0 group-data-[state=expanded]:opacity-100 group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:shadow-sm group-data-[variant=floating]:ring-1 group-data-[variant=floating]:ring-sidebar-border"
         >
           {children}
         </div>
@@ -359,7 +359,7 @@ function SidebarSeparator({
     <Separator
       data-slot="sidebar-separator"
       data-sidebar="separator"
-      className={cn("mx-2 w-auto bg-sidebar-border", className)}
+      className={cn("w-auto bg-sidebar-border", className)}
       {...props}
     />
   )
@@ -509,7 +509,7 @@ function SidebarMenuButton({
     isActive?: boolean
     tooltip?: string | React.ComponentProps<typeof TooltipContent>
   } & VariantProps<typeof sidebarMenuButtonVariants>) {
-  const { isMobile, state } = useSidebar()
+  const { isMobile, state, setOpenMobile } = useSidebar()
   const comp = useRender({
     defaultTagName: "button",
     props: mergeProps<"button">(
@@ -527,8 +527,17 @@ function SidebarMenuButton({
     },
   })
 
+  const wrapped = isMobile
+    ? React.cloneElement(comp as React.ReactElement<React.HTMLAttributes<HTMLElement>>, {
+        onClick: (e: React.MouseEvent<HTMLElement>) => {
+          ;(comp.props as React.HTMLAttributes<HTMLElement>).onClick?.(e)
+          setOpenMobile(false)
+        },
+      })
+    : comp
+
   if (!tooltip) {
-    return comp
+    return wrapped
   }
 
   if (typeof tooltip === "string") {
@@ -539,7 +548,7 @@ function SidebarMenuButton({
 
   return (
     <Tooltip>
-      {comp}
+      {wrapped}
       <TooltipContent
         side="right"
         align="center"

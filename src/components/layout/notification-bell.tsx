@@ -2,7 +2,6 @@
 
 import { useNavigate } from "@tanstack/react-router";
 import { BellIcon, MessageSquareIcon, TicketIcon } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,7 +19,7 @@ import { cn } from "@/lib/utils";
 interface NotificationBellProps {
   notifications: NotificationItem[];
   unreadCount: number;
-  markAsRead: (ticketId: string) => void;
+  markAsRead: (ticketId: string, isIntake?: boolean) => void;
 }
 
 function describeNotification(item: NotificationItem): { title: string; subtitle: string } {
@@ -57,11 +56,7 @@ export function NotificationBell({ notifications, unreadCount, markAsRead }: Not
         }
       >
         <BellIcon className="size-4 text-foreground" />
-        {unreadCount > 0 && (
-          <Badge className="absolute -top-1.5 -right-1.5 h-4 min-w-4 justify-center rounded-full border-0 bg-destructive px-1 text-[10px] leading-none text-white">
-            {unreadCount > 99 ? "99+" : unreadCount}
-          </Badge>
-        )}
+        {unreadCount > 0 && <span className="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-destructive" />}
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-80 min-w-80 rounded-lg" side="top" align="end" sideOffset={4}>
         <DropdownMenuGroup>
@@ -79,12 +74,20 @@ export function NotificationBell({ notifications, unreadCount, markAsRead }: Not
                   <DropdownMenuItem
                     key={item.localId}
                     onClick={() => {
-                      const projectSlug = item.data?.projectSlug;
-                      if (typeof projectSlug !== "string") return;
+                      const isIntake = item.data?.isIntake === true;
                       const ticketId = item.data?.ticketId;
                       if (typeof ticketId === "string") {
-                        markAsRead(ticketId);
+                        markAsRead(ticketId, isIntake);
                       }
+                      if (isIntake) {
+                        navigate({
+                          to: "/dashboard/triage",
+                          search: { selectedTicketId: typeof ticketId === "string" ? ticketId : undefined },
+                        });
+                        return;
+                      }
+                      const projectSlug = item.data?.projectSlug;
+                      if (typeof projectSlug !== "string") return;
                       navigate({
                         to: "/dashboard/project/$projectSlug/tickets",
                         params: { projectSlug },

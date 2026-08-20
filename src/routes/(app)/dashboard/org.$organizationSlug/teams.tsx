@@ -1,14 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { ChevronLeft, ChevronRight, Users } from "lucide-react";
+import { Users } from "lucide-react";
 import type { Member, User } from "prisma/generated/client";
 import { Suspense, useEffect, useRef, useState } from "react";
+import { Pagination } from "@/components/Pagination";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { InviteModal } from "@/components/ui/invite-modals";
 import { DataTableSkeleton, ToolbarSkeleton } from "@/components/ui/skeleton";
 import { REDIRECT_REASON } from "@/enums/enums";
 import { useDebounce } from "@/hooks/use-debounce";
+import { useResponsivePageSize } from "@/hooks/use-responsive-page-size";
+import { useViewport } from "@/hooks/use-viewport";
 import { formatDate } from "@/lib/format-date";
 import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
 import { removeMemberFn, updateMemberRoleFn } from "@/modules/members/member.functions";
@@ -284,14 +287,23 @@ function TeamTable({ organizationId }: { organizationId: string }) {
   const debouncedSearchQuery = useDebounce(searchQuery);
   const [activeTab, setActiveTab] = useState("ALL USERS");
   const [page, setPage] = useState(1);
+  const pageSize = useResponsivePageSize();
+  const { isMounted } = useViewport();
 
   const roleFilter = activeTab === "ALL USERS" ? undefined : (activeTab.toLowerCase() as "admin" | "agent" | "member");
 
   const membersQuery = useQuery(
-    memberQueries.adminList({ organizationId, page, role: roleFilter, search: debouncedSearchQuery || undefined }),
+    memberQueries.adminList({
+      organizationId,
+      page,
+      pageSize,
+      role: roleFilter,
+      search: debouncedSearchQuery || undefined,
+    }),
   );
   const data = membersQuery.data;
   const members = (data?.members ?? []) as Array<Member & { user: User }>;
+  const total = data?.total ?? 0;
   const totalPages = data?.totalPages ?? 1;
 
   const prevSearchRef = useRef(debouncedSearchQuery);
@@ -312,6 +324,8 @@ function TeamTable({ organizationId }: { organizationId: string }) {
       setPage(totalPages);
     }
   }, [membersQuery.isSuccess, page, totalPages]);
+
+  if (!isMounted) return null;
 
   if (membersQuery.isPending && members.length === 0) return null;
 
@@ -387,6 +401,9 @@ function TeamTable({ organizationId }: { organizationId: string }) {
         </div>
       </div>
 
+      <p className="text-xs text-muted-foreground md:hidden">
+        Showing {members.length} of {total} members
+      </p>
       <div className="bg-background rounded-[7px] border border-border shadow-sm overflow-hidden w-full">
         {members.length === 0 ? (
           <EmptyState icon={<Users className="w-12 h-12" />} title="No users found" className="py-20 bg-muted/50" />
@@ -503,50 +520,14 @@ function TeamTable({ organizationId }: { organizationId: string }) {
           </div>
         )}
       </div>
-      <MemberPagination page={page} totalPages={totalPages} onPageChange={setPage} />
+      <div className="mt-6">
+        <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+      </div>
       <InviteModal
         isOpen={isInviteModalOpen}
         onClose={() => setIsInviteModalOpen(false)}
         organizationId={organizationId}
       />
-    </div>
-  );
-}
-
-function MemberPagination({
-  page,
-  totalPages,
-  onPageChange,
-}: {
-  page: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
-}) {
-  if (totalPages <= 1) return null;
-
-  return (
-    <div className="flex items-center justify-center gap-3 py-2">
-      <button
-        type="button"
-        onClick={() => onPageChange(page - 1)}
-        disabled={page <= 1}
-        className="inline-flex size-8 items-center justify-center rounded-sm border border-muted bg-background text-muted-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
-        title="Previous page"
-      >
-        <ChevronLeft className="size-4" />
-      </button>
-      <span className="text-sm font-medium tabular-nums">
-        {page} / {totalPages}
-      </span>
-      <button
-        type="button"
-        onClick={() => onPageChange(page + 1)}
-        disabled={page >= totalPages}
-        className="inline-flex size-8 items-center justify-center rounded-sm border border-muted bg-background text-muted-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
-        title="Next page"
-      >
-        <ChevronRight className="size-4" />
-      </button>
     </div>
   );
 }
