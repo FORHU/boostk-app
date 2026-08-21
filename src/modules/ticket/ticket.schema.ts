@@ -22,11 +22,6 @@ export const UpsertTicketSessionInput = CreateCustomerSchema.extend({
 });
 export type UpsertTicketSessionInput = z.infer<typeof UpsertTicketSessionInput>;
 
-export const GetTicketByReferenceNumberSchema = z.object({
-  referenceNumber: z.string(),
-});
-export type GetTicketByReferenceNumberInput = z.infer<typeof GetTicketByReferenceNumberSchema>;
-
 export const TICKET_SORT_OPTIONS = ["newest", "oldest", "priority"] as const;
 export type TicketSort = (typeof TICKET_SORT_OPTIONS)[number];
 
