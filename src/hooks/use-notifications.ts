@@ -248,6 +248,12 @@ export function useNotifications({
       };
     };
 
+    const reconnect = () => {
+      lastActivityAt = Date.now();
+      markReconnecting();
+      connect();
+    };
+
     const markOffline = () => {
       if (reconnectingSince === null) reconnectingSince = Date.now();
       setStatusSafely("reconnecting");
@@ -266,13 +272,13 @@ export function useNotifications({
     if (!navigator.onLine) markOffline();
     const watchdog = setInterval(() => {
       if (Date.now() - lastActivityAt > HEARTBEAT_TIMEOUT_MS) {
-        markReconnecting();
+        reconnect();
       }
     }, 5000);
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible" && Date.now() - lastActivityAt > HEARTBEAT_TIMEOUT_MS) {
-        markReconnecting();
+        reconnect();
       }
     };
     document.addEventListener("visibilitychange", handleVisibilityChange);
