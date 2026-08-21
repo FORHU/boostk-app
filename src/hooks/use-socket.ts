@@ -132,6 +132,14 @@ export function useSocket({ userId, ticketId, projectId }: { userId?: string; ti
         return;
       }
 
+      // Symmetric recovery signal: the relay re-established its RabbitMQ channel after
+      // broadcasting DEGRADED. The socket never dropped, so without this the indicator
+      // would sit on "reconnecting" forever.
+      if (message.event === EventType.CONNECTED) {
+        setStatus("connected");
+        return;
+      }
+
       const shouldRing = NOTIFICATION_EVENTS.has(message.event) && shouldRingBell(message.event, data, userId);
 
       if (shouldRing) {

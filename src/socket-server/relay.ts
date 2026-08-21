@@ -58,5 +58,21 @@ export async function startRealtimeRelay(io: Server): Promise<ChannelWrapper> {
     io.emit(EventType.DEGRADED, { reason: "relay_channel_error" });
   });
 
+  // A lost AMQP connection is silent at the channel level — ChannelWrapper._onDisconnect
+  // clears its state without emitting anything — so listen one level up, on the
+  // ConnectionManager. Without this, clients keep showing "connected" through a broker
+  // outage: their sockets never drop and no channel error ever fires.
+  connection.on("disconnect", () => {
+    io.emit(EventType.DEGRADED, { reason: "rabbitmq_disconnected" });
+  });
+
+  // amqp-connection-manager re-establishes this channel on its own; `connect` fires
+  // on first setup and after every recovery. Clients that received DEGRADED have no
+  // other way back to "connected": their socket stays open through the outage, so
+  // neither `disconnect` nor `connect` will fire again.
+  relayChannel.on("connect", () => {
+    io.emit(EventType.CONNECTED, { reason: "relay_channel_recovered" });
+  });
+
   return relayChannel;
 }

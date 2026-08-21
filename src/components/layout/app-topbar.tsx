@@ -3,7 +3,7 @@
 import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { Link, useMatch, useNavigate } from "@tanstack/react-router";
 import { BadgeCheckIcon, CreditCardIcon, InboxIcon, LogOutIcon, SparklesIcon, ZapIcon } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import ThemeToggle from "@/components/ThemeToggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -18,12 +18,17 @@ import {
 import { useSidebar } from "@/components/ui/sidebar";
 import type { NotificationItem } from "@/hooks/use-notifications";
 import { authClient } from "@/lib/auth-client";
+import { cn } from "@/lib/utils";
 import { authQueries } from "@/modules/auth/auth.queries";
 import { hasOrgRole, ORG_ROLE } from "@/modules/auth/roles";
 import { intakeQueries } from "@/modules/intake/intake.queries";
 import { organizationQueries } from "@/modules/organization/organization.queries";
 import { NotificationBell } from "./notification-bell";
 import { RouterBreadcrumb } from "./RouterBreadcrumb";
+
+// How long the "Connected" label lingers after (re)connecting before settling down
+// to the dot alone — the healthy steady state shouldn't shout about itself.
+const CONNECTED_LABEL_MS = 3000;
 
 /**
  * Entry point to the BOOSTK-wide triage inbox, shown only to platform staff.
@@ -72,6 +77,19 @@ export default function AppTopbar({ connectionStatus, notifications, unreadCount
     shouldThrow: false,
   });
   const { data: organizations } = useSuspenseQuery(organizationQueries.getAuthOrganization());
+
+  const [showConnectedLabel, setShowConnectedLabel] = useState(false);
+
+  useEffect(() => {
+    if (connectionStatus !== "connected") {
+      setShowConnectedLabel(false);
+      return;
+    }
+    // Just (re)connected: confirm it briefly, then let the dot speak for itself.
+    setShowConnectedLabel(true);
+    const timer = setTimeout(() => setShowConnectedLabel(false), CONNECTED_LABEL_MS);
+    return () => clearTimeout(timer);
+  }, [connectionStatus]);
 
   // Reached only when the session expires *while* the dashboard is open: `(app)/route.tsx`
   // already redirects on `beforeLoad`, so a signed-out visitor never gets this far on a
@@ -122,10 +140,21 @@ export default function AppTopbar({ connectionStatus, notifications, unreadCount
 
         <div className="flex items-center gap-4">
           <TriageNavLink />
-          {connectionStatus && connectionStatus !== "connected" && (
+          {connectionStatus && (
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <span className="size-2 rounded-full bg-amber-500 animate-pulse" />
-              {connectionStatus === "connecting" ? "Connecting…" : "Reconnecting…"}
+              <span
+                className={cn(
+                  "size-2 rounded-full",
+                  connectionStatus === "connected" ? "bg-green-500" : "bg-amber-500 animate-pulse",
+                )}
+              />
+              {connectionStatus === "connecting"
+                ? "Connecting…"
+                : connectionStatus === "reconnecting"
+                  ? "Reconnecting…"
+                  : showConnectedLabel
+                    ? "Connected"
+                    : null}
             </div>
           )}
           <ThemeToggle />
