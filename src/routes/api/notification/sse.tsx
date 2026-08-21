@@ -2,20 +2,42 @@ import { createFileRoute } from "@tanstack/react-router";
 import type { ChannelWrapper } from "amqp-connection-manager";
 import type { ConfirmChannel } from "amqplib";
 import z from "zod";
+import { auth } from "@/lib/auth";
 import { EventType, type Message } from "@/lib/notifier/core";
+import { prisma } from "@/lib/prisma";
 import { connection, EXCHANGE_NAME } from "@/lib/rabbitmq";
+import { TICKET_COOKIE_NAME } from "@/modules/ticket/ticket.constants";
 
+// Every binding on this stream is a live feed of someone's support conversations, so
+// each requested scope is verified against a real credential before its queue binding
+// is created:
+//
+// - `userId` must equal the caller's better-auth session user id. Agents listen to their
+//   own `user.<id>.*` notification feed and nothing else.
+// - `ticketId` must match the ticket referenced by the customer widget's ticket cookie
+//   (the same bearer credential that authorizes messaging on the conversation).
+//
+// An anonymous or unauthenticated request gets no bindings at all — there is no
+// "anonymous" default stream to subscribe to.
 const SseSchema = z.object({
-  userId: z.string().min(1).default("anonymous"),
-  projectId: z
-    .string()
-    .regex(/^[a-zA-Z0-9-]+$/)
-    .optional(),
+  userId: z.string().min(1).optional(),
   ticketId: z
     .string()
     .regex(/^[a-zA-Z0-9-]+$/)
     .optional(),
 });
+
+/** Minimal RFC 6265 cookie reader — avoids importing server-only cookie helpers into an API route. */
+function readCookie(cookieHeader: string | null, name: string): string | null {
+  if (!cookieHeader) return null;
+  for (const part of cookieHeader.split(";")) {
+    const idx = part.indexOf("=");
+    if (idx === -1) continue;
+    if (part.slice(0, idx).trim() !== name) continue;
+    return decodeURIComponent(part.slice(idx + 1).trim());
+  }
+  return null;
+}
 
 export const Route = createFileRoute("/api/notification/sse")({
   server: {
@@ -28,7 +50,41 @@ export const Route = createFileRoute("/api/notification/sse")({
           return Response.json({ success: false, error: result.error.message }, { status: 400 });
         }
 
-        const { userId, projectId, ticketId } = result.data;
+        const { userId, ticketId } = result.data;
+
+        // At least one scope is required; a connection with nothing bound could never
+        // receive an event and would only hold a RabbitMQ consumer open.
+        if (!userId && !ticketId) {
+          return Response.json({ success: false, error: "userId or ticketId is required" }, { status: 401 });
+        }
+
+        let sessionUserId: string | null = null;
+        try {
+          const session = await auth.api.getSession({ headers: new Headers(request.headers) });
+          sessionUserId = session?.user.id ?? null;
+        } catch (error) {
+          console.error("[SSE] Session lookup failed:", error);
+          return Response.json({ success: false, error: "Authentication unavailable" }, { status: 503 });
+        }
+
+        // A session may only subscribe to its own user feed.
+        if (userId && userId !== sessionUserId) {
+          return Response.json({ success: false, error: "Forbidden" }, { status: 403 });
+        }
+
+        // A visitor may only subscribe to the conversation their ticket cookie points at.
+        if (ticketId) {
+          const referenceNumber = readCookie(request.headers.get("cookie"), TICKET_COOKIE_NAME);
+          const ticket = referenceNumber
+            ? await prisma.ticket.findFirst({
+                where: { id: ticketId, referenceNumber },
+                select: { id: true },
+              })
+            : null;
+          if (!ticket) {
+            return Response.json({ success: false, error: "Forbidden" }, { status: 403 });
+          }
+        }
 
         const encoder = new TextEncoder();
         let sseChannelWrapper: ChannelWrapper;
@@ -63,16 +119,9 @@ export const Route = createFileRoute("/api/notification/sse")({
                 });
                 const sseQueue = tempQueue.queue;
 
-                await channel.bindQueue(sseQueue, EXCHANGE_NAME, "test.queue");
-
-                // Bind to user queues (agent dashboard notifications)
-                if (userId && userId !== "anonymous") {
-                  await channel.bindQueue(sseQueue, EXCHANGE_NAME, `user.${userId}.*`);
-                }
-
-                // Bind to project and ticket queues
-                if (projectId) {
-                  await channel.bindQueue(sseQueue, EXCHANGE_NAME, `project.${projectId}.*`);
+                // Bind only the scopes that were just verified against credentials.
+                if (sessionUserId) {
+                  await channel.bindQueue(sseQueue, EXCHANGE_NAME, `user.${sessionUserId}.*`);
                 }
                 if (ticketId) {
                   await channel.bindQueue(sseQueue, EXCHANGE_NAME, `ticket.${ticketId}.*`);
@@ -84,7 +133,6 @@ export const Route = createFileRoute("/api/notification/sse")({
 
                   try {
                     const payload = JSON.parse(msg.content.toString());
-                    // [SSE] received message log removed
 
                     sendSseMessage({
                       event: payload.event,
@@ -96,8 +144,10 @@ export const Route = createFileRoute("/api/notification/sse")({
                     channel.ack(msg);
                   } catch (error) {
                     console.error("[SSE] Failed to parse RabbitMQ message", error);
-                    // Nack the message so it gets removed from the queue and doesn't block other messages.
-                    channel.nack(msg);
+                    // A malformed payload is unparseable on every redelivery, so drop it
+                    // (requeue=false). The default nack requeues, which turns one bad
+                    // message into an infinite hot loop.
+                    channel.nack(msg, false, false);
                   }
                 });
               },
@@ -109,12 +159,15 @@ export const Route = createFileRoute("/api/notification/sse")({
                 event: EventType.DEGRADED,
                 data: { reason: "channel_error" },
               });
-              controller.close();
               clearInterval(timer);
+              controller.close();
+              // amqp-connection-manager auto-recovers channels; without closing the
+              // wrapper it re-runs `setup` and resurrects a consumer feeding a dead
+              // stream, whose enqueue throws land right back in the nack path.
+              sseChannelWrapper.close().catch(console.error);
             });
 
             request.signal.addEventListener("abort", () => {
-              // [SSE] client disconnect log removed
               clearInterval(timer);
               controller.close();
 

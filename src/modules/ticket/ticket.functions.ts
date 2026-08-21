@@ -15,7 +15,6 @@ import {
   GetProjectTicketCountsSchema,
   GetProjectTicketInboxSchema,
   GetProjectTicketsSchema,
-  GetTicketByReferenceNumberSchema,
   RateTicketSchema,
   UpsertTicketSessionInput,
 } from "./ticket.schema";
@@ -66,20 +65,6 @@ export const upsertTicketSessionFn = createServerFn({ method: "POST" })
     }
 
     return createTicketSession(data);
-  });
-
-export const getTicketByReferenceNumberFn = createServerFn({ method: "GET" })
-  .inputValidator(GetTicketByReferenceNumberSchema)
-  .handler(async ({ data }) => {
-    const ticket = await prisma.ticket.findUnique({
-      where: { referenceNumber: data.referenceNumber },
-      include: {
-        customer: true,
-      },
-    });
-    if (!ticket) throw new Error("Ticket not found");
-
-    return ticket;
   });
 
 export const getTicketCookieFn = createServerFn({ method: "GET" })

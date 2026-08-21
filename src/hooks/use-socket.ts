@@ -142,6 +142,10 @@ export function useSocket({ userId, ticketId, projectId }: { userId?: string; ti
     const socket: Socket = io(SOCKET_URL, {
       query: { userId, ticketId, projectId },
       transports: ["websocket", "polling"],
+      // The relay authorizes room membership from the better-auth session and ticket
+      // cookies at handshake; without this the browser strips cookies cross-origin and
+      // every connection is rejected as unauthenticated.
+      withCredentials: true,
     });
 
     socket.on("connect", () => {
