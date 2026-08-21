@@ -153,28 +153,53 @@ export const Route = createFileRoute("/api/notification/sse")({
               },
             });
 
+            // One guarded teardown shared by every close path below — client abort,
+            // a channel-level error, the AMQP connection dropping — so the stream is
+            // closed exactly once and the singleton listener never leaks.
+            let cleanedUp = false;
+            const cleanupStream = () => {
+              if (cleanedUp) return;
+              cleanedUp = true;
+              connection.removeListener("disconnect", handleRabbitDisconnect);
+              clearInterval(timer);
+              try {
+                controller.close();
+              } catch {
+                // Another path already closed the stream.
+              }
+              if (sseChannelWrapper) {
+                sseChannelWrapper.close().catch(console.error);
+              }
+            };
+
+            // A lost AMQP connection is silent at the ChannelWrapper level —
+            // ChannelWrapper._onDisconnect clears its state without emitting anything —
+            // so listen one level up, on the ConnectionManager singleton. Without this
+            // the stream just goes quiet while the heartbeat timer keeps telling the
+            // client everything is fine.
+            const handleRabbitDisconnect = () => {
+              console.error(`[SSE] RabbitMQ disconnected for User ${userId}`);
+              sendSseMessage({
+                event: EventType.DEGRADED,
+                data: { reason: "rabbitmq_disconnected" },
+              });
+              cleanupStream();
+            };
+            connection.on("disconnect", handleRabbitDisconnect);
+
             sseChannelWrapper.on("error", (err) => {
               console.error(`[SSE] RabbitMQ Channel Error for User ${userId}:`, err);
               sendSseMessage({
                 event: EventType.DEGRADED,
                 data: { reason: "channel_error" },
               });
-              clearInterval(timer);
-              controller.close();
               // amqp-connection-manager auto-recovers channels; without closing the
               // wrapper it re-runs `setup` and resurrects a consumer feeding a dead
               // stream, whose enqueue throws land right back in the nack path.
-              sseChannelWrapper.close().catch(console.error);
+              cleanupStream();
             });
 
-            request.signal.addEventListener("abort", () => {
-              clearInterval(timer);
-              controller.close();
-
-              if (sseChannelWrapper) {
-                sseChannelWrapper.close().catch(console.error);
-              }
-            });
+            request.signal.addEventListener("abort", cleanupStream);
           },
         });
 

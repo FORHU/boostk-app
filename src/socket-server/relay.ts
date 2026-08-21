@@ -6,6 +6,8 @@ import { connection, EXCHANGE_NAME } from "@/lib/rabbitmq";
 
 const BINDING_PATTERNS = ["user.*.*", "ticket.*.*", "project.*.*"];
 
+const HEARTBEAT_INTERVAL_MS = 10_000;
+
 /**
  * Relays RabbitMQ events published on the BoostK exchange to connected socket.io
  * clients. A single shared, exclusive consumer is bound to the exchange; each
@@ -57,6 +59,31 @@ export async function startRealtimeRelay(io: Server): Promise<ChannelWrapper> {
     // shared consumer, so when it dies it dies for everyone.
     io.emit(EventType.DEGRADED, { reason: "relay_channel_error" });
   });
+
+  // A lost AMQP connection is silent at the channel level — ChannelWrapper._onDisconnect
+  // clears its state without emitting anything — so listen one level up, on the
+  // ConnectionManager. Without this, clients keep showing "connected" through a broker
+  // outage: their sockets never drop and no channel error ever fires.
+  connection.on("disconnect", () => {
+    io.emit(EventType.DEGRADED, { reason: "rabbitmq_disconnected" });
+  });
+
+  // amqp-connection-manager re-establishes this channel on its own; `connect` fires
+  // on first setup and after every recovery. Clients that received DEGRADED have no
+  // other way back to "connected": their socket stays open through the outage, so
+  // neither `disconnect` nor `connect` will fire again.
+  relayChannel.on("connect", () => {
+    io.emit(EventType.CONNECTED, { reason: "relay_channel_recovered" });
+  });
+
+  // Liveness signal so clients can distinguish a healthy-but-quiet feed from a dead
+  // one. A hung relay or half-open connection produces no events and no disconnect,
+  // so without a steady beat the client can only guess. `unref` keeps this timer from
+  // ever blocking a clean shutdown.
+  const heartbeat = setInterval(() => {
+    io.emit(EventType.HEARTBEAT, { ts: Date.now() });
+  }, HEARTBEAT_INTERVAL_MS);
+  heartbeat.unref();
 
   return relayChannel;
 }
