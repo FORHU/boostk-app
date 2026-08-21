@@ -224,6 +224,13 @@ export const createAgentTicketMessageFn = createServerFn({ method: "POST" })
       include: { attachment: ATTACHMENT_SELECT },
     });
 
+    // The author has by definition read their own reply — record it so unread
+    // summaries (which count messages lacking a MessageRead for the viewer) don't
+    // serve the sender's own words back to them on reload.
+    await prisma.messageRead.create({
+      data: { messageId: message.id, ticketId: ticket.id, userId },
+    });
+
     await publishToTicketChannel({
       ticketId: ticket.id,
       event: EventType.CHAT_MESSAGE,

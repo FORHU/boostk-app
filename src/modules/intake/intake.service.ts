@@ -288,6 +288,22 @@ export const routeIntakeTicket = async ({
           createdAt: message.createdAt,
         })),
       });
+
+      // Copied staff/agent messages keep their author, so record them as already-read
+      // by that author — otherwise a forwarded conversation greets its original writer
+      // with phantom unreads in the receiving org's inbox.
+      if (intakeTicket.ticketMessages.some((message) => message.userId != null)) {
+        const copied = await tx.ticketMessage.findMany({
+          where: { ticketId: newTicket.id },
+          select: { id: true, userId: true },
+        });
+        await tx.messageRead.createMany({
+          data: copied.flatMap((message) =>
+            message.userId ? [{ messageId: message.id, ticketId: newTicket.id, userId: message.userId }] : [],
+          ),
+          skipDuplicates: true,
+        });
+      }
     }
 
     await tx.ticket.update({

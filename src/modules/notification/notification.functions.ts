@@ -51,6 +51,11 @@ export const getUnreadTicketSummaries = createServerFn({ method: "GET" })
     const unreadMessages = await prisma.ticketMessage.findMany({
       where: {
         ticket: { project: { organizationId: { in: orgIds } } },
+        // Your own replies are never "unread" to you. The explicit OR keeps customer
+        // messages (userId = null) counting — a bare `{ not: userId }` has ambiguous
+        // NULL semantics on this nullable column — and covers every write path,
+        // including transcripts copied across during triage routing.
+        OR: [{ userId: null }, { userId: { not: userId } }],
         messageReads: { none: { userId } },
       },
       include: {
@@ -111,6 +116,8 @@ export const getUnreadTicketSummaries = createServerFn({ method: "GET" })
       const intakeUnread = await prisma.ticketMessage.findMany({
         where: {
           ticket: { project: { slug: INTAKE_PROJECT_SLUG } },
+          // Same self-exclusion as the org query above.
+          OR: [{ userId: null }, { userId: { not: userId } }],
           messageReads: { none: { userId } },
         },
         include: {
