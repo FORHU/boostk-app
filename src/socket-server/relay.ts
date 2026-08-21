@@ -6,6 +6,8 @@ import { connection, EXCHANGE_NAME } from "@/lib/rabbitmq";
 
 const BINDING_PATTERNS = ["user.*.*", "ticket.*.*", "project.*.*"];
 
+const HEARTBEAT_INTERVAL_MS = 10_000;
+
 /**
  * Relays RabbitMQ events published on the BoostK exchange to connected socket.io
  * clients. A single shared, exclusive consumer is bound to the exchange; each
@@ -73,6 +75,15 @@ export async function startRealtimeRelay(io: Server): Promise<ChannelWrapper> {
   relayChannel.on("connect", () => {
     io.emit(EventType.CONNECTED, { reason: "relay_channel_recovered" });
   });
+
+  // Liveness signal so clients can distinguish a healthy-but-quiet feed from a dead
+  // one. A hung relay or half-open connection produces no events and no disconnect,
+  // so without a steady beat the client can only guess. `unref` keeps this timer from
+  // ever blocking a clean shutdown.
+  const heartbeat = setInterval(() => {
+    io.emit(EventType.HEARTBEAT, { ts: Date.now() });
+  }, HEARTBEAT_INTERVAL_MS);
+  heartbeat.unref();
 
   return relayChannel;
 }

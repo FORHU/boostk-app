@@ -7,7 +7,7 @@ import {
   type UnreadTicketSummary,
 } from "@/modules/notification/notification.functions";
 
-const HEARTBEAT_TIMEOUT_MS = 25000;
+export const HEARTBEAT_TIMEOUT_MS = 25000;
 const RECONNECTING_MIN_HOLD_MS = 1500;
 
 const MAX_NOTIFICATIONS = 20;
