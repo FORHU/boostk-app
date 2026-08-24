@@ -99,6 +99,30 @@ const EnvSchema = z
 
     /** Comma separated list of emails for platform staff who have access to the triage dashboard. */
     PLATFORM_STAFF_EMAILS: optional(z.string().min(1).optional()),
+
+    /**
+     * SMTP transport for outgoing mail (see `lib/email.ts`). Optional as a group in every
+     * environment: local dev keeps the console transport with nothing configured, and an
+     * unconfigured production deploy boots with a loud warning rather than refusing to
+     * start -- mail is not worth taking the whole app down for. `env.mailerEnabled` is the
+     * flag callers should read; a half-filled set (host but no password) counts as
+     * unconfigured rather than producing an SMTP handshake that fails at the provider.
+     */
+    MAILER_TRANSPORT_HOST: optional(z.string().min(1).optional()),
+    MAILER_TRANSPORT_PORT: optional(
+      z.coerce.number({ error: "must be a port number" }).int("must be a whole number").min(1).max(65535).default(587),
+    ),
+    /** True only for implicit TLS on port 465; STARTTLS on 587 uses `false`. */
+    MAILER_TRANSPORT_SECURE: optional(
+      z
+        .enum(["true", "false"], { error: "must be true or false" })
+        .default("false")
+        .transform((value) => value === "true"),
+    ),
+    /** Both the SMTP username and the From address. */
+    MAILER_EMAIL: optional(z.email("must be an email address").optional()),
+    /** For Gmail this is a 16-character App Password, not the account password. */
+    MAILER_PASSWORD: optional(z.string().min(1).optional()),
   })
   .superRefine((value, ctx) => {
     if (value.NODE_ENV !== "production") return;
@@ -164,9 +188,34 @@ export const env = {
    */
   googleAuthEnabled: Boolean(data.GOOGLE_CLIENT_ID && data.GOOGLE_CLIENT_SECRET),
 
+  /**
+   * Whether a real SMTP transport can be built. All three or none: host without
+   * credentials produces a connection that is rejected at the provider rather than a
+   * clear "no mail configured" at the seam.
+   */
+  mailerEnabled: Boolean(data.MAILER_TRANSPORT_HOST && data.MAILER_EMAIL && data.MAILER_PASSWORD),
+
   isProduction: data.NODE_ENV === "production",
   isDevelopment: data.NODE_ENV === "development",
   isTest: data.NODE_ENV === "test",
 } as const;
+
+/**
+ * Mail is not fatal at boot, but an unconfigured production deploy is a real outage of
+ * the only account-recovery path -- and an invisible one, since the forgot-password flow
+ * still answers "if an account exists, we've sent a link". Say so once, at startup, where
+ * an operator reading deploy logs will actually see it.
+ */
+if (env.isProduction && !env.mailerEnabled) {
+  console.warn(
+    [
+      "",
+      "⚠ No mail transport configured (MAILER_TRANSPORT_HOST / MAILER_EMAIL / MAILER_PASSWORD).",
+      "  Password reset emails will be logged and dropped, not delivered.",
+      "  Users who forget their password have no recovery path until this is set.",
+      "",
+    ].join("\n"),
+  );
+}
 
 export type Env = typeof env;
