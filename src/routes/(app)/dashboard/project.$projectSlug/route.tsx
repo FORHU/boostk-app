@@ -24,7 +24,7 @@ function OrganizationLayout() {
 
   return (
     <div
-      className="flex flex-1 min-h-0 relative"
+      className="flex h-full min-h-0 relative"
       style={
         {
           "--sidebar-width": "13rem",

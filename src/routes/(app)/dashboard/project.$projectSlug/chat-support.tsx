@@ -20,7 +20,7 @@ import {
   X,
 } from "lucide-react";
 import type { TicketMessage } from "prisma/generated/client";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ReplyInput } from "@/components/chat-support/reply-input";
 import TicketChatMessageBubble from "@/components/chat-support/TicketChatMessageBubble";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -359,7 +359,7 @@ function ProjectChatSupportPage() {
     <div className="flex h-full w-full bg-muted/20 text-foreground font-sans overflow-hidden">
       {/* TICKET LIST SIDEBAR */}
       <aside
-        className={`border-r border-border bg-background flex-col ${isMd ? "w-80 flex" : `w-full ${selectedTicketId ? "hidden" : "flex"}`}`}
+        className={`border-r border-border bg-background flex-col min-h-0 ${isMd ? "w-80 flex" : `w-full ${selectedTicketId ? "hidden" : "flex"}`}`}
       >
         <div className="p-4 border-b border-border/50">
           <div className="flex justify-between items-center mb-4">
@@ -398,7 +398,7 @@ function ProjectChatSupportPage() {
           </div>
         </div>
 
-        <div className="no-scrollbar flex-1 overflow-y-auto p-2 space-y-2">
+        <div className="no-scrollbar flex-1 min-h-0 overflow-y-auto p-2 space-y-2">
           {tickets.length === 0 ? (
             <EmptyState title="No conversations found." size="sm" className="p-4" />
           ) : (
@@ -447,9 +447,9 @@ function ProjectChatSupportPage() {
       </aside>
 
       {/* ACTIVE CHAT AREA */}
-      {selectedTicket && (
+      {selectedTicket ? (
         <main
-          className={`flex-1 flex flex-col mb-8 bg-background relative transition-all duration-300 ease-in-out ${isMd || selectedTicketId ? "flex" : "hidden"}`}
+          className={`flex-1 flex flex-col min-h-0 bg-background transition-all duration-300 ease-in-out ${isMd || selectedTicketId ? "flex" : "hidden"}`}
         >
           <ChatWindow
             ticket={selectedTicket}
@@ -461,127 +461,144 @@ function ProjectChatSupportPage() {
             onToggleDetails={() => (isLg ? setShowDesktopDetails((v) => !v) : setShowMobileDetails(true))}
           />
         </main>
-      )}
+      ) : tickets.length === 0 ? (
+        <main className="flex-1 flex-col bg-background relative hidden md:flex">
+          <EmptyState
+            icon={
+              <div className="bg-muted p-4 rounded-full">
+                <MessageCircle className="text-muted-foreground" size={48} />
+              </div>
+            }
+            title="No conversations yet"
+            description="When customers start chatting, their conversations will appear here."
+            className="h-full"
+          />
+        </main>
+      ) : null}
 
       {/* TICKET DETAILS */}
-      <aside
-        className={`flex h-full transition-all duration-300 ease-in-out ${
-          isLg
-            ? `relative shadow-none ${showDesktopDetails ? "w-72" : "w-0"}`
-            : `fixed inset-y-0 right-0 z-50 ${showMobileDetails ? "translate-x-0 shadow-2xl" : "translate-x-full"}`
-        }`}
-      >
-        <div className="w-72 max-w-[85vw] bg-background border-l border-border h-full flex flex-col shrink-0">
-          <div className={`${isMd ? "p-5" : "p-4"} border-b border-border/50 flex justify-between items-center`}>
-            <h3 className="text-sm font-bold text-foreground uppercase truncate pr-2">Ticket &amp; Customer</h3>
-            {!isLg && (
-              <button
-                type="button"
-                className="text-muted-foreground hover:text-foreground shrink-0 p-1 bg-muted/50 rounded-md"
-                onClick={() => setShowMobileDetails(false)}
-              >
-                <X className="w-5 h-5" />
-              </button>
-            )}
-          </div>
+      {tickets.length > 0 && (
+        <aside
+          className={`flex h-full transition-all duration-300 ease-in-out ${
+            isLg
+              ? `relative shadow-none ${showDesktopDetails ? "w-72" : "w-0"}`
+              : `fixed inset-y-0 right-0 z-50 ${showMobileDetails ? "translate-x-0 shadow-2xl" : "translate-x-full"}`
+          }`}
+        >
+          <div className="w-72 max-w-[85vw] bg-background border-l border-border h-full flex flex-col shrink-0">
+            <div className={`${isMd ? "p-5" : "p-4"} border-b border-border/50 flex justify-between items-center`}>
+              <h3 className="text-sm font-bold text-foreground uppercase truncate pr-2">Ticket &amp; Customer</h3>
+              {!isLg && (
+                <button
+                  type="button"
+                  className="text-muted-foreground hover:text-foreground shrink-0 p-1 bg-muted/50 rounded-md"
+                  onClick={() => setShowMobileDetails(false)}
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              )}
+            </div>
 
-          {selectedTicket && (
-            <div className={`${isMd ? "p-6" : "p-4"} space-y-6 overflow-y-auto no-scrollbar h-[calc(100vh-65px)]`}>
-              <div className="flex flex-col items-center text-center gap-3">
-                <div className="w-20 h-20 bg-muted text-muted-foreground rounded-full flex items-center justify-center text-2xl font-bold shadow-inner uppercase shrink-0">
-                  {selectedTicket.customer.name.charAt(0)}
+            {selectedTicket && (
+              <div className={`${isMd ? "p-6" : "p-4"} space-y-6 overflow-y-auto no-scrollbar h-[calc(100vh-65px)]`}>
+                <div className="flex flex-col items-center text-center gap-3">
+                  <div className="w-20 h-20 bg-muted text-muted-foreground rounded-full flex items-center justify-center text-2xl font-bold shadow-inner uppercase shrink-0">
+                    {selectedTicket.customer.name.charAt(0)}
+                  </div>
+                  <div className="w-full min-w-0">
+                    <h4 className="font-bold text-foreground text-lg break-words">{selectedTicket.customer.name}</h4>
+                    {selectedTicket.customer.language && (
+                      <span className="text-xs font-semibold px-2 py-1 bg-muted text-muted-foreground rounded-sm border border-border mt-1 inline-block truncate max-w-full">
+                        Speaks: {selectedTicket.customer.language}
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <div className="w-full min-w-0">
-                  <h4 className="font-bold text-foreground text-lg break-words">{selectedTicket.customer.name}</h4>
-                  {selectedTicket.customer.language && (
-                    <span className="text-xs font-semibold px-2 py-1 bg-muted text-muted-foreground rounded-sm border border-border mt-1 inline-block truncate max-w-full">
-                      Speaks: {selectedTicket.customer.language}
-                    </span>
-                  )}
-                </div>
-              </div>
 
-              <hr className="border-border" />
+                <hr className="border-border" />
 
-              <ul className="space-y-5">
-                <li className="flex items-center gap-3 text-sm">
-                  <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center text-muted-foreground border border-border shrink-0">
-                    <Hash className="w-4 h-4" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs uppercase font-bold text-muted-foreground truncate">Ticket</p>
-                    <p className="font-medium text-foreground truncate">{selectedTicket.referenceNumber}</p>
-                  </div>
-                </li>
-                <li className="flex items-center gap-3 text-sm">
-                  <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center text-muted-foreground border border-border shrink-0">
-                    {getStatusIndicator(selectedTicket.status)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs uppercase font-bold text-muted-foreground truncate">Status</p>
-                    <p className="font-medium text-foreground truncate">
-                      {selectedTicket.status === "OPEN" ? "Open" : "Closed"}
-                    </p>
-                  </div>
-                </li>
-                <li className="flex items-center gap-3 text-sm">
-                  <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center text-muted-foreground border border-border shrink-0">
-                    <Flag className="w-4 h-4" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs uppercase font-bold text-muted-foreground truncate">Priority</p>
-                    <p className="mt-0.5">
-                      <TicketPriorityBadge priority={selectedTicket.priority} />
-                    </p>
-                  </div>
-                </li>
-                <li className="flex items-center gap-3 text-sm">
-                  <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center text-muted-foreground border border-border shrink-0">
-                    <Star className="w-4 h-4" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs uppercase font-bold text-muted-foreground truncate">Customer Rating</p>
-                    <p className="font-medium text-foreground truncate">
-                      {selectedTicket.satisfactionScore != null ? `${selectedTicket.satisfactionScore}/5` : "Not rated"}
-                    </p>
-                  </div>
-                </li>
-                <li className="flex items-center gap-3 text-sm">
-                  <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center text-muted-foreground border border-border shrink-0">
-                    <Mail className="w-4 h-4" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs uppercase font-bold text-muted-foreground truncate">Email Address</p>
-                    <p className="font-medium text-foreground truncate">{selectedTicket.customer.email}</p>
-                  </div>
-                </li>
-                {selectedTicket.customer.metadata ? (
+                <ul className="space-y-5">
                   <li className="flex items-center gap-3 text-sm">
                     <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center text-muted-foreground border border-border shrink-0">
-                      <Tag className="w-4 h-4" />
+                      <Hash className="w-4 h-4" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs uppercase font-bold text-muted-foreground truncate">Source</p>
-                      <p className="font-medium text-foreground truncate">{selectedTicket.customer.metadata}</p>
+                      <p className="text-xs uppercase font-bold text-muted-foreground truncate">Ticket</p>
+                      <p className="font-medium text-foreground truncate">{selectedTicket.referenceNumber}</p>
                     </div>
                   </li>
-                ) : null}
-                <li className="flex items-center gap-3 text-sm">
-                  <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center text-muted-foreground border border-border shrink-0">
-                    <Calendar className="w-4 h-4" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs uppercase font-bold text-muted-foreground truncate">Customer Since</p>
-                    <p className="font-medium text-foreground truncate">
-                      {formatDate(selectedTicket.customer.createdAt)}
-                    </p>
-                  </div>
-                </li>
-              </ul>
-            </div>
-          )}
-        </div>
-      </aside>
+                  <li className="flex items-center gap-3 text-sm">
+                    <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center text-muted-foreground border border-border shrink-0">
+                      {getStatusIndicator(selectedTicket.status)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs uppercase font-bold text-muted-foreground truncate">Status</p>
+                      <p className="font-medium text-foreground truncate">
+                        {selectedTicket.status === "OPEN" ? "Open" : "Closed"}
+                      </p>
+                    </div>
+                  </li>
+                  <li className="flex items-center gap-3 text-sm">
+                    <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center text-muted-foreground border border-border shrink-0">
+                      <Flag className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs uppercase font-bold text-muted-foreground truncate">Priority</p>
+                      <p className="mt-0.5">
+                        <TicketPriorityBadge priority={selectedTicket.priority} />
+                      </p>
+                    </div>
+                  </li>
+                  <li className="flex items-center gap-3 text-sm">
+                    <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center text-muted-foreground border border-border shrink-0">
+                      <Star className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs uppercase font-bold text-muted-foreground truncate">Customer Rating</p>
+                      <p className="font-medium text-foreground truncate">
+                        {selectedTicket.satisfactionScore != null
+                          ? `${selectedTicket.satisfactionScore}/5`
+                          : "Not rated"}
+                      </p>
+                    </div>
+                  </li>
+                  <li className="flex items-center gap-3 text-sm">
+                    <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center text-muted-foreground border border-border shrink-0">
+                      <Mail className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs uppercase font-bold text-muted-foreground truncate">Email Address</p>
+                      <p className="font-medium text-foreground truncate">{selectedTicket.customer.email}</p>
+                    </div>
+                  </li>
+                  {selectedTicket.customer.metadata ? (
+                    <li className="flex items-center gap-3 text-sm">
+                      <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center text-muted-foreground border border-border shrink-0">
+                        <Tag className="w-4 h-4" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs uppercase font-bold text-muted-foreground truncate">Source</p>
+                        <p className="font-medium text-foreground truncate">{selectedTicket.customer.metadata}</p>
+                      </div>
+                    </li>
+                  ) : null}
+                  <li className="flex items-center gap-3 text-sm">
+                    <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center text-muted-foreground border border-border shrink-0">
+                      <Calendar className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs uppercase font-bold text-muted-foreground truncate">Customer Since</p>
+                      <p className="font-medium text-foreground truncate">
+                        {formatDate(selectedTicket.customer.createdAt)}
+                      </p>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            )}
+          </div>
+        </aside>
+      )}
 
       {showMobileDetails && !isLg && (
         <button
@@ -608,6 +625,33 @@ function ChatWindow({ ticket, projectId, role, memberId, isMd, onBack, onToggleD
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [statusAction, setStatusAction] = useState<"CLOSED" | "OPEN" | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const isNearBottomRef = useRef(true);
+
+  const { data: messages, isLoading: messagesLoading } = useQuery(ticketMessageQueries.getByTicket(ticket.id));
+
+  const list = messages ?? [];
+
+  const scrollToBottom = useCallback((smooth = true) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: smooth ? "smooth" : "instant" });
+  }, []);
+
+  // Auto-scroll to bottom when messages change, if user is near bottom.
+  // Also resets scroll position on ticket switch.
+  const prevTicketIdRef = useRef(ticket.id);
+  useEffect(() => {
+    if (prevTicketIdRef.current !== ticket.id) {
+      prevTicketIdRef.current = ticket.id;
+      isNearBottomRef.current = true;
+      scrollToBottom(false);
+      return;
+    }
+    if (isNearBottomRef.current) {
+      scrollToBottom(list.length > 0);
+    }
+  }, [list.length, scrollToBottom, ticket.id]);
 
   const updateStatusMutation = useMutation({
     mutationFn: updateTicketStatusFn,
@@ -634,8 +678,8 @@ function ChatWindow({ ticket, projectId, role, memberId, isMd, onBack, onToggleD
   const canTakeTicket = !hasOrgRole(role, ORG_ROLE.ADMIN) && ticket.assignedAgentId === null && memberId !== null;
 
   return (
-    <>
-      <header className={`h-16 flex justify-between items-center ${isMd ? "px-6" : "px-3"} bg-muted/50 z-10 gap-2`}>
+    <div className="relative flex flex-1 flex-col min-h-0 h-full overflow-hidden">
+      <header className={`h-16 flex justify-between items-center ${isMd ? "px-6" : "px-3"} bg-muted/50 z-20 gap-2 shrink-0 relative`}>
         <div className={`flex items-center ${isMd ? "gap-3" : "gap-2"} flex-1 min-w-0`}>
           {!isMd && (
             <button
@@ -698,35 +742,51 @@ function ChatWindow({ ticket, projectId, role, memberId, isMd, onBack, onToggleD
         </div>
       </header>
 
-      {/* Message History */}
-      <div className={`no-scrollbar flex-1 overflow-y-auto ${isMd ? "p-6" : "p-4"} space-y-6 mt-3`}>
-        <AgentMessageList ticketId={ticket.id} />
-      </div>
+      {/* Body: message pane (z-0, absolutely filled + scrollable) with the
+          input bar layered on top (z-10, pinned to the bottom). Using absolute
+          positioning here means the input's position is independent of flex
+          height propagation from ancestors — it can never get pushed down by
+          message content growth, even if some outer container fails to cap
+          its height. */}
+      <div className="relative flex-1 min-h-0">
+        {/* Message History — z-0, sits underneath the input bar */}
+        <div
+          ref={scrollRef}
+          onScroll={() => {
+            const el = scrollRef.current;
+            if (!el) return;
+            isNearBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
+          }}
+          className={`no-scrollbar absolute inset-0 z-0 overflow-y-auto ${isMd ? "p-6" : "p-4"} pb-24 md:pb-28 space-y-6`}
+        >
+          <AgentMessageList messages={list} isLoading={messagesLoading} />
+        </div>
 
-      {/* Chat Input */}
-      <div className="bg-background border-t border-border">
-        {ticket.status === "CLOSED" ? (
-          <div className="p-3">
-            <div className="text-center p-3 text-sm text-muted-foreground bg-muted rounded-lg border border-border">
-              This ticket is closed. Reopen it to continue the conversation.
+        {/* Chat Input — z-10, raised slightly off the bottom edge, always on top of messages */}
+        <div className="absolute bottom-2 md:bottom-3 inset-x-0 z-10 bg-background border-t border-border">
+          {ticket.status === "CLOSED" ? (
+            <div className="p-3">
+              <div className="text-center p-3 text-sm text-muted-foreground bg-muted rounded-lg border border-border">
+                This ticket is closed. Reopen it to continue the conversation.
+              </div>
             </div>
-          </div>
-        ) : (
-          <ReplyInput
-            ticketId={ticket.id}
-            projectId={projectId}
-            customerName={ticket.customer.name}
-            customerLanguage={ticket.customer.language}
-            onSuccess={() => {
-              queryClient.invalidateQueries({
-                queryKey: ticketMessageQueries.getByTicket(ticket.id).queryKey,
-              });
-              queryClient.invalidateQueries({
-                queryKey: ticketInboxQueries.listPrefix(projectId),
-              });
-            }}
-          />
-        )}
+          ) : (
+            <ReplyInput
+              ticketId={ticket.id}
+              projectId={projectId}
+              customerName={ticket.customer.name}
+              customerLanguage={ticket.customer.language}
+              onSuccess={() => {
+                queryClient.invalidateQueries({
+                  queryKey: ticketMessageQueries.getByTicket(ticket.id).queryKey,
+                });
+                queryClient.invalidateQueries({
+                  queryKey: ticketInboxQueries.listPrefix(projectId),
+                });
+              }}
+            />
+          )}
+        </div>
       </div>
 
       <ConfirmDialog
@@ -754,13 +814,11 @@ function ChatWindow({ ticket, projectId, role, memberId, isMd, onBack, onToggleD
           setStatusAction(null);
         }}
       />
-    </>
+    </div>
   );
 }
 
-const AgentMessageList = ({ ticketId }: { ticketId: string }) => {
-  const { data: messages, isLoading } = useQuery(ticketMessageQueries.getByTicket(ticketId));
-
+const AgentMessageList = ({ messages, isLoading }: { messages: TicketMessage[]; isLoading: boolean }) => {
   if (isLoading) {
     return (
       <div className="flex-1 flex items-center justify-center bg-slate-50 dark:bg-slate-900/50">
@@ -769,9 +827,7 @@ const AgentMessageList = ({ ticketId }: { ticketId: string }) => {
     );
   }
 
-  const list = messages ?? [];
-
-  if (list.length === 0) {
+  if (messages.length === 0) {
     return (
       <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="h-full">
         <EmptyState
@@ -790,9 +846,9 @@ const AgentMessageList = ({ ticketId }: { ticketId: string }) => {
 
   return (
     <div className="flex flex-col space-y-0.5">
-      {list.map((msg, index) => {
-        const isStart = !isSameGroup(list[index - 1], msg);
-        const isEnd = !isSameGroup(msg, list[index + 1]);
+      {messages.map((msg, index) => {
+        const isStart = !isSameGroup(messages[index - 1], msg);
+        const isEnd = !isSameGroup(msg, messages[index + 1]);
         return <TicketChatMessageBubble key={msg.id} msg={msg} isStart={isStart} isEnd={isEnd} viewer="agent" />;
       })}
     </div>

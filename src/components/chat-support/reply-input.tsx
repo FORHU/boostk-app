@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { Loader2, Send } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AttachmentButton, AttachmentPreview } from "@/components/chat-support/attachment-picker";
 import { useToast } from "@/components/ui/toast";
 import { useAttachmentUpload } from "@/hooks/use-attachment-upload";
@@ -18,6 +18,8 @@ interface ReplyInputProps {
 export function ReplyInput({ ticketId, projectId, customerName, customerLanguage, onSuccess }: ReplyInputProps) {
   const { toast } = useToast();
   const [message, setMessage] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+  const shouldRefocusRef = useRef(false);
 
   const onUploadError = useCallback((error: string) => toast(error, "error"), [toast]);
   const { attachment, isUploading, upload, clear } = useAttachmentUpload({
@@ -59,6 +61,7 @@ export function ReplyInput({ ticketId, projectId, customerName, customerLanguage
 
       setMessage("");
       onSuccess?.();
+      shouldRefocusRef.current = true;
     } catch {
       // onError already surfaced a toast; keep the draft so nothing is lost.
     }
@@ -72,6 +75,15 @@ export function ReplyInput({ ticketId, projectId, customerName, customerLanguage
 
   const isBusy = replyMutation.isPending || isUploading;
 
+  // Keep focus in the composer after a successful send. The field is disabled while
+  // the mutation is in flight, which drops focus; restore it once it is interactive again.
+  useEffect(() => {
+    if (shouldRefocusRef.current && !replyMutation.isPending) {
+      inputRef.current?.focus();
+      shouldRefocusRef.current = false;
+    }
+  }, [replyMutation.isPending]);
+
   return (
     <form
       onSubmit={handleSubmit}
@@ -82,6 +94,7 @@ export function ReplyInput({ ticketId, projectId, customerName, customerLanguage
       <div className="flex items-end gap-2">
         <AttachmentButton onSelect={upload} disabled={replyMutation.isPending} isUploading={isUploading} />
         <input
+          ref={inputRef}
           type="text"
           value={message}
           onChange={(e) => setMessage(e.target.value)}

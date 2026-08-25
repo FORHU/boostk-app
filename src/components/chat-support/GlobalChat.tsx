@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { CheckCircle2, Loader2, Send } from "lucide-react";
 import type { TicketMessage } from "prisma/generated/client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { BoostkLogo } from "@/components/BoostkLogo";
 import { AttachmentButton, AttachmentHint, AttachmentPreview } from "@/components/chat-support/attachment-picker";
 import IntakeCustomerForm from "@/components/chat-support/IntakeCustomerForm";
@@ -36,8 +36,32 @@ export default function GlobalChat({ headerAction }: { headerAction?: React.Reac
   const queryClient = useQueryClient();
   const { data: ticket, isLoading: sessionLoading } = useQuery(intakeQueries.session());
   const { data: messages, isLoading: messagesLoading } = useQuery(intakeQueries.messages());
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const isNearBottomRef = useRef(true);
 
   const { lastMessage, status } = useSocket({ ticketId: ticket?.id, projectId: ticket?.projectId });
+
+  const scrollToBottom = useCallback((smooth = true) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: smooth ? "smooth" : "instant" });
+  }, []);
+
+  const messageCount = messages?.length ?? 0;
+
+  const ticketId = ticket?.id;
+  const prevTicketIdRef = useRef(ticketId);
+  useEffect(() => {
+    if (prevTicketIdRef.current !== ticketId) {
+      prevTicketIdRef.current = ticketId;
+      isNearBottomRef.current = true;
+      scrollToBottom(false);
+      return;
+    }
+    if (isNearBottomRef.current) {
+      scrollToBottom(messageCount > 0);
+    }
+  }, [messageCount, scrollToBottom, ticketId]);
 
   useEffect(() => {
     if (lastMessage?.event === EventType.CHAT_MESSAGE) {
@@ -60,7 +84,15 @@ export default function GlobalChat({ headerAction }: { headerAction?: React.Reac
     <div className="flex flex-col h-full min-h-0 bg-white">
       <ChatHeader connectionStatus={ticket ? status : undefined} action={headerAction} />
 
-      <div className="flex-1 min-h-0 overflow-y-auto p-2 bg-slate-50 scroll-smooth">
+      <div
+        ref={scrollRef}
+        onScroll={() => {
+          const el = scrollRef.current;
+          if (!el) return;
+          isNearBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
+        }}
+        className="flex-1 min-h-0 overflow-y-auto p-2 bg-slate-50 scroll-smooth"
+      >
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
             <Loader2 className="animate-spin text-blue-600" size={28} />
@@ -206,6 +238,8 @@ const ChatInput = ({
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState(initialStatus);
   const [rated, setRated] = useState(initialScore != null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const shouldRefocusRef = useRef(false);
 
   const rateLimit = useRateLimitNotice();
 
@@ -238,6 +272,15 @@ const ChatInput = ({
     },
   });
 
+  // Keep focus in the composer after a successful send. The field is disabled while
+  // the mutation is in flight, which drops focus; restore it once it is interactive again.
+  useEffect(() => {
+    if (shouldRefocusRef.current && !createMessageMutation.isPending) {
+      inputRef.current?.focus();
+      shouldRefocusRef.current = false;
+    }
+  }, [createMessageMutation.isPending]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = message.trim();
@@ -263,6 +306,7 @@ const ChatInput = ({
       }
 
       setMessage("");
+      shouldRefocusRef.current = true;
     } catch {
       // onError already toasted; keep the draft so the visitor does not retype it.
     }
@@ -309,6 +353,7 @@ const ChatInput = ({
             className="text-gray-400 hover:text-gray-700 hover:bg-gray-100"
           />
           <input
+            ref={inputRef}
             type="text"
             value={message}
             onChange={(e) => setMessage(e.target.value)}
