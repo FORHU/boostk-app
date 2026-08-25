@@ -3,7 +3,7 @@ import { createFileRoute, notFound, redirect, useRouter } from "@tanstack/react-
 import { motion } from "framer-motion";
 import { CheckCircle2, Loader2, Send } from "lucide-react";
 import type { Project, TicketMessage } from "prisma/generated/client";
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { BoostkLogo } from "@/components/BoostkLogo";
 import { AttachmentButton, AttachmentHint, AttachmentPreview } from "@/components/chat-support/attachment-picker";
@@ -84,12 +84,36 @@ function RouteComponent() {
   const [ticketStatus, setTicketStatus] = useState<string | null>(ticket?.status ?? null);
   const [isCloseConfirmOpen, setIsCloseConfirmOpen] = useState(false);
   const { lastMessage, status } = useSocket({ ticketId: ticket?.id, projectId: project.id });
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const isNearBottomRef = useRef(true);
 
   const { data: ticketMessages } = useQuery({
     ...ticketMessageQueries.getTicketMessages(project.id),
     enabled: !!ticket,
   });
   const hasCustomerMessage = ticketMessages?.some((m) => m.customerId != null) ?? false;
+
+  const scrollToBottom = useCallback((smooth = true) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: smooth ? "smooth" : "instant" });
+  }, []);
+
+  const messageCount = ticketMessages?.length ?? 0;
+
+  const ticketId = ticket?.id;
+  const prevTicketIdRef = useRef(ticketId);
+  useEffect(() => {
+    if (prevTicketIdRef.current !== ticketId) {
+      prevTicketIdRef.current = ticketId;
+      isNearBottomRef.current = true;
+      scrollToBottom(false);
+      return;
+    }
+    if (isNearBottomRef.current) {
+      scrollToBottom(messageCount > 0);
+    }
+  }, [messageCount, scrollToBottom, ticketId]);
 
   useEffect(() => {
     setTicketStatus(ticket?.status ?? null);
@@ -145,7 +169,15 @@ function RouteComponent() {
         onRequestClose={() => setIsCloseConfirmOpen(true)}
       />
 
-      <div className="flex-1 overflow-y-auto p-2 bg-slate-50 scroll-smooth pb-4">
+      <div
+        ref={scrollRef}
+        onScroll={() => {
+          const el = scrollRef.current;
+          if (!el) return;
+          isNearBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
+        }}
+        className="flex-1 overflow-y-auto p-2 bg-slate-50 scroll-smooth pb-4"
+      >
         {/* If the timer is still running, show the spinner, otherwise let Suspense handle it */}
         {showSpinner ? (
           <LoadingFallback />
@@ -314,6 +346,8 @@ const ChatInput = ({ ticketId, status, projectId, initialScore }: ChatInputProps
   const { toast } = useToast();
   const [message, setMessage] = useState<string>("");
   const [rated, setRated] = useState(initialScore != null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const shouldRefocusRef = useRef(false);
 
   const rateMutation = useMutation({
     mutationFn: rateTicketFn,
@@ -343,6 +377,15 @@ const ChatInput = ({ ticketId, status, projectId, initialScore }: ChatInputProps
     },
   });
 
+  // Keep focus in the composer after a successful send. The field is disabled while
+  // the mutation is in flight, which drops focus; restore it once it is interactive again.
+  useEffect(() => {
+    if (shouldRefocusRef.current && !createTicketMessageMutation.isPending) {
+      inputRef.current?.focus();
+      shouldRefocusRef.current = false;
+    }
+  }, [createTicketMessageMutation.isPending]);
+
   const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
     const trimmed = message.trim();
@@ -371,6 +414,7 @@ const ChatInput = ({ ticketId, status, projectId, initialScore }: ChatInputProps
       }
 
       setMessage("");
+      shouldRefocusRef.current = true;
     } catch {
       // onError already toasted; keep the draft so the customer does not retype it.
     }
@@ -430,6 +474,7 @@ const ChatInput = ({ ticketId, status, projectId, initialScore }: ChatInputProps
           {/* The field itself stays enabled while cooling down — the draft is the one
               thing the visitor should not lose to a rate limit. Only sending is held. */}
           <input
+            ref={inputRef}
             type="text"
             value={message}
             onChange={(e) => setMessage(e.target.value)}
