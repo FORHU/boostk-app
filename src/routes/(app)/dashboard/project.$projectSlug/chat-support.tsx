@@ -763,7 +763,7 @@ function ChatWindow({ ticket, projectId, role, memberId, isMd, onBack, onToggleD
         </div>
 
         {/* Chat Input — z-10, raised slightly off the bottom edge, always on top of messages */}
-        <div className="absolute bottom-2 md:bottom-3 inset-x-0 z-10 bg-background border-t border-border">
+        <div className="absolute bottom-0 inset-x-0 z-10 bg-background border-t border-border">
           {ticket.status === "CLOSED" ? (
             <div className="p-3">
               <div className="text-center p-3 text-sm text-muted-foreground bg-muted rounded-lg border border-border">
