@@ -126,6 +126,11 @@ export function useSocket({ userId, ticketId, projectId }: { userId?: string; ti
     if (!userId && !ticketId) return;
     if (typeof window === "undefined") return;
 
+    // A fresh identity (userId/ticketId/projectId change) must start with a clean
+    // "never connected" flag, otherwise the first connect_error sees the previous
+    // user's true and shows "Reconnecting…" instead of falling back to SSE.
+    hasConnectedOnceRef.current = false;
+
     // Liveness marker for the watchdog below: any byte from the relay proves the feed
     // is alive, even when it carries bad news (DEGRADED) or is just a heartbeat.
     let lastTrafficAt = Date.now();
