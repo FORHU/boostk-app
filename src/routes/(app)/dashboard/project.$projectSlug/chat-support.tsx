@@ -679,7 +679,9 @@ function ChatWindow({ ticket, projectId, role, memberId, isMd, onBack, onToggleD
 
   return (
     <div className="relative flex flex-1 flex-col min-h-0 h-full overflow-hidden">
-      <header className={`h-16 flex justify-between items-center ${isMd ? "px-6" : "px-3"} bg-muted/50 z-20 gap-2 shrink-0 relative`}>
+      <header
+        className={`h-16 flex justify-between items-center ${isMd ? "px-6" : "px-3"} bg-muted/50 z-20 gap-2 shrink-0 relative`}
+      >
         <div className={`flex items-center ${isMd ? "gap-3" : "gap-2"} flex-1 min-w-0`}>
           {!isMd && (
             <button
