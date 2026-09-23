@@ -5,11 +5,26 @@ on:
   # push:
   #   branches: [master]   # <-- uncomment later for fully automatic deploys
 
+# OIDC: GitHub mints a short-lived token and AWS trades it for the deploy role.
+# No long-lived AWS keys and no SSH key live in this repo's secrets any more.
+permissions:
+  id-token: write
+  contents: read
+
 env:
   # Dedicated repo:
   # arn:aws:ecr:ap-southeast-1:617163942417:repository/boostk
   # Only the NAME goes here — the registry host comes from the ecr-login step.
   ECR_REPOSITORY: boostk
+  # SecureString holding app.env. Written here on every deploy, read by the
+  # instance in deploy/remote-deploy.sh.
+  ENV_PARAM: /boostk/app-env
+  # Where the compose file and deploy script land on the instance.
+  APP_DIR: /opt/boostk
+  # Accept either tab (Settings → Secrets and variables → Actions): these are
+  # not sensitive, but they have been added under Secrets before.
+  AWS_REGION: ${{ vars.AWS_REGION || secrets.AWS_REGION }}
+  INSTANCE_ID: ${{ vars.INSTANCE_ID || secrets.INSTANCE_ID }}
 
 jobs:
   deploy:
@@ -18,13 +33,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Authenticate to AWS so we can push to ECR.
+      # The role needs: ECR push to `boostk`, ssm:PutParameter on
+      # parameter/boostk/*, ssm:SendCommand on the instance + AWS-RunShellScript,
+      # and ssm:GetCommandInvocation.
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME || vars.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
         id: ecr-login
@@ -50,142 +66,96 @@ jobs:
           docker push "$REGISTRY/$ECR_REPOSITORY:${{ github.sha }}"
           docker push "$REGISTRY/$ECR_REPOSITORY:latest"
 
-      # mint a fresh ECR password per deploy
-      - name: Get ECR pull password
-        id: ecr-pw
+      # app.env goes to Parameter Store, NOT into the SSM command: send-command
+      # parameters are kept in plain text in the command history, readable by
+      # anyone with SSM read access. The instance pulls it with its own role.
+      - name: Store app.env in Parameter Store
+        env:
+          # One whole secret rather than a URL assembled from parts. The database is
+          # managed (RDS) now, so the host, database name and connection parameters are
+          # not ours to hardcode — and a password containing @ / : / ? has to be
+          # percent-encoded exactly once, which is only safe to do by hand, once, when
+          # the secret is written.
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          RABBITMQ_DEFAULT_USER: ${{ secrets.RABBITMQ_DEFAULT_USER }}
+          RABBITMQ_DEFAULT_PASS: ${{ secrets.RABBITMQ_DEFAULT_PASS }}
+          BETTER_AUTH_URL: ${{ secrets.BETTER_AUTH_URL }}
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+          TRUSTED_ORIGINS: ${{ secrets.TRUSTED_ORIGINS }}
+          # Google sign-in. Both or neither — src/lib/auth.ts only registers the
+          # provider when it has a complete pair, so a half-configured deploy falls
+          # back to email/password instead of a broken button.
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          FORHU_CHAT_URL: ${{ vars.FORHU_CHAT_URL }}
+          SUPPORT_LANGUAGE: ${{ vars.SUPPORT_LANGUAGE }}
+          PLATFORM_STAFF_EMAILS: ${{ vars.PLATFORM_STAFF_EMAILS }}
         run: |
-          PASSWORD=$(aws ecr get-login-password)
-          echo "::add-mask::$PASSWORD"
-          echo "password=$PASSWORD" >> "$GITHUB_OUTPUT"
+          umask 077
+          printf '%s\n' \
+            "DATABASE_URL=$DATABASE_URL" \
+            "RABBITMQ_DEFAULT_USER=$RABBITMQ_DEFAULT_USER" \
+            "RABBITMQ_DEFAULT_PASS=$RABBITMQ_DEFAULT_PASS" \
+            "RABBITMQ_URL=amqp://$RABBITMQ_DEFAULT_USER:$RABBITMQ_DEFAULT_PASS@rabbitmq:5672" \
+            "BETTER_AUTH_URL=$BETTER_AUTH_URL" \
+            "BETTER_AUTH_SECRET=$BETTER_AUTH_SECRET" \
+            "TRUSTED_ORIGINS=$TRUSTED_ORIGINS" \
+            "GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID" \
+            "GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET" \
+            "FORHU_CHAT_URL=$FORHU_CHAT_URL" \
+            "SUPPORT_LANGUAGE=$SUPPORT_LANGUAGE" \
+            "PLATFORM_STAFF_EMAILS=$PLATFORM_STAFF_EMAILS" \
+            "SOCKET_PORT=5001" > app.env
+          # Intelligent-Tiering: standard (free) under 4 KB, advanced only if it grows past.
+          aws ssm put-parameter --name "$ENV_PARAM" --type SecureString \
+            --tier Intelligent-Tiering --overwrite --value file://app.env > /dev/null
+          rm -f app.env
 
-      # Ship the compose file straight from the repo checkout, so the box can
-      # never drift from what is committed. strip_components drops the leading
-      # "deploy/" path segment, landing it at ~/boostk-app/.
-      - name: Upload compose file to EC2
-        uses: appleboy/scp-action@v1
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          source: deploy/docker-compose.prod.yaml
-          target: ~/boostk-app/
-          strip_components: 1
-
-      # EC2 only logs in, pulls the prebuilt image, and swaps containers.
-      # app.env is written here from individual secrets, so nothing has to be
-      # created on the box by hand — same pattern as our other repos' deploy.yml.
-      - name: Deploy over SSH
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.EC2_HOST }} # EC2 public IP or DNS name
-          username: ${{ secrets.EC2_USER }} # usually "ubuntu" or "ec2-user"
-          key: ${{ secrets.EC2_SSH_KEY }} # contents of your .pem private key
-          envs: REGISTRY,IMAGE,ECR_PASSWORD
-          script: |
-            set -e
-
-            # ── Bootstrap: Docker Compose v2 plugin ──────────────────────
-            # `docker compose` (no hyphen) requires this plugin; without it
-            # Docker's CLI can't parse "compose" as a subcommand and instead
-            # errors on "-f" as an unrecognized root flag.
-            if ! docker compose version &> /dev/null; then
-              mkdir -p ~/.docker/cli-plugins
-              curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 \
-                -o ~/.docker/cli-plugins/docker-compose
-              chmod +x ~/.docker/cli-plugins/docker-compose
-            fi
-
-            mkdir -p ~/boostk-app
-            cd ~/boostk-app
-
-            umask 077
-            cat > app.env << 'ENVEOF'
-            # One whole secret rather than a URL assembled from parts. The database is
-            # managed (RDS) now, so the host, database name and connection parameters are
-            # not ours to hardcode — and a password containing @ / : / ? has to be
-            # percent-encoded exactly once, which is only safe to do by hand, once, when
-            # the secret is written. POSTGRES_USER/PASSWORD/DB are gone with the container.
-            DATABASE_URL=${{ secrets.DATABASE_URL }}
-            RABBITMQ_DEFAULT_USER=${{ secrets.RABBITMQ_DEFAULT_USER }}
-            RABBITMQ_DEFAULT_PASS=${{ secrets.RABBITMQ_DEFAULT_PASS }}
-            RABBITMQ_URL=amqp://${{ secrets.RABBITMQ_DEFAULT_USER }}:${{ secrets.RABBITMQ_DEFAULT_PASS }}@rabbitmq:5672
-            BETTER_AUTH_URL=${{ secrets.BETTER_AUTH_URL }}
-            BETTER_AUTH_SECRET=${{ secrets.BETTER_AUTH_SECRET }}
-            TRUSTED_ORIGINS=${{ secrets.TRUSTED_ORIGINS }}
-            # Google sign-in. Both or neither — src/lib/auth.ts only registers the
-            # provider when it has a complete pair, so a half-configured deploy falls
-            # back to email/password instead of a broken button.
-            GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
-            GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
-            FORHU_CHAT_URL=${{ vars.FORHU_CHAT_URL }}
-            SUPPORT_LANGUAGE=${{ vars.SUPPORT_LANGUAGE }}
-            PLATFORM_STAFF_EMAILS=${{ vars.PLATFORM_STAFF_EMAILS }}
-            SOCKET_PORT=5001
-            ENVEOF
-
-            echo "$ECR_PASSWORD" | docker login --username AWS --password-stdin "$REGISTRY"
-            docker pull "$IMAGE"
-
-            # docker-compose.prod.yaml interpolates ${IMAGE}, so every service
-            # (app, socket relay, migration job) runs the identical commit.
-            export IMAGE
-
-            # Migrations run BEFORE the new code starts, as a one-shot container
-            # from the same image. `run` (not `run --no-deps`) brings up the
-            # depends_on services first, so the network exists. Retried because
-            # a managed database can be briefly unreachable (failover, a
-            # maintenance window); if it never succeeds, the deploy aborts and
-            # the old containers keep serving traffic.
-            #
-            # If all five attempts fail immediately rather than timing out, the
-            # cause is almost always the RDS security group not admitting this
-            # instance on 5432 — not the credentials.
-            for i in 1 2 3 4 5; do
-              if docker compose -f docker-compose.prod.yaml run --rm app \
-                   bun prisma migrate deploy; then
-                echo "✅ migrations applied"
-                break
-              fi
-              if [ "$i" = "5" ]; then
-                echo "❌ migrations failed after 5 attempts — aborting deploy"
-                exit 1
-              fi
-              echo "migrations failed (attempt $i), retrying in 5s..."
-              sleep 5
-            done
-
-            # Seed the global-intake org/project. NOT `prisma db seed` — that runs
-            # prisma/seed.ts, which also creates demo tenants (Forhu, Organization 1,
-            # ten @example.com users) and must never touch production. seed-intake.ts
-            # is upsert-only infrastructure: the public /chat route throws without it.
-            #
-            # Non-fatal: a failure here leaves /chat broken but the rest of the app
-            # serving, which beats rolling back a good deploy. Check the log.
-            if docker compose -f docker-compose.prod.yaml run --rm app \
-                 bun run prisma/seed-intake.ts; then
-              echo "✅ intake project ready"
-            else
-              echo "⚠️  intake seeding FAILED — /chat will not work until this is fixed"
-            fi
-
-            docker compose -f docker-compose.prod.yaml up -d
-
-            # Fail the deploy loudly instead of reporting green on a dead app.
-            for i in $(seq 1 30); do
-              if curl -fs http://127.0.0.1:5000/ > /dev/null; then
-                echo "✅ app healthy after ${i}s"
-                break
-              fi
-              if [ "$i" = "30" ]; then
-                echo "❌ health check failed — last 50 lines:"
-                docker compose -f docker-compose.prod.yaml logs --tail=50 app
-                exit 1
-              fi
-              sleep 1
-            done
-
-            docker image prune -f            # clean up old image layers
+      # Ship the compose file and deploy script straight from the checkout, so the
+      # box can never drift from what is committed, then run the script. The
+      # actual deploy logic lives in deploy/remote-deploy.sh.
+      - name: Deploy via SSM
         env:
           REGISTRY: ${{ steps.ecr-login.outputs.registry }}
           IMAGE: ${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
-          ECR_PASSWORD: ${{ steps.ecr-pw.outputs.password }}
+        run: |
+          set -euo pipefail
+          COMPOSE_B64=$(base64 -w0 deploy/docker-compose.prod.yaml)
+          SCRIPT_B64=$(base64 -w0 deploy/remote-deploy.sh)
+          REMOTE="set -e; mkdir -p $APP_DIR; cd $APP_DIR; \
+          echo $COMPOSE_B64 | base64 -d > docker-compose.prod.yaml; \
+          echo $SCRIPT_B64 | base64 -d > remote-deploy.sh; \
+          IMAGE=$IMAGE REGISTRY=$REGISTRY AWS_REGION=$AWS_REGION ENV_PARAM=$ENV_PARAM bash remote-deploy.sh"
+          jq -n --arg c "$REMOTE" '{commands: [$c], executionTimeout: ["1800"]}' > params.json
+
+          CMD_ID=$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --comment "boostk ${GITHUB_SHA::7}" \
+            --parameters file://params.json \
+            --query Command.CommandId --output text)
+          echo "SSM command: $CMD_ID"
+
+          # send-command only queues the work — without waiting here the job goes
+          # green even when the deploy on the box fails.
+          STATUS=Pending
+          for _ in $(seq 1 180); do # 15 min
+            sleep 5
+            STATUS=$(aws ssm get-command-invocation --command-id "$CMD_ID" \
+              --instance-id "$INSTANCE_ID" --query Status --output text 2>/dev/null || echo Pending)
+            case "$STATUS" in Pending|InProgress|Delayed) continue ;; *) break ;; esac
+          done
+
+          echo "::group::Instance output"
+          aws ssm get-command-invocation --command-id "$CMD_ID" --instance-id "$INSTANCE_ID" \
+            --query StandardOutputContent --output text
+          echo "::endgroup::"
+          echo "::group::Instance errors"
+          aws ssm get-command-invocation --command-id "$CMD_ID" --instance-id "$INSTANCE_ID" \
+            --query StandardErrorContent --output text
+          echo "::endgroup::"
+
+          if [ "$STATUS" != "Success" ]; then
+            echo "::error::Deploy on $INSTANCE_ID ended with status $STATUS"
+            exit 1
+          fi
