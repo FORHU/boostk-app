@@ -38,10 +38,19 @@ env:
   ACCOUNT_ID: "617163942417"
   INSTANCE_ID: i-0f95a93145ea25e7a
   ECR_REPOSITORY: boostk
-  CONTAINER: boostk
   NETWORK: forhu-dev
+  # One image, run twice. The web app serves on 5000; the socket relay is the
+  # same image started with a different command (see docker-compose.prod.yaml on
+  # the production box). Caddy sends /socket.io/* to 4061 and everything else to
+  # 4060 — see /etc/caddy/sites/boostk.caddy. Changing a port here without
+  # changing that file breaks websockets only, which reads as an app bug.
+  CONTAINER: boostk-app
   HOST_PORT: "4060"
-  APP_PORT: "3000"
+  APP_PORT: "5000"
+  SOCKET_CONTAINER: boostk-socket
+  SOCKET_HOST_PORT: "4061"
+  SOCKET_APP_PORT: "5001"
+  SOCKET_CMD: bun run src/socket-server/index.ts
   ENV_PARAM: /forhu-dev/boostk/env
   SHARED_ENV: /opt/forhu-dev/credentials/boostk.env
   MERGED_ENV: /opt/forhu-dev/boostk.env
@@ -95,6 +104,13 @@ jobs:
           push: true
           platforms: linux/arm64
           provenance: false
+          # Vite inlines VITE_* at build time — they end up baked into the
+          # bundle the browser downloads, not read from the container's env.
+          # Passing them to `docker run` instead builds a frontend that calls
+          # localhost from the tester's machine and fails silently.
+          build-args: |
+            VITE_SOCKET_URL=${{ vars.VITE_SOCKET_URL }}
+            VITE_SUPPORT_PROJECT_ID=${{ vars.VITE_SUPPORT_PROJECT_ID }}
           tags: ${{ steps.tag.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ steps.tag.outputs.tag }}
 
       # This project's own secrets only. Anything unset is omitted rather than
@@ -103,15 +119,40 @@ jobs:
       # UK stack.
       - name: Publish project env to Parameter Store
         env:
-          # EDIT ME — one line per secret this project needs.
-          EXAMPLE_API_KEY: ${{ secrets.EXAMPLE_API_KEY }}
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+          BETTER_AUTH_URL: ${{ vars.BETTER_AUTH_URL }}
+          TRUSTED_ORIGINS: ${{ vars.TRUSTED_ORIGINS }}
+          FORHU_CHAT_URL: ${{ vars.FORHU_CHAT_URL }}
+          SUPPORT_LANGUAGE: ${{ vars.SUPPORT_LANGUAGE }}
         run: |
           set -euo pipefail
           umask 077
-          printf 'NODE_ENV=development\n' > env.tmp
 
-          # EDIT ME — append each secret, skipping blanks:
-          # [ -n "${EXAMPLE_API_KEY:-}" ] && printf 'EXAMPLE_API_KEY=%s\n' "$EXAMPLE_API_KEY" >> env.tmp
+          # NODE_ENV=production because the image runs a built bundle
+          # (.output/server/index.mjs). Under "development" a prebuilt Nitro
+          # server and better-auth change cookie and error behaviour, which is
+          # not what we want to be testing on dev.
+          printf 'NODE_ENV=production\n' > env.tmp
+          printf 'PORT=%s\n' '${{ env.APP_PORT }}' >> env.tmp
+          printf 'SOCKET_PORT=%s\n' '${{ env.SOCKET_APP_PORT }}' >> env.tmp
+
+          # Written only when set. `add` always returns 0 on purpose: under
+          # `set -e` a bare `[ -n "$x" ] && printf ...` aborts the whole step
+          # the first time a value happens to be empty.
+          add() { [ -n "${2:-}" ] && printf '%s=%s\n' "$1" "$2" >> env.tmp; return 0; }
+
+          add BETTER_AUTH_SECRET "${BETTER_AUTH_SECRET:-}"
+          add BETTER_AUTH_URL    "${BETTER_AUTH_URL:-}"
+          add TRUSTED_ORIGINS    "${TRUSTED_ORIGINS:-}"
+          add FORHU_CHAT_URL     "${FORHU_CHAT_URL:-}"
+          add SUPPORT_LANGUAGE   "${SUPPORT_LANGUAGE:-}"
+
+          # DATABASE_URL, RABBITMQ_URL and REDIS_* are deliberately absent: they
+          # come from SHARED_ENV on the host and are concatenated ahead of this
+          # file, so setting them here would shadow the host's own values.
+          # RABBITMQ_DEFAULT_USER/PASS are gone too — those configured the
+          # per-project broker the production box runs in compose; this host has
+          # one shared broker with a vhost per project.
 
           aws ssm put-parameter \
             --name "${{ env.ENV_PARAM }}" \
@@ -139,7 +180,9 @@ jobs:
             "docker image prune -af || true"
             "docker pull --platform linux/arm64 ${IMAGE}"
             "docker rm -f ${{ env.CONTAINER }} 2>/dev/null || true"
+            "docker rm -f ${{ env.SOCKET_CONTAINER }} 2>/dev/null || true"
             "docker run -d --name ${{ env.CONTAINER }} --restart unless-stopped --platform linux/arm64 --network ${{ env.NETWORK }} --env-file ${{ env.MERGED_ENV }} -p 127.0.0.1:${{ env.HOST_PORT }}:${{ env.APP_PORT }} ${IMAGE}"
+            "docker run -d --name ${{ env.SOCKET_CONTAINER }} --restart unless-stopped --platform linux/arm64 --network ${{ env.NETWORK }} --env-file ${{ env.MERGED_ENV }} -p 127.0.0.1:${{ env.SOCKET_HOST_PORT }}:${{ env.SOCKET_APP_PORT }} ${IMAGE} ${{ env.SOCKET_CMD }}"
           )
 
           # jq builds the JSON, so a quote inside any command cannot break it.
