@@ -22,9 +22,13 @@ on:
   workflow_dispatch:
     inputs:
       ref:
-        description: "Branch, tag or SHA to deploy"
-        required: true
-        default: main
+        # No default: repos in this org do not agree on a default branch name
+        # (boostk-app is master, others are main). Left blank, the checkout
+        # below falls back to github.ref_name — the branch you dispatched from,
+        # which always exists. A hardcoded default silently fetches a branch
+        # that may not be there and fails in checkout, before any build runs.
+        description: "Branch, tag or SHA to deploy (blank = the branch you ran this from)"
+        required: false
   # Uncomment once a dev branch exists and the team wants push-to-deploy.
   # push:
   #   branches: [dev]
