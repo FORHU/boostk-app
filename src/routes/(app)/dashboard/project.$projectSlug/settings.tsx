@@ -5,8 +5,12 @@ import { createServerFn } from "@tanstack/react-start";
 import { Check, Copy } from "lucide-react";
 import { useState } from "react";
 import { z } from "zod";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { PageHeader } from "@/components/ui/page-header";
+import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/toast";
 import { REDIRECT_REASON } from "@/enums/enums";
 import { getFieldInvalid } from "@/lib/form-utils";
@@ -138,84 +142,20 @@ function ProjectSettingsPage() {
   });
 
   return (
-    <div className="p-6">
+    <div className="max-w-7xl mx-auto p-6 md:p-10 space-y-10">
       {isEditing ? (
         <form
-          className="flex flex-col gap-4 mr-10"
+          className="space-y-8"
           onSubmit={async (e) => {
             e.preventDefault();
             e.stopPropagation();
             await updateForm.handleSubmit();
           }}
         >
-          {/* Server errors (duplicate slug, etc.) are surfaced via the error toast. */}
-          <FieldGroup className="flex flex-col gap-4">
-            <updateForm.Field name="name">
-              {(field) => {
-                const isInvalid = getFieldInvalid(field, updateForm);
-                return (
-                  <Field data-invalid={isInvalid}>
-                    <FieldLabel htmlFor={field.name}>Project Name</FieldLabel>
-                    <Input
-                      id={field.name}
-                      name={field.name}
-                      value={field.state.value}
-                      onBlur={field.handleBlur}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                      className="w-full"
-                    />
-                    {isInvalid && <FieldError errors={field.state.meta.errors} />}
-                  </Field>
-                );
-              }}
-            </updateForm.Field>
-
-            <updateForm.Field name="slug">
-              {(field) => {
-                const isInvalid = getFieldInvalid(field, updateForm);
-                return (
-                  <Field data-invalid={isInvalid}>
-                    <FieldLabel htmlFor={field.name}>Slug</FieldLabel>
-                    <Input
-                      id={field.name}
-                      name={field.name}
-                      value={field.state.value}
-                      onBlur={field.handleBlur}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                      className="w-full font-mono"
-                    />
-                    {isInvalid && <FieldError errors={field.state.meta.errors} />}
-                  </Field>
-                );
-              }}
-            </updateForm.Field>
-
-            <updateForm.Field name="description">
-              {(field) => {
-                const isInvalid = getFieldInvalid(field, updateForm);
-                return (
-                  <Field data-invalid={isInvalid}>
-                    <FieldLabel htmlFor={field.name}>Description</FieldLabel>
-                    <textarea
-                      id={field.name}
-                      name={field.name}
-                      value={field.state.value || ""}
-                      onBlur={field.handleBlur}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                      className="w-full border rounded-md p-2"
-                      rows={3}
-                    />
-                    {isInvalid && <FieldError errors={field.state.meta.errors} />}
-                  </Field>
-                );
-              }}
-            </updateForm.Field>
-          </FieldGroup>
-
-          <div className="flex gap-2 justify-end mt-4">
-            <button
+          <PageHeader title="Project Settings" description="Update your project details.">
+            <Button
               type="button"
-              className="px-4 py-2 border hover:bg-muted transition-colors"
+              variant="outline"
               onClick={() => {
                 updateForm.reset();
                 setIsEditing(false);
@@ -223,72 +163,135 @@ function ProjectSettingsPage() {
               disabled={updateProjectMutation.isPending}
             >
               Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={updateProjectMutation.isPending || !updateForm.state.canSubmit}
-              className="px-4 py-2 border bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors"
-            >
+            </Button>
+            <Button type="submit" disabled={updateProjectMutation.isPending || !updateForm.state.canSubmit}>
               {updateProjectMutation.isPending ? "Saving..." : "Save Changes"}
-            </button>
-          </div>
+            </Button>
+          </PageHeader>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>General</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <FieldGroup className="space-y-6">
+                <updateForm.Field name="name">
+                  {(field) => {
+                    const isInvalid = getFieldInvalid(field, updateForm);
+                    return (
+                      <Field data-invalid={isInvalid}>
+                        <FieldLabel htmlFor={field.name}>Project Name</FieldLabel>
+                        <Input
+                          id={field.name}
+                          name={field.name}
+                          value={field.state.value}
+                          onBlur={field.handleBlur}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          aria-invalid={isInvalid}
+                          className="w-full"
+                        />
+                        {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                      </Field>
+                    );
+                  }}
+                </updateForm.Field>
+
+                <updateForm.Field name="slug">
+                  {(field) => {
+                    const isInvalid = getFieldInvalid(field, updateForm);
+                    return (
+                      <Field data-invalid={isInvalid}>
+                        <FieldLabel htmlFor={field.name}>Slug</FieldLabel>
+                        <Input
+                          id={field.name}
+                          name={field.name}
+                          value={field.state.value}
+                          onBlur={field.handleBlur}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          aria-invalid={isInvalid}
+                          className="w-full font-mono"
+                        />
+                        {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                      </Field>
+                    );
+                  }}
+                </updateForm.Field>
+
+                <updateForm.Field name="description">
+                  {(field) => {
+                    const isInvalid = getFieldInvalid(field, updateForm);
+                    return (
+                      <Field data-invalid={isInvalid}>
+                        <FieldLabel htmlFor={field.name}>Description</FieldLabel>
+                        <textarea
+                          id={field.name}
+                          name={field.name}
+                          value={field.state.value || ""}
+                          onBlur={field.handleBlur}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          className="w-full border border-border rounded-lg bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          rows={3}
+                        />
+                        {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                      </Field>
+                    );
+                  }}
+                </updateForm.Field>
+              </FieldGroup>
+            </CardContent>
+          </Card>
         </form>
       ) : (
         <>
-          {/* ----- READ-ONLY MODE ----- */}
-          <div className="grid grid-cols-2 mb-10">
-            <div>
-              <h1 className="text-2xl font-bold">Project Settings</h1>
-            </div>
-            <div className="ml-auto mr-20">
-              <button
-                type="button"
-                className="px-4 py-2 text-sm border rounded hover:bg-muted transition-colors"
-                onClick={() => setIsEditing(true)}
-              >
-                Edit Settings
-              </button>
-            </div>
-          </div>
+          <PageHeader title="Project Settings" description="Manage your project configuration.">
+            <Button variant="outline" onClick={() => setIsEditing(true)}>
+              Edit Settings
+            </Button>
+          </PageHeader>
 
-          <div className="border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-            <div className="divide-y divide-gray-200">
-              <div className="grid grid-cols-2">
-                <div className="px-6 py-4 text-sm font-semibold">Name</div>
-                <div className="px-6 py-4 text-sm">{project?.name}</div>
+          <Card>
+            <CardHeader>
+              <CardTitle>General</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between py-3">
+                <span className="text-sm font-medium">Name</span>
+                <span className="text-sm text-muted-foreground">{project?.name}</span>
               </div>
-              <div className="grid grid-cols-2">
-                <div className="px-6 py-4 text-sm font-semibold">Slug</div>
-                <div className="px-6 py-4 text-sm font-mono">{project?.slug}</div>
+              <Separator />
+              <div className="flex items-center justify-between py-3">
+                <span className="text-sm font-medium">Slug</span>
+                <span className="text-sm text-muted-foreground font-mono">{project?.slug}</span>
               </div>
-              <div className="grid grid-cols-2">
-                <div className="px-6 py-4 text-sm font-semibold">Description</div>
-                <div className="px-6 py-4 text-sm whitespace-normal wrap-break-words">
+              <Separator />
+              <div className="flex items-center justify-between py-3">
+                <span className="text-sm font-medium">Description</span>
+                <span className="text-sm text-muted-foreground text-right max-w-md">
                   {project?.description || "No description provided."}
-                </div>
+                </span>
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
-          <div className="mt-10 border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-            <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-              <div>
-                <h2 className="text-lg font-semibold">Embed Widget</h2>
-                <p className="text-sm text-gray-500">Copy this code to install the chat widget on your website.</p>
+          <Card>
+            <CardHeader>
+              <CardTitle>Embed Widget</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Copy this code to install the chat widget on your website.
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-lg bg-foreground/5 border border-border p-6 overflow-x-auto">
+                <pre className="text-sm font-mono text-foreground whitespace-pre-wrap">{embedCode}</pre>
               </div>
-              <button
-                type="button"
-                onClick={handleCopy}
-                className="flex items-center gap-2 px-3 py-1.5 text-sm border bg-white rounded-md hover:bg-gray-50 transition-colors"
-              >
-                {copied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+            </CardContent>
+            <div className="px-4 pb-4">
+              <Button variant="outline" size="sm" onClick={handleCopy}>
+                {copied ? <Check className="size-4 text-green-600" /> : <Copy className="size-4" />}
                 {copied ? "Copied!" : "Copy Code"}
-              </button>
+              </Button>
             </div>
-            <div className="p-6 bg-gray-900 text-gray-100 overflow-x-auto">
-              <pre className="text-sm font-mono whitespace-pre-wrap">{embedCode}</pre>
-            </div>
-          </div>
+          </Card>
         </>
       )}
     </div>

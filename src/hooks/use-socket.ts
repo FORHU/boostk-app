@@ -7,11 +7,18 @@ import {
   markIntakeTicketReadFn,
   markTicketReadFn,
 } from "@/modules/notification/notification.functions";
-import { type ConnectionStatus, type NotificationItem, shouldRingBell, useNotifications } from "./use-notifications";
+import {
+  type ConnectionStatus,
+  HEARTBEAT_TIMEOUT_MS,
+  type NotificationItem,
+  shouldRingBell,
+  useNotifications,
+} from "./use-notifications";
 
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:3001";
 
 const MAX_NOTIFICATIONS = 20;
+const WATCHDOG_TICK_MS = 5000;
 
 const NOTIFICATION_EVENTS = new Set<EventType>([EventType.TICKET_CREATED, EventType.CHAT_MESSAGE]);
 
@@ -119,9 +126,14 @@ export function useSocket({ userId, ticketId, projectId }: { userId?: string; ti
     if (!userId && !ticketId) return;
     if (typeof window === "undefined") return;
 
-    const handleEvent = (event: string, data: unknown) => {
-      const message = { event: event as EventType, data };
-      setLastMessage(message);
+    // A fresh identity (userId/ticketId/projectId change) must start with a clean
+    // "never connected" flag, otherwise the first connect_error sees the previous
+    // user's true and shows "Reconnecting…" instead of falling back to SSE.
+    hasConnectedOnceRef.current = false;
+
+    // Liveness marker for the watchdog below: any byte from the relay proves the feed
+    // is alive, even when it carries bad news (DEGRADED) or is just a heartbeat.
+    let lastTrafficAt = Date.now();
 
       // The relay cannot read its queue. The socket itself is still open, so neither
       // `disconnect` nor `connect_error` will fire -- without this the indicator would
@@ -137,6 +149,18 @@ export function useSocket({ userId, ticketId, projectId }: { userId?: string; ti
         return;
       }
 
+      // Symmetric recovery signal: the relay re-established its RabbitMQ channel after
+      // broadcasting DEGRADED. The socket never dropped, so without this the indicator
+      // would sit on "reconnecting" forever. A HEARTBEAT means the feed is simply alive.
+      if (event === EventType.CONNECTED || event === EventType.HEARTBEAT) {
+        lastTrafficAt = Date.now();
+        setStatus("connected");
+        return;
+      }
+
+      const message = { event: event as EventType, data };
+      setLastMessage(message);
+
       const shouldRing = NOTIFICATION_EVENTS.has(message.event) && shouldRingBell(message.event, data, userId);
 
       if (shouldRing) {
@@ -147,10 +171,15 @@ export function useSocket({ userId, ticketId, projectId }: { userId?: string; ti
     const socket: Socket = io(SOCKET_URL, {
       query: { userId, ticketId, projectId },
       transports: ["websocket", "polling"],
+      // The relay authorizes room membership from the better-auth session and ticket
+      // cookies at handshake; without this the browser strips cookies cross-origin and
+      // every connection is rejected as unauthenticated.
+      withCredentials: true,
     });
 
     socket.on("connect", () => {
       hasConnectedOnceRef.current = true;
+      lastTrafficAt = Date.now();
       setStatus("connected");
     });
 
@@ -170,7 +199,34 @@ export function useSocket({ userId, ticketId, projectId }: { userId?: string; ti
 
     socket.onAny(handleEvent);
 
+    // The browser announces interface loss instantly; waiting for the socket's ping
+    // timeout (~25s) would leave the indicator lying about a dead connection.
+    const handleOffline = () => {
+      setStatus("reconnecting");
+      socket.disconnect();
+    };
+    const handleOnline = () => {
+      socket.connect();
+    };
+    window.addEventListener("offline", handleOffline);
+    window.addEventListener("online", handleOnline);
+
+    // Silence watchdog: a hung relay or half-open connection produces no events and no
+    // disconnect, so only missing traffic gives it away. Force a fresh connection rather
+    // than trusting the dead one to error on its own.
+    const watchdog = setInterval(() => {
+      if (Date.now() - lastTrafficAt > HEARTBEAT_TIMEOUT_MS) {
+        console.warn("[Socket] No traffic in a while -- forcing reconnect");
+        setStatus("reconnecting");
+        socket.disconnect();
+        socket.connect();
+      }
+    }, WATCHDOG_TICK_MS);
+
     return () => {
+      clearInterval(watchdog);
+      window.removeEventListener("offline", handleOffline);
+      window.removeEventListener("online", handleOnline);
       socket.disconnect();
     };
   }, [useSseFallback, userId, ticketId, projectId]);

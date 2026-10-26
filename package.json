@@ -16,6 +16,7 @@
 		"test:watch": "vitest",
 		"setup-local-db": "bun prisma generate && bun prisma migrate reset && bun prisma db seed",
 		"db:seed:intake": "bun run prisma/seed-intake.ts",
+		"db:seed:demo": "bun run prisma/seed-demo.ts",
 		"start": "bun run .output/server/index.mjs"
 	},
 	"dependencies": {

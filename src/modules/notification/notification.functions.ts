@@ -8,33 +8,6 @@ import { hasPlatformRole } from "@/modules/auth/roles";
 import { INTAKE_PROJECT_SLUG } from "@/modules/intake/intake.constants";
 import { requireTicketAgentMiddleware } from "@/modules/ticket/ticket.middleware";
 
-const SendNotificationMessageSchema = z.object({
-  targetRoutingKey: z.string(),
-  message: z.object({
-    event: z.enum(EventType),
-    data: z.any(),
-  }),
-});
-
-export const sendNotificationMessage = createServerFn({ method: "POST" })
-  .inputValidator(SendNotificationMessageSchema)
-  .handler(async ({ data }) => {
-    try {
-      const payload = {
-        id: Bun.randomUUIDv7(),
-        event: data.message.event,
-        data: data.message.data,
-      };
-
-      await publishEvent(data.targetRoutingKey, payload);
-
-      return { success: true };
-    } catch (error) {
-      console.error("[notify] Failed to publish notification message:", error);
-      return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
-    }
-  });
-
 export type UnreadTicketSummary = {
   projectId: string;
   projectSlug: string;
@@ -80,6 +53,11 @@ export const getUnreadTicketSummaries = createServerFn({ method: "GET" })
     const unreadMessages = await prisma.ticketMessage.findMany({
       where: {
         ticket: { project: { organizationId: { in: orgIds } } },
+        // Your own replies are never "unread" to you. The explicit OR keeps customer
+        // messages (userId = null) counting — a bare `{ not: userId }` has ambiguous
+        // NULL semantics on this nullable column — and covers every write path,
+        // including transcripts copied across during triage routing.
+        OR: [{ userId: null }, { userId: { not: userId } }],
         messageReads: { none: { userId } },
       },
       include: {
@@ -140,6 +118,8 @@ export const getUnreadTicketSummaries = createServerFn({ method: "GET" })
       const intakeUnread = await prisma.ticketMessage.findMany({
         where: {
           ticket: { project: { slug: INTAKE_PROJECT_SLUG } },
+          // Same self-exclusion as the org query above.
+          OR: [{ userId: null }, { userId: { not: userId } }],
           messageReads: { none: { userId } },
         },
         include: {

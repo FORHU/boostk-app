@@ -286,6 +286,12 @@ export const createTriageMessageFn = createServerFn({ method: "POST" })
       include: { attachment: ATTACHMENT_SELECT },
     });
 
+    // Record the sender's own read so unread summaries don't serve staff their
+    // own triage replies back as unread on reload.
+    await prisma.messageRead.create({
+      data: { messageId: message.id, ticketId: ticket.id, userId },
+    });
+
     // Reaches the visitor's open /chat window.
     await publishToTicketChannel({
       ticketId: ticket.id,

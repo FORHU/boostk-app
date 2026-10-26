@@ -5,6 +5,8 @@ import { EventType } from "@/lib/notifier/core";
 
 const RELAYED_SCOPES = new Set(["user", "ticket", "project"]);
 
+const HEARTBEAT_INTERVAL_MS = 10_000;
+
 /**
  * Relays events from the BoostK topic to connected socket.io clients. The relay drains
  * its own SQS queue (RELAY_QUEUE_URL, subscribed to the topic); each message's routing
