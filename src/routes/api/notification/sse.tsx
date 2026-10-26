@@ -1,9 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import type { ChannelWrapper } from "amqp-connection-manager";
-import type { ConfirmChannel } from "amqplib";
 import z from "zod";
 import { EventType, type Message } from "@/lib/notifier/core";
-import { connection, EXCHANGE_NAME } from "@/lib/rabbitmq";
+import { subscribeSseStream } from "@/lib/sse-hub";
 
 const SseSchema = z.object({
   userId: z.string().min(1).default("anonymous"),
@@ -31,7 +29,6 @@ export const Route = createFileRoute("/api/notification/sse")({
         const { userId, projectId, ticketId } = result.data;
 
         const encoder = new TextEncoder();
-        let sseChannelWrapper: ChannelWrapper;
 
         const stream = new ReadableStream({
           start(controller) {
@@ -54,73 +51,37 @@ export const Route = createFileRoute("/api/notification/sse")({
               });
             }, 8000);
 
-            // Create a rabbitmq channel for the user
-            sseChannelWrapper = connection.createChannel({
-              setup: async (channel: ConfirmChannel) => {
-                const tempQueue = await channel.assertQueue("", {
-                  exclusive: true,
-                  autoDelete: true,
-                });
-                const sseQueue = tempQueue.queue;
+            // Patterns this stream listens on, in the old RabbitMQ binding syntax.
+            const patterns: string[] = [];
+            // Agent dashboard notifications
+            if (userId && userId !== "anonymous") patterns.push(`user.${userId}.*`);
+            if (projectId) patterns.push(`project.${projectId}.*`);
+            if (ticketId) patterns.push(`ticket.${ticketId}.*`);
 
-                await channel.bindQueue(sseQueue, EXCHANGE_NAME, "test.queue");
-
-                // Bind to user queues (agent dashboard notifications)
-                if (userId && userId !== "anonymous") {
-                  await channel.bindQueue(sseQueue, EXCHANGE_NAME, `user.${userId}.*`);
-                }
-
-                // Bind to project and ticket queues
-                if (projectId) {
-                  await channel.bindQueue(sseQueue, EXCHANGE_NAME, `project.${projectId}.*`);
-                }
-                if (ticketId) {
-                  await channel.bindQueue(sseQueue, EXCHANGE_NAME, `ticket.${ticketId}.*`);
-                }
-
-                // Consume messages and push to SSE stream
-                await channel.consume(sseQueue, (msg) => {
-                  if (!msg) return;
-
-                  try {
-                    const payload = JSON.parse(msg.content.toString());
-                    // [SSE] received message log removed
-
-                    sendSseMessage({
-                      event: payload.event,
-                      data: payload.data,
-                      id: payload.id,
-                    });
-
-                    // Acknowledge the message only on success
-                    channel.ack(msg);
-                  } catch (error) {
-                    console.error("[SSE] Failed to parse RabbitMQ message", error);
-                    // Nack the message so it gets removed from the queue and doesn't block other messages.
-                    channel.nack(msg);
-                  }
-                });
-              },
-            });
-
-            sseChannelWrapper.on("error", (err) => {
-              console.error(`[SSE] RabbitMQ Channel Error for User ${userId}:`, err);
-              sendSseMessage({
-                event: EventType.DEGRADED,
-                data: { reason: "channel_error" },
-              });
-              controller.close();
+            let closed = false;
+            const close = () => {
+              if (closed) return;
+              closed = true;
               clearInterval(timer);
-            });
+              unsubscribe();
+              controller.close();
+            };
+
+            const unsubscribe = subscribeSseStream(
+              patterns,
+              (_routingKey, payload) => {
+                const message = payload as Message;
+                sendSseMessage({ event: message.event, data: message.data, id: message.id });
+              },
+              () => {
+                sendSseMessage({ event: EventType.DEGRADED, data: { reason: "queue_error" } });
+                close();
+              },
+            );
 
             request.signal.addEventListener("abort", () => {
               // [SSE] client disconnect log removed
-              clearInterval(timer);
-              controller.close();
-
-              if (sseChannelWrapper) {
-                sseChannelWrapper.close().catch(console.error);
-              }
+              close();
             });
           },
         });

@@ -75,7 +75,9 @@ fi
 # linger next to the compose stack.
 docker rm -f boostk &> /dev/null || true
 
-dc up -d
+# --remove-orphans drops containers for services no longer in the compose file
+# (the old rabbitmq broker).
+dc up -d --remove-orphans
 
 # Fail the deploy loudly instead of reporting green on a dead app.
 for i in $(seq 1 30); do

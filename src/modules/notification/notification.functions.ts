@@ -1,8 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import z from "zod";
+import { publishEvent } from "@/lib/messaging";
 import { EventType } from "@/lib/notifier/core";
 import { prisma } from "@/lib/prisma";
-import { publishEvent } from "@/lib/rabbitmq";
 import { requireAuthMiddleware, requirePlatformStaffMiddleware } from "@/modules/auth/auth.middleware";
 import { hasPlatformRole } from "@/modules/auth/roles";
 import { INTAKE_PROJECT_SLUG } from "@/modules/intake/intake.constants";

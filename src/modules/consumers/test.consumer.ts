@@ -1,7 +1,6 @@
-export const handleTestMessage = async (data: unknown, routingKey: string) => {
+export const handleTestMessage = async (job: unknown) => {
   console.log("\n====================================");
-  console.log("🤖 [BACKGROUND WORKER] Test Message Caught!");
-  console.log(`🔑 Routing Key: ${routingKey}`);
-  console.log(`📦 Payload:`, data);
+  console.log("🤖 [BACKGROUND WORKER] Test Job Caught!");
+  console.log(`📦 Payload:`, job);
   console.log("====================================\n");
 };

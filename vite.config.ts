@@ -15,7 +15,7 @@ const config = defineConfig({
     viteReact(),
     nitro({
       preset: "bun",
-      plugins: ["./src/modules/plugins/rabbitmq.plugin.ts"],
+      plugins: ["./src/modules/plugins/messaging.plugin.ts"],
       // Always let the browser/CDN revalidate the SW so PWA updates are picked up promptly
       // (the #1 "my PWA won't update" gotcha is a long-cached sw.js). The only manifest is
       // generated per project at /support/<projectSlug>/manifest, which sets its own TTL.
