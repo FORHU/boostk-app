@@ -15,8 +15,8 @@ name: Deploy Dev
 #      process listens on inside the container. HOST_PORT is allocated per
 #      project and must not change; see /etc/caddy/sites/00-PORTS.md.
 #   3. Put this project's own secrets in the `dev` environment, and list them
-#      in the "Publish project env" step. DATABASE_URL, REDIS_URL and
-#      RABBITMQ_URL come from the host — do NOT set them here.
+#      in the "Publish project env" step. DATABASE_URL and REDIS_URL come from
+#      the host — do NOT set them here.
 
 on:
   push:
@@ -130,6 +130,14 @@ jobs:
           TRUSTED_ORIGINS: ${{ vars.TRUSTED_ORIGINS }}
           FORHU_CHAT_URL: ${{ vars.FORHU_CHAT_URL }}
           SUPPORT_LANGUAGE: ${{ vars.SUPPORT_LANGUAGE }}
+          # SNS + SQS, created by scripts/setup-messaging.sh with
+          # MESSAGING_PREFIX=dev-boostk. All three are in REQUIRED_IN_PRODUCTION
+          # (src/env.ts) and this container runs NODE_ENV=production, so the app
+          # refuses to boot without them. They live in the `staging` environment,
+          # whose values shadow the repository ones deploy.yml uses for production.
+          EVENTS_TOPIC_ARN: ${{ vars.EVENTS_TOPIC_ARN }}
+          SSE_QUEUE_URL: ${{ vars.SSE_QUEUE_URL }}
+          RELAY_QUEUE_URL: ${{ vars.RELAY_QUEUE_URL }}
         run: |
           set -euo pipefail
           umask 077
@@ -152,13 +160,15 @@ jobs:
           add TRUSTED_ORIGINS    "${TRUSTED_ORIGINS:-}"
           add FORHU_CHAT_URL     "${FORHU_CHAT_URL:-}"
           add SUPPORT_LANGUAGE   "${SUPPORT_LANGUAGE:-}"
+          add EVENTS_TOPIC_ARN   "${EVENTS_TOPIC_ARN:-}"
+          add SSE_QUEUE_URL      "${SSE_QUEUE_URL:-}"
+          add RELAY_QUEUE_URL    "${RELAY_QUEUE_URL:-}"
 
-          # DATABASE_URL, RABBITMQ_URL and REDIS_* are deliberately absent: they
-          # come from SHARED_ENV on the host and are concatenated ahead of this
-          # file, so setting them here would shadow the host's own values.
-          # RABBITMQ_DEFAULT_USER/PASS are gone too — those configured the
-          # per-project broker the production box runs in compose; this host has
-          # one shared broker with a vhost per project.
+          # DATABASE_URL and REDIS_* are deliberately absent: they come from
+          # SHARED_ENV on the host and are concatenated ahead of this file, so
+          # setting them here would shadow the host's own values. Nothing
+          # RabbitMQ-shaped is set any more either — realtime moved to SNS + SQS
+          # and the broker is no longer in the app's compose file at all.
 
           aws ssm put-parameter \
             --name "${{ env.ENV_PARAM }}" \
