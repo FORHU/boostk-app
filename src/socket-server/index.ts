@@ -115,8 +115,6 @@ io.use(async (socket, next) => {
   }
 });
 
-startRealtimeRelay(io).catch((err) => {
-  console.error("[Socket.IO] Failed to start RabbitMQ relay:", err);
-});
+startRealtimeRelay(io);
 
 console.log(`🔌 Socket.io relay listening on http://localhost:${env.SOCKET_PORT}`);

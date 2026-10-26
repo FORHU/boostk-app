@@ -6,7 +6,7 @@ This application is built with a modern, high-performance stack:
 * **Frontend/SSR:** TanStack Start (Full-stack React)
 * **Runtime & Package Manager:** Bun
 * **Database:** PostgreSQL with Prisma ORM
-* **Real-Time:** RabbitMQ topic exchange + standalone Socket.io relay server (SSE fallback)
+* **Real-Time:** AWS SNS + SQS (LocalStack in dev) + standalone Socket.io relay server (SSE fallback) — see [docs/MESSAGING.md](docs/MESSAGING.md)
 
 ## 🛠 Prerequisites
 Before setting up the project, make sure you have the following installed on your machine:
@@ -133,7 +133,10 @@ DATABASE_URL=postgresql://postgres.[YOUR_USERNAME] [YOUR_PASSWORD]@localhost:543
 BETTER_AUTH_SECRET=your_better_auth_secret_here
 BETTER_AUTH_URL=http://localhost:3000/
 
-RABBITMQ_URL=amqp://[user]:[password]@[ip]:5672
+# Messaging: LocalStack via `docker compose up -d --wait` — copy the block from .env.example
+AWS_MESSAGING_ENDPOINT=http://localhost:4566
+AWS_ACCESS_KEY_ID=test
+AWS_SECRET_ACCESS_KEY=test
 
   FORHU_CHAT_URL=https://chat-dev.forhu.ai
 
@@ -167,7 +170,7 @@ Run the development server from your terminal in the boostk-app root directory:
 bun run dev
 
 ### Real-Time Socket.io Relay
-The realtime layer needs two processes: the main app and the Socket.io relay (which subscribes to RabbitMQ and pushes events to the browser). Start both together:
+The realtime layer needs two processes: the main app and the Socket.io relay (which drains its SQS queue and pushes events to the browser). Start both together:
 
 bun run dev:all
 

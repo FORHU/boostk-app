@@ -15,10 +15,9 @@ services:
     ports:
       # Loopback only — nginx is the sole way in from the internet.
       - "127.0.0.1:5000:5000"
-    # Postgres is managed (RDS) and lives outside this stack, so there is nothing
-    # local to wait for. Reachability is a security-group question now, not a
-    # container-ordering one — see docs/DATABASE-SETUP.md.
-    depends_on: [rabbitmq]
+    # Postgres (RDS) and messaging (SNS + SQS) are managed and live outside this stack,
+    # so there is nothing local to wait for. Both containers reach AWS with the EC2
+    # instance role — see deploy/iam-messaging-policy.json and docs/DEPLOYMENT.md.
 
   socket:
     image: ${IMAGE}
@@ -28,21 +27,11 @@ services:
     command: ["bun", "run", "src/socket-server/index.ts"]
     ports:
       - "127.0.0.1:5001:5001"
-    depends_on:
-      rabbitmq:
-        condition: service_started
 
-  rabbitmq:
-    image: rabbitmq:3-management
-    restart: unless-stopped
-    # guest/guest only works over loopback by default, and app/socket reach
-    # this over the Docker network (not loopback) — so a real user is required.
-    # RABBITMQ_DEFAULT_USER / RABBITMQ_DEFAULT_PASS come from app.env, written
-    # by deploy.yml from the RABBITMQ_DEFAULT_USER/RABBITMQ_DEFAULT_PASS secrets.
-    env_file: app.env
-    # No ports: reachable only on the internal Docker network.
-    # NEVER publish 15672 — the management UI ships with guest/guest.
-
+# RabbitMQ was a container here until messaging moved to SNS + SQS. remote-deploy.sh
+# runs `up --remove-orphans`, so the next deploy removes the leftover container; it
+# held no durable state worth keeping (realtime events only).
+#
 # Postgres was a container here until we moved to RDS. It is gone deliberately:
 # a database sharing a host with the app dies with the host, restores by hand, and
 # backs itself up never. DATABASE_URL now points at the managed instance and is

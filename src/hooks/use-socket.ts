@@ -135,13 +135,17 @@ export function useSocket({ userId, ticketId, projectId }: { userId?: string; ti
     // is alive, even when it carries bad news (DEGRADED) or is just a heartbeat.
     let lastTrafficAt = Date.now();
 
-    const handleEvent = (event: string, data: unknown) => {
-      // Control-plane events keep the indicator honest but are not chat data -- they
-      // must not reach lastMessage or the bell logic (heartbeats arrive every ~10s and
-      // would otherwise churn every consumer that watches lastMessage).
-      if (event === EventType.DEGRADED) {
-        lastTrafficAt = Date.now();
+      // The relay cannot read its queue. The socket itself is still open, so neither
+      // `disconnect` nor `connect_error` will fire -- without this the indicator would
+      // stay green while no event can arrive. Not a notification, so it returns before
+      // the bell logic.
+      if (message.event === EventType.DEGRADED) {
         setStatus("reconnecting");
+        return;
+      }
+      // The relay's poller retries on its own and announces when its queue is readable again.
+      if (message.event === EventType.CONNECTED) {
+        setStatus("connected");
         return;
       }
 

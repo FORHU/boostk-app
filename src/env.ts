@@ -25,17 +25,29 @@ const blankToUndefined = (value: unknown) => (typeof value === "string" && value
 /** Wraps a schema so blank strings are normalized to `undefined` first. */
 const optional = <T extends z.ZodTypeAny>(schema: T) => z.preprocess(blankToUndefined, schema);
 
-const DEFAULT_RABBITMQ_URL = "amqp://127.0.0.1:5672";
+const DEFAULT_AWS_REGION = "ap-southeast-1";
+// LocalStack's default account and the names scripts/setup-messaging.sh creates.
+const LOCALSTACK_QUEUE_BASE = "http://localhost:4566/000000000000";
+const DEFAULT_EVENTS_TOPIC_ARN = `arn:aws:sns:${DEFAULT_AWS_REGION}:000000000000:boostk-events`;
+const DEFAULT_SSE_QUEUE_URL = `${LOCALSTACK_QUEUE_BASE}/boostk-realtime-sse`;
+const DEFAULT_RELAY_QUEUE_URL = `${LOCALSTACK_QUEUE_BASE}/boostk-realtime-relay`;
 const DEFAULT_FORHU_CHAT_URL = "https://chat-dev.forhu.ai";
 const DEFAULT_SOCKET_PORT = 3001;
 
 /**
  * Variables that must be set explicitly in production. These all have
  * dev-friendly defaults or are optional, which is convenient locally but a
- * footgun in production -- silently pointing at localhost RabbitMQ or running
+ * footgun in production -- silently pointing at LocalStack queues or running
  * auth with no trusted origins is worse than refusing to boot.
  */
-const REQUIRED_IN_PRODUCTION = ["BETTER_AUTH_URL", "BETTER_AUTH_SECRET", "TRUSTED_ORIGINS", "RABBITMQ_URL"] as const;
+const REQUIRED_IN_PRODUCTION = [
+  "BETTER_AUTH_URL",
+  "BETTER_AUTH_SECRET",
+  "TRUSTED_ORIGINS",
+  "EVENTS_TOPIC_ARN",
+  "SSE_QUEUE_URL",
+  "RELAY_QUEUE_URL",
+] as const;
 
 const EnvSchema = z
   .object({
@@ -67,7 +79,27 @@ const EnvSchema = z
     GOOGLE_CLIENT_ID: optional(z.string().min(1).optional()),
     GOOGLE_CLIENT_SECRET: optional(z.string().min(1).optional()),
 
-    RABBITMQ_URL: optional(z.string().min(1).default(DEFAULT_RABBITMQ_URL)),
+    /**
+     * Realtime messaging (see `lib/messaging.ts`). Publishers send to one SNS topic; SNS
+     * copies every event into one SQS queue per consuming process. The app's SSE route
+     * and the socket relay each need their OWN queue -- pointed at the same queue they
+     * would split the events between them and both lose half.
+     *
+     * Credentials come from the SDK's default chain: the EC2 instance role in
+     * production, `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` (any value) locally.
+     */
+    AWS_REGION: optional(z.string().min(1).default(DEFAULT_AWS_REGION)),
+    /** Set only in local dev, to LocalStack. Unset means real AWS. Redirects SNS and SQS only. */
+    AWS_MESSAGING_ENDPOINT: optional(z.url("must be an absolute URL, e.g. http://localhost:4566").optional()),
+    EVENTS_TOPIC_ARN: optional(
+      z.string().startsWith("arn:", "must be an SNS topic ARN").default(DEFAULT_EVENTS_TOPIC_ARN),
+    ),
+    /** Queue the app server drains for its SSE streams. */
+    SSE_QUEUE_URL: optional(z.url("must be an SQS queue URL").default(DEFAULT_SSE_QUEUE_URL)),
+    /** Queue the standalone socket relay drains. */
+    RELAY_QUEUE_URL: optional(z.url("must be an SQS queue URL").default(DEFAULT_RELAY_QUEUE_URL)),
+    /** Demo background-job queue. Unset means its worker is not started. */
+    TEST_QUEUE_URL: optional(z.url("must be an SQS queue URL").optional()),
 
     SOCKET_PORT: optional(
       z.coerce

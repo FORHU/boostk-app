@@ -77,8 +77,12 @@ jobs:
           # percent-encoded exactly once, which is only safe to do by hand, once, when
           # the secret is written.
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          RABBITMQ_DEFAULT_USER: ${{ secrets.RABBITMQ_DEFAULT_USER }}
-          RABBITMQ_DEFAULT_PASS: ${{ secrets.RABBITMQ_DEFAULT_PASS }}
+          # SNS + SQS resources printed by scripts/setup-messaging.sh. Not secret — access
+          # is granted by the instance role, not by knowing the URL. Same either-tab
+          # fallback as AWS_REGION above.
+          EVENTS_TOPIC_ARN: ${{ vars.EVENTS_TOPIC_ARN || secrets.EVENTS_TOPIC_ARN }}
+          SSE_QUEUE_URL: ${{ vars.SSE_QUEUE_URL || secrets.SSE_QUEUE_URL }}
+          RELAY_QUEUE_URL: ${{ vars.RELAY_QUEUE_URL || secrets.RELAY_QUEUE_URL }}
           BETTER_AUTH_URL: ${{ secrets.BETTER_AUTH_URL }}
           BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
           TRUSTED_ORIGINS: ${{ secrets.TRUSTED_ORIGINS }}
@@ -94,9 +98,10 @@ jobs:
           umask 077
           printf '%s\n' \
             "DATABASE_URL=$DATABASE_URL" \
-            "RABBITMQ_DEFAULT_USER=$RABBITMQ_DEFAULT_USER" \
-            "RABBITMQ_DEFAULT_PASS=$RABBITMQ_DEFAULT_PASS" \
-            "RABBITMQ_URL=amqp://$RABBITMQ_DEFAULT_USER:$RABBITMQ_DEFAULT_PASS@rabbitmq:5672" \
+            "AWS_REGION=$AWS_REGION" \
+            "EVENTS_TOPIC_ARN=$EVENTS_TOPIC_ARN" \
+            "SSE_QUEUE_URL=$SSE_QUEUE_URL" \
+            "RELAY_QUEUE_URL=$RELAY_QUEUE_URL" \
             "BETTER_AUTH_URL=$BETTER_AUTH_URL" \
             "BETTER_AUTH_SECRET=$BETTER_AUTH_SECRET" \
             "TRUSTED_ORIGINS=$TRUSTED_ORIGINS" \

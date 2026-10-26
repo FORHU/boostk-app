@@ -10,8 +10,8 @@
  * SCOPE LIMIT — the counters are per-process. They are real protection for a
  * single-instance deploy and meaningfully raise the cost of casual abuse anywhere, but
  * they do NOT hold across horizontally scaled instances: an attacker spreading requests
- * over N app servers gets N times the budget. Moving the windows to Redis (or a
- * companion store on the existing RabbitMQ host) is the follow-up before scaling out.
+ * over N app servers gets N times the budget. Moving the windows to a shared store
+ * (Redis/ElastiCache or Postgres) is the follow-up before scaling out.
  *
  * Deliberately free of server-only imports. The chat widgets import `readRateLimit` to
  * render their "slow down" state, so anything pulled in here lands in the browser bundle

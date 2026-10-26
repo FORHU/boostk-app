@@ -11,12 +11,35 @@ services:
     volumes:
       - boostk_local:/var/lib/postgresql/data
 
-  rabbitmq:
-    image: rabbitmq:3-management
+  # Local SNS + SQS. Only those two clients point here (AWS_MESSAGING_ENDPOINT); deployed
+  # environments leave that unset and use real AWS. Queues live in memory, so
+  # scripts/setup-messaging.sh recreates them on every start.
+  localstack:
+    # Pinned: tags from 2026.03 on (and `latest`) refuse to start without a
+    # LOCALSTACK_AUTH_TOKEN.
+    image: localstack/localstack:3
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      # Another project's LocalStack already on 4566? Set LOCALSTACK_PORT and change the
+      # port in AWS_MESSAGING_ENDPOINT and the *_QUEUE_URL values in .env to match.
+      - "${LOCALSTACK_PORT:-4566}:4566"
+    environment:
+      - SERVICES=sns,sqs
+      - AWS_DEFAULT_REGION=${AWS_REGION:-ap-southeast-1}
+      - MESSAGING_REGION=${AWS_REGION:-ap-southeast-1}
+      - MESSAGING_CLI=awslocal
+    volumes:
+      - ./scripts/setup-messaging.sh:/etc/localstack/init/ready.d/setup-messaging.sh:ro
+    healthcheck:
+      # Healthy only once every ready.d script has finished successfully. The plain
+      # /_localstack/health endpoint turns healthy before the queues exist.
+      test:
+        - CMD-SHELL
+        - >-
+          curl -sf http://localhost:4566/_localstack/init/ready | grep -q '"completed": true'
+          && ! curl -sf http://localhost:4566/_localstack/init/ready | grep -qE '"state": "(UNKNOWN|RUNNING|ERROR)"'
+      interval: 3s
+      timeout: 5s
+      retries: 30
+
 volumes:
  boostk_local:
-
-  

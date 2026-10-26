@@ -1,6 +1,6 @@
+import { publishEvent, publishEventToMany } from "@/lib/messaging";
 import type { EventType, Message } from "@/lib/notifier/core";
 import { prisma } from "@/lib/prisma";
-import { publishEvent } from "@/lib/rabbitmq";
 import { hasOrgRole, ORG_ROLE, PLATFORM_ROLE } from "@/modules/auth/roles";
 
 type NotificationData = Record<string, unknown>;
@@ -62,7 +62,10 @@ export async function publishToProjectAgents({
       ...(assignee?.userId ? { notifyUserId: assignee.userId } : {}),
     };
     const message = buildMessage(event, payload);
-    await Promise.all(agentUserIds.map((userId) => publishEvent(`user.${userId}.${event}`, message)));
+    await publishEventToMany(
+      agentUserIds.map((userId) => `user.${userId}.${event}`),
+      message,
+    );
   } catch (err) {
     console.error("[notify] Failed to publish event to project agents:", err);
   }
@@ -97,7 +100,10 @@ export async function publishToPlatformStaff({
     if (staffUserIds.length === 0) return;
 
     const message = buildMessage(event, data);
-    await Promise.all(staffUserIds.map((userId) => publishEvent(`user.${userId}.${event}`, message)));
+    await publishEventToMany(
+      staffUserIds.map((userId) => `user.${userId}.${event}`),
+      message,
+    );
   } catch (err) {
     console.error("[notify] Failed to publish event to platform staff:", err);
   }

@@ -1,24 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import type { ChannelWrapper } from "amqp-connection-manager";
-import type { ConfirmChannel } from "amqplib";
 import z from "zod";
 import { auth } from "@/lib/auth";
 import { EventType, type Message } from "@/lib/notifier/core";
-import { prisma } from "@/lib/prisma";
-import { connection, EXCHANGE_NAME } from "@/lib/rabbitmq";
-import { TICKET_COOKIE_NAME } from "@/modules/ticket/ticket.constants";
+import { subscribeSseStream } from "@/lib/sse-hub";
 
-// Every binding on this stream is a live feed of someone's support conversations, so
-// each requested scope is verified against a real credential before its queue binding
-// is created:
-//
-// - `userId` must equal the caller's better-auth session user id. Agents listen to their
-//   own `user.<id>.*` notification feed and nothing else.
-// - `ticketId` must match the ticket referenced by the customer widget's ticket cookie
-//   (the same bearer credential that authorizes messaging on the conversation).
-//
-// An anonymous or unauthenticated request gets no bindings at all — there is no
-// "anonymous" default stream to subscribe to.
 const SseSchema = z.object({
   userId: z.string().min(1).optional(),
   ticketId: z
@@ -87,7 +72,6 @@ export const Route = createFileRoute("/api/notification/sse")({
         }
 
         const encoder = new TextEncoder();
-        let sseChannelWrapper: ChannelWrapper;
 
         const stream = new ReadableStream({
           start(controller) {
@@ -110,96 +94,38 @@ export const Route = createFileRoute("/api/notification/sse")({
               });
             }, 8000);
 
-            // Create a rabbitmq channel for the user
-            sseChannelWrapper = connection.createChannel({
-              setup: async (channel: ConfirmChannel) => {
-                const tempQueue = await channel.assertQueue("", {
-                  exclusive: true,
-                  autoDelete: true,
-                });
-                const sseQueue = tempQueue.queue;
+            // Patterns this stream listens on, in the old RabbitMQ binding syntax.
+            const patterns: string[] = [];
+            // Agent dashboard notifications
+            if (userId && userId !== "anonymous") patterns.push(`user.${userId}.*`);
+            if (projectId) patterns.push(`project.${projectId}.*`);
+            if (ticketId) patterns.push(`ticket.${ticketId}.*`);
 
-                // Bind only the scopes that were just verified against credentials.
-                if (sessionUserId) {
-                  await channel.bindQueue(sseQueue, EXCHANGE_NAME, `user.${sessionUserId}.*`);
-                }
-                if (ticketId) {
-                  await channel.bindQueue(sseQueue, EXCHANGE_NAME, `ticket.${ticketId}.*`);
-                }
-
-                // Consume messages and push to SSE stream
-                await channel.consume(sseQueue, (msg) => {
-                  if (!msg) return;
-
-                  try {
-                    const payload = JSON.parse(msg.content.toString());
-
-                    sendSseMessage({
-                      event: payload.event,
-                      data: payload.data,
-                      id: payload.id,
-                    });
-
-                    // Acknowledge the message only on success
-                    channel.ack(msg);
-                  } catch (error) {
-                    console.error("[SSE] Failed to parse RabbitMQ message", error);
-                    // A malformed payload is unparseable on every redelivery, so drop it
-                    // (requeue=false). The default nack requeues, which turns one bad
-                    // message into an infinite hot loop.
-                    channel.nack(msg, false, false);
-                  }
-                });
-              },
-            });
-
-            // One guarded teardown shared by every close path below — client abort,
-            // a channel-level error, the AMQP connection dropping — so the stream is
-            // closed exactly once and the singleton listener never leaks.
-            let cleanedUp = false;
-            const cleanupStream = () => {
-              if (cleanedUp) return;
-              cleanedUp = true;
-              connection.removeListener("disconnect", handleRabbitDisconnect);
+            let closed = false;
+            const close = () => {
+              if (closed) return;
+              closed = true;
               clearInterval(timer);
-              try {
-                controller.close();
-              } catch {
-                // Another path already closed the stream.
-              }
-              if (sseChannelWrapper) {
-                sseChannelWrapper.close().catch(console.error);
-              }
+              unsubscribe();
+              controller.close();
             };
 
-            // A lost AMQP connection is silent at the ChannelWrapper level —
-            // ChannelWrapper._onDisconnect clears its state without emitting anything —
-            // so listen one level up, on the ConnectionManager singleton. Without this
-            // the stream just goes quiet while the heartbeat timer keeps telling the
-            // client everything is fine.
-            const handleRabbitDisconnect = () => {
-              console.error(`[SSE] RabbitMQ disconnected for User ${userId}`);
-              sendSseMessage({
-                event: EventType.DEGRADED,
-                data: { reason: "rabbitmq_disconnected" },
-              });
-              cleanupStream();
-            };
-            connection.on("disconnect", handleRabbitDisconnect);
+            const unsubscribe = subscribeSseStream(
+              patterns,
+              (_routingKey, payload) => {
+                const message = payload as Message;
+                sendSseMessage({ event: message.event, data: message.data, id: message.id });
+              },
+              () => {
+                sendSseMessage({ event: EventType.DEGRADED, data: { reason: "queue_error" } });
+                close();
+              },
+            );
 
-            sseChannelWrapper.on("error", (err) => {
-              console.error(`[SSE] RabbitMQ Channel Error for User ${userId}:`, err);
-              sendSseMessage({
-                event: EventType.DEGRADED,
-                data: { reason: "channel_error" },
-              });
-              // amqp-connection-manager auto-recovers channels; without closing the
-              // wrapper it re-runs `setup` and resurrects a consumer feeding a dead
-              // stream, whose enqueue throws land right back in the nack path.
-              cleanupStream();
+            request.signal.addEventListener("abort", () => {
+              // [SSE] client disconnect log removed
+              close();
             });
-
-            request.signal.addEventListener("abort", cleanupStream);
           },
         });
 
