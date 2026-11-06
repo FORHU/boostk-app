@@ -135,25 +135,25 @@ export function useSocket({ userId, ticketId, projectId }: { userId?: string; ti
     // is alive, even when it carries bad news (DEGRADED) or is just a heartbeat.
     let lastTrafficAt = Date.now();
 
+    // socket.onAny delivers every event here as (name, payload) — see the wiring below.
+    const handleEvent = (event: string, data: unknown) => {
+      // Any byte from the relay proves the feed is alive, even when it carries bad news
+      // (DEGRADED) or is only a heartbeat. Set once here so no branch can forget it.
+      lastTrafficAt = Date.now();
+
       // The relay cannot read its queue. The socket itself is still open, so neither
       // `disconnect` nor `connect_error` will fire -- without this the indicator would
       // stay green while no event can arrive. Not a notification, so it returns before
       // the bell logic.
-      if (message.event === EventType.DEGRADED) {
+      if (event === EventType.DEGRADED) {
         setStatus("reconnecting");
         return;
       }
-      // The relay's poller retries on its own and announces when its queue is readable again.
-      if (message.event === EventType.CONNECTED) {
-        setStatus("connected");
-        return;
-      }
 
-      // Symmetric recovery signal: the relay re-established its RabbitMQ channel after
-      // broadcasting DEGRADED. The socket never dropped, so without this the indicator
-      // would sit on "reconnecting" forever. A HEARTBEAT means the feed is simply alive.
+      // Recovery signal: the relay re-established its queue after broadcasting DEGRADED
+      // and says so, and the socket never dropped. A HEARTBEAT means the feed is simply
+      // alive. Neither is a notification, so both return before the bell logic.
       if (event === EventType.CONNECTED || event === EventType.HEARTBEAT) {
-        lastTrafficAt = Date.now();
         setStatus("connected");
         return;
       }
