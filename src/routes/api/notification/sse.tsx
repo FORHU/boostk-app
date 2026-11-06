@@ -2,10 +2,17 @@ import { createFileRoute } from "@tanstack/react-router";
 import z from "zod";
 import { auth } from "@/lib/auth";
 import { EventType, type Message } from "@/lib/notifier/core";
+import { prisma } from "@/lib/prisma";
 import { subscribeSseStream } from "@/lib/sse-hub";
+import { TICKET_COOKIE_NAME } from "@/modules/ticket/ticket.constants";
 
 const SseSchema = z.object({
   userId: z.string().min(1).optional(),
+  // The stream still subscribes to `project.<id>.*` below, so this has to be parsed.
+  projectId: z
+    .string()
+    .regex(/^[a-zA-Z0-9-]+$/)
+    .optional(),
   ticketId: z
     .string()
     .regex(/^[a-zA-Z0-9-]+$/)
@@ -35,7 +42,7 @@ export const Route = createFileRoute("/api/notification/sse")({
           return Response.json({ success: false, error: result.error.message }, { status: 400 });
         }
 
-        const { userId, ticketId } = result.data;
+        const { userId, projectId, ticketId } = result.data;
 
         // At least one scope is required; a connection with nothing bound could never
         // receive an event and would only hold a RabbitMQ consumer open.

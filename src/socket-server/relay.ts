@@ -14,7 +14,16 @@ const HEARTBEAT_INTERVAL_MS = 10_000;
  * re-emitted to its members.
  */
 export function startRealtimeRelay(io: Server): EventSubscription {
-  return subscribeToEvents(
+  // socket.io's own ping/pong never reaches the client's `onAny`, so an idle feed is
+  // indistinguishable from a dead one: the watchdog in use-socket.ts forces a reconnect
+  // after HEARTBEAT_TIMEOUT_MS (25s) with no event. This emitter is what stops an idle
+  // connection reconnecting on a loop. The constant below was already here with nothing
+  // using it, which is how the missing emitter came to light.
+  const heartbeat = setInterval(() => {
+    io.emit(EventType.HEARTBEAT, { at: Date.now() });
+  }, HEARTBEAT_INTERVAL_MS);
+
+  const subscription = subscribeToEvents(
     env.RELAY_QUEUE_URL,
     (routingKey, payload) => {
       const [scope, id, ...rest] = routingKey.split(".");
@@ -42,4 +51,11 @@ export function startRealtimeRelay(io: Server): EventSubscription {
       onRecovered: () => io.emit(EventType.CONNECTED, { status: "connected" }),
     },
   );
+
+  return {
+    stop: async () => {
+      clearInterval(heartbeat);
+      await subscription.stop();
+    },
+  };
 }
